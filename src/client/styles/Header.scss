@@ -1,0 +1,47 @@
+.header {
+	padding: 0.5rem 1.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	&__brand {
+		font-size: 1.3rem;
+		font-weight: bold;
+	}
+	&__search {
+		width: 45%;
+		height: 2.2rem;
+		display: flex;
+		justify-content: center;
+		&__bar {
+			width: 80%;
+			padding: 0 1rem;
+			border: none;
+			&:focus {
+				outline: none;
+			}
+		}
+		&__icon {
+			border: none;
+			width: 20%;
+			background-color: #f3cd87;
+			transition: background-color 0.5s;
+			&:hover {
+				background-color: orange;
+			}
+		}
+	}
+	&__button {
+		width: 30%;
+		display: flex;
+		justify-content: center;
+		gap: 10px;
+		button {
+			display: flex;
+			align-items: center;
+			gap: 5px;
+			border: none;
+			background-color: white;
+			color: black;
+		}
+	}
+}

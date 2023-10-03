@@ -1,0 +1,58 @@
+.main-content {
+	padding: 3rem 0;
+}
+
+.required {
+	color: #fff;
+}
+
+.title {
+	text-align: center;
+	font-size: 2.3rem;
+	margin-bottom: 1rem;
+}
+
+.form {
+	height: fit-content;
+	width: 47.5%;
+	border-radius: 10px;
+	padding: 1.5rem 2rem;
+	border-radius: 2px;
+	box-shadow: inset 2px 2px 2px 2px black;
+	&__nameGroup {
+		display: flex;
+	}
+	&__name {
+		@media screen and (max-width: 996px) {
+			flex-basis: 100%;
+		}
+	}
+	&__label,
+	&__check {
+		margin-top: 1rem;
+	}
+	&__label {
+		font-weight: bold;
+	}
+	&__submit {
+		width: 100%;
+		margin: 1rem 0;
+		border-radius: 10px;
+		border: none;
+		background-color: #096e1f;
+		&:hover {
+			background-color: #03310d;
+		}
+	}
+	&__error {
+		color: red;
+	}
+	&__bottom {
+		text-align: end;
+		a {
+			text-decoration: none;
+			color: blue;
+			font-weight: 600;
+		}
+	}
+}

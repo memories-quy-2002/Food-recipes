@@ -1,0 +1,26 @@
+.footer {
+	background-color: rgb(12, 12, 12);
+	color: darkgray;
+	padding: 1rem 0;
+	margin-top: 1rem;
+	&__links {
+		display: flex;
+		margin-bottom: 2rem;
+	}
+	&__col {
+		@media screen and (max-width: 996px) {
+			flex-basis: 100%;
+		}
+	}
+	&__title {
+		font-weight: bold;
+		font-size: 1.2rem;
+	}
+	&__items {
+		list-style-type: none;
+		padding: 0;
+	}
+	&__item {
+		width: 100%;
+	}
+}
