@@ -96,7 +96,6 @@
 		display: flex;
 		justify-content: flex-end;
 		margin-left: auto;
-		gap: 10px;
 		@media screen and (max-width: 768px) {
 			display: none;
 		}
@@ -106,7 +105,7 @@
 		&--login {
 			display: flex;
 			align-items: center;
-			padding: 1rem 0.5rem;
+			padding: 1rem 1rem;
 			gap: 5px;
 			border: none;
 			border-radius: 0;
