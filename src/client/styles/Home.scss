@@ -1,0 +1,91 @@
+.home {
+	padding: 0;
+	&__background {
+		height: fit-content;
+		background-color: orange;
+		display: flex;
+		flex-direction: row;
+		&--img {
+			flex-basis: 50%;
+			width: 50vw;
+			min-height: 50vh;
+			background: url("../assets/images/slides.png");
+			background-size: cover;
+			background-position: center;
+			background-repeat: no-repeat;
+			object-fit: cover;
+		}
+		&--text {
+			padding: 2rem 1.5rem;
+			flex-basis: 50%;
+			display: flex;
+			justify-content: flex-start;
+			flex-direction: column;
+			color: black;
+			button {
+				width: fit-content;
+				padding: 0.5rem 1rem;
+				border: none;
+				border-radius: 5px;
+				background-color: #000;
+				color: white;
+				transition: background-color 0.3s ease-out;
+				&:hover {
+					background-color: #242323;
+				}
+			}
+		}
+	}
+	&__main {
+		margin-top: 1rem;
+		&__title {
+			h3 {
+				text-align: center;
+				font-weight: bold;
+				font-size: 3rem;
+			}
+		}
+		&__search {
+			margin-top: 1rem;
+			margin-bottom: 2rem;
+			margin-left: auto;
+			margin-right: auto;
+			width: 75%;
+			height: 50px;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			input {
+				width: 50%;
+				padding: 0.5rem 1rem;
+			}
+		}
+		&__cardList {
+			margin: 1rem 2rem;
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 50px 25px;
+			@media screen and (max-width: 992px) {
+				grid-template-columns: 1fr;
+			}
+		}
+		&__card {
+			border: 1px solid black;
+			border-radius: 5px;
+			padding-bottom: 1rem;
+			&__img {
+				width: 100%;
+			}
+			&__name {
+				margin-top: 1rem;
+				margin-left: 1.6rem;
+				font-weight: bold;
+				font-size: 2rem;
+			}
+			&__desc {
+				margin-left: 1.6rem;
+				font-size: 1.3rem;
+			}
+		}
+	}
+}

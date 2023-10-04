@@ -1,47 +1,121 @@
+@import url("https://fonts.googleapis.com/css2?family=Lato&display=swap");
 .header {
-	padding: 0.5rem 1.5rem;
+	font-family: "Lato", sans-serif;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	&__brand {
 		font-size: 1.3rem;
 		font-weight: bold;
+		margin-left: 1rem;
 	}
-	&__search {
-		width: 45%;
-		height: 2.2rem;
-		display: flex;
-		justify-content: center;
-		&__bar {
-			width: 80%;
-			padding: 0 1rem;
-			border: none;
-			&:focus {
-				outline: none;
-			}
+	&__toggle {
+		.dropdown-toggle::after {
+			display: none;
 		}
 		&__icon {
-			border: none;
-			width: 20%;
-			background-color: #f3cd87;
-			transition: background-color 0.5s;
-			&:hover {
-				background-color: orange;
+			width: 3rem;
+			height: 2.5rem;
+			border: 1px solid darkgray;
+			border-radius: 5px;
+			background-color: #fff;
+			color: #000;
+
+			display: none;
+		}
+		&__menu {
+			background-color: orange;
+			color: white;
+		}
+		&__links {
+			padding: 0;
+			margin: 1rem 0;
+			list-style-type: none;
+			display: flex;
+			flex-direction: column;
+			li {
+				display: block;
+				padding: 0.75rem;
+				transition: background-color 0.3s ease-out;
+				a {
+					width: 100%;
+					text-decoration: none;
+					color: black;
+					font-size: 1.2rem;
+					font-weight: bold;
+					display: block;
+				}
+				&:hover {
+					background-color: darkgray;
+				}
+			}
+		}
+		&__wrap {
+			display: flex;
+			justify-content: center;
+		}
+		&__search {
+			width: 80%;
+			margin: 2rem 0;
+			position: relative;
+			display: flex;
+			justify-content: center;
+			input {
+				width: 100%;
+				border: 3px solid orange;
+				border-right: none;
+				padding: 0.5rem 0.8rem;
+				border-radius: 5px 0 0 5px;
+				outline: none;
+			}
+			button {
+				width: 3rem;
+				border: 1px solid orange;
+				background: orange;
+				color: #fff;
+				border-radius: 0 5px 5px 0;
+				cursor: pointer;
+				font-size: 20px;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+		}
+		@media screen and (max-width: 768px) {
+			margin-left: auto;
+			padding: 0.5rem 1rem;
+			&__icon {
+				display: flex;
+				justify-content: center;
+				align-items: center;
 			}
 		}
 	}
 	&__button {
-		width: 30%;
+		height: 100%;
+		width: fit-content;
 		display: flex;
-		justify-content: center;
+		justify-content: flex-end;
+		margin-left: auto;
 		gap: 10px;
-		button {
+		@media screen and (max-width: 768px) {
+			display: none;
+		}
+		&--cart,
+		&--wishlist,
+		&--signup,
+		&--login {
 			display: flex;
 			align-items: center;
+			padding: 1rem 0.5rem;
 			gap: 5px;
 			border: none;
+			border-radius: 0;
 			background-color: white;
 			color: black;
+
+			&:hover {
+				background-color: orange;
+			}
 		}
 	}
 }

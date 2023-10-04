@@ -1,11 +1,24 @@
 import React from "react";
 import Layout from "../components/layout/Layout";
+import "../styles/Home.scss";
+import FoodCardList from "../components/home/FoodCardList";
+import Background from "../components/home/Background";
 
 const Home = () => {
 	return (
 		<Layout>
-			<div style={{ height: 1000 }} className="container-fluid">
-				<h1>This is the main content</h1>
+			<div className="container-fluid home">
+				<Background />
+
+				<div className="home__main">
+					<div className="home__main__title">
+						<h3>Find your recipes</h3>
+					</div>
+					<div className="home__main__search">
+						<input type="text" placeholder="Search..."></input>
+					</div>
+					<FoodCardList />
+				</div>
 			</div>
 		</Layout>
 	);

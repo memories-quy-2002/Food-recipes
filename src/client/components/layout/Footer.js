@@ -1,9 +1,10 @@
 import React from "react";
 import "../../styles/Footer.scss";
+import { Container } from "react-bootstrap";
 const Footer = () => {
 	return (
 		<footer className="footer">
-			<div className="container container-fluid">
+			<Container>
 				<div className="row footer__links">
 					<div className="col footer__col">
 						<h5 className="footer__title">Docs</h5>
@@ -38,7 +39,7 @@ const Footer = () => {
 						Copyright © 2023 React Bootstrap. Built with Docusaurus.
 					</div>
 				</div>
-			</div>
+			</Container>
 		</footer>
 	);
 };

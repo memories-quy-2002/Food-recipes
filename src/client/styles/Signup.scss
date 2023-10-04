@@ -1,58 +1,82 @@
 .main-content {
-	padding: 3rem 0;
+	width: 85%;
+	height: fit-content;
+	margin: 2rem auto;
+	display: flex;
+	flex-direction: row;
+	box-shadow: 1px 20px 20px 12px rgba(0, 0, 0, 0.23);
 }
 
-.required {
-	color: #fff;
-}
-
-.title {
-	text-align: center;
-	font-size: 2.3rem;
-	margin-bottom: 1rem;
+.background {
+	flex: 1;
+	background: url("../assets/images/background-vertical.png");
+	background-repeat: no-repeat;
+	background-size: cover;
 }
 
 .form {
-	height: fit-content;
-	width: 47.5%;
-	border-radius: 10px;
-	padding: 1.5rem 2rem;
-	border-radius: 2px;
-	box-shadow: inset 2px 2px 2px 2px black;
-	&__nameGroup {
-		display: flex;
+	flex: 1;
+	&__title {
+		width: fit-content;
+		font-size: 2.3rem;
+		margin-bottom: 1rem;
 	}
-	&__name {
-		@media screen and (max-width: 996px) {
-			flex-basis: 100%;
-		}
-	}
-	&__label,
-	&__check {
-		margin-top: 1rem;
-	}
-	&__label {
-		font-weight: bold;
-	}
-	&__submit {
+	&__container {
+		height: fit-content;
 		width: 100%;
-		margin: 1rem 0;
-		border-radius: 10px;
-		border: none;
-		background-color: #096e1f;
-		&:hover {
-			background-color: #03310d;
+		padding: 1.5rem 2rem;
+		background-color: white;
+		&__nameGroup {
+			display: flex;
 		}
-	}
-	&__error {
-		color: red;
-	}
-	&__bottom {
-		text-align: end;
-		a {
-			text-decoration: none;
-			color: blue;
-			font-weight: 600;
+		&__name {
+			@media screen and (max-width: 996px) {
+				flex-basis: 100%;
+			}
+		}
+		&__label,
+		&__check {
+			margin-top: 1rem;
+		}
+		&__label {
+			font-weight: bold;
+			&--required {
+				color: red;
+			}
+		}
+		&__input {
+			border: 2px solid #ffa500ab;
+			border-radius: 10px;
+		}
+		&__checked {
+			display: flex;
+			margin-top: 1rem;
+			gap: 10px;
+		}
+		&__submit {
+			width: 100%;
+			margin: 1rem 0;
+			border-radius: 10px;
+			border: none;
+			background-color: orange;
+			transition: background-color 0.3s ease-out;
+			&:hover {
+				background-color: rgb(207, 135, 2);
+			}
+		}
+		&__error {
+			color: red;
+		}
+		&__bottom {
+			text-align: end;
+			a {
+				text-decoration: none;
+				color: orange;
+				font-weight: 600;
+				&:hover {
+					color: rgb(207, 135, 2);
+				}
+			}
 		}
 	}
 }

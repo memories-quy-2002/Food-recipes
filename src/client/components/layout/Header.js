@@ -1,47 +1,23 @@
-import React from "react";
-import { Button, Navbar } from "react-bootstrap";
-import {
-	BsFillBoxFill,
-	BsSearch,
-	BsCartFill,
-	BsFillPersonFill,
-	BsBoxArrowRight,
-} from "react-icons/bs";
+import React, { useState } from "react";
 import "../../styles/Header.scss";
+import HeaderBrand from "../header/HeaderBrand";
+import HeaderButtons from "../header/HeaderButtons";
+import HeaderToggle from "../header/HeaderToggle";
 
 const Header = () => {
+	const [show, setShow] = useState(false);
+
+	const handleClose = () => setShow(false);
+	const handleShow = () => setShow(true);
 	return (
-		<header className="container header">
-			<Navbar.Brand
-				href="/"
-				className="d-flex align-items-center gap-2 header__brand"
-			>
-				<BsFillBoxFill />
-				React
-			</Navbar.Brand>
-			<div className="header__search">
-				<input
-					type="text"
-					placeholder="Search..."
-					className="header__search__bar"
-				/>
-				<button className="header__search__icon">
-					<BsSearch />
-				</button>
-			</div>
-			<div className="header__button">
-				<Button className="header__button--cart">
-					<BsCartFill />
-					My cart
-				</Button>
-				<Button className="header__button--signup">
-					<BsFillPersonFill /> Sign up
-				</Button>
-				<Button className="header__button--login">
-					<BsBoxArrowRight />
-					Log in
-				</Button>
-			</div>
+		<header className="container-fluid header">
+			<HeaderBrand />
+			<HeaderButtons />
+			<HeaderToggle
+				show={show}
+				handleClose={handleClose}
+				handleShow={handleShow}
+			/>
 		</header>
 	);
 };
