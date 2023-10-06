@@ -25,29 +25,32 @@ const SignupForm = () => {
 			setErrors(["Confirmed password is not matched!"]);
 			return;
 		}
-		navigate("/");
+		console.log("Sign up success");
 	};
 	return (
-		<div className="form">
+		<div className="form__signup">
 			<Form
 				action="/"
 				method="POST"
 				noValidate
 				validated={validated}
 				onSubmit={handleSubmit}
-				className="container form__container"
+				className="form__signup__container"
 			>
-				<h3 className="form__title">Get started</h3>
-				<Row className="form__container__nameGroup">
-					<Form.Group as={Col} className="form__container__name">
-						<Form.Label className="form__container__label ">
+				<h3 className="form__signup__container__title">Get started</h3>
+				<Row className="form__signup__container__nameGroup">
+					<Form.Group
+						as={Col}
+						className="form__signup__container__name"
+					>
+						<Form.Label className="form__signup__container__label ">
 							First name{" "}
-							<span className="form__container__label--required">
+							<span className="form__signup__container__label--required">
 								*
 							</span>
 						</Form.Label>
 						<Form.Control
-							className="form__container__input"
+							className="form__signup__container__input"
 							type="text"
 							required
 							aria-required
@@ -61,15 +64,18 @@ const SignupForm = () => {
 						/>
 					</Form.Group>
 
-					<Form.Group as={Col} className="form__container__name">
-						<Form.Label className="form__container__label">
+					<Form.Group
+						as={Col}
+						className="form__signup__container__name"
+					>
+						<Form.Label className="form__signup__container__label">
 							Last name{" "}
-							<span className="form__container__label--required">
+							<span className="form__signup__container__label--required">
 								*
 							</span>
 						</Form.Label>
 						<Form.Control
-							className="form__container__input"
+							className="form__signup__container__input"
 							type="text"
 							required
 							aria-required
@@ -84,15 +90,15 @@ const SignupForm = () => {
 					</Form.Group>
 				</Row>
 
-				<Form.Group className="form__container__email">
-					<Form.Label className="form__container__label">
+				<Form.Group className="form__signup__container__email">
+					<Form.Label className="form__signup__container__label">
 						Email address{" "}
-						<span className="form__container__label--required">
+						<span className="form__signup__container__label--required">
 							*
 						</span>
 					</Form.Label>
 					<Form.Control
-						className="form__container__input"
+						className="form__signup__container__input"
 						type="email"
 						required
 						aria-required
@@ -100,15 +106,15 @@ const SignupForm = () => {
 						onChange={(e) => setEmail(e.target.value)}
 					/>
 				</Form.Group>
-				<Form.Group className="form__container__pwd">
-					<Form.Label className="form__container__label">
+				<Form.Group className="form__signup__container__pwd">
+					<Form.Label className="form__signup__container__label">
 						Password{" "}
-						<span className="form__container__label--required">
+						<span className="form__signup__container__label--required">
 							*
 						</span>
 					</Form.Label>
 					<Form.Control
-						className="form__container__input"
+						className="form__signup__container__input"
 						type="password"
 						required
 						aria-required
@@ -116,15 +122,15 @@ const SignupForm = () => {
 						onChange={(e) => setPassword(e.target.value)}
 					/>
 				</Form.Group>
-				<Form.Group className="form__container__pwd">
-					<Form.Label className="form__container__label">
+				<Form.Group className="form__signup__container__pwd">
+					<Form.Label className="form__signup__container__label">
 						Confirm password{" "}
-						<span className="form__container__label--required">
+						<span className="form__signup__container__label--required">
 							*
 						</span>
 					</Form.Label>
 					<Form.Control
-						className="form__container__input"
+						className="form__signup__container__input"
 						type="password"
 						required
 						aria-required
@@ -132,11 +138,14 @@ const SignupForm = () => {
 						onChange={(e) => setConfirmPassword(e.target.value)}
 					/>
 				</Form.Group>
-				<div className="form__container__checked">
+				<div className="form__signup__container__checked">
 					<input type="checkbox" />
 					<label>Agree to terms and conditions</label>
 				</div>
-				<Button type="submit" className="form__container__submit">
+				<Button
+					type="submit"
+					className="form__signup__container__submit"
+				>
 					Sign Up
 				</Button>
 
@@ -147,7 +156,7 @@ const SignupForm = () => {
 						))}
 					</div>
 				)}
-				<div className="form__container__bottom">
+				<div className="form__signup__container__bottom">
 					<p>
 						Already have an account? <a href="/login">Log in</a>
 					</p>

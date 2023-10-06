@@ -1,0 +1,159 @@
+.main {
+	background: url("../assets/images/background.png");
+	background-size: auto;
+	background-repeat: no-repeat;
+	background-blend-mode: multiply;
+	padding: 1rem 0;
+}
+
+.form {
+	width: 500px;
+	height: fit-content;
+	background-color: white;
+	position: relative;
+	margin: auto;
+	overflow: hidden;
+	&__btnBox {
+		position: relative;
+		height: 60px;
+		width: 300px;
+		margin: 20px auto;
+		box-shadow: 10px 10px 30px rgb(254, 215, 188);
+		border-radius: 50px;
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		&__button {
+			width: 150px;
+			text-align: center;
+			font-size: 22px;
+			border: none;
+			outline: none;
+			background-color: transparent;
+			position: relative;
+			cursor: pointer;
+			color: black;
+		}
+		&__slider {
+			height: 60px;
+			width: 150px;
+			border-radius: 50px;
+			background-image: linear-gradient(
+				to right,
+				rgb(255, 195, 110),
+				rgb(255, 146, 91)
+			);
+			position: absolute;
+			left: 0;
+			transition: all 0.5s ease-in-out;
+		}
+	}
+	&__section {
+		height: fit-content;
+		width: 1000px;
+		display: flex;
+		position: relative;
+		transition: all 0.5s ease-in-out;
+		left: 0;
+	}
+	&__signup,
+	&__login {
+		height: 100%;
+		width: 500px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 0px 2.5rem;
+	}
+	&__signup {
+		&__container {
+			width: 100%;
+			&__title {
+				text-align: center;
+				font-size: 2rem;
+				margin-bottom: 1rem;
+			}
+			&__label {
+				margin-top: 1rem;
+				&--required {
+					color: red;
+				}
+			}
+			&__input {
+				border: 0;
+				border-radius: 0;
+				border-bottom: 1px solid orange;
+			}
+			&__checked {
+				margin: 1.5rem 0;
+				display: flex;
+				gap: 10px;
+			}
+			&__submit {
+				width: 100%;
+				background: linear-gradient(
+					to right,
+					rgb(255, 195, 110),
+					rgb(255, 146, 91)
+				);
+				color: black;
+				outline: none;
+				border: none;
+				border-radius: 10px;
+				margin-bottom: 1rem;
+			}
+		}
+	}
+	&__login {
+		left: 450px;
+		&__container {
+			width: 100%;
+			&__title {
+				text-align: center;
+				font-size: 2rem;
+				margin-bottom: 1rem;
+			}
+			&__label {
+				margin-top: 1rem;
+				&--required {
+					color: red;
+				}
+			}
+			&__input {
+				width: 100%;
+				border: 0;
+				border-radius: 0;
+				border-bottom: 1px solid orange;
+			}
+			&__checked {
+				width: 100%;
+				margin: 1.5rem 0;
+				display: flex;
+				justify-content: flex-start;
+				gap: 10px;
+			}
+			&__submit {
+				width: 100%;
+				padding: 0.5rem;
+				background: linear-gradient(
+					to right,
+					rgb(255, 195, 110),
+					rgb(255, 146, 91)
+				);
+				color: black;
+				outline: none;
+				border: none;
+				border-radius: 10px;
+				margin-bottom: 1rem;
+			}
+		}
+	}
+}
+
+.moveslider {
+	left: 150px;
+}
+
+.movesection {
+	left: -500px;
+}

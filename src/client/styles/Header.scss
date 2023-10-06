@@ -90,7 +90,7 @@
 			}
 		}
 	}
-	&__button {
+	&__menu {
 		height: 100%;
 		width: fit-content;
 		display: flex;
@@ -99,10 +99,7 @@
 		@media screen and (max-width: 768px) {
 			display: none;
 		}
-		&--cart,
-		&--wishlist,
-		&--signup,
-		&--login {
+		&--content {
 			display: flex;
 			align-items: center;
 			padding: 1rem 1rem;

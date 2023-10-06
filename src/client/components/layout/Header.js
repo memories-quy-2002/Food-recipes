@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import "../../styles/Header.scss";
 import HeaderBrand from "../header/HeaderBrand";
-import HeaderButtons from "../header/HeaderButtons";
+import HeaderMenu from "../header/HeaderMenu";
 import HeaderToggle from "../header/HeaderToggle";
 
 const Header = () => {
@@ -12,7 +12,7 @@ const Header = () => {
 	return (
 		<header className="container-fluid header">
 			<HeaderBrand />
-			<HeaderButtons />
+			<HeaderMenu />
 			<HeaderToggle
 				show={show}
 				handleClose={handleClose}
