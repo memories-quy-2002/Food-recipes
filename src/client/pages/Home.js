@@ -1,14 +1,14 @@
 import React from "react";
+import FoodCardList from "../components/home/FoodCardList";
+import SlideShow from "../components/home/SlideShow";
 import Layout from "../components/layout/Layout";
 import "../styles/Home.scss";
-import FoodCardList from "../components/home/FoodCardList";
-import Background from "../components/home/Background";
 
 const Home = () => {
 	return (
 		<Layout>
 			<div className="container-fluid home">
-				<Background />
+				<SlideShow />
 
 				<div className="home__main">
 					<div className="home__main__title">

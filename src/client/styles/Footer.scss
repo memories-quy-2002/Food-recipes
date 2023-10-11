@@ -14,12 +14,23 @@
 	&__title {
 		font-weight: bold;
 		font-size: 1.2rem;
+		margin-bottom: 1rem;
 	}
-	&__items {
+	&__social,
+	&__list {
 		list-style-type: none;
 		padding: 0;
+		margin-bottom: 2rem;
+		&__link {
+			padding-bottom: 0.5rem;
+		}
 	}
-	&__item {
-		width: 100%;
+	&__social {
+		display: flex;
+		flex-direction: row;
+		gap: 20px;
+		&__link {
+			color: white;
+		}
 	}
 }

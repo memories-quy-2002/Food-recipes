@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 const AccountForm = () => {
@@ -9,6 +9,7 @@ const AccountForm = () => {
 	const onLogin = () => {
 		setIsSignup(false);
 	};
+
 	return (
 		<div className="form">
 			<div className="form__btnBox">

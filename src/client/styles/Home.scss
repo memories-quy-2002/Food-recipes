@@ -1,28 +1,35 @@
 .home {
 	padding: 0;
-	&__background {
+	&__slideshow {
 		height: fit-content;
+		position: relative;
+		overflow-x: hidden;
+		&__container {
+			display: flex;
+			flex-direction: row;
+		}
+	}
+
+	&__slide {
+		width: 100vw;
+		height: 480px;
 		background-color: orange;
 		display: flex;
 		flex-direction: row;
-		&--img {
-			flex-basis: 50%;
-			width: 50vw;
-			min-height: 50vh;
-			background: url("../assets/images/slides.png");
-			background-size: cover;
-			background-position: center;
-			background-repeat: no-repeat;
+		&__img {
 			object-fit: cover;
 		}
-		&--text {
+		&__content {
+			width: 100vw;
 			padding: 2rem 1.5rem;
-			flex-basis: 50%;
 			display: flex;
 			justify-content: flex-start;
 			flex-direction: column;
 			color: black;
-			button {
+			&__desc {
+				margin: 1rem 0;
+			}
+			&__button {
 				width: fit-content;
 				padding: 0.5rem 1rem;
 				border: none;
@@ -37,7 +44,7 @@
 		}
 	}
 	&__main {
-		margin-top: 1rem;
+		margin-top: 2rem;
 		&__title {
 			h3 {
 				text-align: center;
@@ -72,19 +79,31 @@
 		&__card {
 			border: 1px solid black;
 			border-radius: 5px;
-			padding-bottom: 1rem;
+			padding-bottom: 0.5rem;
 			&__img {
 				width: 100%;
 			}
 			&__name {
 				margin-top: 1rem;
-				margin-left: 1.6rem;
+				margin-left: 1rem;
 				font-weight: bold;
 				font-size: 2rem;
 			}
 			&__desc {
-				margin-left: 1.6rem;
+				margin-left: 1rem;
 				font-size: 1.3rem;
+			}
+			&__button {
+				margin-left: 1rem;
+				padding: 0.6rem 1.2rem;
+				border: none;
+				border-radius: 5px;
+				background-color: orange;
+				color: black;
+				transition: background-color 0.3s ease-in;
+				&:hover {
+					background-color: rgb(236, 191, 108);
+				}
 			}
 		}
 	}
