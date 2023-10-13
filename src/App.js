@@ -4,6 +4,8 @@ import About from "./client/pages/About";
 import Account from "./client/pages/Account";
 import Contact from "./client/pages/Contact";
 import Home from "./client/pages/Home";
+import { useEffect, useState } from "react";
+import axios from "axios";
 function App() {
 	return (
 		<BrowserRouter>
@@ -14,6 +16,7 @@ function App() {
 				<Route path="/account" element={<Account />} />
 			</Routes>
 		</BrowserRouter>
+
 	);
 }
 

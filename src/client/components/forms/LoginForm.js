@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-
+import * as constants from "../../utils/constant";
 const LoginForm = () => {
 	const [validated, setValidated] = useState(false);
 	const [email, setEmail] = useState("");
@@ -14,11 +14,16 @@ const LoginForm = () => {
 		if (!email || !password) {
 			setErrors(["Please fill in all fields!"]);
 			return;
-		} else if (password.length < 8) {
-			setErrors(["Password must be 8 characters or more!"]);
+		}
+		const e1 = constants.EMAIL_REGEX.test(email);
+		const e2 = constants.PWD_REGEX.test(password);
+		if (!e1) {
+			setErrors(["Invalid email"]);
+			return;
+		} else if (!e2) {
+			setErrors(["Invalid password"]);
 			return;
 		}
-		navigate("./");
 	};
 	return (
 		<div className="form__login">
@@ -72,19 +77,21 @@ const LoginForm = () => {
 					<input type="checkbox" name="remember_box" />
 					<label htmlFor="remember_box">Remember me</label>
 				</div>
+				{errors.length > 0 && (
+					<div className="form__login__container__error">
+						{errors.map((error) => (
+							<p className="alert alert-danger" key={error}>
+								{error}
+							</p>
+						))}
+					</div>
+				)}
 				<Button
 					type="submit"
 					className="form__login__container__submit"
 				>
 					Log In
 				</Button>
-				{errors.length > 0 && (
-					<div className="alert alert-danger text-center">
-						{errors.map((error) => (
-							<p key={error}>{error}</p>
-						))}
-					</div>
-				)}
 			</Form>
 		</div>
 	);
