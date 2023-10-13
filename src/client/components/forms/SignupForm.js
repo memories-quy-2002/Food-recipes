@@ -1,10 +1,7 @@
-import React, { useContext, useEffect } from "react";
-import { useState } from "react";
-import { Form, Row, Col, Button } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Button, Col, Form, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import * as constants from "../../utils/constant";
-import axios from "../../api/axios";
-import AuthContext from "../../context/AuthProvider";
 const SignupForm = () => {
 	const [name, setName] = useState({ first: "", last: "" });
 	const [email, setEmail] = useState("");
@@ -37,32 +34,6 @@ const SignupForm = () => {
 		} else if (password !== confirmPassword) {
 			setErrors(["Confirm password is not matched"]);
 			return;
-		}
-		try {
-			const response = await axios.post(
-				"/post/signup",
-				JSON.stringify({ name, email, password }),
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-			console.log(JSON.stringify(response.data));
-
-			const accessToken = response?.data?.accessToken;
-			const roles = response?.data?.roles;
-			setName("");
-			setEmail("");
-			setPassword("");
-			setConfirmPassword("");
-		} catch (err) {
-			if (!err?.response) {
-				setErrors(["No Server Response"]);
-			} else if (err.response?.status === 409) {
-				setErrors(["Username Taken"]);
-			} else {
-				setErrors(["Registration Failed"]);
-			}
 		}
 	};
 	return (
