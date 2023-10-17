@@ -1,21 +1,25 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const db = require("./queries");
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 4000;
 
 const app = express();
-var corOptions = {
-	origin: "https://localhost:8081",
-};
-
-app.use(cors(corOptions));
+app.use(
+	cors({
+		origin: "http://localhost:3000",
+		credentials: true,
+	})
+);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.post("/account/", db.getUserByJWT);
+app.post("/account/login", db.getUsersLogIn);
+app.post("/account/signup", db.createUser);
+app.put("/account/users/:id", db.updateUser);
+app.delete("/account/users/:id", db.deleteUser);
 
-app.get("/", (req, res) => {
-	res.send({ message: "Welcome to my application." });
-});
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}.`);
 });

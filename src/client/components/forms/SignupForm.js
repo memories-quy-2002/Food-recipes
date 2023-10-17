@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import * as constants from "../../utils/constant";
+import axios from "../../api/axios";
 const SignupForm = () => {
 	const [name, setName] = useState({ first: "", last: "" });
 	const [email, setEmail] = useState("");
@@ -10,9 +11,7 @@ const SignupForm = () => {
 	const [validated, setValidated] = useState(false);
 	const [errors, setErrors] = useState([]);
 	const navigate = useNavigate();
-	useEffect(() => {
-		setErrors([]);
-	}, [name, email, password, confirmPassword]);
+
 	const handleSubmitSignup = async (e) => {
 		e.preventDefault();
 		setValidated(true);
@@ -34,6 +33,21 @@ const SignupForm = () => {
 		} else if (password !== confirmPassword) {
 			setErrors(["Confirm password is not matched"]);
 			return;
+		}
+		try {
+			const response = await axios.post(
+				"http://localhost:4000/account/signup",
+				JSON.stringify({ name, email, password }),
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+			if (response.status === 200) {
+				navigate("/");
+			}
+		} catch (err) {
+			console.error(err);
 		}
 	};
 	return (
@@ -114,7 +128,6 @@ const SignupForm = () => {
 						placeholder="Email"
 						value={email}
 						onChange={(e) => {
-							console.log("Signup:" + email);
 							setEmail(e.target.value);
 						}}
 					/>

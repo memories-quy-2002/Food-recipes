@@ -1,15 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import * as constants from "../../utils/constant";
+import axios from "../../api/axios";
 const LoginForm = () => {
 	const [validated, setValidated] = useState(false);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [errors, setErrors] = useState([]);
 	const navigate = useNavigate();
-	const handleSubmitLogin = (event) => {
-		event.preventDefault();
+
+	const handleSubmitLogin = async (e) => {
+		e.preventDefault();
 		setValidated(true);
 		if (!email || !password) {
 			setErrors(["Please fill in all fields!"]);
@@ -23,6 +25,27 @@ const LoginForm = () => {
 		} else if (!e2) {
 			setErrors(["Invalid password"]);
 			return;
+		}
+		try {
+			const response = await axios.post(
+				"http://localhost:4000/account/login",
+				JSON.stringify({ email, password }),
+				{
+					headers: { "Content-Type": "application/json" },
+					withCredentials: true,
+				}
+			);
+			if (response.status === 200) {
+				localStorage.setItem("jwt", response.data.token);
+				navigate("/");
+			}
+		} catch (error) {
+			if (error.response && error.response.status === 401) {
+				// Show error message to user
+				console.error(error.response.data.message);
+			} else {
+				console.error(error);
+			}
 		}
 	};
 	return (
@@ -52,7 +75,6 @@ const LoginForm = () => {
 						value={email}
 						onChange={(e) => {
 							setEmail(e.target.value);
-							console.log("Login:" + email);
 						}}
 					/>
 				</Form.Group>

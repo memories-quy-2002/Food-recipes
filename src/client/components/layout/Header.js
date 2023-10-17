@@ -31,11 +31,6 @@ const items = [
 		icon: <BsCartFill />,
 		href: "/cart",
 	},
-	{
-		title: "Sign up",
-		icon: <BsFillPersonFill />,
-		href: "/account",
-	},
 ];
 const Header = () => {
 	const [show, setShow] = useState(false);
