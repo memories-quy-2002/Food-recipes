@@ -99,6 +99,38 @@
 		@media screen and (max-width: 768px) {
 			display: none;
 		}
+		&__dropdown {
+			position: relative;
+			display: inline-block;
+			&__button {
+				height: 100%;
+				background-color: white;
+				border: none;
+				font-weight: bold;
+				padding: 1rem;
+			}
+			&__content {
+				width: 100%;
+				display: none;
+				position: absolute;
+				z-index: 1;
+				a {
+					background-color: white;
+					color: black;
+					padding: 1rem;
+					text-decoration: none;
+					display: block;
+					transition: all 0.3s ease-out;
+					&:hover {
+						background-color: orange;
+						color: white;
+					}
+				}
+			}
+			&:hover &__content {
+				display: block;
+			}
+		}
 		&--content {
 			display: flex;
 			align-items: center;

@@ -44,6 +44,7 @@ const SignupForm = () => {
 				}
 			);
 			if (response.status === 200) {
+				localStorage.setItem("jwt", response.data.token);
 				navigate("/");
 			}
 		} catch (err) {

@@ -14,6 +14,8 @@ app.use(
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.get("/recipe/", db.getRecipes);
+app.get("/recipe/:id", db.getRecipesById);
 app.post("/account/", db.getUserByJWT);
 app.post("/account/login", db.getUsersLogIn);
 app.post("/account/signup", db.createUser);

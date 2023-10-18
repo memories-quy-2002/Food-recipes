@@ -1,40 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import FoodCard from "./FoodCard";
-
-const foods = [
-	{
-		imgSrc: "hamburger",
-		name: "Burger",
-		desc: "This is a delicious burger",
-	},
-	{
-		imgSrc: "hamburger",
-		name: "French Chips",
-		desc: "This is a delicious burger",
-	},
-	{
-		imgSrc: "hamburger",
-		name: "Fried Chicken",
-		desc: "This is a delicious burger",
-	},
-	{
-		imgSrc: "hamburger",
-		name: "Salad",
-		desc: "This is a delicious burger",
-	},
-	{
-		imgSrc: "hamburger",
-		name: "BBQ",
-		desc: "This is a delicious burger",
-	},
-];
+import axios from "../../api/axios";
 
 const FoodCardList = () => {
+	const [recipes, setRecipes] = useState([]);
+	useEffect(() => {
+		(async () => {
+			const response = await axios.get("http://localhost:4000/recipe");
+			setRecipes(response.data.recipes);
+		})();
+	}, []);
 	return (
 		<div className="home__main__cardList">
-			{foods.map(({ imgSrc, name, desc }, index) => (
-				<FoodCard key={index} src={imgSrc} name={name} desc={desc} />
-			))}
+			{recipes.map(
+				(
+					{ recipe_id, recipe_name, recipe_description, category_id },
+					index
+				) => (
+					<FoodCard
+						key={index}
+						id={recipe_id}
+						name={recipe_name}
+						desc={recipe_description}
+						category={category_id}
+					/>
+				)
+			)}
 		</div>
 	);
 };
