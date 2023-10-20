@@ -1,31 +1,27 @@
-import React, { useEffect, useState } from "react";
-import { Dropdown } from "react-bootstrap";
+import React, { useEffect } from "react";
 import { BsFillPersonFill } from "react-icons/bs";
-import axios from "../../api/axios";
-import HeaderButton from "./HeaderButton";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { authActions } from "../../redux/authSlice";
+import HeaderButton from "./HeaderButton";
+import axios from "../../api/axios";
+
 const HeaderMenu = ({ items }) => {
-	const token = localStorage.getItem("jwt");
-	const [name, setName] = useState("");
+	const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	useEffect(() => {
-		const getName = async (token) => {
-			const response = await axios.post(
-				"http://localhost:4000/account",
-				JSON.stringify({ token }),
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-			setName(response.data.user.full_name);
+		const postToken = async () => {
+			await axios.post("http://localhost:4000/account/jwt", { token });
 		};
-		getName(token);
-	});
+		postToken(token);
+	}, [token]);
+
 	const handleSignOut = () => {
-		localStorage.removeItem("jwt");
+		dispatch(authActions.logout());
 		navigate("/");
 	};
+
 	return (
 		<div className="header__menu">
 			{items.map(({ title, icon, href }, index) => (
@@ -36,14 +32,14 @@ const HeaderMenu = ({ items }) => {
 					href={href}
 				/>
 			))}
-			{token !== null ? (
+			{isAuthenticated ? (
 				<div className="header__menu__dropdown">
 					<button className="header__menu__dropdown__button">
-						{name}
+						{user.full_name}
 					</button>
 					<div className="header__menu__dropdown__content">
 						<a href="/profile">Profile</a>
-						<a href="#/action-2">Settings</a>
+						<a href="/setting">Settings</a>
 						<a href="/" onClick={handleSignOut}>
 							Sign out
 						</a>

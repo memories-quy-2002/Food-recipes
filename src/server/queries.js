@@ -18,7 +18,7 @@ pool.connect((err) => {
 	}
 });
 
-const getUsersLogIn = (request, response) => {
+const getUsersLogin = (request, response) => {
 	const { email, password } = request.body;
 	pool.query(
 		"SELECT * FROM accounts WHERE email=$1",
@@ -52,6 +52,7 @@ const getUsersLogIn = (request, response) => {
 								);
 								console.log("Logged in Successfully!");
 								response.status(200).json({
+									user,
 									token,
 									message: "Logged in!",
 								});
@@ -173,13 +174,13 @@ const getRecipesById = (request, response) => {
 			if (error) {
 				throw error;
 			}
-			const recipes = results.rows[0];
-			response.status(200).json({ recipes });
+			const recipe = results.rows[0];
+			response.status(200).json({ recipe });
 		}
 	);
 };
 module.exports = {
-	getUsersLogIn,
+	getUsersLogin,
 	createUser,
 	updateUser,
 	deleteUser,

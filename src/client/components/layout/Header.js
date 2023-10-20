@@ -1,15 +1,10 @@
 import React, { useState } from "react";
+import { BsCartFill, BsHeartFill, BsHouseFill } from "react-icons/bs";
+import { FaUtensils } from "react-icons/fa6";
 import "../../styles/Header.scss";
 import HeaderBrand from "../header/HeaderBrand";
 import HeaderMenu from "../header/HeaderMenu";
 import HeaderToggle from "../header/HeaderToggle";
-import {
-	BsCartFill,
-	BsFillPersonFill,
-	BsHeartFill,
-	BsHouseFill,
-} from "react-icons/bs";
-import { FaUtensils } from "react-icons/fa6";
 const items = [
 	{
 		title: "Home",

@@ -4,8 +4,9 @@ import About from "./client/pages/About";
 import Account from "./client/pages/Account";
 import Contact from "./client/pages/Contact";
 import Home from "./client/pages/Home";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import Profile from "./client/pages/Profile";
+import Recipe from "./client/pages/Recipe";
+
 function App() {
 	return (
 		<BrowserRouter>
@@ -14,9 +15,10 @@ function App() {
 				<Route path="/about" element={<About />} />
 				<Route path="/contact" element={<Contact />} />
 				<Route path="/account" element={<Account />} />
+				<Route path="/profile" element={<Profile />} />
+				<Route path="/recipe" element={<Recipe />} />
 			</Routes>
 		</BrowserRouter>
-
 	);
 }
 

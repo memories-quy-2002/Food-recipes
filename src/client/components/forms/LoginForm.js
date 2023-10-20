@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button, Form } from "react-bootstrap";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import * as constants from "../../utils/constant";
 import axios from "../../api/axios";
+import { authActions } from "../../redux/authSlice";
+import * as constants from "../../utils/constant";
 const LoginForm = () => {
 	const [validated, setValidated] = useState(false);
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [errors, setErrors] = useState([]);
 	const navigate = useNavigate();
+	const dispatch = useDispatch();
 
 	const handleSubmitLogin = async (e) => {
 		e.preventDefault();
@@ -36,7 +39,10 @@ const LoginForm = () => {
 				}
 			);
 			if (response.status === 200) {
-				localStorage.setItem("jwt", response.data.token);
+				const user = response.data.user;
+				const token = response.data.token;
+				const payload = { user, token };
+				dispatch(authActions.login(payload));
 				navigate("/");
 			}
 		} catch (error) {

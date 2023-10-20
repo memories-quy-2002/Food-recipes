@@ -1,15 +1,12 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-const FoodCard = ({ id, name, desc, category }) => {
-	const navigate = useNavigate();
-	const handleClick = (id) => {
-		navigate(`/recipe/${id}`);
-	};
-	const img = name.toLowerCase().replace(" ", "_");
+
+const FoodCard = ({ name, desc, category, onNavigate }) => {
+	const imgName = name.toLowerCase().replace(" ", "_");
+
 	return (
 		<div className="home__main__card">
 			<img
-				src={require(`../../assets/images/${img}.png`)}
+				src={require(`../../assets/images/${imgName}.png`)}
 				alt="This"
 				className="home__main__card__img"
 			></img>
@@ -19,7 +16,7 @@ const FoodCard = ({ id, name, desc, category }) => {
 			<button
 				type="button"
 				className="home__main__card__button"
-				onClick={() => handleClick(id)}
+				onClick={onNavigate}
 			>
 				View
 			</button>

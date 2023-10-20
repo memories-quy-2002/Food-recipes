@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import * as constants from "../../utils/constant";
 import axios from "../../api/axios";
+import * as constants from "../../utils/constant";
 const SignupForm = () => {
 	const [name, setName] = useState({ first: "", last: "" });
 	const [email, setEmail] = useState("");
