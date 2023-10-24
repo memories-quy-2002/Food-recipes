@@ -154,7 +154,9 @@ const deleteUser = (request, response) => {
 
 const getRecipes = (request, response) => {
 	pool.query(
-		"SELECT recipe_id, recipe_name, recipe_description, category_id FROM recipes",
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_name, c.category_name " +
+			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
+			"JOIN categories c ON r.category_id = c.category_id ",
 		(error, results) => {
 			if (error) {
 				throw error;
@@ -168,7 +170,10 @@ const getRecipes = (request, response) => {
 const getRecipesById = (request, response) => {
 	const recipe_id = request.params.id;
 	pool.query(
-		"SELECT * FROM recipes WHERE recipe_id = $1",
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.prep_time, r.cook_time, m.meal_name, c.category_name " +
+			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
+			"JOIN categories c ON r.category_id = c.category_id " +
+			"WHERE r.recipe_id = $1 ",
 		[recipe_id],
 		(error, results) => {
 			if (error) {
