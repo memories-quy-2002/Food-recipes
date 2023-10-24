@@ -1,22 +1,18 @@
 import React from "react";
+import convertImage from "../../utils/convertImage";
 
-const FoodCard = ({ name, desc, category, onNavigate }) => {
-	const imgName = name.toLowerCase().replace(" ", "_");
-
+const FoodCard = ({ name, desc, category, meal, handleNavigate }) => {
 	return (
 		<div className="home__main__card">
-			<img
-				src={require(`../../assets/images/${imgName}.png`)}
-				alt="This"
-				className="home__main__card__img"
-			></img>
+			{convertImage(name, "home__main__card__img")}
 			<h5 className="home__main__card__name">{name}</h5>
 			<p className="home__main__card__desc">{desc}</p>
 			<p className="home__main__card__category">Category: {category}</p>
+			<p className="home__main__card__meal">Meal: {meal}</p>
 			<button
 				type="button"
 				className="home__main__card__button"
-				onClick={onNavigate}
+				onClick={handleNavigate}
 			>
 				View
 			</button>

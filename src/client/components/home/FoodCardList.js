@@ -9,31 +9,36 @@ const FoodCardList = () => {
 
 	useEffect(() => {
 		(async () => {
-			const response = await axios.get("http://localhost:4000/recipe");
+			const response = await axios.get("/recipe");
 			setRecipes(response.data.recipes);
 		})();
 	}, []);
 
-	const onClickNavigate = (id) => {
+	const handleNavigate = (id) => {
 		navigate(`/recipe?id=${id}`);
 	};
-
+	console.log(recipes);
 	return (
 		<div className="home__main__cardList">
-			{recipes.map(
-				(
-					{ recipe_id, recipe_name, recipe_description, category_id },
-					index
-				) => (
+			{recipes.map((recipe, index) => {
+				const {
+					recipe_id,
+					recipe_name,
+					recipe_description,
+					category_name,
+					meal_name,
+				} = recipe;
+				return (
 					<FoodCard
 						key={index}
 						name={recipe_name}
 						desc={recipe_description}
-						category={category_id}
-						onNavigate={() => onClickNavigate(recipe_id)}
+						category={category_name}
+						meal={meal_name}
+						handleNavigate={() => handleNavigate(recipe_id)}
 					/>
-				)
-			)}
+				);
+			})}
 		</div>
 	);
 };
