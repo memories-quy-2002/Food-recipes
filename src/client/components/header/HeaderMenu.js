@@ -1,18 +1,18 @@
 import React, { useEffect } from "react";
 import { BsFillPersonFill } from "react-icons/bs";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import axios from "../../api/axios";
 import { authActions } from "../../redux/authSlice";
 import HeaderButton from "./HeaderButton";
-import axios from "../../api/axios";
 
-const HeaderMenu = ({ items }) => {
-	const { isAuthenticated, user, token } = useSelector((state) => state.auth);
+const HeaderMenu = ({ items, auth }) => {
+	const { isAuthenticated, user, token } = auth;
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	useEffect(() => {
 		const postToken = async () => {
-			await axios.post("http://localhost:4000/account/jwt", { token });
+			await axios.post("/account/jwt", { token });
 		};
 		postToken(token);
 	}, [token]);

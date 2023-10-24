@@ -2,12 +2,12 @@ import React from "react";
 import { Button, Offcanvas } from "react-bootstrap";
 import { BsFillPersonFill, BsSearch } from "react-icons/bs";
 import { FaBars } from "react-icons/fa6";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { authActions } from "../../redux/authSlice";
 
-const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
-	const { isAuthenticated, user } = useSelector((state) => state.auth);
+const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 	const dispatch = useDispatch();
+	const { isAuthenticated, user } = auth;
 	return (
 		<div className="header__toggle">
 			<Button onClick={handleShow} className="header__toggle__icon">

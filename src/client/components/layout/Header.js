@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { BsCartFill, BsHeartFill, BsHouseFill } from "react-icons/bs";
 import { FaUtensils } from "react-icons/fa6";
+import { useSelector } from "react-redux";
 import "../../styles/Header.scss";
 import HeaderBrand from "../header/HeaderBrand";
 import HeaderMenu from "../header/HeaderMenu";
@@ -29,18 +30,19 @@ const items = [
 ];
 const Header = () => {
 	const [show, setShow] = useState(false);
-
+	const auth = useSelector((state) => state.auth);
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
 	return (
 		<header className="container-fluid header">
 			<HeaderBrand />
-			<HeaderMenu items={items} />
+			<HeaderMenu items={items} auth={auth} />
 			<HeaderToggle
 				show={show}
 				handleClose={handleClose}
 				handleShow={handleShow}
 				items={items}
+				auth={auth}
 			/>
 		</header>
 	);
