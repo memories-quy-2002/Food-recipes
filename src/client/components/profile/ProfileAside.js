@@ -1,17 +1,11 @@
 import React from "react";
-import { useDispatch } from "react-redux";
-import { authActions } from "../../redux/authSlice";
+import convertImage from "../../utils/convertImage";
 
-const ProfileAside = ({ name }) => {
-	const dispatch = useDispatch();
+const ProfileAside = ({ name, handleLogOut }) => {
 	return (
 		<div className="profile__container__aside">
 			<div className="profile__container__aside__img">
-				<img
-					src={require("../../assets/images/avatar.png")}
-					alt="Avatar"
-					width={160}
-				/>
+				{convertImage("avatar", "")}
 			</div>
 			<div className="profile__container__aside__content">
 				<div className="profile__container__aside__content__title">
@@ -34,10 +28,7 @@ const ProfileAside = ({ name }) => {
 						</a>
 					</li>
 					<li>
-						<a
-							href="/"
-							onClick={() => dispatch(authActions.logout())}
-						>
+						<a href="/" onClick={handleLogOut}>
 							<div>Sign out</div>
 						</a>
 					</li>
