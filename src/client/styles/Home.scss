@@ -56,45 +56,67 @@
 			}
 		}
 		&__search {
+			width: 100%;
+			height: fit-content;
+			text-align: center;
 			margin-top: 1rem;
 			margin-bottom: 2rem;
-			margin-left: auto;
-			margin-right: auto;
-			width: 75%;
-			height: 50px;
-			display: flex;
-			justify-content: center;
-			align-items: center;
 			input {
 				width: 50%;
 				padding: 0.5rem 1rem;
+				display: inline-block;
+			}
+			&__result {
+				width: 50%;
+				display: block;
+				text-align: left;
+				padding: 0;
+				border: 1px solid rgba(255, 166, 0, 0.562);
+				margin: auto;
+				list-style-type: none;
+				li {
+					padding: 0.75rem 1rem;
+					width: 100%;
+					transition: background-color 0.3s ease-in-out;
+					&:hover {
+						background-color: #ff8c0081;
+					}
+				}
 			}
 		}
 		&__cardList {
-			margin: 1rem 2rem;
+			padding: 1rem 2.5rem;
 			display: grid;
 			grid-template-columns: repeat(3, 1fr);
-			gap: 50px 25px;
+			grid-gap: 50px 4rem;
 			@media screen and (max-width: 992px) {
 				grid-template-columns: 1fr;
 			}
 		}
 		&__card {
 			position: relative;
-			border: 1px solid black;
+			border: 1px solid rgba(0, 0, 0, 0.18);
 			border-radius: 5px;
 			padding-bottom: 1rem;
 			height: fit-content;
+			cursor: pointer;
 			&__img {
-				height: 300px;
+				height: 200px;
 				width: 100%;
 				object-fit: cover;
 			}
-			&__name {
+			&__category {
+				display: block;
 				margin-top: 1rem;
 				margin-left: 1rem;
+			}
+			&__name {
+				display: inline-block;
+				height: 2rem;
+				margin-top: 0.5rem;
+				margin-left: 1rem;
 				font-weight: bold;
-				font-size: 2rem;
+				font-size: 1.5rem;
 			}
 			&__desc {
 				display: block;
@@ -104,22 +126,12 @@
 				overflow: hidden;
 				text-overflow: ellipsis;
 			}
-			&__category,
 			&__meal {
 				display: block;
 				margin-left: 1rem;
 			}
-			&__button {
-				margin-left: 1rem;
-				padding: 0.6rem 1.2rem;
-				border: none;
-				border-radius: 5px;
-				background-color: orange;
-				color: black;
-				transition: background-color 0.3s ease-in;
-				&:hover {
-					background-color: rgb(236, 191, 108);
-				}
+			&:hover &__name {
+				border-bottom: 1px solid orange;
 			}
 		}
 	}

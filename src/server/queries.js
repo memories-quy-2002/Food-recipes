@@ -24,51 +24,51 @@ const getUsersLogin = (request, response) => {
 		"SELECT * FROM accounts WHERE email=$1",
 		[email],
 		(error, results) => {
-			const user = results.rows[0];
 			if (error) {
 				throw error;
 			}
-			if (results.rows.length > 0) {
-				(async () => {
-					const match = await utils.checkPassword(
-						password,
-						user.password
-					);
-					if (match) {
-						pool.query(
-							"UPDATE accounts SET last_login=CURRENT_TIMESTAMP WHERE user_id=$1",
-							[user.user_id],
-							(error, results) => {
-								if (error) {
-									throw error;
-								}
-								const token = jwt.sign(
-									{
-										user_id: user.user_id,
-										email: user.email,
-									},
-									"secret",
-									{ expiresIn: "1h" }
-								);
-								console.log("Logged in Successfully!");
-								response.status(200).json({
-									user,
-									token,
-									message: "Logged in!",
-								});
-							}
-						);
-					} else {
-						response
-							.status(401)
-							.json({ message: "The password is incorrect!" });
-					}
-				})();
-			} else {
+			if (results.rowCount === 0) {
 				response.status(401).json({
 					message: "The email you entered is not signed up!",
 				});
+				return;
 			}
+
+			const user = results.rows[0];
+			(async () => {
+				const match = await utils.checkPassword(
+					password,
+					user.password
+				);
+				if (!match) {
+					response
+						.status(401)
+						.json({ message: "The password is incorrect!" });
+					return;
+				}
+				pool.query(
+					"UPDATE accounts SET last_login=CURRENT_TIMESTAMP WHERE user_id=$1",
+					[user.user_id],
+					(error, results) => {
+						if (error) {
+							throw error;
+						}
+						const token = jwt.sign(
+							{
+								user_id: user.user_id,
+								email: user.email,
+							},
+							"secret",
+							{ expiresIn: "1h" }
+						);
+						response.status(200).json({
+							user,
+							token,
+							message: "Logged in!",
+						});
+					}
+				);
+			})();
 		}
 	);
 };
@@ -78,6 +78,11 @@ const getUserByJWT = (request, response) => {
 	const secretKey = "secret";
 	try {
 		const payload = jwt.verify(token, secretKey);
+		const currentTime = Date.now();
+		if (payload.exp * 1000 <= currentTime) {
+			response.status(401).json({ message: "JWT Expired" });
+			return;
+		}
 		pool.query(
 			"SELECT * FROM accounts WHERE user_id = $1",
 			[payload.user_id],
@@ -116,8 +121,9 @@ const createUser = (request, response) => {
 						expiresIn: "1h",
 					}
 				);
-				console.log("Create user Successfully!");
-				response.status(200).json({ token, message: "Signed up!" });
+				response
+					.status(200)
+					.json({ user, token, message: "Signed up!" });
 			}
 		);
 	})();

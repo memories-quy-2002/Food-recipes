@@ -1,21 +1,21 @@
 .profile {
 	&__container {
-		background-color: gray;
 		padding: 2rem 1rem;
 		display: flex;
 		flex-direction: row;
-		gap: 10px;
 
 		&__aside {
 			flex: 2;
 			background-color: orange;
-			border-radius: 20px;
+			border-radius: 20px 0 0 20px;
 			&__img {
 				height: fit-content;
 				display: flex;
+				flex-direction: column;
+				gap: 20px;
 				justify-content: center;
 				align-items: center;
-				padding: 0.5rem 0;
+				padding: 1rem 0;
 				img {
 					border-radius: 100%;
 					width: 160px;
@@ -52,9 +52,9 @@
 		}
 		&__main {
 			flex: 4;
-			background-color: white;
-			border-radius: 20px;
-			padding: 0.75rem 1.5rem;
+			border-radius: 0 20px 20px 0;
+			border: 2px solid orange;
+			padding: 1rem 2rem;
 			h2 {
 				margin: 1.5rem 0;
 			}

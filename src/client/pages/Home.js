@@ -1,5 +1,6 @@
 import React from "react";
 import FoodCardList from "../components/home/FoodCardList";
+import HomeSearchBar from "../components/home/HomeSearchBar";
 import SlideShow from "../components/home/SlideShow";
 import Layout from "../components/layout/Layout";
 import "../styles/Home.scss";
@@ -14,9 +15,8 @@ const Home = () => {
 					<div className="home__main__title">
 						<h3>Find your recipes</h3>
 					</div>
-					<div className="home__main__search">
-						<input type="text" placeholder="Search..."></input>
-					</div>
+					<HomeSearchBar />
+
 					<FoodCardList />
 				</div>
 			</div>

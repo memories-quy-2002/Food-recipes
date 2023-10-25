@@ -33,17 +33,17 @@ const Footer = () => {
 						<ul className="footer__social">
 							<li className="footer__social__item">
 								<a href="/" className="footer__social__link">
-									<FaFacebook />
+									<FaFacebook color="black" size={24} />
 								</a>
 							</li>
 							<li className="footer__social__item">
 								<a href="/" className="footer__social__link">
-									<FaInstagram />
+									<FaInstagram color="black" size={24} />
 								</a>
 							</li>
 							<li className="footer__social__item">
 								<a href="/" className="footer__social__link">
-									<FaLinkedin />
+									<FaLinkedin color="black" size={24} />
 								</a>
 							</li>
 						</ul>

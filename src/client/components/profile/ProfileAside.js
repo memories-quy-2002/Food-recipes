@@ -10,7 +10,9 @@ const ProfileAside = ({ name, handleLogOut }) => {
 			<div className="profile__container__aside__content">
 				<div className="profile__container__aside__content__title">
 					<h4>{name}</h4>
+					<a href="/profile/edit">Edit profile</a>
 				</div>
+
 				<ul className="profile__container__aside__content__menu">
 					<li>
 						<a href="/">

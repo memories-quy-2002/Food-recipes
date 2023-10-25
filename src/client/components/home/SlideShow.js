@@ -34,7 +34,7 @@ const SlideShow = () => {
 		setCurrIndex((prevIndex) => (prevIndex + 1) % items.length);
 	};
 	useEffect(() => {
-		const intervalId = setInterval(handleNextSlide, 5000);
+		const intervalId = setInterval(handleNextSlide, 10000);
 		return () => {
 			clearInterval(intervalId);
 		};

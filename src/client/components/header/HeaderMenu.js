@@ -12,10 +12,17 @@ const HeaderMenu = ({ items, auth }) => {
 	const navigate = useNavigate();
 	useEffect(() => {
 		const postToken = async () => {
-			await axios.post("/account/jwt", { token });
+			try {
+				await axios.post("/account/jwt", { token });
+			} catch (error) {
+				if (error.response && error.response.status === 401) {
+					dispatch(authActions.logout());
+					return;
+				}
+			}
 		};
 		postToken(token);
-	}, [token]);
+	}, [token, dispatch]);
 
 	const handleSignOut = () => {
 		dispatch(authActions.logout());

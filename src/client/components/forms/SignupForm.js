@@ -3,6 +3,8 @@ import { Button, Col, Form, Row } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import * as constants from "../../utils/constant";
+import { useDispatch } from "react-redux";
+import { authActions } from "../../redux/authSlice";
 const SignupForm = () => {
 	const [name, setName] = useState({ first: "", last: "" });
 	const [email, setEmail] = useState("");
@@ -10,6 +12,7 @@ const SignupForm = () => {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [validated, setValidated] = useState(false);
 	const [errors, setErrors] = useState([]);
+	const dispatch = useDispatch();
 	const navigate = useNavigate();
 
 	const handleSubmitSignup = async (e) => {
@@ -44,7 +47,9 @@ const SignupForm = () => {
 				}
 			);
 			if (response.status === 200) {
-				localStorage.setItem("jwt", response.data.token);
+				const { user, token } = response.data;
+				const payload = { user, token };
+				dispatch(authActions.login(payload));
 				navigate("/");
 			}
 		} catch (err) {
