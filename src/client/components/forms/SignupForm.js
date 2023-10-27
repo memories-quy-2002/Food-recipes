@@ -1,67 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import axios from "../../api/axios";
-import * as constants from "../../utils/constant";
-import { useDispatch } from "react-redux";
-import { authActions } from "../../redux/authSlice";
+import useForm from "../../hooks/useForm";
 const SignupForm = () => {
-	const [name, setName] = useState({ first: "", last: "" });
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [confirmPassword, setConfirmPassword] = useState("");
-	const [validated, setValidated] = useState(false);
-	const [errors, setErrors] = useState([]);
-	const dispatch = useDispatch();
-	const navigate = useNavigate();
+	const [
+		formData,
+		validated,
+		errors,
+		handleName,
+		handleChange,
+		handleSubmit,
+	] = useForm();
 
-	const handleSubmitSignup = async (e) => {
-		e.preventDefault();
-		setValidated(true);
-		if (!name || !email || !password || !confirmPassword) {
-			setErrors(["Please fill in all fields"]);
-		}
-		const e1 = constants.EMAIL_REGEX.test(email);
-		const e2 = constants.PWD_REGEX.test(password);
-		const e3 = constants.PWD_REGEX.test(confirmPassword);
-		if (!e1) {
-			setErrors(["Invalid email"]);
-			return;
-		} else if (!e2) {
-			setErrors(["Invalid password"]);
-			return;
-		} else if (!e3) {
-			setErrors(["Invalid confirm password"]);
-			return;
-		} else if (password !== confirmPassword) {
-			setErrors(["Confirm password is not matched"]);
-			return;
-		}
-		try {
-			const response = await axios.post(
-				"http://localhost:4000/account/signup",
-				JSON.stringify({ name, email, password }),
-				{
-					headers: { "Content-Type": "application/json" },
-					withCredentials: true,
-				}
-			);
-			if (response.status === 200) {
-				const { user, token } = response.data;
-				const payload = { user, token };
-				dispatch(authActions.login(payload));
-				navigate("/");
-			}
-		} catch (err) {
-			console.error(err);
-		}
-	};
 	return (
 		<div className="form__signup">
 			<Form
 				noValidate
 				validated={validated}
-				onSubmit={handleSubmitSignup}
+				onSubmit={handleSubmit}
 				className="form__signup__container"
 			>
 				<h3 className="form__signup__container__title">Get started</h3>
@@ -79,16 +34,12 @@ const SignupForm = () => {
 						<Form.Control
 							className="form__signup__container__input"
 							type="text"
+							name="first"
 							required
 							aria-required
 							placeholder="First name"
-							value={name.first}
-							onChange={(e) =>
-								setName({
-									...name,
-									first: e.target.value,
-								})
-							}
+							value={formData.name.first}
+							onChange={handleName}
 						/>
 					</Form.Group>
 
@@ -105,16 +56,12 @@ const SignupForm = () => {
 						<Form.Control
 							className="form__signup__container__input"
 							type="text"
+							name="last"
 							required
 							aria-required
 							placeholder="Last name"
-							value={name.last}
-							onChange={(e) =>
-								setName({
-									...name,
-									last: e.target.value,
-								})
-							}
+							value={formData.name.last}
+							onChange={handleName}
 						/>
 					</Form.Group>
 				</Row>
@@ -129,13 +76,12 @@ const SignupForm = () => {
 					<Form.Control
 						className="form__signup__container__input"
 						type="email"
+						name="email"
 						required
 						aria-required
 						placeholder="Email"
-						value={email}
-						onChange={(e) => {
-							setEmail(e.target.value);
-						}}
+						value={formData.email}
+						onChange={handleChange}
 					/>
 				</Form.Group>
 				<Form.Group className="form__signup__container__pwd">
@@ -148,11 +94,12 @@ const SignupForm = () => {
 					<Form.Control
 						className="form__signup__container__input"
 						type="password"
+						name="password"
 						required
 						aria-required
 						placeholder="Password"
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
+						value={formData.password}
+						onChange={handleChange}
 					/>
 				</Form.Group>
 				<Form.Group className="form__signup__container__pwd">
@@ -165,11 +112,12 @@ const SignupForm = () => {
 					<Form.Control
 						className="form__signup__container__input"
 						type="password"
+						name="confirmPassword"
 						required
 						aria-required
 						placeholder="Confirm Password"
-						value={confirmPassword}
-						onChange={(e) => setConfirmPassword(e.target.value)}
+						value={formData.confirmPassword}
+						onChange={handleChange}
 					/>
 				</Form.Group>
 				<div className="form__signup__container__checked">
@@ -182,6 +130,11 @@ const SignupForm = () => {
 				>
 					Sign Up
 				</Button>
+				{validated && (
+					<p style={{ color: "green" }}>
+						Form submitted successfully!
+					</p>
+				)}
 
 				{errors.length > 0 && (
 					<div className="alert alert-danger text-center">

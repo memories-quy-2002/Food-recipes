@@ -10,6 +10,10 @@ const AccountForm = () => {
 		setIsSignup(false);
 	};
 
+	const handleFormState = (setState) => (e) => {
+		setState(e.target.value);
+	};
+
 	return (
 		<div className="form">
 			<div className="form__btnBox">
@@ -33,8 +37,8 @@ const AccountForm = () => {
 				</button>
 			</div>
 			<div className={`form__section ${isSignup ? "movesection" : ""}`}>
-				<LoginForm />
-				<SignupForm />
+				<LoginForm handleFormState={handleFormState} />
+				<SignupForm handleFormState={handleFormState} />
 			</div>
 		</div>
 	);
