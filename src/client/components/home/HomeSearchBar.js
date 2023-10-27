@@ -1,8 +1,11 @@
 import React, { useContext, useState } from "react";
 import { RecipeContext } from "../../../App";
+import convertImage from "../../utils/convertImage";
+import { useNavigate } from "react-router-dom";
 
 const HomeSearchBar = () => {
 	const [searchTerm, setSearchTerm] = useState("");
+	const navigate = useNavigate();
 	const { recipes } = useContext(RecipeContext);
 	const handleChange = (e) => {
 		setSearchTerm(e.target.value);
@@ -19,9 +22,24 @@ const HomeSearchBar = () => {
 			></input>
 			{searchTerm && (
 				<ul className="home__main__search__result">
-					{filterRecipes.map((recipe) => (
-						<li key={recipe.recipe_id}>{recipe.recipe_name}</li>
-					))}
+					{filterRecipes.length > 0 ? (
+						filterRecipes.map((recipe) => (
+							<li
+								key={recipe.recipe_id}
+								onClick={() =>
+									navigate(`/recipe?id=${recipe.recipe_id}`)
+								}
+							>
+								{convertImage(
+									recipe.recipe_name,
+									"home__main__search__result__img"
+								)}
+								<p>{recipe.recipe_name}</p>
+							</li>
+						))
+					) : (
+						<li>No recipe found</li>
+					)}
 				</ul>
 			)}
 		</div>

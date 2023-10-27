@@ -1,9 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-const Slide = ({ title, desc, imgSrc }) => {
+const Slide = ({ id, title, desc, imgSrc }) => {
 	const navigate = useNavigate();
 	const handleClick = () => {
-		navigate("/recipe?id=1");
+		navigate(`/meal?id=${id}`);
 	};
 	return (
 		<div className={`home__slide`}>

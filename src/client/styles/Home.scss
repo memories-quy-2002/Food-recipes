@@ -8,6 +8,19 @@
 			display: flex;
 			flex-direction: row;
 		}
+		&__nav {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			gap: 20px;
+			button {
+				border: none;
+			}
+			&__button {
+				display: flex;
+				gap: 1rem;
+			}
+		}
 	}
 
 	&__slide {
@@ -47,6 +60,7 @@
 		}
 	}
 	&__main {
+		position: relative;
 		margin-top: 2rem;
 		&__title {
 			h3 {
@@ -56,6 +70,7 @@
 			}
 		}
 		&__search {
+			position: absolute;
 			width: 100%;
 			height: fit-content;
 			text-align: center;
@@ -67,38 +82,67 @@
 				display: inline-block;
 			}
 			&__result {
+				background-color: #ffffff;
+				max-height: 200px;
 				width: 50%;
-				display: block;
+				overflow: auto;
 				text-align: left;
 				padding: 0;
+				z-index: 2;
 				border: 1px solid rgba(255, 166, 0, 0.562);
 				margin: auto;
 				list-style-type: none;
 				li {
+					height: 50px;
 					padding: 0.75rem 1rem;
 					width: 100%;
+					display: flex;
+					gap: 20px;
 					transition: background-color 0.3s ease-in-out;
 					&:hover {
 						background-color: #ff8c0081;
 					}
 				}
+				&__img {
+					height: 100%;
+					width: 40px;
+				}
 			}
 		}
 		&__cardList {
-			padding: 1rem 2.5rem;
-			display: grid;
-			grid-template-columns: repeat(3, 1fr);
-			grid-gap: 50px 4rem;
-			@media screen and (max-width: 992px) {
-				grid-template-columns: 1fr;
+			padding: 10rem 2.5rem 3rem 2.5rem;
+			&__title {
+				text-align: left;
+				font-size: 1.75rem;
+				margin-bottom: 1rem;
+			}
+			&__list {
+				display: grid;
+				grid-gap: 2rem 2rem;
+				grid-template-columns: repeat(4, 1fr);
+				@media screen and (max-width: 992px) {
+					grid-template-columns: repeat(2, 1fr);
+				}
+				@media screen and (max-width: 576px) {
+					grid-template-columns: 1fr;
+				}
+			}
+
+			&__link {
+				color: orange;
+				cursor: pointer;
+				font-size: 1.2rem;
+				font-weight: bold;
+				&:hover {
+					color: #ff8e03;
+				}
 			}
 		}
 		&__card {
-			position: relative;
+			height: 400px;
 			border: 1px solid rgba(0, 0, 0, 0.18);
 			border-radius: 5px;
 			padding-bottom: 1rem;
-			height: fit-content;
 			cursor: pointer;
 			&__img {
 				height: 200px;
@@ -112,11 +156,10 @@
 			}
 			&__name {
 				display: inline-block;
-				height: 2rem;
+				height: 25px;
 				margin-top: 0.5rem;
 				margin-left: 1rem;
 				font-weight: bold;
-				font-size: 1.5rem;
 			}
 			&__desc {
 				display: block;
