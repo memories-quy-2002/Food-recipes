@@ -15,7 +15,6 @@ function App() {
 	useEffect(() => {
 		const getRecipes = async () => {
 			const response = await axios.get("/recipe");
-			console.log(response.data.recipes);
 			setRecipes(response.data.recipes);
 		};
 		getRecipes();
