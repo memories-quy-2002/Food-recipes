@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 const Slide = ({ id, title, desc, imgSrc }) => {
 	const navigate = useNavigate();
 	const handleClick = () => {
-		navigate(`/meal?id=${id}`);
+		navigate(`/food?meal=${title.toLowerCase()}`);
 	};
 	return (
 		<div className={`home__slide`}>

@@ -1,9 +1,17 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button, Form } from "react-bootstrap";
 import useLoginForm from "../../hooks/useLoginForm";
-const LoginForm = () => {
-	const [formData, validated, errors, handleChange, handleSubmit] =
-		useLoginForm();
+const LoginForm = ({ onSignup }) => {
+	const [
+		formData,
+		remember,
+		validated,
+		errors,
+		handleChange,
+		handleRemember,
+		handleSubmit,
+	] = useLoginForm();
+	useEffect(() => console.log(remember), [remember]);
 	return (
 		<div className="form__login">
 			<Form
@@ -52,8 +60,13 @@ const LoginForm = () => {
 					/>
 				</Form.Group>
 				<div className="form__login__container__checked">
-					<input type="checkbox" name="remember_box" />
-					<label htmlFor="remember_box">Remember me</label>
+					<input
+						type="checkbox"
+						name="remember"
+						value={remember}
+						onChange={handleRemember}
+					/>
+					<label htmlFor="remember">Remember me</label>
 				</div>
 				{errors.length > 0 && (
 					<div className="form__login__container__error">
@@ -70,6 +83,17 @@ const LoginForm = () => {
 				>
 					Log In
 				</Button>
+				<div className="form__login__container__bottom">
+					<p>
+						Don't have an account?{" "}
+						<span
+							onClick={onSignup}
+							className="form__login__container__bottom__button"
+						>
+							Register
+						</span>
+					</p>
+				</div>
 			</Form>
 		</div>
 	);

@@ -10,6 +10,7 @@ const initialState = {
 		email: "",
 		password: "",
 	},
+	remember: false,
 	validated: false,
 	errors: [],
 };
@@ -18,6 +19,8 @@ const reducer = (state, action) => {
 	switch (action.type) {
 		case "SET_FORM_DATA":
 			return { ...state, formData: action.payload };
+		case "SET_REMEMBER":
+			return { ...state, remember: !state.remember };
 		case "SET_VALIDATED":
 			return { ...state, validated: action.payload };
 		case "SET_ERRORS":
@@ -40,6 +43,12 @@ const useLoginForm = () => {
 				...state.formData,
 				[name]: value,
 			},
+		});
+	};
+
+	const handleRemember = () => {
+		dispatch({
+			type: "SET_REMEMBER",
 		});
 	};
 
@@ -69,9 +78,15 @@ const useLoginForm = () => {
 					if (response.status === 200) {
 						dispatch({ type: "SET_VALIDATED", payload: true });
 						const user = response.data.user;
-						const token = response.data.token;
-						const payload = { user, token };
-						loginDispatch(authActions.login(payload));
+						if (state.remember) {
+							const token = response.data.token;
+							const payload = { user, token };
+							loginDispatch(authActions.login(payload));
+						} else {
+							const payload = { user };
+							loginDispatch(authActions.loginSession(payload));
+						}
+
 						navigate("/");
 					}
 				} catch (err) {
@@ -86,9 +101,11 @@ const useLoginForm = () => {
 
 	return [
 		state.formData,
+		state.remember,
 		state.validated,
 		state.errors,
 		handleChange,
+		handleRemember,
 		handleSubmit,
 	];
 };

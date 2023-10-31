@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const db = require("./queries");
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || process.env.REACT_APP_PORT;
 
 const app = express();
 app.use(
@@ -16,6 +16,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.get("/recipe/", db.getRecipes);
 app.get("/recipe/:id", db.getRecipesById);
+app.get("/category/", db.getCategories);
+app.get("/meal/", db.getMeals);
 app.post("/account/jwt", db.getUserByJWT);
 app.post("/account/login", db.getUsersLogin);
 app.post("/account/signup", db.createUser);

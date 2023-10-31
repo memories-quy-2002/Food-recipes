@@ -1,14 +1,17 @@
 const pg = require("pg");
 const utils = require("./utils");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 const Pool = pg.Pool;
 const pool = new Pool({
-	user: "postgres",
-	host: "localhost",
-	database: "mydb",
-	password: "123456",
-	port: 5432,
+	user: process.env.REACT_APP_DATABASE_USER,
+	host: process.env.REACT_APP_DATABASE_HOST,
+	database: process.env.REACT_APP_DATABASE_NAME,
+	password: process.env.REACT_APP_DATABASE_PASSWORD,
+	port: process.env.REACT_APP_DATABASE_PORT,
 });
+
+const secretKey = process.env.REACT_APP_SECRET_KEY;
 
 pool.connect((err) => {
 	if (err) {
@@ -58,7 +61,7 @@ const getUsersLogin = (request, response) => {
 								user_id: user.user_id,
 								email: user.email,
 							},
-							"secret",
+							secretKey,
 							{ expiresIn: "1h" }
 						);
 						response.status(200).json({
@@ -75,7 +78,6 @@ const getUsersLogin = (request, response) => {
 
 const getUserByJWT = (request, response) => {
 	const token = request.body.token;
-	const secretKey = "secret";
 	try {
 		const payload = jwt.verify(token, secretKey);
 		const currentTime = Date.now();
@@ -116,7 +118,7 @@ const createUser = (request, response) => {
 				const user = results.rows[0];
 				const token = jwt.sign(
 					{ user_id: user.user_id, email: user.email },
-					"secret",
+					secretKey,
 					{
 						expiresIn: "1h",
 					}
@@ -190,6 +192,25 @@ const getRecipesById = (request, response) => {
 		}
 	);
 };
+const getCategories = (request, response) => {
+	pool.query("SELECT * FROM categories", (error, results) => {
+		if (error) {
+			throw error;
+		}
+		const categories = results.rows;
+		response.status(200).json({ categories });
+	});
+};
+
+const getMeals = (request, response) => {
+	pool.query("SELECT * FROM meals", (error, results) => {
+		if (error) {
+			throw error;
+		}
+		const meals = results.rows;
+		response.status(200).json({ meals });
+	});
+};
 module.exports = {
 	getUsersLogin,
 	createUser,
@@ -198,4 +219,6 @@ module.exports = {
 	getUserByJWT,
 	getRecipes,
 	getRecipesById,
+	getCategories,
+	getMeals,
 };

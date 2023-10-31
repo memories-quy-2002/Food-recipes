@@ -1,6 +1,6 @@
 import default_image from "../assets/images/default_image.png";
 
-const convertImage = (name, className) => {
+const convertImage = (name, className = "") => {
 	const checkImageExists = (name) => {
 		try {
 			require(`../assets/images/${name

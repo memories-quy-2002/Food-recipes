@@ -3,7 +3,7 @@
 	background-size: auto;
 	background-repeat: no-repeat;
 	background-blend-mode: multiply;
-	backdrop-filter: blur(8px);
+
 	height: fit-content;
 	width: 100%;
 	padding: 0;
@@ -21,7 +21,7 @@
 .form {
 	margin-top: 1rem;
 	width: 500px;
-	height: 1000px;
+	min-height: fit-content;
 	background-color: white;
 	margin: auto;
 	overflow: hidden;
@@ -96,12 +96,8 @@
 				border-radius: 0;
 				border-bottom: 1px solid orange;
 			}
-			&__checked {
-				margin: 1.5rem 0;
-				display: flex;
-				gap: 10px;
-			}
 			&__submit {
+				margin: 1.5rem 0;
 				width: 100%;
 				background: linear-gradient(
 					to right,
@@ -157,6 +153,16 @@
 				border: none;
 				border-radius: 10px;
 				margin-bottom: 1rem;
+			}
+		}
+	}
+	&__login,
+	&__signup {
+		&__container__bottom__button {
+			color: orange;
+			cursor: pointer;
+			&:hover {
+				text-decoration: underline;
 			}
 		}
 	}

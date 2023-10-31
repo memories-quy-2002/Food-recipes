@@ -1,13 +1,22 @@
 import React from "react";
 import Layout from "../components/layout/Layout";
-import { Container } from "react-bootstrap";
+import { Col, Container, Row } from "react-bootstrap";
 import "../styles/Food.scss";
+import MenuBar from "../components/food/MenuBar";
+import FoodContent from "../components/food/FoodContent";
 
 const Food = () => {
 	return (
 		<Layout>
-			<Container>
-				<h1 className="food__title">Choose your food</h1>
+			<Container fluid>
+				<Row>
+					<Col md={3}>
+						<MenuBar />
+					</Col>
+					<Col md={9}>
+						<FoodContent />
+					</Col>
+				</Row>
 			</Container>
 		</Layout>
 	);

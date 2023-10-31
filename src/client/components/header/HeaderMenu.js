@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BsFillPersonFill } from "react-icons/bs";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -7,23 +7,35 @@ import { authActions } from "../../redux/authSlice";
 import HeaderButton from "./HeaderButton";
 
 const HeaderMenu = ({ items, auth }) => {
-	const { isAuthenticated, user, token } = auth;
+	const { local, session } = auth;
+	const { token } = local;
+	const [user, setUser] = useState({});
+	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+
 	useEffect(() => {
-		const postToken = async () => {
-			try {
-				await axios.post("/account/jwt", { token });
-			} catch (error) {
-				if (error.response && error.response.status === 401) {
-					dispatch(authActions.logout());
-					return;
+		const fetchData = async () => {
+			if (token) {
+				try {
+					const response = await axios.post("/account/jwt", {
+						token,
+					});
+					console.log("Hello");
+
+					setUser(response.data.user);
+				} catch (error) {
+					if (error.response && error.response.status === 401) {
+						dispatch(authActions.logout());
+					}
 				}
+			} else {
+				setUser(session.user);
 			}
 		};
-		postToken(token);
-	}, [token, dispatch]);
 
+		fetchData();
+	}, [token, session.user, dispatch]);
 	const handleSignOut = () => {
 		dispatch(authActions.logout());
 		navigate("/");
@@ -42,7 +54,7 @@ const HeaderMenu = ({ items, auth }) => {
 			{isAuthenticated ? (
 				<div className="header__menu__dropdown">
 					<button className="header__menu__dropdown__button">
-						{user.full_name}
+						{user ? user.full_name : ""}
 					</button>
 					<div className="header__menu__dropdown__content">
 						<a href="/profile">Profile</a>

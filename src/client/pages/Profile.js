@@ -7,9 +7,12 @@ import ProfileMain from "../components/profile/ProfileMain";
 import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../redux/authSlice";
 import { useNavigate } from "react-router-dom";
+import { BsArrowBarLeft } from "react-icons/bs";
 
 const Profile = () => {
-	const user = useSelector((state) => state.auth.user);
+	const user = useSelector((state) =>
+		state.auth.local.user ? state.auth.local.user : state.auth.session.user
+	);
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
 	const handleLogOut = () => {
@@ -22,7 +25,9 @@ const Profile = () => {
 		<Layout>
 			<Container fluid style={{ padding: 0 }}>
 				<div>
-					<button onClick={handleGoBack}>&lt;- Back</button>
+					<button onClick={handleGoBack} className="profile__button">
+						<BsArrowBarLeft size={48} /> Back
+					</button>
 				</div>
 				<div className="profile__container">
 					<ProfileAside

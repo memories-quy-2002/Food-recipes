@@ -29,7 +29,7 @@ const reducer = (state, action) => {
 	}
 };
 
-const useForm = () => {
+const useSignupForm = () => {
 	const loginDispatch = useDispatch();
 	const [state, dispatch] = useReducer(reducer, initialState);
 	const navigate = useNavigate();
@@ -114,4 +114,4 @@ const useForm = () => {
 	];
 };
 
-export default useForm;
+export default useSignupForm;

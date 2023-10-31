@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
-import useForm from "../../hooks/useForm";
-const SignupForm = () => {
+import useSignupForm from "../../hooks/useSignupForm";
+const SignupForm = ({ onLogin }) => {
 	const [
 		formData,
 		validated,
@@ -9,7 +9,7 @@ const SignupForm = () => {
 		handleName,
 		handleChange,
 		handleSubmit,
-	] = useForm();
+	] = useSignupForm();
 
 	return (
 		<div className="form__signup">
@@ -120,16 +120,13 @@ const SignupForm = () => {
 						onChange={handleChange}
 					/>
 				</Form.Group>
-				<div className="form__signup__container__checked">
-					<input type="checkbox" />
-					<label>Agree to terms and conditions</label>
-				</div>
 				<Button
 					type="submit"
 					className="form__signup__container__submit"
 				>
 					Sign Up
 				</Button>
+
 				{validated && (
 					<p style={{ color: "green" }}>
 						Form submitted successfully!
@@ -145,7 +142,13 @@ const SignupForm = () => {
 				)}
 				<div className="form__signup__container__bottom">
 					<p>
-						Already have an account? <a href="/login">Log in</a>
+						Already have an account?{" "}
+						<span
+							onClick={onLogin}
+							className="form__signup__container__bottom__button"
+						>
+							Log in
+						</span>
 					</p>
 				</div>
 			</Form>

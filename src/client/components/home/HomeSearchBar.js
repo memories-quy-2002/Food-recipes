@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
-import { RecipeContext } from "../../../App";
 import convertImage from "../../utils/convertImage";
 import { useNavigate } from "react-router-dom";
+import { RecipeContext } from "../../context/RecipeProvider";
 
 const HomeSearchBar = () => {
 	const [searchTerm, setSearchTerm] = useState("");
