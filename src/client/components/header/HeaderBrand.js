@@ -4,13 +4,12 @@ import hamburger from "../../assets/icons/hamburger.svg";
 
 const HeaderBrand = () => {
 	return (
-		<Navbar.Brand
-			href="/"
-			className="d-flex align-items-center gap-2 header__brand"
-		>
-			<img src={hamburger} alt="Icon" width={35} />
-			Food Recipe
-		</Navbar.Brand>
+		<div className="header__brand">
+			<Navbar.Brand href="/" className="d-flex gap-2 align-items-center">
+				<img src={hamburger} alt="Icon" width={35} />
+				<p className="m-0">Food Recipe</p>
+			</Navbar.Brand>
+		</div>
 	);
 };
 

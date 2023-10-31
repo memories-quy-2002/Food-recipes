@@ -3,9 +3,9 @@ import { Col, Container, Row } from "react-bootstrap";
 import { BsMailbox } from "react-icons/bs";
 import { FaHouse, FaPhone } from "react-icons/fa6";
 import "../../styles/Footer.scss";
-import { footer } from "../../utils/constant";
+import { website_content } from "../../utils/constant";
 const Footer = () => {
-	const { about, contact, overview, follow } = footer;
+	const { about, contact, overview, follow } = website_content;
 
 	return (
 		<footer className="footer">

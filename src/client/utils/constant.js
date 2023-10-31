@@ -4,7 +4,7 @@ import {
 	FaLinkedin,
 	FaYoutube,
 } from "react-icons/fa6";
-export const footer = {
+export const website_content = {
 	about: "Welcome to Food Recipes, a website dedicated to sharing delicious and healthy recipes from around the world. Our team of passionate chefs and food lovers are here to inspire you to cook and enjoy food. Whether you are looking for breakfast, lunch, dinner, or dessert ideas, we have something for you.",
 	contact: {
 		email: "foodrecipes@example.com",

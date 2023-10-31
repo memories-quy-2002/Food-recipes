@@ -1,31 +1,31 @@
 import React, { useState } from "react";
-import { BsCartFill, BsHeartFill, BsHouseFill } from "react-icons/bs";
-import { FaUtensils } from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import "../../styles/Header.scss";
+import HeaderAuthButton from "../header/HeaderAuthButton";
+import HeaderBar from "../header/HeaderBar";
 import HeaderBrand from "../header/HeaderBrand";
 import HeaderMenu from "../header/HeaderMenu";
 import HeaderToggle from "../header/HeaderToggle";
 const items = [
 	{
 		title: "Home",
-		icon: <BsHouseFill />,
 		href: "/",
 	},
 	{
 		title: "Food",
-		icon: <FaUtensils />,
 		href: "/food",
 	},
 	{
 		title: "Wishlist",
-		icon: <BsHeartFill />,
 		href: "/wishlist",
 	},
 	{
-		title: "Cart",
-		icon: <BsCartFill />,
-		href: "/cart",
+		title: "About",
+		href: "/about",
+	},
+	{
+		title: "Contact",
+		href: "/contact",
 	},
 ];
 const Header = () => {
@@ -35,15 +35,20 @@ const Header = () => {
 	const handleShow = () => setShow(true);
 	return (
 		<header className="container-fluid header">
-			<HeaderBrand />
-			<HeaderMenu items={items} auth={auth} />
-			<HeaderToggle
-				show={show}
-				handleClose={handleClose}
-				handleShow={handleShow}
-				items={items}
-				auth={auth}
-			/>
+			<HeaderBar />
+
+			<div className="header__main">
+				<HeaderBrand />
+				<HeaderMenu items={items} />
+				<HeaderAuthButton auth={auth} />
+				<HeaderToggle
+					show={show}
+					handleClose={handleClose}
+					handleShow={handleShow}
+					items={items}
+					auth={auth}
+				/>
+			</div>
 		</header>
 	);
 };

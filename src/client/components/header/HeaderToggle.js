@@ -18,8 +18,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 				show={show}
 				onHide={handleClose}
 				scroll="true"
-				className="header__toggle__menu"
-			>
+				className="header__toggle__menu">
 				<Offcanvas.Header closeButton>
 					<Offcanvas.Title>
 						{isAuthenticated
@@ -33,8 +32,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 							<li key={index} className="header__toggle__item">
 								<a
 									href={href}
-									className="header__toggle__item__link"
-								>
+									className="header__toggle__item__link">
 									{icon} {""}
 									{title}
 								</a>
@@ -47,9 +45,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 									className="header__toggle__item__link"
 									onClick={() =>
 										dispatch(authActions.logout())
-									}
-								>
-									{<BsFillPersonFill />} {""}
+									}>
 									Sign out
 								</a>
 							</li>
@@ -57,9 +53,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 							<li className="header__toggle__item">
 								<a
 									href="/account"
-									className="header__toggle__item__link"
-								>
-									{<BsFillPersonFill />} {""}
+									className="header__toggle__item__link">
 									Sign up
 								</a>
 							</li>
