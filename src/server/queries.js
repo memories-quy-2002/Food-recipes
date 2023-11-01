@@ -80,11 +80,6 @@ const getUserByJWT = (request, response) => {
 	const token = request.body.token;
 	try {
 		const payload = jwt.verify(token, secretKey);
-		const currentTime = Date.now();
-		if (payload.exp * 1000 <= currentTime) {
-			response.status(401).json({ message: "JWT Expired" });
-			return;
-		}
 		pool.query(
 			"SELECT * FROM accounts WHERE user_id = $1",
 			[payload.user_id],
@@ -98,7 +93,8 @@ const getUserByJWT = (request, response) => {
 			}
 		);
 	} catch (err) {
-		console.error("Token verification failed: ", err);
+		response.status(401).json({ message: "JWT Expired" });
+		return;
 	}
 };
 

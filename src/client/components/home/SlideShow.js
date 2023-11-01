@@ -9,15 +9,17 @@ const SlideShow = ({ items }) => {
 	};
 
 	const handlePrevSlide = () => {
-		setCurrIndex((prevIndex) => (prevIndex - 1) % items.length);
+		setCurrIndex(
+			(prevIndex) => (prevIndex - 1 + items.length) % items.length
+		);
 	};
 
 	const handleSpecSlide = (id) => {
-		setCurrIndex(id - 1);
+		setCurrIndex(id);
 	};
 
 	useEffect(() => {
-		const intervalId = setInterval(handleNextSlide, 10000);
+		const intervalId = setInterval(handleNextSlide, 8000);
 		return () => {
 			clearInterval(intervalId);
 		};

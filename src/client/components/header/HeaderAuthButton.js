@@ -18,7 +18,6 @@ const HeaderAuthButton = ({ auth }) => {
 					const response = await axios.post("/account/jwt", {
 						token,
 					});
-					console.log("Hello");
 
 					setUser(response.data.user);
 				} catch (error) {
@@ -46,9 +45,10 @@ const HeaderAuthButton = ({ auth }) => {
 				<div className="header__auth--login">
 					<button
 						className="header__auth--login__button"
-						onClick={handleClick}>
+						onClick={handleClick}
+					>
 						<p className="m-0">
-							Welcome {user ? user.full_name : "Guest"}
+							{user ? user.full_name : "Unknown"}
 						</p>
 					</button>
 					<div className="header__auth--login__content">
@@ -64,7 +64,8 @@ const HeaderAuthButton = ({ auth }) => {
 					<button
 						type="button"
 						onClick={handleClick}
-						className="header__auth--signup__button">
+						className="header__auth--signup__button"
+					>
 						Sign up
 					</button>
 				</div>

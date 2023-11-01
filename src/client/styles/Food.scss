@@ -2,14 +2,17 @@
 	height: fit-content;
 	&__menubar {
 		height: 100%;
-		&__search {
-			input {
-				padding-left: 0.5rem;
-			}
-		}
+		border-right: 2px solid orange;
+
 		&__section {
 			height: fit-content;
-			padding: 1rem 0.5rem;
+			padding: 0 0.5rem 1rem 0.5rem;
+			input {
+				padding: 0.25rem 0.6rem;
+				width: 90%;
+				border: 2px solid orange;
+				border-radius: 10px;
+			}
 			&__title {
 				font-size: 1.35rem;
 			}
@@ -17,6 +20,7 @@
 				list-style-type: none;
 				padding-left: 0;
 				li {
+					padding-bottom: 0.2rem;
 					a {
 						text-decoration: none;
 						color: orange;
@@ -28,12 +32,45 @@
 				height: 60px;
 				display: flex;
 				gap: 10px;
-				padding: 0.25rem 0.5rem;
-				border: 1px solid orange;
+				padding: 0.25rem 0.5rem 0.25rem 0;
 				&__img {
 					height: 100%;
 					width: 66px;
 					object-fit: auto;
+				}
+			}
+		}
+	}
+
+	&__content {
+		&__section {
+			&__title {
+				font-size: 1.75rem;
+				margin: 3rem 0 0.5rem 0;
+			}
+			&__list {
+				display: grid;
+				grid-gap: 2rem 1.5rem;
+				grid-template-columns: repeat(3, 1fr);
+				&__item {
+					display: flex;
+					flex-direction: column;
+
+					border: 1px solid black;
+					&__img {
+						width: 100%;
+					}
+					&__context {
+						display: flex;
+						flex-direction: column;
+						padding: 1rem 1rem;
+						h6 {
+							text-transform: uppercase;
+							padding-bottom: 0.5rem;
+							font-size: 14px;
+							font-weight: bold;
+						}
+					}
 				}
 			}
 		}

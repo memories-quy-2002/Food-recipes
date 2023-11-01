@@ -18,15 +18,23 @@ const SlideShowNav = ({
 				<BsArrowLeftShort color="orange" size={36} />
 			</button>
 			<div className="home__slideshow__nav__button">
-				{items.map(({ id }) => (
-					<button key={id} onClick={() => onSpecSlide(id)}>
-						{currIndex === id - 1 ? (
-							<BsCircleFill size={12} color="orange" />
-						) : (
-							<BsCircle size={12} />
-						)}
-					</button>
-				))}
+				{items.map(({ id }) => {
+					return (
+						<button
+							type="button"
+							key={id}
+							onClick={() => {
+								onSpecSlide(id);
+							}}
+						>
+							{currIndex === id ? (
+								<BsCircleFill size={12} color="orange" />
+							) : (
+								<BsCircle size={12} />
+							)}
+						</button>
+					);
+				})}
 			</div>
 
 			<button onClick={onNextSlide}>

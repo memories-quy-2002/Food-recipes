@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import FoodCard from "./FoodCard";
 import { RecipeContext } from "../../context/RecipeProvider";
 import axios from "../../api/axios";
+import convertImage from "../../utils/convertImage";
 
 const FoodCardList = () => {
 	const navigate = useNavigate();
@@ -35,12 +36,9 @@ const FoodCardList = () => {
 							key={category_id}
 							className="home__main__cardList__category__item"
 						>
-							<img
-								src={require("../../assets/images/background.png")}
-								alt="category"
-							/>
+							{convertImage(category_name)}
 							<div className="home__main__cardList__category__item__content">
-								<h5>{category_name}</h5>
+								<h4>{category_name}</h4>
 								<a
 									href={`/food?category=${category_name.toLowerCase()}`}
 								>
@@ -50,9 +48,12 @@ const FoodCardList = () => {
 						</div>
 					))}
 			</div>
+			<a href="/food" className="home__main__cardList__link">
+				&#x2192; More categories
+			</a>
 			<h3 className="home__main__cardList__title">Feature recipes</h3>
-			<div className="home__main__cardList__list">
-				{recipes.slice(0, 4).map((recipe, index) => {
+			<div className="home__main__cardList__feature">
+				{recipes.slice(0, 8).map((recipe, index) => {
 					const { recipe_id, recipe_name, category_name, meal_name } =
 						recipe;
 					return (

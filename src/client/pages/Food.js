@@ -8,7 +8,7 @@ import FoodContent from "../components/food/FoodContent";
 const Food = () => {
 	return (
 		<Layout>
-			<Container fluid>
+			<Container fluid className="my-3">
 				<Row>
 					<Col md={3}>
 						<MenuBar />
