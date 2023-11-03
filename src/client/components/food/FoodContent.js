@@ -1,36 +1,49 @@
 import React, { useContext } from "react";
 import { RecipeContext } from "../../context/RecipeProvider";
-const categories = ["Breakfast", "Lunch", "Dinner", "Desserts"];
+import convertImage from "../../utils/convertImage";
+import { useNavigate } from "react-router-dom";
 
-const FoodContent = () => {
+const FoodContent = ({ categoryId }) => {
+	const navigate = useNavigate();
 	const { recipes } = useContext(RecipeContext);
-	console.log(recipes);
+	let categories = recipes
+		.map(({ category_id: id, category_name: name }) => ({ id, name }))
+		.filter(
+			(category, index, self) =>
+				index === self.findIndex((c) => c.id === category.id)
+		)
+		.sort((a, b) => a.id - b.id);
+	if (categoryId) {
+		categories = categories.filter(
+			(category) => category.id === parseInt(categoryId)
+		);
+	}
 	return (
 		<div className="food__content">
-			{categories.map((category, index) => (
-				<div className="food__content__section">
-					<h4 className="food__content__section__title">
-						{category}
-					</h4>
+			{categories.map(({ id, name }) => (
+				<div key={id} className="food__content__section">
+					<h4 className="food__content__section__title">{name}</h4>
 					<div className="food__content__section__list">
-						{recipes.map(
-							({ recipe_id, recipe_name, category_name }) => (
+						{recipes
+							.filter((recipe) => recipe.category_name === name)
+							.map(({ recipe_id, recipe_name }) => (
 								<div
 									key={recipe_id}
 									className="food__content__section__list__item"
+									onClick={() =>
+										navigate(`/recipe?id=${recipe_id}`)
+									}
 								>
-									<img
-										src={require("../../assets/images/background.png")}
-										alt="breakfast"
-										className="food__content__section__list__item__img"
-									/>
+									{convertImage(
+										recipe_name,
+										"food__content__section__list__item__img"
+									)}
+
 									<div className="food__content__section__list__item__context">
-										<h6 className="">{category_name}</h6>
 										<strong>{recipe_name}</strong>
 									</div>
 								</div>
-							)
-						)}
+							))}
 					</div>
 				</div>
 			))}

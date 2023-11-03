@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FoodCard from "./FoodCard";
-import { RecipeContext } from "../../context/RecipeProvider";
 import axios from "../../api/axios";
 import convertImage from "../../utils/convertImage";
+import { RecipeContext } from "../../context/RecipeProvider";
 
 const FoodCardList = () => {
 	const navigate = useNavigate();
@@ -25,6 +25,7 @@ const FoodCardList = () => {
 		};
 		fetchCategories();
 	}, []);
+
 	return (
 		<div className="home__main__cardList">
 			<h3 className="home__main__cardList__title">Category</h3>

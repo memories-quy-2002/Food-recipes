@@ -1,32 +1,25 @@
-import React, { useContext, useEffect, useState } from "react";
-import axios from "../../api/axios";
+import React, { useContext } from "react";
 import { RecipeContext } from "../../context/RecipeProvider";
 import convertImage from "../../utils/convertImage";
+import MenuSection from "./MenuSection";
 
-const MenuBar = () => {
+const MenuBar = ({ categoryId, mealId }) => {
 	const { recipes } = useContext(RecipeContext);
-	const [categories, setCategories] = useState([]);
-	const [meals, setMeals] = useState([]);
-	useEffect(() => {
-		const fetchCategories = async () => {
-			try {
-				const response = await axios.get("/category/");
-				setCategories(response.data.categories);
-			} catch (err) {
-				throw err;
-			}
-		};
-		const fetchMeals = async () => {
-			try {
-				const response = await axios.get("/meal/");
-				setMeals(response.data.meals);
-			} catch (err) {
-				throw err;
-			}
-		};
-		fetchCategories();
-		fetchMeals();
-	}, []);
+
+	const categories = recipes
+		.map(({ category_id: id, category_name: name }) => ({ id, name }))
+		.filter(
+			(category, index, self) =>
+				index === self.findIndex((c) => c.id === category.id)
+		)
+		.sort((a, b) => a.id - b.id);
+	const meals = recipes
+		.map(({ meal_id: id, meal_name: name }) => ({ id, name }))
+		.filter(
+			(meal, index, self) =>
+				index === self.findIndex((c) => c.id === meal.id)
+		)
+		.sort((a, b) => a.id - b.id);
 	return (
 		<div className="food__menubar">
 			<div className="food__menubar__section">
@@ -37,30 +30,13 @@ const MenuBar = () => {
 					placeholder="Search..."
 				/>
 			</div>
-			<div className="food__menubar__section">
-				<h5 className="food__menubar__section__title">Categories</h5>
-				<ul className="food__menubar__section__list">
-					{categories.map(({ category_id, category_name }) => (
-						<li key={category_id}>
-							<a href={`/food?category=${category_id}`}>
-								<strong>{category_name}</strong>
-							</a>
-						</li>
-					))}
-				</ul>
-			</div>
-			<div className="food__menubar__section">
-				<h5 className="food__menubar__section__title">Meals</h5>
-				<ul className="food__menubar__section__list">
-					{meals.map(({ meal_id, meal_name }) => (
-						<li key={meal_id}>
-							<a href={`/food?meal=${meal_id}`}>
-								<strong>{meal_name}</strong>
-							</a>
-						</li>
-					))}
-				</ul>
-			</div>
+			<MenuSection
+				list={categories}
+				listId={categoryId}
+				listName="Categories"
+			/>
+			<MenuSection list={meals} listId={mealId} listName="Meals" />
+
 			<div className="food__menubar__section">
 				<h5 className="food__menubar__section__title">Popular Food</h5>
 				<ul className="food__menubar__section__list">

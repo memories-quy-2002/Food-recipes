@@ -46,19 +46,25 @@
 		&__section {
 			&__title {
 				font-size: 1.75rem;
-				margin: 3rem 0 0.5rem 0;
+				margin-bottom: 2rem;
 			}
 			&__list {
 				display: grid;
 				grid-gap: 2rem 1.5rem;
 				grid-template-columns: repeat(3, 1fr);
+				margin-bottom: 3rem;
 				&__item {
 					display: flex;
 					flex-direction: column;
-
-					border: 1px solid black;
+					height: 300px;
+					border: 2px solid rgba(255, 166, 0, 0.5);
 					&__img {
 						width: 100%;
+						height: 200px;
+						border-bottom: 2px solid rgba(255, 166, 0, 0.5);
+						&:hover {
+							cursor: pointer;
+						}
 					}
 					&__context {
 						display: flex;
@@ -69,6 +75,13 @@
 							padding-bottom: 0.5rem;
 							font-size: 14px;
 							font-weight: bold;
+						}
+						strong {
+							font-size: 1.4rem;
+						}
+						&:hover {
+							cursor: pointer;
+							text-decoration: underline orange;
 						}
 					}
 				}

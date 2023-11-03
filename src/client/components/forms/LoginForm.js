@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Button, Form } from "react-bootstrap";
 import useLoginForm from "../../hooks/useLoginForm";
 const LoginForm = ({ onSignup }) => {
@@ -11,7 +11,6 @@ const LoginForm = ({ onSignup }) => {
 		handleRemember,
 		handleSubmit,
 	] = useLoginForm();
-	useEffect(() => console.log(remember), [remember]);
 	return (
 		<div className="form__login">
 			<Form

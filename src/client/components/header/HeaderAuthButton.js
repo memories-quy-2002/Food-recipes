@@ -43,10 +43,7 @@ const HeaderAuthButton = ({ auth }) => {
 		<div className="header__auth">
 			{isAuthenticated ? (
 				<div className="header__auth--login">
-					<button
-						className="header__auth--login__button"
-						onClick={handleClick}
-					>
+					<button className="header__auth--login__button">
 						<p className="m-0">
 							{user ? user.full_name : "Unknown"}
 						</p>

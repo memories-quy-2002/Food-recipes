@@ -17,14 +17,14 @@ const SlideShow = ({ items }) => {
 	const handleSpecSlide = (id) => {
 		setCurrIndex(id);
 	};
-
 	useEffect(() => {
-		const intervalId = setInterval(handleNextSlide, 8000);
+		const intervalId = setInterval(() => {
+			setCurrIndex((prevIndex) => (prevIndex + 1) % items.length);
+		}, 8000);
 		return () => {
 			clearInterval(intervalId);
 		};
-	}, []);
-
+	}, [items.length]);
 	return (
 		<div className="home__slideshow">
 			<div
@@ -34,15 +34,17 @@ const SlideShow = ({ items }) => {
 					transform: `translateX(-${currIndex * 100}vw)`,
 				}}
 			>
-				{items.map(({ id, title, desc, imgSrc }) => (
-					<Slide
-						key={id}
-						id={id}
-						title={title}
-						desc={desc}
-						imgSrc={imgSrc}
-					/>
-				))}
+				{!items
+					? "Loading..."
+					: items.map(({ id, name, description }) => (
+							<Slide
+								key={id}
+								id={id}
+								title={name}
+								desc={description}
+								imgSrc={name}
+							/>
+					  ))}
 			</div>
 
 			<SlideShowNav

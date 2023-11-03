@@ -62,7 +62,7 @@ const getUsersLogin = (request, response) => {
 								email: user.email,
 							},
 							secretKey,
-							{ expiresIn: "1h" }
+							{ expiresIn: "4h" }
 						);
 						response.status(200).json({
 							user,
@@ -116,7 +116,7 @@ const createUser = (request, response) => {
 					{ user_id: user.user_id, email: user.email },
 					secretKey,
 					{
-						expiresIn: "1h",
+						expiresIn: "4h",
 					}
 				);
 				response
@@ -158,7 +158,7 @@ const deleteUser = (request, response) => {
 
 const getRecipes = (request, response) => {
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_name, c.category_name " +
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_id, m.meal_name, m.meal_description, c.category_id,  c.category_name " +
 			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
 			"JOIN categories c ON r.category_id = c.category_id ",
 		(error, results) => {

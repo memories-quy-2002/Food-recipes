@@ -27,7 +27,7 @@ const SlideShowNav = ({
 								onSpecSlide(id);
 							}}
 						>
-							{currIndex === id ? (
+							{currIndex + 1 === id ? (
 								<BsCircleFill size={12} color="orange" />
 							) : (
 								<BsCircle size={12} />

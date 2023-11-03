@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import convertImage from "../../utils/convertImage";
 const Slide = ({ id, title, desc, imgSrc }) => {
 	const navigate = useNavigate();
 	const handleClick = () => {
-		navigate(`/food?meal=${title.toLowerCase()}`);
+		navigate(`/food?meal=${id}`);
 	};
 	return (
 		<div className={`home__slide`}>
@@ -18,11 +19,7 @@ const Slide = ({ id, title, desc, imgSrc }) => {
 					Learn more
 				</button>
 			</div>
-			<img
-				className="home__slide__img"
-				src={require(`../../assets/images/${imgSrc.toLowerCase()}.png`)}
-				alt={title}
-			/>
+			{convertImage(imgSrc, "home__slide__img")}
 		</div>
 	);
 };

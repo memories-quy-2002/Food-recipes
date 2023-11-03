@@ -1,11 +1,10 @@
 import default_image from "../assets/images/default_image.png";
 
 const convertImage = (name, className = "") => {
-	const checkImageExists = (name) => {
+	const imageName = name.toLowerCase().replace(" ", "_");
+	const checkImageExists = (imageName) => {
 		try {
-			require(`../assets/images/${name
-				.toLowerCase()
-				.replace(" ", "_")}.png`);
+			require(`../assets/images/${imageName}.png`);
 			return true;
 		} catch (error) {
 			return false;
@@ -14,10 +13,8 @@ const convertImage = (name, className = "") => {
 	return (
 		<img
 			src={
-				checkImageExists(name)
-					? require(`../assets/images/${name
-							.toLowerCase()
-							.replace(" ", "_")}.png`)
+				checkImageExists(imageName)
+					? require(`../assets/images/${imageName}.png`)
 					: default_image
 			}
 			alt={name[0].toUpperCase() + name.substring(1)}
