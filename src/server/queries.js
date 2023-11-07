@@ -207,6 +207,60 @@ const getMeals = (request, response) => {
 		response.status(200).json({ meals });
 	});
 };
+
+const addItemstoWishlist = (request, response) => {
+	const { user_id, recipe_id } = request.body;
+	pool.query(
+		"INSERT INTO wishlist (user_id, recipe_id) VALUES ($1, $2) ON CONFLICT (user_id, recipe_id) DO NOTHING",
+		[user_id, recipe_id],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			if (results.rowCount === 0) {
+				response.status(200).json({
+					message: `Item already exists in wishlist with user_id = ${user_id} and recipe_id = ${recipe_id}`,
+				});
+			} else {
+				response.status(200).json({
+					message: `Item has been added to wishlist with user_id = ${user_id} and recipe_id = ${recipe_id}`,
+				});
+			}
+		}
+	);
+};
+const getWishlistbyUser = (request, response) => {
+	const user_id = request.params.id;
+	pool.query(
+		"SELECT recipe_id FROM wishlist WHERE user_id = $1",
+		[user_id],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			response.status(200).json({
+				wishlist: results.rows,
+			});
+		}
+	);
+};
+const deleteWishlistItems = (request, response) => {
+	const user_id = request.params.uid;
+	const recipe_id = request.params.rid;
+
+	pool.query(
+		"DELETE FROM wishlist WHERE user_id = $1 AND recipe_id = $2 ",
+		[user_id, recipe_id],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			response.status(200).json({
+				message: `Item with user_id = ${user_id} and recipe_id = ${recipe_id} has been deleted successfully`,
+			});
+		}
+	);
+};
 module.exports = {
 	getUsersLogin,
 	createUser,
@@ -217,4 +271,7 @@ module.exports = {
 	getRecipesById,
 	getCategories,
 	getMeals,
+	addItemstoWishlist,
+	getWishlistbyUser,
+	deleteWishlistItems,
 };

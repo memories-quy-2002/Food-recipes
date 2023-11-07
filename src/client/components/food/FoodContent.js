@@ -3,9 +3,14 @@ import { RecipeContext } from "../../context/RecipeProvider";
 import convertImage from "../../utils/convertImage";
 import { useNavigate } from "react-router-dom";
 
-const FoodContent = ({ categoryId }) => {
+const FoodContent = ({ categoryId, mealId }) => {
 	const navigate = useNavigate();
-	const { recipes } = useContext(RecipeContext);
+	let { recipes } = useContext(RecipeContext);
+	if (mealId) {
+		recipes = recipes.filter(
+			(recipe) => recipe.meal_id === parseInt(mealId)
+		);
+	}
 	let categories = recipes
 		.map(({ category_id: id, category_name: name }) => ({ id, name }))
 		.filter(
@@ -13,11 +18,13 @@ const FoodContent = ({ categoryId }) => {
 				index === self.findIndex((c) => c.id === category.id)
 		)
 		.sort((a, b) => a.id - b.id);
+
 	if (categoryId) {
 		categories = categories.filter(
 			(category) => category.id === parseInt(categoryId)
 		);
 	}
+
 	return (
 		<div className="food__content">
 			{categories.map(({ id, name }) => (

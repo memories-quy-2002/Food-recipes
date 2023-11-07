@@ -19,7 +19,7 @@ const Food = () => {
 						<MenuBar categoryId={categoryId} mealId={mealId} />
 					</Col>
 					<Col md={9}>
-						<FoodContent categoryId={categoryId} />
+						<FoodContent categoryId={categoryId} mealId={mealId} />
 					</Col>
 				</Row>
 			</Container>

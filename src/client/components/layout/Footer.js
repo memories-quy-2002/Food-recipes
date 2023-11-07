@@ -5,7 +5,8 @@ import { FaHouse, FaPhone } from "react-icons/fa6";
 import "../../styles/Footer.scss";
 import { website_content } from "../../utils/constant";
 const Footer = () => {
-	const { about, contact, overview, follow } = website_content;
+	const d = new Date();
+	const { about, contact, overview, follow, bottom } = website_content;
 
 	return (
 		<footer className="footer">
@@ -54,7 +55,7 @@ const Footer = () => {
 				</div>
 
 				<div className="footer__bottom text-center">
-					<p>&copy; 2023 Food Recipe. Built with ReactJS.</p>
+					<p>&copy; {`${d.getFullYear()} ${bottom} `}</p>
 				</div>
 			</Container>
 		</footer>

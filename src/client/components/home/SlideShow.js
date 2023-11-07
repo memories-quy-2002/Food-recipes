@@ -34,17 +34,16 @@ const SlideShow = ({ items }) => {
 					transform: `translateX(-${currIndex * 100}vw)`,
 				}}
 			>
-				{!items
-					? "Loading..."
-					: items.map(({ id, name, description }) => (
-							<Slide
-								key={id}
-								id={id}
-								title={name}
-								desc={description}
-								imgSrc={name}
-							/>
-					  ))}
+				{items &&
+					items.map(({ id, name, description }) => (
+						<Slide
+							key={id}
+							id={id}
+							title={name}
+							desc={description}
+							imgSrc={name}
+						/>
+					))}
 			</div>
 
 			<SlideShowNav

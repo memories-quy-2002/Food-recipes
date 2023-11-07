@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Offcanvas } from "react-bootstrap";
-import { BsFillPersonFill, BsSearch } from "react-icons/bs";
+import { BsSearch } from "react-icons/bs";
 import { FaBars } from "react-icons/fa6";
 import { useDispatch } from "react-redux";
 import { authActions } from "../../redux/authSlice";
@@ -18,7 +18,8 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 				show={show}
 				onHide={handleClose}
 				scroll="true"
-				className="header__toggle__menu">
+				className="header__toggle__menu"
+			>
 				<Offcanvas.Header closeButton>
 					<Offcanvas.Title>
 						{isAuthenticated
@@ -32,7 +33,8 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 							<li key={index} className="header__toggle__item">
 								<a
 									href={href}
-									className="header__toggle__item__link">
+									className="header__toggle__item__link"
+								>
 									{icon} {""}
 									{title}
 								</a>
@@ -45,7 +47,8 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 									className="header__toggle__item__link"
 									onClick={() =>
 										dispatch(authActions.logout())
-									}>
+									}
+								>
 									Sign out
 								</a>
 							</li>
@@ -53,7 +56,8 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 							<li className="header__toggle__item">
 								<a
 									href="/account"
-									className="header__toggle__item__link">
+									className="header__toggle__item__link"
+								>
 									Sign up
 								</a>
 							</li>

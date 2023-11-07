@@ -1,14 +1,38 @@
 import React, { useContext, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import FoodCard from "./FoodCard";
 import axios from "../../api/axios";
-import convertImage from "../../utils/convertImage";
 import { RecipeContext } from "../../context/RecipeProvider";
+import convertImage from "../../utils/convertImage";
+import FoodCard from "./FoodCard";
 
 const FoodCardList = () => {
 	const navigate = useNavigate();
 	const [categories, setCategories] = useState([]);
+	const [wishlist, setWishlist] = useState([]);
 	const { recipes } = useContext(RecipeContext);
+	const { local, session } = useSelector(({ auth }) => auth);
+	console.log({ local, session });
+	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
+	const user_id = isAuthenticated
+		? local.isAuthenticated
+			? local.user.user_id
+			: session.user.user_id
+		: 0;
+
+	const handleClickFavorite = async (recipe_id) => {
+		if (!isAuthenticated) navigate("/account");
+		try {
+			const response = await axios.post("/wishlist", {
+				user_id,
+				recipe_id,
+			});
+			console.log(response);
+			window.location.reload(false);
+		} catch (err) {
+			console.error(err);
+		}
+	};
 
 	const handleNavigate = (id) => {
 		navigate(`/recipe?id=${id}`);
@@ -17,14 +41,19 @@ const FoodCardList = () => {
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {
-				const response = await axios.get("/category/");
+				const response = await axios.get("/category");
 				setCategories(response.data.categories);
 			} catch (err) {
 				throw err;
 			}
 		};
+		const fetchFavorites = async () => {
+			const response = await axios.get(`/wishlist/${user_id}`);
+			setWishlist(response.data.wishlist);
+		};
 		fetchCategories();
-	}, []);
+		fetchFavorites();
+	}, [user_id]);
 
 	return (
 		<div className="home__main__cardList">
@@ -54,19 +83,36 @@ const FoodCardList = () => {
 			</a>
 			<h3 className="home__main__cardList__title">Feature recipes</h3>
 			<div className="home__main__cardList__feature">
-				{recipes.slice(0, 8).map((recipe, index) => {
-					const { recipe_id, recipe_name, category_name, meal_name } =
-						recipe;
-					return (
-						<FoodCard
-							key={index}
-							name={recipe_name}
-							category={category_name}
-							meal={meal_name}
-							handleNavigate={() => handleNavigate(recipe_id)}
-						/>
-					);
-				})}
+				{recipes
+					.slice(0, 8)
+					.map(
+						({
+							recipe_id,
+							recipe_name,
+							category_name,
+							meal_name,
+						}) => {
+							return (
+								<FoodCard
+									key={recipe_id}
+									id={recipe_id}
+									name={recipe_name}
+									category={category_name}
+									meal={meal_name}
+									favorite={wishlist.some(
+										(recipe) =>
+											recipe.recipe_id === recipe_id
+									)}
+									handleNavigate={() =>
+										handleNavigate(recipe_id)
+									}
+									handleClickFavorite={() =>
+										handleClickFavorite(recipe_id)
+									}
+								/>
+							);
+						}
+					)}
 			</div>
 
 			<a href="/food" className="home__main__cardList__link">

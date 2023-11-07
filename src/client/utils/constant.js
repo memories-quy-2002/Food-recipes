@@ -11,11 +11,12 @@ export const website_content = {
 		phone: "(+84) 123 456 7890",
 		address: "123 ABC St, Ho Chi Minh City, Vietnam",
 	},
-	overview: ["Categories", "Recipes", "Breakfast"],
+	overview: ["Home", "Food", "Wishlist", "About", "Contact", "Support"],
 	follow: [
 		<FaFacebook color="white" size={24} />,
 		<FaInstagram color="white" size={24} />,
 		<FaLinkedin color="white" size={24} />,
 		<FaYoutube color="white" size={24} />,
 	],
+	bottom: "Food Recipe. Built with ReactJS, NodeJS and Express.",
 };
