@@ -3,23 +3,9 @@ import { RecipeContext } from "../../context/RecipeProvider";
 import convertImage from "../../utils/convertImage";
 import MenuSection from "./MenuSection";
 
-const MenuBar = ({ categoryId, mealId }) => {
+const MenuBar = ({ categoryId, mealId, categories, meals }) => {
 	const { recipes } = useContext(RecipeContext);
 
-	const categories = recipes
-		.map(({ category_id: id, category_name: name }) => ({ id, name }))
-		.filter(
-			(category, index, self) =>
-				index === self.findIndex((c) => c.id === category.id)
-		)
-		.sort((a, b) => a.id - b.id);
-	const meals = recipes
-		.map(({ meal_id: id, meal_name: name }) => ({ id, name }))
-		.filter(
-			(meal, index, self) =>
-				index === self.findIndex((c) => c.id === meal.id)
-		)
-		.sort((a, b) => a.id - b.id);
 	return (
 		<div className="food__menubar">
 			<div className="food__menubar__section">

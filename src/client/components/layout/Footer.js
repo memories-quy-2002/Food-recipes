@@ -46,8 +46,13 @@ const Footer = () => {
 					<ul className="footer__social__list">
 						{follow.map((item, index) => (
 							<li key={index} className="footer__social__item">
-								<a href="/" className="footer__social__link">
-									{item}
+								<a
+									href={item.href}
+									target="_blank"
+									rel="noreferrer"
+									className="footer__social__link"
+								>
+									{item.icon}
 								</a>
 							</li>
 						))}

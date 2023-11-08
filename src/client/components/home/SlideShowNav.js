@@ -1,22 +1,8 @@
 import React from "react";
-import {
-	BsArrowLeftShort,
-	BsArrowRightShort,
-	BsCircle,
-	BsCircleFill,
-} from "react-icons/bs";
-const SlideShowNav = ({
-	currIndex,
-	items,
-	onPrevSlide,
-	onSpecSlide,
-	onNextSlide,
-}) => {
+import { BsCircle, BsCircleFill } from "react-icons/bs";
+const SlideShowNav = ({ currIndex, items, onSpecSlide }) => {
 	return (
 		<div className="home__slideshow__nav">
-			<button onClick={onPrevSlide}>
-				<BsArrowLeftShort color="orange" size={36} />
-			</button>
 			<div className="home__slideshow__nav__button">
 				{items.map(({ id }) => {
 					return (
@@ -30,16 +16,12 @@ const SlideShowNav = ({
 							{currIndex + 1 === id ? (
 								<BsCircleFill size={12} color="orange" />
 							) : (
-								<BsCircle size={12} />
+								<BsCircle size={12} color="orange" />
 							)}
 						</button>
 					);
 				})}
 			</div>
-
-			<button onClick={onNextSlide}>
-				<BsArrowRightShort color="orange" size={36} />
-			</button>
 		</div>
 	);
 };

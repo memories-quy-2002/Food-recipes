@@ -10,7 +10,7 @@ const HomeSearchBar = () => {
 	const handleChange = (e) => {
 		setSearchTerm(e.target.value);
 	};
-	const filterRecipes = recipes.filter((recipe) =>
+	const filteredRecipes = recipes.filter((recipe) =>
 		recipe.recipe_name.toLowerCase().includes(searchTerm.toLowerCase())
 	);
 	return (
@@ -18,12 +18,13 @@ const HomeSearchBar = () => {
 			<input
 				type="text"
 				placeholder="Search..."
+				className="home__main__search__input"
 				onChange={handleChange}
 			></input>
 			{searchTerm && (
 				<ul className="home__main__search__result">
-					{filterRecipes.length > 0 ? (
-						filterRecipes.map((recipe) => (
+					{filteredRecipes.length > 0 ? (
+						filteredRecipes.map((recipe) => (
 							<li
 								key={recipe.recipe_id}
 								onClick={() =>

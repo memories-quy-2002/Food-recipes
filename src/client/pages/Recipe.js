@@ -7,6 +7,7 @@ import "../styles/Recipe.scss";
 import convertImage from "../utils/convertImage";
 import convertTime from "../utils/convertTime";
 import { BsHeart } from "react-icons/bs";
+import additionTime from "../utils/additionTime";
 
 const Recipe = () => {
 	const [recipe, setRecipe] = useState(null);
@@ -37,11 +38,10 @@ const Recipe = () => {
 		prep_time,
 		recipe_description,
 	} = recipe;
-
 	return (
 		<Layout>
 			{
-				<Container fluid>
+				<Container>
 					<div className="recipe__container">
 						<h1 className="recipe__container__title">
 							{recipe_name}
@@ -78,13 +78,17 @@ const Recipe = () => {
 								</Col>
 							</Row>
 							<Row>
-								<Col md={6}>
+								<Col md={4}>
 									<h5>Cook time</h5>
 									<p>{convertTime(cook_time)}</p>
 								</Col>
-								<Col md={6}>
+								<Col md={4}>
 									<h5>Preparation time</h5>
 									<p>{convertTime(prep_time)}</p>
+								</Col>
+								<Col md={4}>
+									<h5>Total time</h5>
+									<p>{additionTime(prep_time, cook_time)}</p>
 								</Col>
 							</Row>
 						</div>

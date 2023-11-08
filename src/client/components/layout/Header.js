@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import "../../styles/Header.scss";
 import HeaderAuthButton from "../header/HeaderAuthButton";
-import HeaderBar from "../header/HeaderBar";
 import HeaderBrand from "../header/HeaderBrand";
 import HeaderMenu from "../header/HeaderMenu";
 import HeaderToggle from "../header/HeaderToggle";
@@ -35,8 +34,6 @@ const Header = () => {
 	const handleShow = () => setShow(true);
 	return (
 		<header className="container-fluid header">
-			<HeaderBar />
-
 			<div className="header__main">
 				<HeaderBrand />
 				<HeaderMenu items={items} />

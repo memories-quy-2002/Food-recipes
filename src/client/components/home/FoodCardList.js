@@ -61,7 +61,7 @@ const FoodCardList = () => {
 			<div className="home__main__cardList__category">
 				{categories
 					.slice(0, 5)
-					.map(({ category_id, category_name }) => (
+					.map(({ id: category_id, name: category_name }) => (
 						<div
 							key={category_id}
 							className="home__main__cardList__category__item"
@@ -69,9 +69,7 @@ const FoodCardList = () => {
 							{convertImage(category_name)}
 							<div className="home__main__cardList__category__item__content">
 								<h4>{category_name}</h4>
-								<a
-									href={`/food?category=${category_name.toLowerCase()}`}
-								>
+								<a href={`/food?categories=${category_id}`}>
 									View all recipes
 								</a>
 							</div>

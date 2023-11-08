@@ -160,7 +160,7 @@ const getRecipes = (request, response) => {
 	pool.query(
 		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_id, m.meal_name, m.meal_description, c.category_id,  c.category_name " +
 			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
-			"JOIN categories c ON r.category_id = c.category_id ",
+			"JOIN categories c ON r.category_id = c.category_id ORDER BY r.recipe_id ASC ",
 		(error, results) => {
 			if (error) {
 				throw error;
@@ -188,24 +188,35 @@ const getRecipesById = (request, response) => {
 		}
 	);
 };
+
 const getCategories = (request, response) => {
-	pool.query("SELECT * FROM categories", (error, results) => {
-		if (error) {
-			throw error;
+	pool.query(
+		"SELECT c.category_id AS id, c.category_name AS name, COUNT(r.recipe_id) AS recipe_count " +
+			"FROM categories c JOIN recipes r ON c.category_id = r.category_id " +
+			"GROUP BY c.category_id, c.category_name ORDER BY c.category_id ASC;",
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			const categories = results.rows;
+			response.status(200).json({ categories });
 		}
-		const categories = results.rows;
-		response.status(200).json({ categories });
-	});
+	);
 };
 
 const getMeals = (request, response) => {
-	pool.query("SELECT * FROM meals", (error, results) => {
-		if (error) {
-			throw error;
+	pool.query(
+		"SELECT m.meal_id AS id, m.meal_name AS name, m.meal_description AS description, COUNT(r.recipe_id) AS recipe_count " +
+			"FROM meals m JOIN recipes r ON m.meal_id = r.meal_id " +
+			"GROUP BY m.meal_id, m.meal_name ORDER BY m.meal_id ASC;",
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			const meals = results.rows;
+			response.status(200).json({ meals });
 		}
-		const meals = results.rows;
-		response.status(200).json({ meals });
-	});
+	);
 };
 
 const addItemstoWishlist = (request, response) => {

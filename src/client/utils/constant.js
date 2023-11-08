@@ -13,10 +13,22 @@ export const website_content = {
 	},
 	overview: ["Home", "Food", "Wishlist", "About", "Contact", "Support"],
 	follow: [
-		<FaFacebook color="white" size={24} />,
-		<FaInstagram color="white" size={24} />,
-		<FaLinkedin color="white" size={24} />,
-		<FaYoutube color="white" size={24} />,
+		{
+			href: "https://www.facebook.com",
+			icon: <FaFacebook color="white" size={24} />,
+		},
+		{
+			href: "https://www.youtube.com",
+			icon: <FaYoutube color="white" size={24} />,
+		},
+		{
+			href: "https://www.instagram.com",
+			icon: <FaInstagram color="white" size={24} />,
+		},
+		{
+			href: "https://www.linkedin.com",
+			icon: <FaLinkedin color="white" size={24} />,
+		},
 	],
 	bottom: "Food Recipe. Built with ReactJS, NodeJS and Express.",
 };

@@ -34,7 +34,6 @@ const Wishlist = () => {
 				`/wishlist/${user_id}/${recipe_id}`
 			);
 			if (response.status === 200) {
-				alert("Delete items successfully");
 				window.location.reload(false);
 			}
 		} catch (err) {

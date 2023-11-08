@@ -4,19 +4,11 @@ import SlideShowNav from "./SlideShowNav";
 
 const SlideShow = ({ items }) => {
 	const [currIndex, setCurrIndex] = useState(0);
-	const handleNextSlide = () => {
-		setCurrIndex((prevIndex) => (prevIndex + 1) % items.length);
-	};
-
-	const handlePrevSlide = () => {
-		setCurrIndex(
-			(prevIndex) => (prevIndex - 1 + items.length) % items.length
-		);
-	};
 
 	const handleSpecSlide = (id) => {
-		setCurrIndex(id);
+		setCurrIndex(id - 1);
 	};
+
 	useEffect(() => {
 		const intervalId = setInterval(() => {
 			setCurrIndex((prevIndex) => (prevIndex + 1) % items.length);
@@ -49,9 +41,7 @@ const SlideShow = ({ items }) => {
 			<SlideShowNav
 				currIndex={currIndex}
 				items={items}
-				onPrevSlide={handlePrevSlide}
 				onSpecSlide={handleSpecSlide}
-				onNextSlide={handleNextSlide}
 			/>
 		</div>
 	);

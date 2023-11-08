@@ -1,7 +1,7 @@
 import default_image from "../assets/images/default_image.png";
 
 const convertImage = (name, className = "") => {
-	const imageName = name.toLowerCase().replace(" ", "_");
+	const imageName = name.toLowerCase().replaceAll(" ", "_");
 	const checkImageExists = (imageName) => {
 		try {
 			require(`../assets/images/${imageName}.png`);
