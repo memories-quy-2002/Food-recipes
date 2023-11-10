@@ -6,7 +6,7 @@ import axios from "../api/axios";
 import "../styles/Recipe.scss";
 import convertImage from "../utils/convertImage";
 import convertTime from "../utils/convertTime";
-import { BsHeart } from "react-icons/bs";
+import { BsFillStarFill, BsHeart, BsStarHalf } from "react-icons/bs";
 import additionTime from "../utils/additionTime";
 
 const Recipe = () => {
@@ -40,61 +40,89 @@ const Recipe = () => {
 	} = recipe;
 	return (
 		<Layout>
-			{
-				<Container>
-					<div className="recipe__container">
-						<h1 className="recipe__container__title">
-							{recipe_name}
-						</h1>
-						<div className="recipe__container__content">
-							<Row>
-								<p className="recipe__container__content__desc">
-									{recipe_description}
-								</p>
-							</Row>
-							<Row>
-								<Col md={3}>
-									<div className="recipe__container__content__fav">
-										<button type="button">
-											Save <BsHeart size={20} />
-										</button>
+			<Container fluid style={{ padding: 0 }}>
+				<Row className="recipe__container">
+					<Col md={6}>
+						<div className="recipe__container__summary">
+							<div className="recipe__container__summary__title">
+								<h1>{recipe_name}</h1>
+							</div>
+
+							<div className="recipe__container__summary__author">
+								<p>By Nguyen Quy</p>
+							</div>
+							<div className="recipe__container__summary__date">
+								<p>November 9, 2023</p>
+							</div>
+							<div className="recipe__container__summary__fav">
+								<button type="button">
+									<BsHeart size={24} />{" "}
+									<strong>Save recipe</strong>
+								</button>
+							</div>
+							<div className="recipe__container__summary__review">
+								<div className="recipe__container__summary__review__score">
+									<strong>4.7</strong>
+								</div>
+								<div className="recipe__container__summary__review__stars">
+									<div>
+										<BsFillStarFill />
 									</div>
-								</Col>
-							</Row>
-							<Row>
-								{convertImage(
-									recipe_name,
-									"recipe__container__content__img"
-								)}
-							</Row>
-							<Row>
-								<Col md={6}>
-									<h5>Category</h5>
-									<p>{category_name}</p>
-								</Col>
-								<Col md={6}>
-									<h5>Meal</h5>
-									<p>{meal_name}</p>
-								</Col>
-							</Row>
-							<Row>
-								<Col md={4}>
-									<h5>Cook time</h5>
-									<p>{convertTime(cook_time)}</p>
-								</Col>
-								<Col md={4}>
-									<h5>Preparation time</h5>
-									<p>{convertTime(prep_time)}</p>
-								</Col>
-								<Col md={4}>
-									<h5>Total time</h5>
-									<p>{additionTime(prep_time, cook_time)}</p>
-								</Col>
-							</Row>
+									<div>
+										<BsFillStarFill />
+									</div>
+									<div>
+										<BsFillStarFill />
+									</div>
+									<div>
+										<BsFillStarFill />
+									</div>
+									<div>
+										<BsStarHalf />
+									</div>
+								</div>
+								<div className="recipe__container__summary__review__count">
+									<strong>(223)</strong>
+								</div>
+							</div>
 						</div>
-					</div>
-				</Container>
-			}
+					</Col>
+					<Col md={6}>
+						{convertImage(recipe_name, "recipe__container__img")}
+					</Col>
+				</Row>
+				<Row className="recipe__content">
+					<Row className="recipe__content__time">
+						<Col md={4}>
+							<h5>Cook time</h5>
+							<p>{convertTime(cook_time)}</p>
+						</Col>
+						<Col md={4}>
+							<h5>Preparation time</h5>
+							<p>{convertTime(prep_time)}</p>
+						</Col>
+						<Col md={4}>
+							<h5>Total time</h5>
+							<p>{additionTime(prep_time, cook_time)}</p>
+						</Col>
+					</Row>
+					<Row className="recipe__content_desc">
+						<div>
+							<p>{recipe_description}</p>
+						</div>
+					</Row>
+					<Row className="recipe__content__rating">
+						<div className="recipe__content__rating__signin">
+							<strong>
+								<span>
+									<a href="/account">Sign in</a>
+								</span>{" "}
+								to leave a Rating and Review
+							</strong>
+						</div>
+					</Row>
+				</Row>
+			</Container>
 		</Layout>
 	);
 };

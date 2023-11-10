@@ -20,7 +20,6 @@ function App() {
 					<Route path="/profile" element={<Profile />} />
 					<Route path="/recipe" element={<Recipe />} />
 					<Route path="/wishlist" element={<Wishlist />} />
-					<Route path="/setting" element={<Setting />} />
 				</Routes>
 			</BrowserRouter>
 		</RecipeProvider>

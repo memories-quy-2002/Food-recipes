@@ -18,14 +18,6 @@ const items = [
 		title: "Wishlist",
 		href: "/wishlist",
 	},
-	{
-		title: "About",
-		href: "/about",
-	},
-	{
-		title: "Contact",
-		href: "/contact",
-	},
 ];
 const Header = () => {
 	const [show, setShow] = useState(false);

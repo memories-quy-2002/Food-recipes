@@ -126,7 +126,7 @@
 			&__title {
 				text-align: left;
 				font-size: 1.75rem;
-				margin-bottom: 1rem;
+				margin-bottom: 2.5rem;
 			}
 			&__category {
 				display: flex;
@@ -181,12 +181,13 @@
 				grid-template-columns: repeat(4, 1fr);
 				&__item {
 					position: relative;
-					height: 400px;
+					height: 360px;
 					border: 1px solid rgba(255, 166, 0, 0.678);
 					border-radius: 5px;
 					padding-bottom: 1rem;
-					cursor: pointer;
+					transition: all 0.3s ease-in-out;
 					&__img {
+						border-radius: inherit;
 						height: 200px;
 						width: 100%;
 						object-fit: cover;
@@ -217,9 +218,9 @@
 					}
 					&__name {
 						display: inline-block;
-						height: 25px;
 						margin-top: 0.5rem;
 						margin-left: 1rem;
+						font-size: 1.4rem;
 						font-weight: bold;
 					}
 					&__meal {
@@ -227,7 +228,9 @@
 						margin-left: 1rem;
 					}
 					&:hover {
-						box-shadow: 0px 0px 14px 2px orange;
+						cursor: pointer;
+						transform: translateY(-4px) translateX(-4px);
+						box-shadow: 4px 4px 10px 1px orange;
 					}
 				}
 				@media screen and (max-width: 992px) {

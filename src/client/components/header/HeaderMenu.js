@@ -9,6 +9,7 @@ const HeaderMenu = ({ items }) => {
 			{items.map(({ title, href }, index) => (
 				<button
 					key={index}
+					type="button"
 					className="header__menu__content"
 					onClick={() => navigate(href)}
 				>

@@ -1,37 +1,85 @@
 .recipe {
 	&__container {
-		margin-top: 2rem;
-		height: fit-content;
-		width: 80%;
-		margin-bottom: 2rem;
-		padding: 1rem;
-		&__title {
-			padding: 1.5rem 0;
-		}
-		&__content {
-			height: fit-content;
-			&__img {
-				width: 100%;
-				object-fit: contain;
-				padding-bottom: 2rem;
+		height: 500px;
+		width: 100%;
+		margin: 0;
+		border-bottom: 1px solid rgba(255, 166, 0, 0.5);
+		margin-bottom: 4rem;
+		&__summary {
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			&__title {
+				padding: 1.5rem 0;
 			}
-			&__desc {
-				font-size: 1.25rem;
+			&__author {
+				text-transform: uppercase;
+			}
+			&__date {
+				font-size: 12px;
 			}
 			&__fav {
-				background-color: orange;
-				width: 104px;
-				height: 52px;
-				margin-bottom: 2rem;
+				width: 150px;
+				height: 60px;
+				margin: 2rem 0;
+				transition: background-color 0.3s ease-in-out;
+				&:hover {
+					background-color: orange;
+				}
 				button {
+					display: flex;
+					justify-content: center;
+					align-items: center;
+					gap: 10px;
 					border: none;
 					height: inherit;
 					width: inherit;
 					background-color: inherit;
-					color: white;
 				}
-				&:hover {
-					background-color: rgb(255, 94, 0);
+			}
+			&__review {
+				display: flex;
+				align-items: center;
+				gap: 1rem;
+				&__score {
+					font-size: 1.5rem;
+					font-weight: 500;
+				}
+				&__stars {
+					display: flex;
+					gap: 1rem;
+				}
+				&__count {
+					font-weight: 500;
+					color: rgb(117, 117, 117);
+				}
+			}
+		}
+		&__img {
+			height: 500px;
+			width: 100%;
+			object-fit: cover;
+		}
+	}
+	&__content {
+		width: 60%;
+		margin: 0 5rem 2rem 5rem;
+		border-top: 1px solid rgba(255, 166, 0, 0.5);
+		&__time {
+			padding-top: 1.5rem;
+		}
+		&__rating {
+			&__signin {
+				width: 100%;
+				background-color: orange;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				padding: 1rem 0;
+				a {
+					color: black;
 				}
 			}
 		}

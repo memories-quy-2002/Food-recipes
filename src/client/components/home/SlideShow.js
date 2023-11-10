@@ -12,7 +12,7 @@ const SlideShow = ({ items }) => {
 	useEffect(() => {
 		const intervalId = setInterval(() => {
 			setCurrIndex((prevIndex) => (prevIndex + 1) % items.length);
-		}, 8000);
+		}, 10000);
 		return () => {
 			clearInterval(intervalId);
 		};
@@ -22,7 +22,7 @@ const SlideShow = ({ items }) => {
 			<div
 				className="home__slideshow__container"
 				style={{
-					transition: `transform 0.3s ease-in-out`,
+					transition: `transform 1s ease-in-out`,
 					transform: `translateX(-${currIndex * 100}vw)`,
 				}}
 			>

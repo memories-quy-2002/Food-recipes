@@ -34,7 +34,6 @@ const HeaderAuthButton = ({ auth }) => {
 	}, [token, session.user, dispatch]);
 	const handleSignOut = () => {
 		dispatch(authActions.logout());
-		navigate("/");
 	};
 	const handleClick = () => {
 		navigate("/account");
@@ -50,7 +49,6 @@ const HeaderAuthButton = ({ auth }) => {
 					</button>
 					<div className="header__auth--login__content">
 						<a href="/profile">Profile</a>
-						<a href="/setting">Settings</a>
 						<a href="/" onClick={handleSignOut}>
 							Sign out
 						</a>
