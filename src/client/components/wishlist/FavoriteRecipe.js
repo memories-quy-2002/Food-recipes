@@ -1,7 +1,7 @@
 import React from "react";
 import convertImage from "../../utils/convertImage";
 
-const FavoriteRecipe = ({ recipe, handleDelete }) => {
+const FavoriteRecipe = ({ recipe, handleShowModal }) => {
 	return (
 		<li className="wishlist__main__content__list__item">
 			<div className="wishlist__main__content__list__item__img">
@@ -18,8 +18,8 @@ const FavoriteRecipe = ({ recipe, handleDelete }) => {
 
 			<button
 				type="button"
-				className="wishlist__main__content__list__item__button"
-				onClick={handleDelete}
+				className="wishlist__main__content__list__item__button btn btn-danger"
+				onClick={handleShowModal}
 			>
 				Delete
 			</button>

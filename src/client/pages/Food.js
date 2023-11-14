@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
-import Layout from "../components/layout/Layout";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import "../styles/Food.scss";
-import MenuBar from "../components/food/MenuBar";
-import FoodContent from "../components/food/FoodContent";
 import { useLocation } from "react-router-dom";
 import axios from "../api/axios";
+import MenuBar from "../components/food/MenuBar";
+import Layout from "../components/layout/Layout";
+import "../styles/Food.scss";
+const FoodContent = lazy(() => import("../components/food/FoodContent"));
 
 const Food = () => {
 	const location = useLocation();
@@ -39,7 +39,18 @@ const Food = () => {
 						/>
 					</Col>
 					<Col md={9}>
-						<FoodContent categoryId={categoryId} mealId={mealId} />
+						<Suspense
+							fallback={
+								<div className="app__loaderContainer">
+									<div className="app__loader"></div>
+								</div>
+							}
+						>
+							<FoodContent
+								categoryId={categoryId}
+								mealId={mealId}
+							/>
+						</Suspense>
 					</Col>
 				</Row>
 			</Container>

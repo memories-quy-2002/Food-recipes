@@ -1,4 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter&family=Montserrat:wght@300&family=Roboto:wght@500&display=swap");
+
+$color_1: #9880ff;
+$background-color_1: #9880ff;
 * {
 	margin: 0;
 	padding: 0;
@@ -7,4 +10,101 @@
 
 body {
 	font-family: "Roboto", sans-serif;
+}
+
+.loaderContainer {
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+@keyframes dot-elastic-before {
+	0% {
+		transform: scale(1, 1);
+	}
+	25% {
+		transform: scale(1, 1.5);
+	}
+	50% {
+		transform: scale(1, 0.67);
+	}
+	75% {
+		transform: scale(1, 1);
+	}
+	100% {
+		transform: scale(1, 1);
+	}
+}
+@keyframes dot-elastic {
+	0% {
+		transform: scale(1, 1);
+	}
+	25% {
+		transform: scale(1, 1);
+	}
+	50% {
+		transform: scale(1, 1.5);
+	}
+	75% {
+		transform: scale(1, 1);
+	}
+	100% {
+		transform: scale(1, 1);
+	}
+}
+@keyframes dot-elastic-after {
+	0% {
+		transform: scale(1, 1);
+	}
+	25% {
+		transform: scale(1, 1);
+	}
+	50% {
+		transform: scale(1, 0.67);
+	}
+	75% {
+		transform: scale(1, 1.5);
+	}
+	100% {
+		transform: scale(1, 1);
+	}
+}
+.dot-elastic {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 20px;
+	aspect-ratio: 1/1;
+	border-radius: 50%;
+	background-color: $background-color_1;
+	color: $color_1;
+	animation: dot-elastic 1s infinite linear;
+	&::before {
+		content: "";
+		display: inline-block;
+		position: absolute;
+		top: 0;
+		left: -25px;
+		width: 20px;
+		aspect-ratio: 1/1;
+		border-radius: 50%;
+		background-color: $background-color_1;
+		color: $color_1;
+		animation: dot-elastic-before 1s infinite linear;
+	}
+	&::after {
+		content: "";
+		display: inline-block;
+		position: absolute;
+		top: 0;
+		left: 25px;
+		width: 20px;
+		aspect-ratio: 1/1;
+		border-radius: 50%;
+		background-color: $background-color_1;
+		color: $color_1;
+		animation: dot-elastic-after 1s infinite linear;
+	}
 }

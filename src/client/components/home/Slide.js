@@ -13,7 +13,7 @@ const Slide = ({ id, title, desc, imgSrc }) => {
 				<p className="home__slide__content__desc">{desc}</p>
 				<button
 					type="button"
-					className="home__slide__content__button"
+					className="home__slide__content__button btn btn-dark"
 					onClick={handleClick}
 				>
 					Learn more

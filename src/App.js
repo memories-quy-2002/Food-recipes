@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.scss";
 import RecipeProvider from "./client/context/RecipeProvider";
@@ -5,9 +6,9 @@ import Account from "./client/pages/Account";
 import Food from "./client/pages/Food";
 import Home from "./client/pages/Home";
 import Profile from "./client/pages/Profile";
-import Recipe from "./client/pages/Recipe";
-import Setting from "./client/pages/Setting";
 import Wishlist from "./client/pages/Wishlist";
+import Layout from "./client/components/layout/Layout";
+const Recipe = lazy(() => import("./client/pages/Recipe"));
 
 function App() {
 	return (
@@ -18,7 +19,24 @@ function App() {
 					<Route path="/food" element={<Food />} />
 					<Route path="/account" element={<Account />} />
 					<Route path="/profile" element={<Profile />} />
-					<Route path="/recipe" element={<Recipe />} />
+					<Route
+						path="/recipe"
+						element={
+							<Layout>
+								<Suspense
+									fallback={
+										<div className="loaderContainer">
+											<div className="dot-elastic"></div>
+										</div>
+									}
+								>
+									<div style={{ minHeight: "100vh" }}>
+										<Recipe />
+									</div>
+								</Suspense>
+							</Layout>
+						}
+					/>
 					<Route path="/wishlist" element={<Wishlist />} />
 				</Routes>
 			</BrowserRouter>

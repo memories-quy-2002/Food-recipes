@@ -1,11 +1,11 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import Layout from "../components/layout/Layout";
 import ProfileAside from "../components/profile/ProfileAside";
-import ProfileMain from "../components/profile/ProfileMain";
 import { authActions } from "../redux/authSlice";
 import "../styles/Profile.scss";
+const ProfileMain = lazy(() => import("../components/profile/ProfileMain"));
 
 const Profile = () => {
 	const user = useSelector((state) =>
@@ -23,7 +23,15 @@ const Profile = () => {
 						name={user.full_name}
 						handleLogOut={handleLogOut}
 					/>
-					<ProfileMain user={user} />
+					<Suspense
+						fallback={
+							<div className="profile__container__main">
+								Loading...
+							</div>
+						}
+					>
+						<ProfileMain user={user} />
+					</Suspense>
 				</div>
 			</Container>
 		</Layout>

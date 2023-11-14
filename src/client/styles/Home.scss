@@ -50,13 +50,8 @@
 				width: fit-content;
 				padding: 0.5rem 1rem;
 				border: none;
-				border-radius: 5px;
-				background-color: #000;
-				color: white;
+				background-color: black;
 				transition: background-color 0.3s ease-out;
-				&:hover {
-					background-color: #242323;
-				}
 			}
 		}
 	}
@@ -185,6 +180,7 @@
 					border: 1px solid rgba(255, 166, 0, 0.678);
 					border-radius: 5px;
 					padding-bottom: 1rem;
+					cursor: pointer;
 					transition: all 0.3s ease-in-out;
 					&__img {
 						border-radius: inherit;
@@ -228,9 +224,8 @@
 						margin-left: 1rem;
 					}
 					&:hover {
-						cursor: pointer;
-						transform: translateY(-4px) translateX(-4px);
-						box-shadow: 4px 4px 10px 1px orange;
+						transform: translateY(-8px);
+						box-shadow: 0px 6px 14px 2px orange;
 					}
 				}
 				@media screen and (max-width: 992px) {
