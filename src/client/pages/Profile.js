@@ -1,7 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
-import Layout from "../components/layout/Layout";
 import ProfileAside from "../components/profile/ProfileAside";
 import { authActions } from "../redux/authSlice";
 import "../styles/Profile.scss";
@@ -16,25 +15,23 @@ const Profile = () => {
 		dispatch(authActions.logout());
 	};
 	return (
-		<Layout>
-			<Container fluid style={{ padding: 0 }}>
-				<div className="profile__container">
-					<ProfileAside
-						name={user.full_name}
-						handleLogOut={handleLogOut}
-					/>
-					<Suspense
-						fallback={
-							<div className="profile__container__main">
-								Loading...
-							</div>
-						}
-					>
-						<ProfileMain user={user} />
-					</Suspense>
-				</div>
-			</Container>
-		</Layout>
+		<Container fluid style={{ padding: 0 }}>
+			<div className="profile__container">
+				<ProfileAside
+					name={user.full_name}
+					handleLogOut={handleLogOut}
+				/>
+				<Suspense
+					fallback={
+						<div className="profile__container__main">
+							Loading...
+						</div>
+					}
+				>
+					<ProfileMain user={user} />
+				</Suspense>
+			</div>
+		</Container>
 	);
 };
 

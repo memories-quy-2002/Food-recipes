@@ -2,12 +2,16 @@ import React from "react";
 import { Button, Offcanvas } from "react-bootstrap";
 import { BsSearch } from "react-icons/bs";
 import { FaBars } from "react-icons/fa6";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "../../redux/authSlice";
 
 const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 	const dispatch = useDispatch();
-	const { isAuthenticated, user } = auth;
+	const user = useSelector((state) =>
+		state.auth.local.user ? state.auth.local.user : state.auth.session.user
+	);
+	const { local, session } = useSelector((state) => state.auth);
+	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	return (
 		<div className="header__toggle">
 			<Button onClick={handleShow} className="header__toggle__icon">

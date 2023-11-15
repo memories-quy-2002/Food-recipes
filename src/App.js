@@ -8,21 +8,22 @@ import Home from "./client/pages/Home";
 import Profile from "./client/pages/Profile";
 import Wishlist from "./client/pages/Wishlist";
 import Layout from "./client/components/layout/Layout";
+import ProfileEdit from "./client/pages/ProfileEdit";
 const Recipe = lazy(() => import("./client/pages/Recipe"));
 
 function App() {
 	return (
 		<RecipeProvider>
 			<BrowserRouter>
-				<Routes>
-					<Route path="/" element={<Home />} />
-					<Route path="/food" element={<Food />} />
-					<Route path="/account" element={<Account />} />
-					<Route path="/profile" element={<Profile />} />
-					<Route
-						path="/recipe"
-						element={
-							<Layout>
+				<Layout>
+					<Routes>
+						<Route path="/" element={<Home />} />
+						<Route path="/food" element={<Food />} />
+						<Route path="/account" element={<Account />} />
+						<Route path="/profile" element={<Profile />} />
+						<Route
+							path="/recipe"
+							element={
 								<Suspense
 									fallback={
 										<div className="loaderContainer">
@@ -34,11 +35,12 @@ function App() {
 										<Recipe />
 									</div>
 								</Suspense>
-							</Layout>
-						}
-					/>
-					<Route path="/wishlist" element={<Wishlist />} />
-				</Routes>
+							}
+						/>
+						<Route path="/wishlist" element={<Wishlist />} />
+						<Route path="/profile/edit" element={<ProfileEdit />} />
+					</Routes>
+				</Layout>
 			</BrowserRouter>
 		</RecipeProvider>
 	);

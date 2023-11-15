@@ -22,13 +22,6 @@ const Recipe = () => {
 			}
 		})();
 	}, [id]);
-	// if (!recipe) {
-	// 	return (
-	// 		<Layout>
-	// 			<div>Loading...</div>
-	// 		</Layout>
-	// 	);
-	// }
 
 	return (
 		<>

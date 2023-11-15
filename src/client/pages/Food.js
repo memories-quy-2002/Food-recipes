@@ -3,7 +3,6 @@ import { Col, Container, Row } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 import axios from "../api/axios";
 import MenuBar from "../components/food/MenuBar";
-import Layout from "../components/layout/Layout";
 import "../styles/Food.scss";
 const FoodContent = lazy(() => import("../components/food/FoodContent"));
 
@@ -27,34 +26,29 @@ const Food = () => {
 		fetchMeals();
 	}, []);
 	return (
-		<Layout>
-			<Container fluid className="my-3">
-				<Row>
-					<Col md={3}>
-						<MenuBar
-							categoryId={categoryId}
-							mealId={mealId}
-							categories={categories}
-							meals={meals}
-						/>
-					</Col>
-					<Col md={9}>
-						<Suspense
-							fallback={
-								<div className="app__loaderContainer">
-									<div className="app__loader"></div>
-								</div>
-							}
-						>
-							<FoodContent
-								categoryId={categoryId}
-								mealId={mealId}
-							/>
-						</Suspense>
-					</Col>
-				</Row>
-			</Container>
-		</Layout>
+		<Container fluid className="my-3">
+			<Row>
+				<Col md={3}>
+					<MenuBar
+						categoryId={categoryId}
+						mealId={mealId}
+						categories={categories}
+						meals={meals}
+					/>
+				</Col>
+				<Col md={9}>
+					<Suspense
+						fallback={
+							<div className="app__loaderContainer">
+								<div className="app__loader"></div>
+							</div>
+						}
+					>
+						<FoodContent categoryId={categoryId} mealId={mealId} />
+					</Suspense>
+				</Col>
+			</Row>
+		</Container>
 	);
 };
 

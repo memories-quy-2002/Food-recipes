@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import axios from "../api/axios";
-import Layout from "../components/layout/Layout";
 import FavoriteRecipe from "../components/wishlist/FavoriteRecipe";
 import { RecipeContext } from "../context/RecipeProvider";
 import "../styles/Wishlist.scss";
@@ -49,52 +48,50 @@ const Wishlist = () => {
 		}
 	};
 	return (
-		<Layout>
-			<Container fluid className="wishlist">
-				<div className="wishlist__main">
-					<div className="wishlist__main__title">
-						<h2>Your favorite recipes</h2>
-					</div>
-					<div className="wishlist__main__content">
-						<ul className="wishlist__main__content__list">
-							{favoriteRecipes.map((recipe) => (
-								<FavoriteRecipe
-									key={recipe.recipe_id}
-									recipe={recipe}
-									handleShowModal={() =>
-										handleShowModal(recipe.recipe_id)
-									}
-								/>
-							))}
-						</ul>
-					</div>
+		<Container fluid className="wishlist">
+			<div className="wishlist__main">
+				<div className="wishlist__main__title">
+					<h2>Your favorite recipes</h2>
 				</div>
-				{showModal && (
-					<div className="wishlist__modal">
-						<div className="wishlist__modal__content">
-							<h3>Delete Recipe</h3>
-							<p>Are you sure you want to delete this recipe?</p>
-							<div className="wishlist__modal__buttons">
-								<button
-									className="btn btn-danger"
-									type="submit"
-									onClick={handleDelete}
-								>
-									Delete
-								</button>
-								<button
-									className="btn btn-primary"
-									type="button"
-									onClick={() => setShowModal(false)}
-								>
-									Cancel
-								</button>
-							</div>
+				<div className="wishlist__main__content">
+					<ul className="wishlist__main__content__list">
+						{favoriteRecipes.map((recipe) => (
+							<FavoriteRecipe
+								key={recipe.recipe_id}
+								recipe={recipe}
+								handleShowModal={() =>
+									handleShowModal(recipe.recipe_id)
+								}
+							/>
+						))}
+					</ul>
+				</div>
+			</div>
+			{showModal && (
+				<div className="wishlist__modal">
+					<div className="wishlist__modal__content">
+						<h3>Delete Recipe</h3>
+						<p>Are you sure you want to delete this recipe?</p>
+						<div className="wishlist__modal__buttons">
+							<button
+								className="btn btn-danger"
+								type="submit"
+								onClick={handleDelete}
+							>
+								Delete
+							</button>
+							<button
+								className="btn btn-primary"
+								type="button"
+								onClick={() => setShowModal(false)}
+							>
+								Cancel
+							</button>
 						</div>
 					</div>
-				)}
-			</Container>
-		</Layout>
+				</div>
+			)}
+		</Container>
 	);
 };
 
