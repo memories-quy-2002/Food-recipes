@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button, Container, Form } from "react-bootstrap";
 import { useSelector } from "react-redux";
-import convertImage from "../utils/convertImage";
 import "../styles/ProfileEdit.scss";
+import convertImage from "../utils/convertImage";
 
 const ProfileEdit = () => {
 	const user = useSelector((state) =>
