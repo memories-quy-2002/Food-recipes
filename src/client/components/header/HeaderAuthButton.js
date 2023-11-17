@@ -3,10 +3,14 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import { authActions } from "../../redux/authSlice";
+import convertImage from "../../utils/convertImage";
+import { FaCaretDown } from "react-icons/fa";
+
 const HeaderAuthButton = ({ auth }) => {
 	const { local, session } = auth;
 	const { token } = local;
 	const [user, setUser] = useState({});
+	const [clicked, setClicked] = useState(false);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
@@ -42,17 +46,27 @@ const HeaderAuthButton = ({ auth }) => {
 		<div className="header__auth">
 			{isAuthenticated ? (
 				<div className="header__auth--login">
-					<button className="header__auth--login__button">
+					<button
+						className="header__auth--login__button"
+						onClick={() => setClicked((clicked) => !clicked)}
+					>
+						{convertImage(
+							"avatar",
+							"header__auth--login__button__img"
+						)}
 						<p className="m-0">
 							{user ? user.full_name : "Unknown"}
 						</p>
+						<FaCaretDown />
 					</button>
-					<div className="header__auth--login__content">
-						<a href="/profile">Profile</a>
-						<a href="/" onClick={handleSignOut}>
-							Sign out
-						</a>
-					</div>
+					{clicked && (
+						<div className="header__auth--login__content">
+							<a href="/profile">My Profile</a>
+							<a href="/" onClick={handleSignOut}>
+								Sign out
+							</a>
+						</div>
+					)}
 				</div>
 			) : (
 				<div className="header__auth--signup">

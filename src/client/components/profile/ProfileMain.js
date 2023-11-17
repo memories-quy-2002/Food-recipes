@@ -1,25 +1,17 @@
 import React from "react";
-
-const ProfileMain = ({ user }) => {
-	const { full_name, email, phone, address } = user;
+import ChangePassword from "./ChangePassword";
+import PersonalInfo from "./PersonalInfo";
+import PersonalRecipes from "./PersonalRecipes";
+import Reviews from "./Reviews";
+const ProfileMain = ({ user, page }) => {
 	return (
-		<div className="profile__container__main">
-			<h2>About</h2>
-			<ul className="profile__container__main__about">
-				<li>
-					<strong>Full name</strong> <p>{full_name}</p>
-				</li>
-				<li>
-					<strong>Email</strong> <p>{email}</p>
-				</li>
-				<li>
-					<strong>Phone</strong> <p>{phone || "Not provided"}</p>
-				</li>
-				<li>
-					<strong>Address</strong> <p>{address || "Not provided"}</p>
-				</li>
-			</ul>
-		</div>
+		<section className="profile__container__main">
+			{page === "info" && <PersonalInfo user={user} />}
+			{page === "setting" && <PersonalInfo />}
+			{page === "password" && <ChangePassword />}
+			{page === "recipes" && <PersonalRecipes />}
+			{page === "reviews" && <Reviews />}
+		</section>
 	);
 };
 

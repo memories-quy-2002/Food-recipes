@@ -7,7 +7,7 @@
 		display: flex;
 		align-items: center;
 		padding: 0rem 1rem;
-		height: 80px;
+		height: 70px;
 	}
 
 	&__brand {
@@ -55,8 +55,6 @@
 				width: 100%;
 				text-decoration: none;
 				color: black;
-				font-size: 1.2rem;
-				font-weight: bold;
 				display: block;
 			}
 			&:hover {
@@ -141,21 +139,17 @@
 			&__button {
 				padding: 0.5rem 0.25rem;
 				width: 150px;
-				background: linear-gradient(
-					109.6deg,
-					rgb(255, 207, 84) 11.2%,
-					rgb(255, 158, 27) 91.1%
-				);
-				border-radius: 30px;
+				background-color: orange;
+				border-radius: 10px;
 				border: none;
 				font-size: 1.2rem;
 				&:hover {
-					background-color: rgb(255, 158, 27);
+					background-color: #ff8c00;
 				}
 			}
 		}
 		&--login {
-			width: 150px;
+			width: 240px;
 			position: relative;
 			display: inline-block;
 			&__button {
@@ -163,11 +157,26 @@
 				background-color: white;
 				border: none;
 				padding: 1rem;
+				display: flex;
+				flex-direction: row;
+				justify-content: center;
+				align-items: center;
+				gap: 0.5rem;
+				&__img {
+					aspect-ratio: 1/1;
+					width: 28px;
+					border-radius: 100%;
+				}
+				p {
+					font-size: 14px;
+				}
 			}
 			&__content {
-				width: 100%;
-				display: none;
+				width: 75%;
+				z-index: 1;
+				display: block;
 				position: absolute;
+				right: 10%;
 				transition: all 0.3s ease-in-out;
 				a {
 					background-color: white;
@@ -181,10 +190,6 @@
 						color: white;
 					}
 				}
-			}
-			&:hover &__content {
-				z-index: 1;
-				display: block;
 			}
 		}
 		@media screen and (max-width: 768px) {

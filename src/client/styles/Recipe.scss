@@ -24,19 +24,24 @@
 				width: 150px;
 				height: 60px;
 				margin: 2rem 0;
+				border: 1px solid orange;
 				transition: background-color 0.3s ease-in-out;
-				&:hover {
-					background-color: orange;
-				}
 				button {
+					height: inherit;
+					width: inherit;
+					background-color: inherit;
 					display: flex;
 					justify-content: center;
 					align-items: center;
 					gap: 10px;
 					border: none;
-					height: inherit;
-					width: inherit;
-					background-color: inherit;
+					transition: color 0.3s ease-in-out;
+				}
+				&:hover {
+					background-color: orange;
+					button {
+						color: white;
+					}
 				}
 			}
 			&__review {

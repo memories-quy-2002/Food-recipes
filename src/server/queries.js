@@ -129,15 +129,22 @@ const createUser = (request, response) => {
 
 const updateUser = (request, response) => {
 	const user_id = parseInt(request.params.id);
-	const { name, email } = request.body;
+	const { name, email, phoneNumber, address } = request.body.formData;
+	console.log({ name, email, phoneNumber, address });
 	pool.query(
-		"UPDATE accounts SET full_name = $1, email = $2 WHERE user_id = $3",
-		[name.first + " " + name.last, email, user_id],
+		"UPDATE accounts SET full_name=$1, email=$2, phone=$3, address=$4 WHERE user_id=$5 RETURNING *",
+		[name, email, phoneNumber, address, user_id],
 		(error, results) => {
 			if (error) {
 				throw error;
 			}
-			response.status(200).send(`User modified with user_id: ${user_id}`);
+			const user = results.rows[0];
+			response
+				.status(200)
+				.send({
+					message: `User modified with user_id: ${user_id}`,
+					user: user,
+				});
 		}
 	);
 };

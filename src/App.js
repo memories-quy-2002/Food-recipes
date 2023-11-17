@@ -1,14 +1,13 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.scss";
+import Layout from "./client/components/layout/Layout";
 import RecipeProvider from "./client/context/RecipeProvider";
 import Account from "./client/pages/Account";
 import Food from "./client/pages/Food";
 import Home from "./client/pages/Home";
 import Profile from "./client/pages/Profile";
 import Wishlist from "./client/pages/Wishlist";
-import Layout from "./client/components/layout/Layout";
-import ProfileEdit from "./client/pages/ProfileEdit";
 const Recipe = lazy(() => import("./client/pages/Recipe"));
 
 function App() {
@@ -38,7 +37,6 @@ function App() {
 							}
 						/>
 						<Route path="/wishlist" element={<Wishlist />} />
-						<Route path="/profile/edit" element={<ProfileEdit />} />
 					</Routes>
 				</Layout>
 			</BrowserRouter>

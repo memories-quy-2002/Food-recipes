@@ -15,6 +15,16 @@ const authSlice = createSlice({
 		},
 	},
 	reducers: {
+		updateUser(state, action) {
+			const { user } = action.payload;
+			if (state.local.isAuthenticated) {
+				state.local = { ...state.local, user: user };
+				localStorage.setItem("user", JSON.stringify(user));
+			} else {
+				state.session = { ...state.session, user: user };
+				sessionStorage.setItem("user", JSON.stringify(user));
+			}
+		},
 		login(state, action) {
 			const { user, token } = action.payload;
 			state.local = {

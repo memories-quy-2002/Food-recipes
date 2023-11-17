@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileAside from "../components/profile/ProfileAside";
@@ -10,16 +10,21 @@ const Profile = () => {
 	const user = useSelector((state) =>
 		state.auth.local.user ? state.auth.local.user : state.auth.session.user
 	);
+	const [page, setPage] = useState("info");
 	const dispatch = useDispatch();
 	const handleLogOut = () => {
 		dispatch(authActions.logout());
 	};
+	const handleChangePage = (pageName) => {
+		setPage(pageName);
+	};
 	return (
 		<Container fluid style={{ padding: 0 }}>
-			<div className="profile__container">
+			<main className="profile__container">
 				<ProfileAside
 					name={user.full_name}
 					handleLogOut={handleLogOut}
+					handleChangePage={handleChangePage}
 				/>
 				<Suspense
 					fallback={
@@ -28,9 +33,9 @@ const Profile = () => {
 						</div>
 					}
 				>
-					<ProfileMain user={user} />
+					<ProfileMain user={user} page={page} />
 				</Suspense>
-			</div>
+			</main>
 		</Container>
 	);
 };

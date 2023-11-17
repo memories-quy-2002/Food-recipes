@@ -1,37 +1,64 @@
 import React from "react";
-import convertImage from "../../utils/convertImage";
-
-const ProfileAside = ({ name, handleLogOut }) => {
+import { IoPersonCircleSharp } from "react-icons/io5";
+const ProfileAside = ({ name, handleLogOut, handleChangePage }) => {
 	return (
 		<div className="profile__container__aside">
-			<div className="profile__container__aside__img">
-				{convertImage("avatar", "")}
+			<div className="profile__container__aside__greeting">
+				<IoPersonCircleSharp color="orange" size={64} />
+				<h5 className="profile__container__aside__greeting__text">
+					Hi, {name}
+				</h5>
 			</div>
 			<div className="profile__container__aside__content">
-				<div className="profile__container__aside__content__title">
-					<h4>{name}</h4>
-					<a href="/profile/edit">Edit profile</a>
-				</div>
+				<ul className="profile__container__aside__content__nav">
+					<li>
+						<a
+							href="/profile#/"
+							onClick={() => handleChangePage("info")}
+						>
+							<div>Personal Info</div>
+						</a>
+					</li>
 
-				<ul className="profile__container__aside__content__menu">
 					<li>
-						<a href="/">
-							<div>Home</div>
+						<a
+							href="/profile#/setting"
+							onClick={() => handleChangePage("setting")}
+						>
+							<div>Public Profile Setting</div>
 						</a>
 					</li>
 					<li>
-						<a href="/support">
-							<div>Support</div>
+						<a
+							href="/profile#/password"
+							onClick={() => handleChangePage("password")}
+						>
+							<div>Change Password</div>
+						</a>
+					</li>
+				</ul>
+				<ul className="profile__container__aside__content__nav">
+					<li>
+						<a
+							href="/profile#/recipes"
+							onClick={() => handleChangePage("recipes")}
+						>
+							<div>All Personal Recipes</div>
 						</a>
 					</li>
 					<li>
-						<a href="/setting">
-							<div>Setting</div>
+						<a
+							href="/profile#/reviews"
+							onClick={() => handleChangePage("reviews")}
+						>
+							<div>Recipes Reviews</div>
 						</a>
 					</li>
+				</ul>
+				<ul className="profile__container__aside__content__nav">
 					<li>
 						<a href="/" onClick={handleLogOut}>
-							<div>Sign out</div>
+							<div>Log out</div>
 						</a>
 					</li>
 				</ul>

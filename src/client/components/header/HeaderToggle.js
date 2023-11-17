@@ -39,7 +39,6 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 									href={href}
 									className="header__toggle__item__link"
 								>
-									{icon} {""}
 									{title}
 								</a>
 							</li>
