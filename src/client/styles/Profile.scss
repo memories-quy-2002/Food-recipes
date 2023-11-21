@@ -58,7 +58,8 @@
 		&__main {
 			flex: 4;
 			padding: 0 2rem;
-			&__info {
+			&__info,
+			&__change {
 				&__title {
 					margin-bottom: 2rem;
 				}
@@ -88,6 +89,38 @@
 							background-color: rgb(255, 44, 0);
 						}
 					}
+				}
+			}
+			&__reviews {
+				&__table {
+					width: 100%;
+					border-collapse: collapse;
+					&__truncate {
+						max-width: 200px; // Set a maximum width for the cell
+						white-space: nowrap; // Prevent text from wrapping
+						overflow: hidden; // Hide overflowing content
+						text-overflow: ellipsis; // Display ellipsis for overflow
+					}
+					&__buttons {
+						text-align: center;
+						.btn {
+							margin-right: 12px;
+
+							&:last-child {
+								margin-right: 0; // Remove margin for the last button
+							}
+						}
+					}
+				}
+
+				th,
+				td {
+					padding: 10px;
+					border: 1px solid #000000;
+					text-align: center;
+				}
+				th {
+					background-color: #f2f2f2;
 				}
 			}
 		}

@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { Button, Col, Container, Form, Row } from "react-bootstrap";
-import { BsFillStarFill, BsHeart, BsStarHalf } from "react-icons/bs";
+import { BsFillHeartFill, BsHeart } from "react-icons/bs";
+import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import "../styles/Recipe.scss";
 import additionTime from "../utils/additionTime";
 import convertImage from "../utils/convertImage";
 import convertTime from "../utils/convertTime";
-import { useSelector } from "react-redux";
+import ratingStar from "../utils/ratingStar";
 
 const Recipe = () => {
 	const [recipe, setRecipe] = useState(null);
-	const [rating, setRating] = useState(0);
+	const [favorite, setFavorite] = useState(false);
+	const [ratingScore, setRatingScore] = useState(0);
 	const [review, setReview] = useState("");
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -24,41 +26,73 @@ const Recipe = () => {
 			? local.user.user_id
 			: session.user.user_id
 		: 0;
+
 	const handleRatingChange = (event) => {
-		setRating(event.target.value);
+		setRatingScore(event.target.value);
 	};
 
 	const handleReviewChange = (event) => {
 		setReview(event.target.value);
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async (event) => {
 		event.preventDefault();
-		console.log(`Rating: ${rating}, Review: ${review}`);
+		await axios.post(`/rating/${user_id}/${recipe.recipe_id}`, {
+			score: ratingScore,
+			review: review,
+		});
+		window.location.reload(false);
+		console.log(`Rating: ${ratingScore}, Review: ${review}`);
 	};
 
-	const handleClickFavorite = async () => {
+	const handleClickFavorite = async (event) => {
+		event.preventDefault();
 		if (!isAuthenticated) navigate("/account");
 		try {
-			const response = await axios.post("/wishlist", {
-				user_id: user_id,
-				recipe_id: recipe.recipe_id,
-			});
-			console.log(response);
-			window.location.reload(false);
+			if (favorite) {
+				const response = await axios.delete(
+					`/wishlist/${user_id}/${recipe.recipe_id}`
+				);
+				if (response.status === 200) {
+					window.location.reload(false);
+				}
+			} else {
+				const response = await axios.post("/wishlist", {
+					user_id: user_id,
+					recipe_id: recipe.recipe_id,
+				});
+				console.log(response);
+				window.location.reload(false);
+			}
 		} catch (err) {
 			console.error(err);
 		}
 	};
 
 	useEffect(() => {
-		(async () => {
+		const fetchRecipe = async () => {
 			const response = await axios.get(`/recipe/${id}`);
 			if (response.status === 200) {
 				setRecipe(response.data.recipe);
 			}
-		})();
+		};
+		fetchRecipe();
 	}, [id]);
+
+	useEffect(() => {
+		const fetchFavorites = async () => {
+			const response = await axios.get(`/wishlist/${user_id}`);
+			if (response.status === 200 && recipe !== null) {
+				setFavorite(
+					response.data.wishlist.some(
+						(wishlistRecipe) =>
+							wishlistRecipe.recipe_id === recipe.recipe_id
+					)
+				);
+			}
+		};
+		fetchFavorites();
+	});
 
 	return (
 		<>
@@ -82,33 +116,31 @@ const Recipe = () => {
 										type="button"
 										onClick={handleClickFavorite}
 									>
-										<BsHeart size={24} />{" "}
-										<strong>Save recipe</strong>
+										{favorite ? (
+											<BsFillHeartFill
+												size={24}
+												color="orange"
+											/>
+										) : (
+											<BsHeart size={24} color="orange" />
+										)}
+
+										<strong>
+											{favorite ? "Unsave" : "Save"}
+										</strong>
 									</button>
 								</div>
 								<div className="recipe__container__summary__review">
 									<div className="recipe__container__summary__review__score">
-										<strong>4.7</strong>
+										<strong>{recipe.overall_score}</strong>
 									</div>
 									<div className="recipe__container__summary__review__stars">
-										<div>
-											<BsFillStarFill />
-										</div>
-										<div>
-											<BsFillStarFill />
-										</div>
-										<div>
-											<BsFillStarFill />
-										</div>
-										<div>
-											<BsFillStarFill />
-										</div>
-										<div>
-											<BsStarHalf />
-										</div>
+										{ratingStar(recipe.overall_score).map(
+											(star) => star
+										)}
 									</div>
 									<div className="recipe__container__summary__review__count">
-										<strong>(223)</strong>
+										<strong>({recipe.num_ratings})</strong>
 									</div>
 								</div>
 							</div>
@@ -166,7 +198,7 @@ const Recipe = () => {
 											min="0"
 											max="5"
 											step="0.1"
-											value={rating}
+											value={ratingScore}
 											onChange={handleRatingChange}
 										/>
 									</Form.Group>

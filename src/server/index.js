@@ -19,11 +19,14 @@ app.get("/recipe/:id", db.getRecipesById);
 app.get("/category/", db.getCategories);
 app.get("/meal/", db.getMeals);
 app.get("/wishlist/:id", db.getWishlistbyUser);
+app.get("/rating/:uid", db.getRatingsById);
 app.post("/wishlist/", db.addItemstoWishlist);
 app.post("/account/jwt", db.getUserByJWT);
 app.post("/account/login", db.getUsersLogin);
 app.post("/account/signup", db.createUser);
+app.post("/rating/:uid/:rid", db.addRating);
 app.put("/account/users/:id", db.updateUser);
+app.put("/account/users/password/:uid", db.updatePassword);
 app.delete("/account/users/:id", db.deleteUser);
 app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
 

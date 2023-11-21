@@ -12,7 +12,6 @@ const FoodCardList = () => {
 	const [wishlist, setWishlist] = useState([]);
 	const { recipes } = useContext(RecipeContext);
 	const { local, session } = useSelector(({ auth }) => auth);
-	console.log({ local, session });
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const user_id = isAuthenticated
 		? local.isAuthenticated
@@ -23,11 +22,10 @@ const FoodCardList = () => {
 	const handleClickFavorite = async (recipe_id) => {
 		if (!isAuthenticated) navigate("/account");
 		try {
-			const response = await axios.post("/wishlist", {
+			await axios.post("/wishlist", {
 				user_id,
 				recipe_id,
 			});
-			console.log(response);
 			window.location.reload(false);
 		} catch (err) {
 			console.error(err);

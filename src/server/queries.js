@@ -129,24 +129,57 @@ const createUser = (request, response) => {
 
 const updateUser = (request, response) => {
 	const user_id = parseInt(request.params.id);
-	const { name, email, phoneNumber, address } = request.body.formData;
-	console.log({ name, email, phoneNumber, address });
+	const { name, phoneNumber, address } = request.body.formData;
 	pool.query(
-		"UPDATE accounts SET full_name=$1, email=$2, phone=$3, address=$4 WHERE user_id=$5 RETURNING *",
-		[name, email, phoneNumber, address, user_id],
+		"UPDATE accounts SET full_name=$1, phone=$2, address=$3 WHERE user_id=$4 RETURNING *",
+		[name, phoneNumber, address, user_id],
 		(error, results) => {
 			if (error) {
 				throw error;
 			}
 			const user = results.rows[0];
-			response
-				.status(200)
-				.send({
-					message: `User modified with user_id: ${user_id}`,
-					user: user,
-				});
+			response.status(200).send({
+				message: `User modified with user_id: ${user_id}`,
+				user: user,
+			});
 		}
 	);
+};
+
+const updatePassword = async (request, response) => {
+	const user_id = request.params.uid;
+	const { currentPassword, newPassword } = request.body;
+
+	try {
+		const result = await pool.query(
+			"SELECT * FROM accounts WHERE user_id = $1",
+			[user_id]
+		);
+
+		const user = result.rows[0];
+		const match = await utils.checkPassword(currentPassword, user.password);
+
+		if (!match) {
+			return response
+				.status(401)
+				.json({ message: "The current password is incorrect!" });
+		}
+
+		const hashedNewPassword = await utils.hashPassword(newPassword);
+		await pool.query("UPDATE accounts SET password=$1 WHERE user_id=$2", [
+			hashedNewPassword,
+			user_id,
+		]);
+
+		response.status(200).json({
+			message: "Password updated successfully!",
+		});
+	} catch (error) {
+		console.error(error);
+		response.status(500).json({
+			message: "Internal Server Error",
+		});
+	}
 };
 
 const deleteUser = (request, response) => {
@@ -165,12 +198,16 @@ const deleteUser = (request, response) => {
 
 const getRecipes = (request, response) => {
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_id, m.meal_name, m.meal_description, c.category_id,  c.category_name " +
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_id, m.meal_name, " +
+			"m.meal_description, c.category_id, c.category_name, " +
+			"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
 			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
-			"JOIN categories c ON r.category_id = c.category_id ORDER BY r.recipe_id ASC ",
+			"JOIN categories c ON r.category_id = c.category_id " +
+			"LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id GROUP BY r.recipe_id, m.meal_id, c.category_id ORDER BY r.recipe_id ASC",
 		(error, results) => {
 			if (error) {
-				throw error;
+				console.error("Error executing query", error);
+				return;
 			}
 			const recipes = results.rows;
 			response.status(200).json({ recipes });
@@ -181,10 +218,11 @@ const getRecipes = (request, response) => {
 const getRecipesById = (request, response) => {
 	const recipe_id = request.params.id;
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.prep_time, r.cook_time, m.meal_name, c.category_name " +
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.prep_time, r.cook_time, m.meal_name, c.category_name, " +
+			"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
 			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
-			"JOIN categories c ON r.category_id = c.category_id " +
-			"WHERE r.recipe_id = $1 ",
+			"JOIN categories c ON r.category_id = c.category_id LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id " +
+			"WHERE r.recipe_id = $1 GROUP BY r.recipe_id, m.meal_name, c.category_name",
 		[recipe_id],
 		(error, results) => {
 			if (error) {
@@ -279,10 +317,45 @@ const deleteWishlistItems = (request, response) => {
 		}
 	);
 };
+const addRating = (request, response) => {
+	const user_id = request.params.uid;
+	const recipe_id = request.params.rid;
+	const { score, review } = request.body;
+	pool.query(
+		"INSERT INTO rating (user_id, recipe_id, score, review) VALUES ($1, $2, $3, $4);",
+		[user_id, recipe_id, score, review],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			response.status(200).json({
+				message: `Rating with user_id = ${user_id}, recipe_id = ${recipe_id} has been added successfully.`,
+			});
+		}
+	);
+};
+const getRatingsById = (request, response) => {
+	const user_id = request.params.uid;
+	pool.query(
+		"SELECT rt.rating_id, rt.recipe_id, r.recipe_name, rt.score, rt.review, rt.date_added FROM rating rt " +
+			"JOIN recipes r ON rt.recipe_id = r.recipe_id WHERE user_id = $1",
+		[user_id],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			const ratings = results.rows;
+			response.status(200).json({
+				ratings,
+			});
+		}
+	);
+};
 module.exports = {
 	getUsersLogin,
 	createUser,
 	updateUser,
+	updatePassword,
 	deleteUser,
 	getUserByJWT,
 	getRecipes,
@@ -292,4 +365,6 @@ module.exports = {
 	addItemstoWishlist,
 	getWishlistbyUser,
 	deleteWishlistItems,
+	addRating,
+	getRatingsById,
 };

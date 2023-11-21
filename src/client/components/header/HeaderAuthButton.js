@@ -27,6 +27,7 @@ const HeaderAuthButton = ({ auth }) => {
 				} catch (error) {
 					if (error.response && error.response.status === 401) {
 						dispatch(authActions.logout());
+						navigate("/");
 					}
 				}
 			} else {
@@ -35,7 +36,7 @@ const HeaderAuthButton = ({ auth }) => {
 		};
 
 		fetchData();
-	}, [token, session.user, dispatch]);
+	}, [token, session.user, dispatch, navigate]);
 	const handleSignOut = () => {
 		dispatch(authActions.logout());
 	};

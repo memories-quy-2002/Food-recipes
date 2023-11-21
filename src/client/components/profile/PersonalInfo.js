@@ -6,7 +6,6 @@ import { authActions } from "../../redux/authSlice";
 const PersonalInfo = ({ user }) => {
 	const [formData, setFormData] = useState({
 		name: user.full_name,
-		email: user.email,
 		address: user.address,
 		phoneNumber: user.phone,
 	});
@@ -31,14 +30,13 @@ const PersonalInfo = ({ user }) => {
 	useEffect(() => console.log(formData), [formData]);
 	return (
 		<div className="profile__container__main__info">
-			<h1 className="profile__container__main__info__title">
+			<h2 className="profile__container__main__info__title">
 				Personal Info
-			</h1>
+			</h2>
 			<p>
-				These details will be used for all the Meredith profiles
-				associated with your email address. By filling out this
-				information, you will receive a more personalized experience
-				across all Meredith websites.
+				These details will be used for all the profiles associated with
+				your email address. By filling out this information, you will
+				receive a more personalized experience across all websites.
 			</p>
 
 			<div className="profile__container__main__info__form">
@@ -53,20 +51,6 @@ const PersonalInfo = ({ user }) => {
 							placeholder="Enter your full name"
 							name="name"
 							value={formData.name}
-							onChange={handleInputChange}
-						/>
-					</Form.Group>
-
-					<Form.Group
-						controlId="formBasicEmail"
-						className="profile__container__main__info__form__field"
-					>
-						<Form.Label>Email address</Form.Label>
-						<Form.Control
-							type="email"
-							placeholder="Enter email"
-							name="email"
-							value={formData.email}
 							onChange={handleInputChange}
 						/>
 					</Form.Group>
