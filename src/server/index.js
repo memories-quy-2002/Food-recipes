@@ -15,11 +15,12 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.get("/recipe/", db.getRecipes);
-app.get("/recipe/:id", db.getRecipesById);
+app.get("/recipe/:id", db.getRecipesByRecipeId);
 app.get("/category/", db.getCategories);
 app.get("/meal/", db.getMeals);
 app.get("/wishlist/:id", db.getWishlistbyUser);
-app.get("/rating/:uid", db.getRatingsById);
+app.get("/rating/:uid", db.getRatingsByUserId);
+app.get("/review/:rid", db.getReviewsByUserId);
 app.post("/wishlist/", db.addItemstoWishlist);
 app.post("/account/jwt", db.getUserByJWT);
 app.post("/account/login", db.getUsersLogin);

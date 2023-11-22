@@ -62,7 +62,7 @@ const getUsersLogin = (request, response) => {
 								email: user.email,
 							},
 							secretKey,
-							{ expiresIn: "4h" }
+							{ expiresIn: "30d" }
 						);
 						response.status(200).json({
 							user,
@@ -116,7 +116,7 @@ const createUser = (request, response) => {
 					{ user_id: user.user_id, email: user.email },
 					secretKey,
 					{
-						expiresIn: "4h",
+						expiresIn: "30d",
 					}
 				);
 				response
@@ -198,7 +198,7 @@ const deleteUser = (request, response) => {
 
 const getRecipes = (request, response) => {
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, m.meal_id, m.meal_name, " +
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, m.meal_id, m.meal_name, " +
 			"m.meal_description, c.category_id, c.category_name, " +
 			"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
 			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
@@ -215,14 +215,36 @@ const getRecipes = (request, response) => {
 	);
 };
 
-const getRecipesById = (request, response) => {
+const getRecipesByRecipeId = (request, response) => {
 	const recipe_id = request.params.id;
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.prep_time, r.cook_time, m.meal_name, c.category_name, " +
-			"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
-			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
-			"JOIN categories c ON r.category_id = c.category_id LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id " +
-			"WHERE r.recipe_id = $1 GROUP BY r.recipe_id, m.meal_name, c.category_name",
+		`SELECT 
+		r.recipe_id, 
+		r.recipe_name, 
+		r.recipe_description, 
+		r.prep_time, 
+		r.cook_time, 
+		r.date_added,
+		m.meal_name, 
+		c.category_name,
+		COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, 
+		COALESCE(COUNT(rt.rating_id), 0) AS num_ratings 
+	  FROM 
+		recipes r 
+		JOIN meals m ON r.meal_id = m.meal_id 
+		JOIN categories c ON r.category_id = c.category_id 
+		LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id
+	  WHERE 
+		r.recipe_id = $1 
+	  GROUP BY 
+		r.recipe_id, 
+		r.recipe_name, 
+		r.recipe_description, 
+		r.prep_time, 
+		r.cook_time, 
+		r.date_added, 
+		m.meal_name, 
+		c.category_name`,
 		[recipe_id],
 		(error, results) => {
 			if (error) {
@@ -322,7 +344,9 @@ const addRating = (request, response) => {
 	const recipe_id = request.params.rid;
 	const { score, review } = request.body;
 	pool.query(
-		"INSERT INTO rating (user_id, recipe_id, score, review) VALUES ($1, $2, $3, $4);",
+		`INSERT INTO rating (user_id, recipe_id, score, review) VALUES ($1, $2, $3, $4) 
+		ON CONFLICT (user_id, recipe_id)
+		DO UPDATE SET score = EXCLUDED.score, review = EXCLUDED.review;`,
 		[user_id, recipe_id, score, review],
 		(error, results) => {
 			if (error) {
@@ -334,11 +358,11 @@ const addRating = (request, response) => {
 		}
 	);
 };
-const getRatingsById = (request, response) => {
+const getRatingsByUserId = (request, response) => {
 	const user_id = request.params.uid;
 	pool.query(
-		"SELECT rt.rating_id, rt.recipe_id, r.recipe_name, rt.score, rt.review, rt.date_added FROM rating rt " +
-			"JOIN recipes r ON rt.recipe_id = r.recipe_id WHERE user_id = $1",
+		`SELECT rt.rating_id, rt.recipe_id, r.recipe_name, rt.score, rt.review, rt.date_added FROM rating rt
+			JOIN recipes r ON rt.recipe_id = r.recipe_id WHERE user_id = $1`,
 		[user_id],
 		(error, results) => {
 			if (error) {
@@ -351,6 +375,25 @@ const getRatingsById = (request, response) => {
 		}
 	);
 };
+const getReviewsByUserId = (request, response) => {
+	const recipe_id = request.params.rid;
+	pool.query(
+		`SELECT rt.rating_id, rt.score, rt.review, rt.date_added, a.full_name 
+		FROM rating rt 
+		JOIN recipes r ON rt.recipe_id = r.recipe_id JOIN accounts a ON rt.user_id = a.user_id
+		WHERE r.recipe_id = $1 ORDER BY rt.date_added DESC;`,
+		[recipe_id],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			const reviews = results.rows;
+			response.status(200).json({
+				reviews,
+			});
+		}
+	);
+};
 module.exports = {
 	getUsersLogin,
 	createUser,
@@ -359,12 +402,13 @@ module.exports = {
 	deleteUser,
 	getUserByJWT,
 	getRecipes,
-	getRecipesById,
+	getRecipesByRecipeId,
 	getCategories,
 	getMeals,
 	addItemstoWishlist,
 	getWishlistbyUser,
 	deleteWishlistItems,
 	addRating,
-	getRatingsById,
+	getRatingsByUserId,
+	getReviewsByUserId,
 };

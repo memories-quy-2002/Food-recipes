@@ -1,65 +1,53 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import convertImage from "../../utils/convertImage";
+import ratingStar from "../../utils/ratingStar";
 
 const Reviews = ({ reviewsData = [] }) => {
-	const navigate = useNavigate();
-	const handleView = (recipe_id) => {
-		navigate(`/recipe?id=${recipe_id}`);
-	};
-	const handleDelete = () => {
-		console.log("Delete");
-	};
 	return (
 		<div className="profile__container__main__reviews">
-			<table className="profile__container__main__reviews__table">
-				<thead>
-					<tr>
-						<th>ID</th>
-						<th>Recipe</th>
-						<th>Score</th>
-						<th>Review</th>
-						<th>Date Rating</th>
-						<th>Operations</th>
-					</tr>
-				</thead>
-				<tbody>
+			<div>
+				<h4 className="profile__container__main__reviews__title">
+					My reviews
+				</h4>
+				<ul className="profile__container__main__reviews__list">
 					{reviewsData.map((review) => (
-						<tr key={review.rating_id}>
-							<td>{review.rating_id}</td>
-							<td>{review.recipe_name}</td>
-							<td>{review.score}</td>
-							<td className="profile__container__main__reviews__table__truncate">
-								{review.review}
-							</td>
-							<td>
-								{Intl.DateTimeFormat("en-GB").format(
-									new Date(review.date_added)
-								)}
-							</td>
-							<td>
-								<div className="profile__container__main__reviews__table__buttons">
+						<li
+							key={review.rating_id}
+							className="profile__container__main__reviews__list__item"
+						>
+							<div>
+								<div className="d-flex gap-4 align-items-center mb-3">
+									<div>
+										{convertImage(
+											review.recipe_name,
+											"profile__container__main__reviews__list__item__img"
+										)}
+									</div>
+									{review.recipe_name}
+								</div>
+								<div>
+									<div className="d-flex gap-3 mb-3">
+										<div className="d-flex gap-2">
+											{ratingStar(review.score, "orange")}
+										</div>
+										<div>{parseInt(review.score)}</div>
+									</div>
+
+									<p>{review.review}</p>
+								</div>
+								<div className="w-100 d-flex justify-content-end">
 									<button
-										type="button"
 										className="btn btn-primary"
-										onClick={() =>
-											handleView(review.recipe_id)
-										}
-									>
-										View
-									</button>
-									<button
 										type="button"
-										className="btn btn-danger"
-										onClick={handleDelete}
 									>
-										Delete
+										Edit review
 									</button>
 								</div>
-							</td>
-						</tr>
+							</div>
+						</li>
 					))}
-				</tbody>
-			</table>
+				</ul>
+			</div>
 		</div>
 	);
 };

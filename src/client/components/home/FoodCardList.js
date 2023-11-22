@@ -52,7 +52,6 @@ const FoodCardList = () => {
 		fetchCategories();
 		fetchFavorites();
 	}, [user_id]);
-
 	return (
 		<div className="home__main__cardList">
 			<h3 className="home__main__cardList__title">Category</h3>
@@ -80,6 +79,7 @@ const FoodCardList = () => {
 			<h3 className="home__main__cardList__title">Feature recipes</h3>
 			<div className="home__main__cardList__feature">
 				{recipes
+					.sort((a, b) => b.num_ratings - a.num_ratings)
 					.slice(0, 8)
 					.map(
 						({
@@ -87,6 +87,8 @@ const FoodCardList = () => {
 							recipe_name,
 							category_name,
 							meal_name,
+							num_ratings,
+							overall_score,
 						}) => {
 							return (
 								<FoodCard
@@ -95,6 +97,8 @@ const FoodCardList = () => {
 									name={recipe_name}
 									category={category_name}
 									meal={meal_name}
+									ratings={num_ratings}
+									score={overall_score}
 									favorite={wishlist.some(
 										(recipe) =>
 											recipe.recipe_id === recipe_id

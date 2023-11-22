@@ -64,8 +64,6 @@
 					margin-bottom: 2rem;
 				}
 				&__form {
-					padding: 1rem;
-					border: 1px solid orange;
 					&__field {
 						margin-bottom: 1.25rem;
 						input {
@@ -92,35 +90,44 @@
 				}
 			}
 			&__reviews {
-				&__table {
-					width: 100%;
-					border-collapse: collapse;
-					&__truncate {
-						max-width: 200px; // Set a maximum width for the cell
-						white-space: nowrap; // Prevent text from wrapping
-						overflow: hidden; // Hide overflowing content
-						text-overflow: ellipsis; // Display ellipsis for overflow
-					}
-					&__buttons {
-						text-align: center;
-						.btn {
-							margin-right: 12px;
-
-							&:last-child {
-								margin-right: 0; // Remove margin for the last button
-							}
+				&__title {
+					margin-bottom: 2rem;
+				}
+				&__list {
+					padding: 0;
+					list-style-type: none;
+					&__item {
+						border: 1px solid rgba(0, 0, 0, 0.26);
+						padding: 1rem;
+						&__img {
+							width: 128px;
 						}
 					}
 				}
-
-				th,
-				td {
-					padding: 10px;
-					border: 1px solid #000000;
-					text-align: center;
-				}
-				th {
-					background-color: #f2f2f2;
+			}
+			&__personal {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100%;
+				&__container {
+					width: 100%;
+					display: flex;
+					flex-direction: column;
+					justify-content: center;
+					align-items: center;
+					&__button {
+						width: 160px;
+						padding: 0.5rem 1rem;
+						border: none;
+						border-radius: 10px;
+						background-color: orange;
+						color: white;
+						font-weight: bold;
+						&:hover {
+							background-color: orangered;
+						}
+					}
 				}
 			}
 		}

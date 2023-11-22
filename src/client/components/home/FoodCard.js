@@ -1,12 +1,14 @@
 import React from "react";
 import { BsFillHeartFill, BsHeart } from "react-icons/bs";
 import convertImage from "../../utils/convertImage";
-
+import ratingStar from "../../utils/ratingStar";
 const FoodCard = ({
 	id,
 	name,
 	category,
 	meal,
+	ratings,
+	score,
 	favorite,
 	handleNavigate,
 	handleClickFavorite,
@@ -41,6 +43,15 @@ const FoodCard = ({
 			<p className="home__main__cardList__feature__item__meal">
 				Meal: {meal}
 			</p>
+			<div
+				className="mx-3 d-flex gap-2 align-items-center"
+				style={{ height: "28px" }}
+			>
+				<div className="d-flex gap-1">
+					{ratingStar(score, "orange")}
+				</div>
+				<span style={{ fontSize: "12px" }}>{ratings} Ratings </span>
+			</div>
 		</div>
 	);
 };
