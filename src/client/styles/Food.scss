@@ -56,7 +56,8 @@
 				&__item {
 					display: flex;
 					flex-direction: column;
-					height: 320px;
+					height: fit-content;
+					padding-bottom: 1rem;
 					border: 2px solid rgba(255, 166, 0, 0.5);
 					transition: all 0.3s ease-in-out;
 					cursor: pointer;
@@ -67,7 +68,7 @@
 					&__context {
 						display: flex;
 						flex-direction: column;
-						padding: 1rem 1rem;
+						padding: 1rem 1rem 0rem 1rem;
 						h6 {
 							text-transform: uppercase;
 							padding-bottom: 0.5rem;
@@ -76,12 +77,19 @@
 						}
 						strong {
 							font-size: 1.4rem;
+							margin-bottom: 1rem;
 						}
 					}
 					&:hover {
 						transform: translateY(-8px);
 						box-shadow: 0px 6px 14px 2px orange;
 					}
+				}
+				@media screen and (max-width: 992px) {
+					grid-template-columns: repeat(2, 1fr);
+				}
+				@media screen and (max-width: 576px) {
+					grid-template-columns: repeat(1, 1fr);
 				}
 			}
 		}

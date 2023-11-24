@@ -1,7 +1,7 @@
 import React from "react";
 import { BsFillHeartFill, BsHeart } from "react-icons/bs";
-import convertImage from "../../utils/convertImage";
-import ratingStar from "../../utils/ratingStar";
+import convertImage from "../../../utils/convertImage";
+import ratingStar from "../../../utils/ratingStar";
 const FoodCard = ({
 	id,
 	name,
@@ -10,20 +10,20 @@ const FoodCard = ({
 	ratings,
 	score,
 	favorite,
-	handleNavigate,
-	handleClickFavorite,
+	onNavigate,
+	onClickFavorite,
 }) => {
 	return (
 		<div
 			className="home__main__cardList__feature__item"
-			onClick={handleNavigate}
+			onClick={onNavigate}
 		>
 			{convertImage(name, "home__main__cardList__feature__item__img")}
 			<div className="home__main__cardList__feature__item__fav">
 				<button
 					onClick={(e) => {
 						e.stopPropagation();
-						handleClickFavorite(id);
+						onClickFavorite(id);
 					}}
 					type="button"
 				>

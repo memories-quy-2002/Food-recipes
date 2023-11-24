@@ -1,13 +1,23 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useRef } from "react";
+import { useSelector } from "react-redux";
 
-const AuthContext = createContext({});
+export const AuthContext = createContext({});
 
 const AuthProvider = ({ children }) => {
-	const [auth, setAuth] = useState({});
+	const auth = useRef({ isAuthenticated: false, userId: 0 });
+
+	const { local, session } = useSelector((state) => state.auth);
+	const isAuthenticated = local?.isAuthenticated || session?.isAuthenticated;
+	const userId = isAuthenticated
+		? local?.isAuthenticated
+			? local?.user?.user_id
+			: session?.user?.user_id
+		: 0;
+
+	auth.current = { isAuthenticated: isAuthenticated, userId: userId };
+
 	return (
-		<AuthContext.Provider value={{ auth, setAuth }}>
-			{children}
-		</AuthContext.Provider>
+		<AuthContext.Provider value={{ auth }}>{children}</AuthContext.Provider>
 	);
 };
 

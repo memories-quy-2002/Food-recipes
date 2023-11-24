@@ -1,9 +1,9 @@
 import React from "react";
 import { BsCircle, BsCircleFill } from "react-icons/bs";
-const SlideShowNav = ({ currIndex, items, onSpecSlide }) => {
+const CarouselNavBar = ({ currIndex, items, onSpecSlide }) => {
 	return (
-		<div className="home__slideshow__nav">
-			<div className="home__slideshow__nav__button">
+		<div className="home__carousel__nav">
+			<div className="home__carousel__nav__button">
 				{items.map(({ id }) => {
 					return (
 						<button
@@ -26,4 +26,4 @@ const SlideShowNav = ({ currIndex, items, onSpecSlide }) => {
 	);
 };
 
-export default SlideShowNav;
+export default CarouselNavBar;

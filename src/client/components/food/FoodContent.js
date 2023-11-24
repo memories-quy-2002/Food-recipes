@@ -1,12 +1,13 @@
-import React, { useContext } from "react";
-import { RecipeContext } from "../../context/RecipeProvider";
-import convertImage from "../../utils/convertImage";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import ratingStar from "../../utils/ratingStar";
+import FoodContentSection from "./content/FoodContentSection";
+import FoodContentSectionItem from "./content/FoodContentSectionItem";
 
-const FoodContent = ({ categoryId, mealId }) => {
+const FoodContent = ({ recipes, categoryId, mealId }) => {
 	const navigate = useNavigate();
-	let { recipes } = useContext(RecipeContext);
+	const handleNavigate = () => {
+		navigate("/food/add");
+	};
 	if (mealId) {
 		recipes = recipes.filter(
 			(recipe) => recipe.meal_id === parseInt(mealId)
@@ -28,55 +29,27 @@ const FoodContent = ({ categoryId, mealId }) => {
 
 	return (
 		<div className="food__content">
-			{categories.map(({ id, name }) => (
-				<div key={id} className="food__content__section">
-					<h4 className="food__content__section__title">{name}</h4>
-					<div className="food__content__section__list">
-						{recipes
-							.sort((a, b) => b.num_ratings - a.num_ratings)
-							.filter((recipe) => recipe.category_name === name)
-							.map(
-								({
-									recipe_id,
-									recipe_name,
-									overall_score,
-									num_ratings,
-								}) => (
-									<div
-										key={recipe_id}
-										className="food__content__section__list__item"
-										onClick={() =>
-											navigate(`/recipe?id=${recipe_id}`)
-										}
-									>
-										{convertImage(
-											recipe_name,
-											"food__content__section__list__item__img"
-										)}
-
-										<div className="food__content__section__list__item__context">
-											<strong>{recipe_name}</strong>
-										</div>
-										<div
-											className="mx-3 d-flex gap-2 align-items-center"
-											style={{ height: "28px" }}
-										>
-											<div className="d-flex gap-1">
-												{ratingStar(
-													overall_score,
-													"orange"
-												)}
-											</div>
-											<span style={{ fontSize: "12px" }}>
-												{num_ratings} Ratings{" "}
-											</span>
-										</div>
-									</div>
-								)
-							)}
-					</div>
+			<div className="food__content__button">
+				<button type="button" onClick={handleNavigate}>
+					Add new recipe +{" "}
+				</button>
+			</div>
+			{categoryId || mealId ? (
+				categories.map(({ id, name }) => (
+					<FoodContentSection
+						key={id}
+						id={id}
+						name={name}
+						recipes={recipes}
+					/>
+				))
+			) : (
+				<div className="food__content__section__list">
+					{recipes.map((recipe, index) => (
+						<FoodContentSectionItem key={index} recipe={recipe} />
+					))}
 				</div>
-			))}
+			)}
 		</div>
 	);
 };

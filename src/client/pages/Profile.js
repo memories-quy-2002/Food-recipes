@@ -7,19 +7,42 @@ import "../styles/Profile.scss";
 import axios from "../api/axios";
 import { CancelToken } from "axios";
 const ProfileMain = lazy(() => import("../components/profile/ProfileMain"));
-
+const profilePageList = [
+	{
+		link: "",
+		name: "Personal info",
+	},
+	{
+		link: "setting",
+		name: "Public Profile Setting",
+	},
+	{
+		link: "password",
+		name: "Change password",
+	},
+	{
+		link: "recipes",
+		name: "All Personal Recipes",
+	},
+	{
+		link: "reviews",
+		name: "Recipes Reviews",
+	},
+];
 const Profile = () => {
 	const user = useSelector(
 		(state) => state.auth.local.user ?? state.auth.session.user
 	);
-	const [page, setPage] = useState("info");
+	const [page, setPage] = useState("");
 	const dispatch = useDispatch();
+
 	const handleLogOut = () => {
 		dispatch(authActions.logout());
 	};
 	const handleChangePage = (pageName) => {
 		setPage(pageName);
 	};
+
 	const [ratings, setRatings] = useState([]);
 
 	useEffect(() => {
@@ -47,9 +70,10 @@ const Profile = () => {
 		<Container fluid style={{ padding: 0 }}>
 			<main className="profile__container">
 				<ProfileAside
-					name={user.full_name}
+					name={user?.full_name}
 					handleLogOut={handleLogOut}
 					handleChangePage={handleChangePage}
+					profilePageList={profilePageList}
 				/>
 				<Suspense
 					fallback={

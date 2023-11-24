@@ -1,6 +1,13 @@
-import React from "react";
-
+import React, { useEffect, useState } from "react";
+import axios from "../../api/axios";
+import { useSelector } from "react-redux";
 const PersonalRecipes = () => {
+	const [personalRecipes, setPersonalRecipes] = useState([]);
+	useEffect(() => {
+		const fetchPersonalRecipes = async () => {
+			const response = await axios.get("/recipe/");
+		};
+	});
 	return (
 		<div className="profile__container__main__personal">
 			<div className="profile__container__main__personal__container">

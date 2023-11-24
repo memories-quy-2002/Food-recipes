@@ -1,42 +1,52 @@
 import React from "react";
 
-const MenuSection = ({ list, listId, listName }) => {
-	const sum = list.reduce(
-		(partialSum, listItem) => partialSum + parseInt(listItem.recipe_count),
-		0
-	);
+const FoodMenuSection = ({
+	list,
+	listId,
+	listName,
+	onMenuClick,
+	onMenuAllClick,
+}) => {
 	return (
 		<div className="food__menubar__section">
 			<h5 className="food__menubar__section__title">{listName}</h5>
 			<ul className="food__menubar__section__list">
 				<li>
-					<a
+					<span
 						href={`/food`}
 						style={{
+							cursor: "pointer",
+							color: "orange",
 							fontWeight: `${listId ? "normal" : "bold"}`,
 						}}
+						onClick={() =>
+							onMenuAllClick(
+								listName === "Categories"
+									? "categoryId"
+									: "mealId"
+							)
+						}
 					>
-						All <span style={{ color: "black" }}>({sum})</span>
-					</a>
+						All <span style={{ color: "black" }}></span>
+					</span>
 				</li>
-				{list.map(({ id, name, recipe_count }) => {
+				{list.map(({ id, name }) => {
 					return (
 						<li key={id}>
-							<a
-								href={`/food?${listName.toLowerCase()}=${id}`}
+							<span
 								style={{
+									cursor: "pointer",
+									color: "orange",
 									fontWeight: `${
 										parseInt(listId) === id
 											? "bold"
 											: "normal"
 									}`,
 								}}
+								onClick={() => onMenuClick(id)}
 							>
 								{name}{" "}
-								<span style={{ color: "black" }}>
-									({recipe_count})
-								</span>
-							</a>
+							</span>
 						</li>
 					);
 				})}
@@ -45,4 +55,4 @@ const MenuSection = ({ list, listId, listName }) => {
 	);
 };
 
-export default MenuSection;
+export default FoodMenuSection;

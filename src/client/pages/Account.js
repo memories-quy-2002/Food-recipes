@@ -1,6 +1,6 @@
 import React from "react";
 import { Container } from "react-bootstrap";
-import AccountForm from "../components/forms/AccountForm";
+import AccountForm from "../components/account/AccountForm";
 import "../styles/Account.scss";
 const Account = () => {
 	return (

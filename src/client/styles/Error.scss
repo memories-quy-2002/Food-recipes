@@ -1,0 +1,19 @@
+/* ErrorPage.css */
+.error {
+	&__container {
+		text-align: center;
+		padding: 20px;
+		margin: 50px auto;
+		max-width: 400px;
+		background-color: #f8d7da; /* Light red background color */
+		border: 1px solid #f5c6cb; /* Border color */
+		border-radius: 5px;
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Box shadow for a subtle effect */
+		h1 {
+			color: #721c24; /* Dark red text color */
+		}
+		p {
+			color: #721c24; /* Dark red text color */
+		}
+	}
+}

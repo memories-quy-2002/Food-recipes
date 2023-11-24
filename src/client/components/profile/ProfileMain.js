@@ -6,10 +6,10 @@ import Reviews from "./Reviews";
 const ProfileMain = ({ user, page, reviewsData }) => {
 	return (
 		<section className="profile__container__main">
-			{page === "info" && <PersonalInfo user={user} />}
+			{page === "" && <PersonalInfo user={user} />}
 			{/* {page === "setting" && <PersonalInfo />} */}
 			{page === "password" && <ChangePassword user={user} />}
-			{page === "recipes" && <PersonalRecipes />}
+			{page === "recipes" && <PersonalRecipes user={user} />}
 			{page === "reviews" && <Reviews reviewsData={reviewsData} />}
 		</section>
 	);

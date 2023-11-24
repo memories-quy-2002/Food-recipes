@@ -1,6 +1,11 @@
 import React from "react";
 import { IoPersonCircleSharp } from "react-icons/io5";
-const ProfileAside = ({ name, handleLogOut, handleChangePage }) => {
+const ProfileAside = ({
+	name,
+	handleLogOut,
+	handleChangePage,
+	profilePageList,
+}) => {
 	return (
 		<div className="profile__container__aside">
 			<div className="profile__container__aside__greeting">
@@ -11,51 +16,24 @@ const ProfileAside = ({ name, handleLogOut, handleChangePage }) => {
 			</div>
 			<div className="profile__container__aside__content">
 				<ul className="profile__container__aside__content__nav">
-					<li>
-						<a
-							href="/profile#/"
-							onClick={() => handleChangePage("info")}
-						>
-							<div>Personal Info</div>
-						</a>
-					</li>
+					{profilePageList.map(({ link, name }, index) => (
+						<li>
+							<a
+								href={`/profile#/${link}`}
+								onClick={() => handleChangePage(link)}
+							>
+								<div>
+									<span>{name}</span>
+								</div>
+							</a>
+						</li>
+					))}
+				</ul>
 
-					<li>
-						<a
-							href="/profile#/setting"
-							onClick={() => handleChangePage("setting")}
-						>
-							<div>Public Profile Setting</div>
-						</a>
-					</li>
-					<li>
-						<a
-							href="/profile#/password"
-							onClick={() => handleChangePage("password")}
-						>
-							<div>Change Password</div>
-						</a>
-					</li>
-				</ul>
-				<ul className="profile__container__aside__content__nav">
-					<li>
-						<a
-							href="/profile#/recipes"
-							onClick={() => handleChangePage("recipes")}
-						>
-							<div>All Personal Recipes</div>
-						</a>
-					</li>
-					<li>
-						<a
-							href="/profile#/reviews"
-							onClick={() => handleChangePage("reviews")}
-						>
-							<div>Recipes Reviews</div>
-						</a>
-					</li>
-				</ul>
-				<ul className="profile__container__aside__content__nav">
+				<ul
+					className="profile__container__aside__content__nav"
+					style={{ borderBottom: "none" }}
+				>
 					<li>
 						<a href="/" onClick={handleLogOut}>
 							<div>Log out</div>

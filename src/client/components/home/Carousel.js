@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import Slide from "./Slide";
-import SlideShowNav from "./SlideShowNav";
-
-const SlideShow = ({ items }) => {
+import CarouselItem from "./carousel/CarouselItem";
+import CarouselNavBar from "./carousel/CarouselNavBar";
+const Carousel = ({ items }) => {
 	const [currIndex, setCurrIndex] = useState(0);
 
 	const handleSpecSlide = (id) => {
@@ -18,9 +17,9 @@ const SlideShow = ({ items }) => {
 		};
 	}, [items.length]);
 	return (
-		<div className="home__slideshow">
+		<div className="home__carousel">
 			<div
-				className="home__slideshow__container"
+				className="home__carousel__container"
 				style={{
 					transition: `transform 1s ease-in-out`,
 					transform: `translateX(-${currIndex * 100}vw)`,
@@ -28,7 +27,7 @@ const SlideShow = ({ items }) => {
 			>
 				{items &&
 					items.map(({ id, name, description }) => (
-						<Slide
+						<CarouselItem
 							key={id}
 							id={id}
 							title={name}
@@ -38,7 +37,7 @@ const SlideShow = ({ items }) => {
 					))}
 			</div>
 
-			<SlideShowNav
+			<CarouselNavBar
 				currIndex={currIndex}
 				items={items}
 				onSpecSlide={handleSpecSlide}
@@ -47,4 +46,4 @@ const SlideShow = ({ items }) => {
 	);
 };
 
-export default SlideShow;
+export default Carousel;

@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
+import { useLocation } from "react-router-dom";
 const AccountForm = () => {
-	const [isSignup, setIsSignup] = useState(true);
+	const location = useLocation();
+	const searchParams = new URLSearchParams(location.search);
+	const [isSignup, setIsSignup] = useState(
+		searchParams.get("signup") === "true"
+	);
 	const onSignup = () => {
 		setIsSignup(true);
 	};

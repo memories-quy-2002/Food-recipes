@@ -1,6 +1,9 @@
 const pg = require("pg");
 const utils = require("./utils");
 const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
+const sanitizeFilename = require("sanitize-filename");
 require("dotenv").config();
 const Pool = pg.Pool;
 const pool = new Pool({
@@ -256,6 +259,55 @@ const getRecipesByRecipeId = (request, response) => {
 	);
 };
 
+const addRecipe = (request, response) => {
+	// Access uploaded file through req.file
+	const newFilename = `${sanitizeFilename(request.body.recipeName)
+		.toLowerCase()
+		.replaceAll(" ", "_")}.png`;
+
+	// Construct the new file path
+	const newFilePath = path.join(path.dirname(request.file.path), newFilename);
+
+	// Rename the file synchronously
+	fs.renameSync(request.file.path, newFilePath);
+
+	// Access other form fields through req.body
+	const {
+		recipeName,
+		recipeDescription,
+		recipeMealName,
+		recipeCategoryName,
+	} = request.body;
+
+	pool.query(
+		`WITH meal_cte AS (
+			INSERT INTO meals (meal_name)
+			SELECT $1::VARCHAR
+			WHERE NOT EXISTS (SELECT 1 FROM meals WHERE meal_name = $1)
+			RETURNING meal_id
+		  ),
+		  category_cte AS (
+			INSERT INTO categories (category_name)
+			SELECT $2::VARCHAR
+			WHERE NOT EXISTS (SELECT 1 FROM categories WHERE category_name = $2)
+			RETURNING category_id
+		  )
+		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time)
+		  VALUES ($3, 
+			$4, COALESCE((SELECT meal_id FROM meal_cte), (SELECT meal_id FROM meals WHERE meal_name = $1)::integer),
+			COALESCE((SELECT category_id FROM category_cte), (SELECT category_id FROM categories WHERE category_name = $2)::integer)
+			,'1h','1h')`,
+		[recipeMealName, recipeCategoryName, recipeName, recipeDescription],
+		(error, results) => {
+			if (error) {
+				console.error("Error executing query", error);
+				return;
+			}
+			response.status(200).json({ message: "Recipe added successfully" });
+		}
+	);
+};
+
 const getCategories = (request, response) => {
 	pool.query(
 		"SELECT c.category_id AS id, c.category_name AS name, COUNT(r.recipe_id) AS recipe_count " +
@@ -307,8 +359,8 @@ const addItemstoWishlist = (request, response) => {
 		}
 	);
 };
-const getWishlistbyUser = (request, response) => {
-	const user_id = request.params.id;
+const getWishlistbyUserId = (request, response) => {
+	const user_id = request.params.uid;
 	pool.query(
 		"SELECT recipe_id FROM wishlist WHERE user_id = $1",
 		[user_id],
@@ -375,8 +427,9 @@ const getRatingsByUserId = (request, response) => {
 		}
 	);
 };
-const getReviewsByUserId = (request, response) => {
+const getReviewsByRecipeId = (request, response) => {
 	const recipe_id = request.params.rid;
+	console.log(recipe_id);
 	pool.query(
 		`SELECT rt.rating_id, rt.score, rt.review, rt.date_added, a.full_name 
 		FROM rating rt 
@@ -403,12 +456,13 @@ module.exports = {
 	getUserByJWT,
 	getRecipes,
 	getRecipesByRecipeId,
+	addRecipe,
 	getCategories,
 	getMeals,
 	addItemstoWishlist,
-	getWishlistbyUser,
+	getWishlistbyUserId,
 	deleteWishlistItems,
 	addRating,
 	getRatingsByUserId,
-	getReviewsByUserId,
+	getReviewsByRecipeId,
 };
