@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
-import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import RecipeContainerSummary from "../components/recipe/RecipeContainerSummary";
 import RecipeContent from "../components/recipe/RecipeContent";
+import { AuthContext } from "../context/AuthProvider";
 import "../styles/Recipe.scss";
 import ErrorPage from "./ErrorPage";
 
 const Recipe = () => {
+	const { auth } = useContext(AuthContext);
+	const { isAuthenticated, userId } = auth.current;
 	const [recipe, setRecipe] = useState(null);
 	const [favorite, setFavorite] = useState(false);
 	const [ratingScore, setRatingScore] = useState(0);
@@ -16,14 +18,6 @@ const Recipe = () => {
 	const [showReview, setShowReview] = useState(false);
 	const [reviewList, setReviewList] = useState([]);
 	const navigate = useNavigate();
-
-	const { local, session } = useSelector((state) => state.auth);
-	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
-	const userId = isAuthenticated
-		? local.isAuthenticated
-			? local.user.user_id
-			: session.user.user_id
-		: 0;
 
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);

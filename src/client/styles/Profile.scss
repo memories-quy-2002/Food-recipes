@@ -93,25 +93,57 @@
 				&__title {
 					margin-bottom: 2rem;
 				}
+				&__summary {
+					width: 100%;
+					border: 1px solid orange;
+					border-radius: 1rem;
+					padding: 0.5rem;
+					margin: 0.5rem 0 1rem 0;
+					&__item {
+						display: flex;
+						flex-direction: column;
+						justify-content: center;
+						align-items: center;
+						strong {
+							font-size: 1.5rem;
+						}
+					}
+				}
 				&__list {
 					padding: 0;
 					list-style-type: none;
 					&__item {
-						border: 1px solid rgba(0, 0, 0, 0.26);
-						padding: 1rem;
+						border-bottom: 1px solid rgba(0, 0, 0, 0.26);
+						padding: 1rem 0;
 						&__img {
 							width: 128px;
+						}
+						button {
+							outline: none;
+							border: 1px solid rgba(0, 0, 0, 0.26);
+							background-color: white;
+							color: rgba(0, 0, 0, 0.74);
+							&:hover {
+								outline: none;
+								border: 1px solid orange;
+								background-color: orange;
+							}
 						}
 					}
 				}
 			}
 			&__personal {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				height: 100%;
+				&__title {
+					font-size: 2rem;
+				}
+				&__declaration {
+					font-size: 0.8rem;
+					margin-bottom: 2rem;
+				}
 				&__container {
 					width: 100%;
+					border-top: 1px solid rgba(0, 0, 0, 0.2);
+					padding: 2rem;
 					display: flex;
 					flex-direction: column;
 					justify-content: center;

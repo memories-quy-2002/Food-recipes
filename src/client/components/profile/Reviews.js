@@ -1,7 +1,7 @@
 import React from "react";
 import convertImage from "../../utils/convertImage";
 import ratingStar from "../../utils/ratingStar";
-
+import { Row, Col } from "react-bootstrap";
 const Reviews = ({ reviewsData = [] }) => {
 	return (
 		<div className="profile__container__main__reviews">
@@ -9,6 +9,27 @@ const Reviews = ({ reviewsData = [] }) => {
 				<h4 className="profile__container__main__reviews__title">
 					My reviews
 				</h4>
+
+				<Row className="profile__container__main__reviews__summary">
+					<Col md={6}>
+						<div className="profile__container__main__reviews__summary__item">
+							<strong>{reviewsData.length}</strong>
+							<p>rating(s)</p>
+						</div>{" "}
+					</Col>
+					<Col md={6}>
+						<div className="profile__container__main__reviews__summary__item">
+							<strong>
+								{
+									reviewsData.filter(
+										(review) => review.review !== ""
+									).length
+								}
+							</strong>
+							<p>comment(s)</p>
+						</div>{" "}
+					</Col>
+				</Row>
 				<ul className="profile__container__main__reviews__list">
 					{reviewsData.map((review) => (
 						<li
@@ -16,7 +37,10 @@ const Reviews = ({ reviewsData = [] }) => {
 							className="profile__container__main__reviews__list__item"
 						>
 							<div>
-								<div className="d-flex gap-4 align-items-center mb-3">
+								<div
+									className="d-flex gap-4 align-items-center mb-3 border border-1 p-2"
+									style={{ borderRadius: "1rem" }}
+								>
 									<div>
 										{convertImage(
 											review.recipe_name,

@@ -43,6 +43,23 @@
 	}
 
 	&__content {
+		&__button {
+			text-align: right;
+			margin-bottom: 1rem;
+			button {
+				background-color: orange;
+				padding: 0.5rem;
+				outline: none;
+				border: none;
+				border-radius: 10px;
+				transition: background-color 0.3s ease-in-out;
+				font-weight: bold;
+				color: white;
+				&:hover {
+					background-color: orangered;
+				}
+			}
+		}
 		&__section {
 			&__title {
 				font-size: 1.75rem;

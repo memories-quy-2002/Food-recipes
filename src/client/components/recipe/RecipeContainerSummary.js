@@ -14,7 +14,7 @@ const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
 					</div>
 
 					<div className="recipe__container__summary__author">
-						<p>By Food Recipes</p>
+						<p>By {recipe.full_name ?? "Food recipe"}</p>
 					</div>
 					<div className="recipe__container__summary__date">
 						<p>{formatTimestamp(recipe.date_added)}</p>

@@ -2,14 +2,15 @@ import { Suspense, lazy } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.scss";
 import Layout from "./client/components/layout/Layout";
+import AuthProvider from "./client/context/AuthProvider";
 import RecipeProvider from "./client/context/RecipeProvider";
 import Account from "./client/pages/Account";
+import AddRecipe from "./client/pages/AddRecipe";
 import Food from "./client/pages/Food";
 import Home from "./client/pages/Home";
 import Profile from "./client/pages/Profile";
 import Wishlist from "./client/pages/Wishlist";
-import AuthProvider from "./client/context/AuthProvider";
-import AddRecipe from "./client/components/food/AddRecipe";
+
 const Recipe = lazy(() => import("./client/pages/Recipe"));
 
 function App() {

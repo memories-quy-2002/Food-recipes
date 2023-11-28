@@ -30,6 +30,7 @@ app.use(
 );
 app.get("/recipe/", db.getRecipes);
 app.get("/recipe/:id", db.getRecipesByRecipeId);
+app.get("/recipe/user/:uid", db.getRecipesByUserId);
 app.get("/category/", db.getCategories);
 app.get("/meal/", db.getMeals);
 app.get("/wishlist/:uid", db.getWishlistbyUserId);

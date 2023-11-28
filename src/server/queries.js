@@ -228,33 +228,61 @@ const getRecipesByRecipeId = (request, response) => {
 		r.prep_time, 
 		r.cook_time, 
 		r.date_added,
+		CASE 
+			WHEN r.user_id = 0 THEN NULL
+			ELSE a.full_name
+		END AS full_name,
 		m.meal_name, 
 		c.category_name,
 		COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, 
 		COALESCE(COUNT(rt.rating_id), 0) AS num_ratings 
-	  FROM 
+	FROM 
 		recipes r 
-		JOIN meals m ON r.meal_id = m.meal_id 
-		JOIN categories c ON r.category_id = c.category_id 
-		LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id
-	  WHERE 
-		r.recipe_id = $1 
-	  GROUP BY 
+	JOIN meals m ON r.meal_id = m.meal_id 
+	JOIN categories c ON r.category_id = c.category_id 
+	LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id
+	LEFT JOIN accounts a ON r.user_id = a.user_id
+	WHERE 
+		r.recipe_id = $1
+	GROUP BY 
 		r.recipe_id, 
 		r.recipe_name, 
 		r.recipe_description, 
 		r.prep_time, 
 		r.cook_time, 
-		r.date_added, 
+		r.date_added,
+		a.full_name,
 		m.meal_name, 
-		c.category_name`,
+		c.category_name;
+	`,
 		[recipe_id],
 		(error, results) => {
 			if (error) {
 				throw error;
 			}
 			const recipe = results.rows[0];
+			console.log(recipe);
 			response.status(200).json({ recipe });
+		}
+	);
+};
+
+const getRecipesByUserId = (request, response) => {
+	const user_id = request.params.uid;
+	pool.query(
+		`SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, m.meal_id, m.meal_name,
+		m.meal_description, c.category_id, c.category_name FROM recipes r 
+		JOIN meals m ON m.meal_id = r.meal_id 
+		JOIN categories c ON c.category_id = r.category_id 
+		WHERE user_id = $1`,
+		[user_id],
+		(error, results) => {
+			if (error) {
+				console.error("Error executing query", error);
+				return;
+			}
+			const recipes = results.rows;
+			response.status(200).json({ recipes });
 		}
 	);
 };
@@ -277,8 +305,14 @@ const addRecipe = (request, response) => {
 		recipeDescription,
 		recipeMealName,
 		recipeCategoryName,
+		recipePrepTime,
+		recipeCookTime,
+		userId,
 	} = request.body;
-
+	console.log(request.body);
+	const prepTime = recipePrepTime.number + " " + recipePrepTime.unit;
+	const cookTime = recipeCookTime.number + " " + recipeCookTime.unit;
+	console.log({ prepTime, cookTime });
 	pool.query(
 		`WITH meal_cte AS (
 			INSERT INTO meals (meal_name)
@@ -292,12 +326,20 @@ const addRecipe = (request, response) => {
 			WHERE NOT EXISTS (SELECT 1 FROM categories WHERE category_name = $2)
 			RETURNING category_id
 		  )
-		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time)
-		  VALUES ($3, 
+		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time, user_id)
+		  VALUES ($3,
 			$4, COALESCE((SELECT meal_id FROM meal_cte), (SELECT meal_id FROM meals WHERE meal_name = $1)::integer),
 			COALESCE((SELECT category_id FROM category_cte), (SELECT category_id FROM categories WHERE category_name = $2)::integer)
-			,'1h','1h')`,
-		[recipeMealName, recipeCategoryName, recipeName, recipeDescription],
+			, $5, $6, $7)`,
+		[
+			recipeMealName,
+			recipeCategoryName,
+			recipeName,
+			recipeDescription,
+			prepTime,
+			cookTime,
+			userId,
+		],
 		(error, results) => {
 			if (error) {
 				console.error("Error executing query", error);
@@ -414,7 +456,7 @@ const getRatingsByUserId = (request, response) => {
 	const user_id = request.params.uid;
 	pool.query(
 		`SELECT rt.rating_id, rt.recipe_id, r.recipe_name, rt.score, rt.review, rt.date_added FROM rating rt
-			JOIN recipes r ON rt.recipe_id = r.recipe_id WHERE user_id = $1`,
+			JOIN recipes r ON rt.recipe_id = r.recipe_id WHERE rt.user_id = $1`,
 		[user_id],
 		(error, results) => {
 			if (error) {
@@ -429,7 +471,6 @@ const getRatingsByUserId = (request, response) => {
 };
 const getReviewsByRecipeId = (request, response) => {
 	const recipe_id = request.params.rid;
-	console.log(recipe_id);
 	pool.query(
 		`SELECT rt.rating_id, rt.score, rt.review, rt.date_added, a.full_name 
 		FROM rating rt 
@@ -456,6 +497,7 @@ module.exports = {
 	getUserByJWT,
 	getRecipes,
 	getRecipesByRecipeId,
+	getRecipesByUserId,
 	addRecipe,
 	getCategories,
 	getMeals,

@@ -1,0 +1,75 @@
+/* Style for the file input container */
+.add {
+	background: url("../assets/images/background.png");
+	background-size: auto;
+	background-repeat: no-repeat;
+	background-blend-mode: multiply;
+
+	height: fit-content;
+	&__container {
+		background-color: white;
+		width: 750px;
+		height: fit-content;
+		margin: auto;
+		padding: 1rem 1.25rem;
+		&__header {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			&__title {
+				font-size: 2rem;
+			}
+			&__declaration {
+				font-size: 0.8rem;
+			}
+		}
+		&__form {
+			label {
+				font-weight: bold;
+			}
+			input,
+			select,
+			textarea {
+				border: 1px solid orange;
+
+				&:focus {
+					border: 2px solid orange;
+					box-shadow: 0px 0px 10px 2px orange;
+				}
+			}
+			input,
+			select {
+				height: 40px;
+			}
+			&__field {
+				margin-bottom: 1rem;
+			}
+			&__imgContainer {
+				display: flex;
+				flex-direction: column;
+
+				&__img {
+					width: 200px;
+					height: 200px;
+				}
+			}
+			&__time {
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				gap: 1rem;
+				margin-bottom: 1rem;
+				label {
+					flex: 1;
+					margin-bottom: 0;
+				}
+				&__input {
+					flex: 2;
+				}
+				&__select {
+					flex: 3;
+				}
+			}
+		}
+	}
+}
