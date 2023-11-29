@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import convertImage from "../../utils/convertImage";
+import { Row, Col } from "react-bootstrap";
 const PersonalRecipes = ({ user }) => {
 	const [personalRecipes, setPersonalRecipes] = useState([]);
+	const navigate = useNavigate();
 	useEffect(() => {
 		const fetchPersonalRecipes = async () => {
 			try {
@@ -18,7 +21,13 @@ const PersonalRecipes = ({ user }) => {
 		};
 		fetchPersonalRecipes();
 	}, [user.user_id]);
-	console.log(personalRecipes);
+	const isInPreviousSevenDays = (date) => {
+		const dateToCheck = new Date(date);
+		const currentDate = new Date();
+		const sevenDaysAgo = new Date();
+		sevenDaysAgo.setDate(currentDate.getDate() - 7);
+		return dateToCheck >= sevenDaysAgo && dateToCheck <= currentDate;
+	};
 	return (
 		<div className="profile__container__main__personal">
 			<h1 className="profile__container__main__personal__title">
@@ -27,15 +36,53 @@ const PersonalRecipes = ({ user }) => {
 			<p className="profile__container__main__personal__declaration">
 				Here is a list of recipe you have added to Food Recipe
 			</p>
-			{personalRecipes ? (
+			{personalRecipes.length > 0 ? (
 				<div className="profile__container__main__personal__container">
-					<ul>
+					<Row className="profile__container__main__personal__container__summary">
+						<Col md={6}>
+							<div className="profile__container__main__personal__container__summary__item">
+								<strong>{personalRecipes.length}</strong>
+								<p>Total</p>
+							</div>{" "}
+						</Col>
+						<Col md={6}>
+							<div className="profile__container__main__personal__container__summary__item">
+								<strong>
+									{
+										personalRecipes.filter((recipe) =>
+											isInPreviousSevenDays(
+												recipe.date_added
+											)
+										).length
+									}
+								</strong>
+								<p>Previous 7 days</p>
+							</div>{" "}
+						</Col>
+					</Row>
+					<ul className="profile__container__main__personal__container__list">
 						{personalRecipes.map((recipe) => (
-							<li>
-								<div>{convertImage(recipe.recipe_name)}</div>
+							<li className="profile__container__main__personal__container__list__item">
 								<div>
-									<strong>{recipe.recipe_name}</strong>
-									<p>{recipe.category_name}</p>
+									{convertImage(
+										recipe.recipe_name,
+										"profile__container__main__personal__container__list__item__img"
+									)}
+								</div>
+								<div className="profile__container__main__personal__container__list__item__context">
+									<div className="d-flex gap-3 flex-column">
+										<h5>{recipe.recipe_name}</h5>
+										<div className="d-flex gap-3">
+											<div>
+												<strong>Category</strong>{" "}
+												<p>{recipe.category_name}</p>
+											</div>
+											<div>
+												<strong>Meal</strong>{" "}
+												<p>{recipe.meal_name}</p>
+											</div>
+										</div>
+									</div>
 								</div>
 							</li>
 						))}
@@ -54,6 +101,7 @@ const PersonalRecipes = ({ user }) => {
 					<button
 						className="profile__container__main__personal__container__button"
 						type="button"
+						onClick={() => navigate("/food/add")}
 					>
 						Add a recipe +
 					</button>

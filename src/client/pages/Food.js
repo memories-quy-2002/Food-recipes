@@ -2,9 +2,9 @@ import React, { Suspense, lazy, useContext, useEffect, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
-import FoodMenuBar from "../components/food/menu/FoodMenuBar";
-import "../styles/Food.scss";
+import FoodMenuBar from "../components/food/FoodMenuBar";
 import { RecipeContext } from "../context/RecipeProvider";
+import "../styles/Food.scss";
 const FoodContent = lazy(() => import("../components/food/FoodContent"));
 
 const Food = () => {
@@ -17,6 +17,7 @@ const Food = () => {
 		categoryId:
 			new URLSearchParams(location.search).get("categories") || "",
 		mealId: new URLSearchParams(location.search).get("meals") || "",
+		q: new URLSearchParams(location.search).get("q") || "",
 	});
 	const handleCategoryClick = (categoryId) => {
 		setSelectedOptions((prevOptions) => ({
@@ -29,6 +30,12 @@ const Food = () => {
 		setSelectedOptions((prevOptions) => ({
 			...prevOptions,
 			mealId: mealId,
+		}));
+	};
+	const handleChangeSearchTerm = (event) => {
+		setSelectedOptions((prevOptions) => ({
+			...prevOptions,
+			q: event.target.value,
 		}));
 	};
 	const handleMenuAllClick = (name) => {
@@ -47,7 +54,9 @@ const Food = () => {
 		if (selectedOptions.mealId) {
 			params.set("meals", selectedOptions.mealId);
 		}
-		console.log(selectedOptions);
+		if (selectedOptions.q) {
+			params.set("q", selectedOptions.q);
+		}
 
 		const newUrl = `/food?${params.toString()}`;
 		navigate(newUrl);
@@ -55,14 +64,28 @@ const Food = () => {
 
 	useEffect(() => {
 		const fetchCategories = async () => {
-			const response = await axios.get("/category");
-			setCategories(response.data.categories);
-		};
-		const fetchMeals = async () => {
-			const response = await axios.get("/meal");
-			setMeals(response.data.meals);
+			try {
+				const response = await axios.get("/category");
+				if (response.status === 200) {
+					setCategories(response.data.categories);
+				}
+			} catch (err) {
+				console.error(err);
+			}
 		};
 		fetchCategories();
+	}, []);
+	useEffect(() => {
+		const fetchMeals = async () => {
+			try {
+				const response = await axios.get("/meal");
+				if (response.status === 200) {
+					setMeals(response.data.meals);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		};
 		fetchMeals();
 	}, []);
 	return (
@@ -77,6 +100,7 @@ const Food = () => {
 						onCategoryClick={handleCategoryClick}
 						onMealClick={handleMealClick}
 						onMenuAllClick={handleMenuAllClick}
+						onChangeSearchTerm={handleChangeSearchTerm}
 					/>
 				</Col>
 				<Col md={9}>
@@ -91,6 +115,7 @@ const Food = () => {
 							recipes={recipes}
 							categoryId={selectedOptions.categoryId}
 							mealId={selectedOptions.mealId}
+							searchTerm={selectedOptions.q}
 						/>
 					</Suspense>
 				</Col>

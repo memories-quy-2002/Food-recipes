@@ -13,8 +13,16 @@ const AuthProvider = ({ children }) => {
 			? local?.user?.user_id
 			: session?.user?.user_id
 		: 0;
-
-	auth.current = { isAuthenticated: isAuthenticated, userId: userId };
+	const user = isAuthenticated
+		? local?.isAuthenticated
+			? local?.user
+			: session?.user
+		: null;
+	auth.current = {
+		isAuthenticated: isAuthenticated,
+		user: user,
+		userId: userId,
+	};
 
 	return (
 		<AuthContext.Provider value={{ auth }}>{children}</AuthContext.Provider>

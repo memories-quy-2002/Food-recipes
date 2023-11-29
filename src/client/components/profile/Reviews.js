@@ -2,7 +2,13 @@ import React from "react";
 import convertImage from "../../utils/convertImage";
 import ratingStar from "../../utils/ratingStar";
 import { Row, Col } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 const Reviews = ({ reviewsData = [] }) => {
+	const navigate = useNavigate();
+	const handleClickEdit = (recipeId) => {
+		navigate(`/recipe?id=${recipeId}`);
+	};
+	console.log(reviewsData);
 	return (
 		<div className="profile__container__main__reviews">
 			<div>
@@ -63,6 +69,9 @@ const Reviews = ({ reviewsData = [] }) => {
 									<button
 										className="btn btn-primary"
 										type="button"
+										onClick={() =>
+											handleClickEdit(review.recipe_id)
+										}
 									>
 										Edit review
 									</button>

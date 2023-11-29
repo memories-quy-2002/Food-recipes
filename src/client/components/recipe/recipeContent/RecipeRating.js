@@ -22,7 +22,7 @@ const RecipeRating = ({
 					<div className="recipe__content__rating__signin">
 						<strong>
 							<span>
-								<a href="/account/signup=true">Sign in</a>
+								<a href="/account/?signup=false">Sign in</a>
 							</span>{" "}
 							to leave a Rating and Review
 						</strong>

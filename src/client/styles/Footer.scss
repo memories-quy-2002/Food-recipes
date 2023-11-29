@@ -1,48 +1,54 @@
 .footer {
 	background-color: rgb(0, 0, 0);
 	padding: 3rem 1.5rem 1rem 1.5rem;
+
 	&__title,
 	&__text,
 	&__social,
 	&__list,
-	&__bottom {
+	&__bottom,
+	&__social__list {
 		color: rgba(255, 255, 255, 0.75);
 	}
+
 	&__title {
 		font-weight: bold;
 		font-size: 1.2rem;
 		margin-bottom: 1rem;
-		color: rgba(255, 255, 255, 0.75);
 	}
+
 	&__text {
 		text-align: justify;
 		max-inline-size: 40ch;
 		overflow-wrap: break-word;
 	}
+
 	&__social__list,
 	&__list {
 		list-style-type: none;
 		padding: 0;
 		margin-bottom: 2rem;
-		color: rgba(255, 255, 255, 0.75);
+
 		&__link {
 			padding-bottom: 0.75rem;
+
 			a {
 				text-decoration: none;
-				color: rgba(255, 255, 255, 0.75);
+				color: inherit;
 			}
 		}
 	}
+
 	&__social {
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
-	}
-	&__social__list {
-		display: flex;
-		flex-direction: row;
-		gap: 20px;
-		color: rgba(255, 255, 255, 0.75);
+
+		&__list {
+			display: flex;
+			flex-direction: row;
+			gap: 20px;
+		}
 	}
 }

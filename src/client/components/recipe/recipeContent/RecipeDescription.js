@@ -22,10 +22,10 @@ const RecipeDescription = ({ recipe }) => {
 			</Row>
 			<Row className="recipe__content__desc">
 				<div>
+					<h5>Description</h5>
 					<p>
-						{recipe.recipe_description
-							? recipe.recipe_description
-							: "There is no description for this recipe"}
+						{recipe.recipe_description ??
+							"There is no description for this recipe"}
 					</p>
 				</div>
 			</Row>

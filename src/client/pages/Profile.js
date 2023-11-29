@@ -13,10 +13,6 @@ const profilePageList = [
 		name: "Personal info",
 	},
 	{
-		link: "setting",
-		name: "Public Profile Setting",
-	},
-	{
 		link: "password",
 		name: "Change password",
 	},

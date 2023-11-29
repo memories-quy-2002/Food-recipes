@@ -1,6 +1,5 @@
 import React from "react";
-import FoodMenuSection from "./FoodMenuSection";
-
+import FoodMenuSection from "./menu/FoodMenuSection";
 const FoodMenuBar = ({
 	categoryId,
 	mealId,
@@ -9,6 +8,7 @@ const FoodMenuBar = ({
 	onCategoryClick,
 	onMealClick,
 	onMenuAllClick,
+	onChangeSearchTerm,
 }) => {
 	return (
 		<div className="food__menubar">
@@ -18,6 +18,7 @@ const FoodMenuBar = ({
 					type="text"
 					name="search_recipe"
 					placeholder="Search..."
+					onChange={onChangeSearchTerm}
 				/>
 			</div>
 			<FoodMenuSection

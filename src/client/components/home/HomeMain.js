@@ -35,11 +35,19 @@ const HomeMain = () => {
 				throw err;
 			}
 		};
-		const fetchWishlists = async () => {
-			const response = await axios.get(`/wishlist/${userId}`);
-			setWishlist(response.data.wishlist);
-		};
 		fetchCategories();
+	}, [userId]);
+	useEffect(() => {
+		const fetchWishlists = async () => {
+			try {
+				const response = await axios.get(`/wishlist/${userId}`);
+				if (response.status === 200) {
+					setWishlist(response.data.wishlist);
+				}
+			} catch (err) {
+				console.error(err);
+			}
+		};
 		fetchWishlists();
 	}, [userId]);
 	return (

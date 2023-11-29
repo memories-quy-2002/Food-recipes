@@ -18,10 +18,12 @@
 		font-weight: bold;
 		margin-left: 1rem;
 	}
+
 	&__toggle {
 		.dropdown-toggle::after {
 			display: none;
 		}
+
 		&__icon {
 			width: 3rem;
 			height: 2.5rem;
@@ -29,9 +31,9 @@
 			border-radius: 5px;
 			background-color: #fff;
 			color: #000;
-
 			display: none;
 		}
+
 		&__menu {
 			background: linear-gradient(
 				109.6deg,
@@ -40,37 +42,43 @@
 			);
 			color: white;
 		}
-		&__items {
+
+		&__list {
 			padding: 0;
 			margin: 1rem 0;
 			list-style-type: none;
 			display: flex;
 			flex-direction: column;
-		}
-		&__item {
-			display: block;
-			padding: 0.75rem;
-			transition: background-color 0.3s ease-out;
-			&__link {
-				width: 100%;
-				text-decoration: none;
-				color: black;
+			&__item {
 				display: block;
-			}
-			&:hover {
-				background-color: #ff8c00;
+				padding: 0.75rem;
+				transition: background-color 0.3s ease-out;
+
+				&__link {
+					width: 100%;
+					text-decoration: none;
+					color: black;
+					display: block;
+				}
+
+				&:hover {
+					background-color: #ff8c00;
+				}
 			}
 		}
+
 		&__wrap {
 			display: flex;
 			justify-content: center;
 		}
+
 		&__search {
 			width: 80%;
 			margin: 2rem 0;
 			position: relative;
 			display: flex;
 			justify-content: center;
+
 			input {
 				width: 100%;
 				border: 3px solid orange;
@@ -79,6 +87,7 @@
 				border-radius: 5px 0 0 5px;
 				outline: none;
 			}
+
 			button {
 				width: 3rem;
 				border: 1px solid orange;
@@ -92,9 +101,11 @@
 				align-items: center;
 			}
 		}
+
 		@media screen and (max-width: 768px) {
 			margin-left: auto;
 			padding: 0.5rem 1rem;
+
 			&__icon {
 				display: flex;
 				justify-content: center;
@@ -102,14 +113,16 @@
 			}
 		}
 	}
+
 	&__menu {
-		flex: 8;
+		flex: 1;
 		height: 100%;
 		width: fit-content;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		gap: 1rem;
+
 		@media screen and (max-width: 768px) {
 			display: none;
 		}
@@ -131,10 +144,12 @@
 			}
 		}
 	}
+
 	&__auth {
 		flex: 1;
 		display: flex;
-		justify-content: center;
+		justify-content: flex-end;
+
 		&--signup {
 			&__button {
 				padding: 0.5rem 0.25rem;
@@ -143,15 +158,18 @@
 				border-radius: 10px;
 				border: none;
 				font-size: 1.2rem;
+
 				&:hover {
 					background-color: #ff8c00;
 				}
 			}
 		}
+
 		&--login {
 			width: 240px;
 			position: relative;
 			display: inline-block;
+
 			&__button {
 				width: 100%;
 				height: 100%;
@@ -163,15 +181,18 @@
 				justify-content: center;
 				align-items: center;
 				gap: 0.5rem;
+
 				&__img {
 					aspect-ratio: 1/1;
 					width: 28px;
 					border-radius: 100%;
 				}
+
 				p {
 					font-size: 14px;
 				}
 			}
+
 			&__content {
 				width: 200px;
 				z-index: 1;
@@ -179,13 +200,14 @@
 				position: absolute;
 				right: 0%;
 				transition: all 0.3s ease-in-out;
+
 				a {
 					background-color: white;
 					color: black;
 					padding: 1rem;
 					text-decoration: none;
 					display: block;
-					transition: all 0.3s ease-out;
+
 					&:hover {
 						background-color: orange;
 						color: white;
@@ -193,6 +215,7 @@
 				}
 			}
 		}
+
 		@media screen and (max-width: 768px) {
 			display: none;
 		}

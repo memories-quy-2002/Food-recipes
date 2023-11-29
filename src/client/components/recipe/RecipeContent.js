@@ -1,7 +1,7 @@
 import React from "react";
 import { Row } from "react-bootstrap";
-import RecipeDescription from "./recipe_container/RecipeDescription";
-import RecipeRating from "./recipe_container/RecipeRating";
+import RecipeDescription from "./recipeContent/RecipeDescription";
+import RecipeRating from "./recipeContent/RecipeRating";
 const RecipeContent = ({
 	recipe,
 	ratingScore,

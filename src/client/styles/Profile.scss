@@ -24,6 +24,7 @@
 				&__img {
 					aspect-ratio: 1/1;
 					width: 60px;
+					object-fit: cover;
 				}
 				&__text {
 					width: 180px;
@@ -117,6 +118,7 @@
 						padding: 1rem 0;
 						&__img {
 							width: 128px;
+							object-fit: cover;
 						}
 						button {
 							outline: none;
@@ -143,11 +145,48 @@
 				&__container {
 					width: 100%;
 					border-top: 1px solid rgba(0, 0, 0, 0.2);
-					padding: 2rem;
+					padding-top: 2rem;
 					display: flex;
 					flex-direction: column;
 					justify-content: center;
 					align-items: center;
+					&__summary {
+						width: 100%;
+						border: 1px solid orange;
+						border-radius: 1rem;
+						padding: 0.5rem;
+						margin: 0.5rem 0 1rem 0;
+						&__item {
+							display: flex;
+							flex-direction: column;
+							justify-content: center;
+							align-items: center;
+							strong {
+								font-size: 1.5rem;
+							}
+						}
+					}
+					&__list {
+						width: 100%;
+						padding: 0;
+						list-style-type: none;
+						border-bottom: 1px solid rgba(0, 0, 0, 0.26);
+						&__item {
+							display: flex;
+							gap: 2rem;
+							width: 100%;
+							height: fit-content;
+							padding: 1rem;
+							&__img {
+								width: 160px;
+								object-fit: cover;
+							}
+							&__context {
+								display: flex;
+								flex-direction: column;
+							}
+						}
+					}
 					&__button {
 						width: 160px;
 						padding: 0.5rem 1rem;

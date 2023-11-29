@@ -270,7 +270,7 @@ const getRecipesByRecipeId = (request, response) => {
 const getRecipesByUserId = (request, response) => {
 	const user_id = request.params.uid;
 	pool.query(
-		`SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, m.meal_id, m.meal_name,
+		`SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, r.prep_time, r.cook_time, m.meal_id, m.meal_name,
 		m.meal_description, c.category_id, c.category_name FROM recipes r 
 		JOIN meals m ON m.meal_id = r.meal_id 
 		JOIN categories c ON c.category_id = r.category_id 

@@ -1,17 +1,14 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Button, Offcanvas } from "react-bootstrap";
-import { BsSearch } from "react-icons/bs";
 import { FaBars } from "react-icons/fa6";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { AuthContext } from "../../context/AuthProvider.js";
 import { authActions } from "../../redux/authSlice";
 
-const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
+const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 	const dispatch = useDispatch();
-	const user = useSelector((state) =>
-		state.auth.local.user ? state.auth.local.user : state.auth.session.user
-	);
-	const { local, session } = useSelector((state) => state.auth);
-	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
+	const { auth } = useContext(AuthContext);
+	const { user, isAuthenticated } = auth.current;
 	return (
 		<div className="header__toggle">
 			<Button onClick={handleShow} className="header__toggle__icon">
@@ -32,22 +29,25 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 					</Offcanvas.Title>
 				</Offcanvas.Header>
 				<Offcanvas.Body style={{ padding: 0 }}>
-					<ul className="header__toggle__items">
+					<ul className="header__toggle__list">
 						{items.map(({ title, icon, href }, index) => (
-							<li key={index} className="header__toggle__item">
+							<li
+								key={index}
+								className="header__toggle__list__item"
+							>
 								<a
 									href={href}
-									className="header__toggle__item__link"
+									className="header__toggle__list__item__link"
 								>
 									{title}
 								</a>
 							</li>
 						))}
 						{isAuthenticated ? (
-							<li className="header__toggle__item">
+							<li className="header__toggle__list__item">
 								<a
 									href="/"
-									className="header__toggle__item__link"
+									className="header__toggle__list__item__link"
 									onClick={() =>
 										dispatch(authActions.logout())
 									}
@@ -56,24 +56,16 @@ const HeaderToggle = ({ show, handleClose, handleShow, items, auth }) => {
 								</a>
 							</li>
 						) : (
-							<li className="header__toggle__item">
+							<li className="header__toggle__list__item">
 								<a
 									href="/account"
-									className="header__toggle__item__link"
+									className="header__toggle__list__item__link"
 								>
 									Sign up
 								</a>
 							</li>
 						)}
 					</ul>
-					<div class="header__toggle__wrap">
-						<div div class="header__toggle__search">
-							<input type="text" placeholder="Search..." />
-							<button>
-								<BsSearch />
-							</button>
-						</div>
-					</div>
 				</Offcanvas.Body>
 			</Offcanvas>
 		</div>

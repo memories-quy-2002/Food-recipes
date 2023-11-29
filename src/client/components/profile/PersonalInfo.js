@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import axios from "../../api/axios";
@@ -27,7 +27,6 @@ const PersonalInfo = ({ user }) => {
 
 		window.location.reload(false);
 	};
-	useEffect(() => console.log(formData), [formData]);
 	return (
 		<div className="profile__container__main__info">
 			<h2 className="profile__container__main__info__title">

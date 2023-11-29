@@ -27,18 +27,9 @@
 					}
 				}
 			}
-			&__popular {
-				width: 100%;
-				height: 60px;
-				display: flex;
-				gap: 10px;
-				padding: 0.25rem 0.5rem 0.25rem 0;
-				&__img {
-					height: 100%;
-					width: 66px;
-					object-fit: auto;
-				}
-			}
+		}
+		@media screen and (max-width: 992px) {
+			border-bottom: 1px solid orange;
 		}
 	}
 
@@ -48,7 +39,7 @@
 			margin-bottom: 1rem;
 			button {
 				background-color: orange;
-				padding: 0.5rem;
+				padding: 0.5rem 0.75rem;
 				outline: none;
 				border: none;
 				border-radius: 10px;
@@ -65,6 +56,10 @@
 				font-size: 1.75rem;
 				margin-bottom: 2rem;
 			}
+			&__pagination {
+				display: flex;
+				justify-content: center;
+			}
 			&__list {
 				display: grid;
 				grid-gap: 2rem 1.5rem;
@@ -73,7 +68,7 @@
 				&__item {
 					display: flex;
 					flex-direction: column;
-					height: fit-content;
+					height: 450px;
 					padding-bottom: 1rem;
 					border: 2px solid rgba(255, 166, 0, 0.5);
 					transition: all 0.3s ease-in-out;
@@ -81,6 +76,7 @@
 					&__img {
 						width: 100%;
 						height: 200px;
+						object-fit: cover;
 					}
 					&__context {
 						display: flex;
@@ -109,6 +105,9 @@
 					grid-template-columns: repeat(1, 1fr);
 				}
 			}
+		}
+		@media screen and (max-width: 992px) {
+			margin-top: 2rem;
 		}
 	}
 }
