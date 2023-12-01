@@ -49,7 +49,7 @@ const FoodContent = ({ recipes, categoryId, mealId, searchTerm }) => {
 	const handlePagination = (pageNumber) => {
 		setCurrentPage(pageNumber);
 	};
-
+	console.log(currentRecipes);
 	return (
 		<div className="food__content">
 			<div className="food__content__button">
@@ -79,14 +79,23 @@ const FoodContent = ({ recipes, categoryId, mealId, searchTerm }) => {
 				)}
 			</div>
 
-			{filteredRecipes.length > ITEMS_PER_PAGE && (
-				<FoodContentPagination
-					recipesPerPage={ITEMS_PER_PAGE}
-					totalRecipes={filteredRecipes.length}
-					onPagination={handlePagination}
-					currentPage={currentPage}
-				/>
-			)}
+			{categoryId
+				? filteredRecipes.length > ITEMS_PER_PAGE && (
+						<FoodContentPagination
+							recipesPerPage={ITEMS_PER_PAGE}
+							totalRecipes={currentRecipes.length}
+							onPagination={handlePagination}
+							currentPage={currentPage}
+						/>
+				  )
+				: filteredRecipes.length > ITEMS_PER_PAGE && (
+						<FoodContentPagination
+							recipesPerPage={ITEMS_PER_PAGE}
+							totalRecipes={filteredRecipes.length}
+							onPagination={handlePagination}
+							currentPage={currentPage}
+						/>
+				  )}
 		</div>
 	);
 };

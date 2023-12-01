@@ -15,6 +15,8 @@ const AddRecipe = () => {
 		recipeCategoryName: "",
 		recipeMealName: "",
 		recipeDescription: "",
+		recipeIngredients: ["", "", ""],
+		recipeInstructions: ["", "", ""],
 		recipePrepTime: {
 			number: 0,
 			unit: "seconds",
@@ -76,6 +78,28 @@ const AddRecipe = () => {
 			...formRecipe,
 			[name]: value,
 		});
+	};
+	const handleArrayChange = (event, index) => {
+		setDisabled(false);
+		const { name, value } = event.target;
+		const updatedFormRecipe = { ...formRecipe };
+		updatedFormRecipe[name][index] = value;
+		setFormRecipe(updatedFormRecipe);
+	};
+	const handleDeleteField = (event, index) => {
+		const { name } = event.target;
+		setFormRecipe({
+			...formRecipe,
+			[name]: [...formRecipe[name].filter((_, i) => i !== index)],
+		});
+	};
+	const handleAddField = (event) => {
+		const { name } = event.target;
+		setFormRecipe({
+			...formRecipe,
+			[name]: [...formRecipe[name], ""],
+		});
+		console.log(formRecipe);
 	};
 	const handleTimeNumberChange = (event) => {
 		setDisabled(false);
@@ -155,6 +179,20 @@ const AddRecipe = () => {
 											type="text"
 											name="recipeName"
 											value={formRecipe.recipeName}
+											onChange={handleInputChange}
+										/>
+									</Form.Group>
+									<Form.Group
+										controlId="formRecipeDescription"
+										className="add__container__form__field"
+										style={{ height: "fit-content" }}
+									>
+										<Form.Label>Description</Form.Label>
+										<Form.Control
+											as="textarea"
+											rows={5}
+											name="recipeDescription"
+											value={formRecipe.recipeDescription}
 											onChange={handleInputChange}
 										/>
 									</Form.Group>
@@ -269,6 +307,7 @@ const AddRecipe = () => {
 									<option value="days">days</option>
 								</Form.Select>
 							</Form.Group>
+
 							<div>
 								<strong>Total time</strong>
 								<p>
@@ -281,17 +320,111 @@ const AddRecipe = () => {
 								</p>
 							</div>
 							<Form.Group
-								controlId="formRecipeDescription"
+								controlId="formRecipeIngredients"
 								className="add__container__form__field"
 							>
-								<Form.Label>Description</Form.Label>
-								<Form.Control
-									as="textarea"
-									rows={5}
-									name="recipeDescription"
-									value={formRecipe.recipeDescription}
-									onChange={handleInputChange}
-								/>
+								<Form.Label>Ingredients</Form.Label>
+								{formRecipe.recipeIngredients.map(
+									(ingredient, index) => (
+										<div
+											key={index}
+											className="d-flex gap-2 mb-3"
+										>
+											<span>{index + 1}.</span>
+											<Form.Control
+												type="text"
+												name={`recipeIngredients`}
+												value={ingredient}
+												onChange={(event) =>
+													handleArrayChange(
+														event,
+														index
+													)
+												}
+											/>
+
+											<button
+												name="recipeIngredients"
+												className="btn btn-danger"
+												type="button"
+												disabled={
+													formRecipe.recipeIngredients
+														.length <= 3
+												}
+												onClick={(event) =>
+													handleDeleteField(
+														event,
+														index
+													)
+												}
+											>
+												X
+											</button>
+										</div>
+									)
+								)}
+								<button
+									name="recipeIngredients"
+									className="add__container__form__field__button"
+									type="button"
+									onClick={handleAddField}
+								>
+									+ Add ingredient
+								</button>
+							</Form.Group>
+							<Form.Group
+								controlId="formRecipeInstructions"
+								className="add__container__form__field"
+							>
+								<Form.Label>Instructions</Form.Label>
+								{formRecipe.recipeInstructions.map(
+									(instruction, index) => (
+										<div
+											key={index}
+											className="d-flex gap-2 mb-3"
+										>
+											<span>{index + 1}. </span>
+											<Form.Control
+												type="text"
+												name={`recipeInstructions`}
+												value={instruction}
+												onChange={(event) =>
+													handleArrayChange(
+														event,
+														index
+													)
+												}
+											/>
+
+											<button
+												name="recipeInstructions"
+												className="btn btn-danger"
+												type="button"
+												disabled={
+													formRecipe
+														.recipeInstructions
+														.length <= 3
+												}
+												onClick={(event) =>
+													handleDeleteField(
+														event,
+														index
+													)
+												}
+											>
+												X
+											</button>
+										</div>
+									)
+								)}
+								<button
+									name="recipeInstructions"
+									className="add__container__form__field__button"
+									type="button"
+									onClick={handleAddField}
+								>
+									+ Add instruction
+								</button>
 							</Form.Group>
 
 							<div style={{ textAlign: "right" }}>

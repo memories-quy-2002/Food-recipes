@@ -43,6 +43,12 @@
 			}
 			&__field {
 				margin-bottom: 1rem;
+				&__button {
+					outline: none;
+					border: none;
+					color: orange;
+					background-color: white;
+				}
 			}
 			&__imgContainer {
 				display: flex;

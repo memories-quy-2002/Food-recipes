@@ -228,6 +228,8 @@ const getRecipesByRecipeId = (request, response) => {
 		r.prep_time, 
 		r.cook_time, 
 		r.date_added,
+		r.ingredients,
+		r.instructions,
 		CASE 
 			WHEN r.user_id = 0 THEN NULL
 			ELSE a.full_name
@@ -307,6 +309,8 @@ const addRecipe = (request, response) => {
 		recipeCategoryName,
 		recipePrepTime,
 		recipeCookTime,
+		recipeIngredients,
+		recipeInstructions,
 		userId,
 	} = request.body;
 	console.log(request.body);
@@ -326,11 +330,11 @@ const addRecipe = (request, response) => {
 			WHERE NOT EXISTS (SELECT 1 FROM categories WHERE category_name = $2)
 			RETURNING category_id
 		  )
-		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time, user_id)
+		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time, ingredients, instructions, user_id)
 		  VALUES ($3,
 			$4, COALESCE((SELECT meal_id FROM meal_cte), (SELECT meal_id FROM meals WHERE meal_name = $1)::integer),
 			COALESCE((SELECT category_id FROM category_cte), (SELECT category_id FROM categories WHERE category_name = $2)::integer)
-			, $5, $6, $7)`,
+			, $5, $6, $7, $8, $9)`,
 		[
 			recipeMealName,
 			recipeCategoryName,
@@ -338,6 +342,8 @@ const addRecipe = (request, response) => {
 			recipeDescription,
 			prepTime,
 			cookTime,
+			recipeIngredients,
+			recipeInstructions,
 			userId,
 		],
 		(error, results) => {

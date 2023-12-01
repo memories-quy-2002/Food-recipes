@@ -8,6 +8,7 @@ const FoodContentPagination = ({
 	currentPage,
 }) => {
 	const pageNumbers = [];
+	console.log(totalRecipes);
 	for (let i = 1; i <= Math.ceil(totalRecipes / recipesPerPage); i++) {
 		pageNumbers.push(i);
 	}
@@ -17,9 +18,6 @@ const FoodContentPagination = ({
 	const lastPage = Math.min(firstPage + 4, totalPages);
 
 	const getDisplayedPages = pageNumbers.slice(firstPage - 1, lastPage);
-
-	console.log(getDisplayedPages);
-
 	return (
 		<Pagination className="food__content__section__pagination">
 			{totalPages <= 5 ? (

@@ -111,8 +111,12 @@ const Recipe = () => {
 						const myRecipeRating = response.data.ratings.filter(
 							(rating) => rating.recipe_id === recipe.recipe_id
 						);
-						setRatingScore(myRecipeRating[0].score);
-						setReview(myRecipeRating[0].review);
+						if (myRecipeRating[0].score) {
+							setRatingScore(myRecipeRating[0].score);
+						}
+						if (myRecipeRating[0].review) {
+							setReview(myRecipeRating[0].review);
+						}
 					}
 				}
 			} catch (err) {
@@ -141,6 +145,7 @@ const Recipe = () => {
 	if (!id) {
 		return <ErrorPage />;
 	}
+	console.log(recipe);
 	return (
 		<>
 			{recipe && (
