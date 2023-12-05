@@ -41,7 +41,7 @@ const HeaderAuthButton = ({ auth }) => {
 		dispatch(authActions.logout());
 	};
 	const handleClick = () => {
-		navigate("/account");
+		navigate("/account?signup=true");
 	};
 	return (
 		<div className="header__auth">

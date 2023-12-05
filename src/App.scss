@@ -1,16 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter&family=Montserrat:wght@300&family=Roboto:wght@500&display=swap");
-
+@import url("https://fonts.googleapis.com/css2?family=Lato&family=Nunito&display=swap");
 $color_1: #9880ff;
 $background-color_1: #9880ff;
-* {
-	margin: 0;
-	padding: 0;
-	box-sizing: border-box;
-}
-
-body {
-	font-family: "Roboto", sans-serif;
-}
 
 .loaderContainer {
 	height: 100vh;

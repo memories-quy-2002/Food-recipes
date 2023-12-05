@@ -35,7 +35,9 @@ const Footer = () => {
 						<ul className="footer__list">
 							{overview.map((item, index) => (
 								<li key={index} className="footer__list__link">
-									<a href="/">{item}</a>
+									<a href={`/${item.toLowerCase()}`}>
+										{item}
+									</a>
 								</li>
 							))}
 						</ul>

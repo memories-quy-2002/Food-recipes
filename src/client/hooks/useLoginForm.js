@@ -90,7 +90,10 @@ const useLoginForm = () => {
 						navigate("/");
 					}
 				} catch (err) {
-					console.error(err);
+					dispatch({
+						type: "SET_ERRORS",
+						payload: [err.response.data.message],
+					});
 				}
 			})
 			.catch((err) => {

@@ -106,8 +106,8 @@ const Food = () => {
 				<Col md={9}>
 					<Suspense
 						fallback={
-							<div className="app__loaderContainer">
-								<div className="app__loader"></div>
+							<div className="loaderContainer">
+								<div className="dot-elastic"></div>
 							</div>
 						}
 					>

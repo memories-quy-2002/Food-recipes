@@ -9,7 +9,7 @@ const AddRecipe = () => {
 	const { auth } = useContext(AuthContext);
 	const { userId } = auth.current;
 	const navigate = useNavigate();
-	const [formRecipe, setFormRecipe] = useState({
+	const initialState = {
 		recipeImage: null,
 		recipeName: "",
 		recipeCategoryName: "",
@@ -26,7 +26,8 @@ const AddRecipe = () => {
 			unit: "seconds",
 		},
 		userId: userId,
-	});
+	};
+	const [formRecipe, setFormRecipe] = useState(initialState);
 	const [preview, setPreview] = useState(null);
 	const [disabled, setDisabled] = useState(true);
 
@@ -123,6 +124,11 @@ const AddRecipe = () => {
 				unit: value,
 			},
 		}));
+	};
+
+	const handleReset = () => {
+		setFormRecipe(initialState);
+		setDisabled(true);
 	};
 
 	const handleSubmit = async (event) => {
@@ -428,6 +434,13 @@ const AddRecipe = () => {
 							</Form.Group>
 
 							<div style={{ textAlign: "right" }}>
+								<Button
+									type="reset"
+									className="add__container__form__reset btn btn-light"
+									onClick={handleReset}
+								>
+									Reset
+								</Button>
 								<Button
 									type="submit"
 									className="add__container__form__submit"

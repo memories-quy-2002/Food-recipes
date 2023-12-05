@@ -18,6 +18,7 @@ const FoodMenuBar = ({
 					type="text"
 					name="search_recipe"
 					placeholder="Search..."
+					className="food__menubar__section__search"
 					onChange={onChangeSearchTerm}
 				/>
 			</div>

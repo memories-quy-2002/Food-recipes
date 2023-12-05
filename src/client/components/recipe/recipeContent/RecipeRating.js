@@ -1,9 +1,8 @@
 import React from "react";
-import { Row, Form, Button } from "react-bootstrap";
-import ratingStar from "../../../utils/ratingStar";
-import { BsStarFill, BsStar } from "react-icons/bs";
-import convertImage from "../../../utils/convertImage";
-import formatTimestamp from "../../../utils/formatTimestamp";
+import { Button, Form, Row } from "react-bootstrap";
+import { BsStar, BsStarFill } from "react-icons/bs";
+import RecipeReviewList from "./RecipeReviewList";
+
 const RecipeRating = ({
 	ratingScore,
 	review,
@@ -103,45 +102,7 @@ const RecipeRating = ({
 					</Form>
 				</Row>
 			)}
-			<Row className="recipe__content__reviews">
-				<h3>All reviews ({reviewList.length})</h3>
-				<ul className="recipe__content__reviews__list">
-					{reviewList.map((review) => (
-						<li
-							key={review.rating_id}
-							className="recipe__content__reviews__list__item"
-						>
-							<div className="recipe__content__reviews__list__item__container">
-								<div className="recipe__content__reviews__list__item__container__context">
-									<div>
-										{convertImage(
-											"avatar",
-											"recipe__content__reviews__list__item__container__context__img"
-										)}
-										<strong>{review.full_name}</strong>
-									</div>
-								</div>
-								<div className="recipe__content__reviews__list__item__container__info">
-									<div className="recipe__content__reviews__list__item__container__info__star">
-										{ratingStar(review.score, "orange")}{" "}
-									</div>
-									<div>
-										<span
-											style={{
-												fontSize: "12px",
-											}}
-										>
-											{formatTimestamp(review.date_added)}
-										</span>
-									</div>
-								</div>
-
-								<p>{review.review}</p>
-							</div>
-						</li>
-					))}
-				</ul>
-			</Row>
+			<RecipeReviewList reviewList={reviewList} />
 		</>
 	);
 };

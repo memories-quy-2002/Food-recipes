@@ -9,9 +9,9 @@ export const website_content = {
 	contact: {
 		email: "foodrecipes@example.com",
 		phone: "(+84) 123 456 7890",
-		address: "123 ABC St, Ho Chi Minh City, Vietnam",
+		address: "123 ABC Street, District 12, Ho Chi Minh City, Vietnam",
 	},
-	overview: ["Home", "Food", "Wishlist", "About", "Contact", "Support"],
+	overview: ["Home", "Food", "Wishlist"],
 	follow: [
 		{
 			href: "https://www.facebook.com",

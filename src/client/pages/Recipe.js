@@ -145,7 +145,6 @@ const Recipe = () => {
 	if (!id) {
 		return <ErrorPage />;
 	}
-	console.log(recipe);
 	return (
 		<>
 			{recipe && (

@@ -8,11 +8,9 @@ const FoodContentPagination = ({
 	currentPage,
 }) => {
 	const pageNumbers = [];
-	console.log(totalRecipes);
 	for (let i = 1; i <= Math.ceil(totalRecipes / recipesPerPage); i++) {
 		pageNumbers.push(i);
 	}
-
 	const totalPages = Math.ceil(totalRecipes / recipesPerPage);
 	const firstPage = Math.max(currentPage - 2, 1);
 	const lastPage = Math.min(firstPage + 4, totalPages);

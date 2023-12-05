@@ -9,7 +9,7 @@
 			padding: 0 0.5rem 1rem 0.5rem;
 			input {
 				padding: 0.25rem 0.6rem;
-				width: 90%;
+				width: 95%;
 				border: 2px solid orange;
 				border-radius: 10px;
 			}
@@ -28,8 +28,12 @@
 				}
 			}
 		}
-		@media screen and (max-width: 992px) {
-			border-bottom: 1px solid orange;
+		@media screen and (max-width: 576px) {
+			border-bottom: 2px solid orange;
+			border-right: none;
+			input {
+				width: 100%;
+			}
 		}
 	}
 
