@@ -20,7 +20,7 @@ const Reviews = ({ reviewsData = [] }) => {
 					<Col md={6}>
 						<div className="profile__container__main__reviews__summary__item">
 							<strong>{reviewsData.length}</strong>
-							<p>rating(s)</p>
+							<p>Rating(s)</p>
 						</div>{" "}
 					</Col>
 					<Col md={6}>
@@ -32,7 +32,7 @@ const Reviews = ({ reviewsData = [] }) => {
 									).length
 								}
 							</strong>
-							<p>comment(s)</p>
+							<p>Comment(s)</p>
 						</div>{" "}
 					</Col>
 				</Row>

@@ -269,7 +269,7 @@ const AddRecipe = () => {
 								controlId="formRecipePrepTime"
 								className="add__container__form__time"
 							>
-								<Form.Label>Prep Time</Form.Label>
+								<Form.Label>Preparation Time</Form.Label>
 								<Form.Control
 									type="number"
 									name="recipePrepTime"
@@ -293,7 +293,7 @@ const AddRecipe = () => {
 								controlId="formRecipeCookTime"
 								className="add__container__form__time"
 							>
-								<Form.Label>Cook Time</Form.Label>
+								<Form.Label>Cooking Time</Form.Label>
 								<Form.Control
 									type="number"
 									name="recipeCookTime"

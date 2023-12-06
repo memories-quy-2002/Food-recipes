@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import RecipeContainerSummary from "../components/recipe/RecipeContainerSummary";
 import RecipeContent from "../components/recipe/RecipeContent";
+import RecipeOtherList from "../components/recipe/RecipeOtherList";
 import { AuthContext } from "../context/AuthProvider";
 import "../styles/Recipe.scss";
 import ErrorPage from "./ErrorPage";
@@ -166,6 +167,7 @@ const Recipe = () => {
 						onToggleReview={handleToggleReview}
 						onReviewChange={handleReviewChange}
 					/>
+					<RecipeOtherList recipeId={recipe.recipe_id} />
 				</Container>
 			)}
 		</>
