@@ -175,15 +175,19 @@
 							display: flex;
 							gap: 2rem;
 							width: 100%;
-							height: fit-content;
+							height: 200px;
 							padding: 1rem;
+							border-bottom: 4px solid orange;
 							&__img {
-								width: 160px;
+								width: 150px;
+								height: 100%;
 								object-fit: cover;
 							}
 							&__context {
 								display: flex;
 								flex-direction: column;
+								width: 100%;
+								height: 100%;
 							}
 						}
 					}

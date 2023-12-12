@@ -131,7 +131,7 @@ const createUser = (request, response) => {
 };
 
 const updateUser = (request, response) => {
-	const user_id = parseInt(request.params.id);
+	const user_id = parseInt(request.params.uid);
 	const { name, phoneNumber, address } = request.body.formData;
 	pool.query(
 		"UPDATE accounts SET full_name=$1, phone=$2, address=$3 WHERE user_id=$4 RETURNING *",
@@ -185,20 +185,6 @@ const updatePassword = async (request, response) => {
 	}
 };
 
-const deleteUser = (request, response) => {
-	const user_id = request.params.id;
-	pool.query(
-		"DELETE FROM accounts WHERE user_id = $1",
-		[user_id],
-		(error, results) => {
-			if (error) {
-				throw error;
-			}
-			response.status(200).send(`User deleted with user_id: ${user_id}`);
-		}
-	);
-};
-
 const getRecipes = (request, response) => {
 	pool.query(
 		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, m.meal_id, m.meal_name, " +
@@ -219,7 +205,7 @@ const getRecipes = (request, response) => {
 };
 
 const getRecipesByRecipeId = (request, response) => {
-	const recipe_id = request.params.id;
+	const recipe_id = request.params.rid;
 	pool.query(
 		`SELECT 
 		r.recipe_id, 
@@ -352,6 +338,22 @@ const addRecipe = (request, response) => {
 				return;
 			}
 			response.status(200).json({ message: "Recipe added successfully" });
+		}
+	);
+};
+
+const deleteRecipe = (request, response) => {
+	const recipeId = request.params.rid;
+	pool.query(
+		`DELETE FROM recipes WHERE recipe_id = $1;`,
+		[recipeId],
+		(error, results) => {
+			if (error) {
+				throw error;
+			}
+			response
+				.status(200)
+				.json({ message: "Recipe deleted successfully" });
 		}
 	);
 };
@@ -499,12 +501,12 @@ module.exports = {
 	createUser,
 	updateUser,
 	updatePassword,
-	deleteUser,
 	getUserByJWT,
 	getRecipes,
 	getRecipesByRecipeId,
 	getRecipesByUserId,
 	addRecipe,
+	deleteRecipe,
 	getCategories,
 	getMeals,
 	addItemstoWishlist,

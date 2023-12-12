@@ -72,8 +72,8 @@ const RecipeRating = ({
 								onClick={onToggleReview}
 							>
 								{showReview
-									? "Hide your review"
-									: "Show your review"}
+									? "Hide review"
+									: "Show & edit review"}
 							</p>
 							{showReview && (
 								<Form.Group controlId="formBasicReview">

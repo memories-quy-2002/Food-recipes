@@ -29,7 +29,7 @@ app.use(
 	})
 );
 app.get("/recipe/", db.getRecipes);
-app.get("/recipe/:id", db.getRecipesByRecipeId);
+app.get("/recipe/:rid", db.getRecipesByRecipeId);
 app.get("/recipe/user/:uid", db.getRecipesByUserId);
 app.get("/category/", db.getCategories);
 app.get("/meal/", db.getMeals);
@@ -42,9 +42,9 @@ app.post("/account/jwt", db.getUserByJWT);
 app.post("/account/login", db.getUsersLogin);
 app.post("/account/signup", db.createUser);
 app.post("/rating/:uid/:rid", db.addRating);
-app.put("/account/users/:id", db.updateUser);
+app.put("/account/users/update/:uid", db.updateUser);
 app.put("/account/users/password/:uid", db.updatePassword);
-app.delete("/account/users/:id", db.deleteUser);
+app.delete("/recipe/delete/:rid", db.deleteRecipe);
 app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
 
 app.listen(PORT, () => {

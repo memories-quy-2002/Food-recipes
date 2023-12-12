@@ -18,9 +18,12 @@ const PersonalInfo = ({ user }) => {
 	};
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		const response = await axios.put(`account/users/${user.user_id}`, {
-			formData,
-		});
+		const response = await axios.put(
+			`account/users/update/${user.user_id}`,
+			{
+				formData,
+			}
+		);
 		if (response.status === 200) {
 			dispatch(authActions.updateUser({ user: response.data.user }));
 		}

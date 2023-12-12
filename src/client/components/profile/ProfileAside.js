@@ -17,7 +17,7 @@ const ProfileAside = ({
 			<div className="profile__container__aside__content">
 				<ul className="profile__container__aside__content__nav">
 					{profilePageList.map(({ link, name }, index) => (
-						<li>
+						<li key={index}>
 							<a
 								href={`/profile#/${link}`}
 								onClick={() => handleChangePage(link)}

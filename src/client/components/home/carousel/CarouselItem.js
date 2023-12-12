@@ -4,7 +4,7 @@ import convertImage from "../../../utils/convertImage";
 const CarouselItem = ({ id, title, desc, imgSrc }) => {
 	const navigate = useNavigate();
 	const handleClick = () => {
-		navigate(`/food?meal=${id}`);
+		navigate(`/food?meals=${id}`);
 	};
 	return (
 		<div className="home__carousel__item">
