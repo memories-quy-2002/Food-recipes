@@ -106,3 +106,4 @@ Dockerfile
 
 # Optional Windows files
 Thumbs.db
+.vercel

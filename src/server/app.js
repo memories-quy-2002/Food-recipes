@@ -17,7 +17,7 @@ const app = express();
 
 var limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 100,
+	max: 1000,
 });
 
 app.use(limiter);
@@ -54,3 +54,7 @@ app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}.`);
 });
+app.get('/', (req, res) => {
+	res.send("Hello World from Express");
+});
+
