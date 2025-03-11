@@ -12,6 +12,9 @@ const pool = new Pool({
 	database: process.env.REACT_APP_DATABASE_NAME,
 	password: process.env.REACT_APP_DATABASE_PASSWORD,
 	port: process.env.REACT_APP_DATABASE_PORT,
+	ssl: {
+		rejectUnauthorized: false // Chỉ sử dụng trong môi trường phát triển, không dùng cho production
+	}
 });
 
 const secretKey = process.env.REACT_APP_SECRET_KEY;
@@ -108,7 +111,7 @@ const createUser = (request, response) => {
 		const hashedPassword = await utils.hashPassword(password);
 		pool.query(
 			"INSERT INTO accounts (full_name, email, password, created_on, last_login) " +
-				"VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *",
+			"VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING *",
 			[name.first + " " + name.last, email, hashedPassword],
 			(error, results) => {
 				if (error) {
@@ -188,11 +191,11 @@ const updatePassword = async (request, response) => {
 const getRecipes = (request, response) => {
 	pool.query(
 		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, m.meal_id, m.meal_name, " +
-			"m.meal_description, c.category_id, c.category_name, " +
-			"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
-			"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
-			"JOIN categories c ON r.category_id = c.category_id " +
-			"LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id GROUP BY r.recipe_id, m.meal_id, c.category_id ORDER BY r.recipe_id ASC",
+		"m.meal_description, c.category_id, c.category_name, " +
+		"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
+		"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
+		"JOIN categories c ON r.category_id = c.category_id " +
+		"LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id GROUP BY r.recipe_id, m.meal_id, c.category_id ORDER BY r.recipe_id ASC",
 		(error, results) => {
 			if (error) {
 				console.error("Error executing query", error);
@@ -361,8 +364,8 @@ const deleteRecipe = (request, response) => {
 const getCategories = (request, response) => {
 	pool.query(
 		"SELECT c.category_id AS id, c.category_name AS name, COUNT(r.recipe_id) AS recipe_count " +
-			"FROM categories c JOIN recipes r ON c.category_id = r.category_id " +
-			"GROUP BY c.category_id, c.category_name ORDER BY c.category_id ASC;",
+		"FROM categories c JOIN recipes r ON c.category_id = r.category_id " +
+		"GROUP BY c.category_id, c.category_name ORDER BY c.category_id ASC;",
 		(error, results) => {
 			if (error) {
 				throw error;
@@ -376,8 +379,8 @@ const getCategories = (request, response) => {
 const getMeals = (request, response) => {
 	pool.query(
 		"SELECT m.meal_id AS id, m.meal_name AS name, m.meal_description AS description, COUNT(r.recipe_id) AS recipe_count " +
-			"FROM meals m JOIN recipes r ON m.meal_id = r.meal_id " +
-			"GROUP BY m.meal_id, m.meal_name ORDER BY m.meal_id ASC;",
+		"FROM meals m JOIN recipes r ON m.meal_id = r.meal_id " +
+		"GROUP BY m.meal_id, m.meal_name ORDER BY m.meal_id ASC;",
 		(error, results) => {
 			if (error) {
 				throw error;
@@ -388,7 +391,7 @@ const getMeals = (request, response) => {
 	);
 };
 
-const addItemstoWishlist = (request, response) => {
+const addItemsToWishlist = (request, response) => {
 	const { user_id, recipe_id } = request.body;
 	pool.query(
 		"INSERT INTO wishlist (user_id, recipe_id) VALUES ($1, $2) ON CONFLICT (user_id, recipe_id) DO NOTHING",
@@ -409,7 +412,7 @@ const addItemstoWishlist = (request, response) => {
 		}
 	);
 };
-const getWishlistbyUserId = (request, response) => {
+const getWishlistByUserId = (request, response) => {
 	const user_id = request.params.uid;
 	pool.query(
 		"SELECT recipe_id FROM wishlist WHERE user_id = $1",
@@ -509,8 +512,8 @@ module.exports = {
 	deleteRecipe,
 	getCategories,
 	getMeals,
-	addItemstoWishlist,
-	getWishlistbyUserId,
+	addItemsToWishlist,
+	getWishlistByUserId,
 	deleteWishlistItems,
 	addRating,
 	getRatingsByUserId,
