@@ -3,20 +3,24 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 const cors = require("cors");
 const db = require("./queries");
-
-const PORT = process.env.PORT || process.env.REACT_APP_PORT;
-
+const rateLimit = require('express-rate-limit')
 const storage = multer.diskStorage({
 	destination: "../client/assets/images/", // Save files to this directory
 	filename: (req, file, cb) => {
 		cb(null, file.originalname);
 	},
 });
-
 const upload = multer({ storage });
 
+const PORT = process.env.PORT || process.env.REACT_APP_PORT;
 const app = express();
 
+var limiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 100,
+});
+
+app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
