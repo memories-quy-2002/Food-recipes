@@ -1,21 +1,12 @@
-const convertTime = (time) => {
-	var result = ``;
-	const { days = 0, hours = 0, minutes = 0, seconds = 0 } = time;
-	if (days > 0) {
-		result += `${days} day(s) `;
-	}
-	if (hours > 0) {
-		result += `${hours} hour(s) `;
-	}
-	if (minutes > 0) {
-		result += `${minutes} minute(s) `;
-	}
-	if (seconds > 0) {
-		result += `${seconds} second(s)`;
-	}
-	if (days === 0 && hours === 0 && minutes === 0 && seconds === 0) {
-		result = "No time";
-	}
-	return result;
+const convertTime = ({ days = 0, hours = 0, minutes = 0, seconds = 0 }) => {
+	const parts = [];
+
+	if (days) parts.push(`${days} day(s)`);
+	if (hours) parts.push(`${hours} hour(s)`);
+	if (minutes) parts.push(`${minutes} minute(s)`);
+	if (seconds) parts.push(`${seconds} second(s)`);
+
+	return parts.length ? parts.join(" ") : "No time";
 };
+
 export default convertTime;

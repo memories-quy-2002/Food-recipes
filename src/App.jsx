@@ -10,7 +10,7 @@ import Food from "./client/pages/Food";
 import Home from "./client/pages/Home";
 import Profile from "./client/pages/Profile";
 import Wishlist from "./client/pages/Wishlist";
-
+import React from "react";
 const Recipe = lazy(() => import("./client/pages/Recipe"));
 
 function App() {

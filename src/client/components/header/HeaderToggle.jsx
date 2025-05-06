@@ -2,8 +2,8 @@ import React, { useContext } from "react";
 import { Button, Offcanvas } from "react-bootstrap";
 import { FaBars } from "react-icons/fa6";
 import { useDispatch } from "react-redux";
-import { AuthContext } from "../../context/AuthProvider.js";
-import { authActions } from "../../redux/authSlice";
+import { AuthContext } from "../../context/AuthProvider.jsx";
+import { authActions } from "../../redux/authSlice.jsx";
 
 const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 	const dispatch = useDispatch();

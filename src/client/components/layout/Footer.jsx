@@ -46,17 +46,10 @@ const Footer = () => {
 				<div className="footer__social">
 					<h5 className="footer__title">Follow Us</h5>
 					<ul className="footer__social__list">
-						{follow.map((item, index) => (
-							<li key={index} className="footer__social__item">
-								<a
-									href={item.href}
-									target="_blank"
-									rel="noreferrer"
-									className="footer__social__link"
-								>
-									{item.icon}
-								</a>
-							</li>
+						{follow.map(({ href, Icon }) => (
+							<a key={href} href={href} target="_blank" rel="noopener noreferrer">
+								<Icon color="white" size={24} />
+							</a>
 						))}
 					</ul>
 				</div>

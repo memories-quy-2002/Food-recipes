@@ -1,5 +1,5 @@
 import { BsStar, BsStarFill, BsStarHalf } from "react-icons/bs";
-
+import React from "react";
 const ratingStar = (overallScore, color = "yellow") => {
 	const stars = [];
 	const maxStars = 5;
