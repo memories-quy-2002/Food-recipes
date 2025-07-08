@@ -1,23 +1,20 @@
 # 🍲 Food Recipes Website
 
-A full-stack web application that delivers a seamless experience for users to explore, read, and share food recipes. Built with **ReactJS**, **ExpressJS**, and **SCSS**, this project integrates frontend and backend technologies to create a modern, responsive platform for food lovers.
-
-## 🌐 Live Demo
-[Visit Live Site](https://food-recipes-ruby-xi.vercel.app)
+A full-stack web application that delivers a seamless experience for users to explore, read, and share food recipes. Built with **ReactJS**, **Node.js** **ExpressJS**, and **SCSS**, this project integrates frontend and backend technologies to create a modern, responsive platform for food lovers.
 
 ## 🛠️ Tech Stack
 
 **Frontend**:
-- ReactJS (Create React App)
+- ReactJS (Vite)
 - SCSS Modules
 - React Router DOM
 
 **Backend**:
-- ExpressJS
-- MySQL
+- Node.js, ExpressJS
+- PostgreSQL
 
 **Database**:
-- Relational schema using MySQL (recipes.sql included)
+- Relational schema using PostgreSQL (recipes.sql included)
 
 ## 🚀 Features
 
@@ -39,12 +36,12 @@ cd Food-recipes
 ### Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Run the app
 ```bash
-npm start
+pnpm start
 ```
 
 ## Set up the backend
