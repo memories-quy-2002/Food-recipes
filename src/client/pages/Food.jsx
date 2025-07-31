@@ -89,7 +89,18 @@ const Food = () => {
 		fetchMeals();
 	}, []);
 	return (
-		<Container fluid className="my-3">
+		<Container fluid className="food">
+			<div className="food__intro">
+				<h2>🍽️ Explore Delicious Recipes</h2>
+				<p>Browse by category, meal type, or search for your favorite dishes. Find inspiration for your next meal!</p>
+				<div className="food__summary">
+					<ul>
+						<li><strong>Total Recipes:</strong> {recipes.length}</li>
+						<li><strong>Categories:</strong> {categories.length}</li>
+						<li><strong>Meal Types:</strong> {meals.length}</li>
+					</ul>
+				</div>
+			</div>
 			<Row>
 				<Col md={3}>
 					<FoodMenuBar

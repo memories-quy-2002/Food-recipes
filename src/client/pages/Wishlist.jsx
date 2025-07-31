@@ -47,31 +47,46 @@ const Wishlist = () => {
 			console.error(err);
 		}
 	};
+
 	return (
 		<Container fluid className="wishlist">
 			<div className="wishlist__main">
 				<div className="wishlist__main__title">
-					<h2>Your favorite recipes</h2>
+					<h2>Your Favorite Recipes</h2>
 				</div>
-				<div className="wishlist__main__content">
-					<ul className="wishlist__main__content__list">
-						{favoriteRecipes.map((recipe) => (
-							<FavoriteRecipe
-								key={recipe.recipe_id}
-								recipe={recipe}
-								handleShowModal={() =>
-									handleShowModal(recipe.recipe_id)
-								}
-							/>
-						))}
+				<section className="wishlist__summary">
+					<ul>
+						<li><strong>Total in Wishlist:</strong> {favoriteRecipes.length}</li>
+						<li><strong>All Recipes:</strong> {recipes.length}</li>
+						<li><strong>User ID:</strong> {user_id}</li>
 					</ul>
+				</section>
+				<div className="wishlist__main__content">
+					{favoriteRecipes.length === 0 ? (
+						<div className="wishlist__empty">
+							<h4>No favorite recipes yet!</h4>
+							<p>Browse recipes and add your favorites to see them here.</p>
+						</div>
+					) : (
+						<ul className="wishlist__main__content__list">
+							{favoriteRecipes.map((recipe) => (
+								<FavoriteRecipe
+									key={recipe.recipe_id}
+									recipe={recipe}
+									handleShowModal={() =>
+										handleShowModal(recipe.recipe_id)
+									}
+								/>
+							))}
+						</ul>
+					)}
 				</div>
 			</div>
 			{showModal && (
 				<div className="wishlist__modal">
 					<div className="wishlist__modal__content">
 						<h3>Delete Recipe</h3>
-						<p>Are you sure you want to delete this recipe?</p>
+						<p>Are you sure you want to remove this recipe from your wishlist? This action cannot be undone.</p>
 						<div className="wishlist__modal__buttons">
 							<button
 								className="btn btn-danger"

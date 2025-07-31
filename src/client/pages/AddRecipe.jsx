@@ -1,3 +1,4 @@
+import cameraPreview from "../assets/images/cameraPreview.png";
 import React, { useContext, useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import axios from "../api/axios";
@@ -217,7 +218,7 @@ const AddRecipe = () => {
 											/>
 										) : (
 											<img
-												src={require("../assets/images/cameraPreview.png")}
+												src={cameraPreview}
 												alt="Camera preview"
 												className="add__container__form__imgContainer__img"
 											/>
