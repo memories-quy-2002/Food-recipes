@@ -53,11 +53,6 @@ Thumbs.db
 /cypress/videos/
 /cypress/screenshots/
 
-# Node.js specific
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
 # Serverless directories
 .serverless/
 
