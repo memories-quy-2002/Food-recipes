@@ -1,35 +1,19 @@
 version: 2
 updates:
-  # FRONTEND (React + pnpm)
   - package-ecosystem: "npm"
-    directory: "/client"
+    directory: "/"
     schedule:
       interval: "weekly"
-    versioning-strategy: increase
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      frontend-dependencies:
-        patterns:
-          - "*"
+      day: "monday"
+      time: "03:00"
+      timezone: "Asia/Ho_Chi_Minh"
 
-  # BACKEND (Express)
-  - package-ecosystem: "npm"
-    directory: "/server"
-    schedule:
-      interval: "weekly"
-    versioning-strategy: increase
+    open-pull-requests-limit: 5
+
     commit-message:
-      prefix: "chore"
+      prefix: "chore(deps)"
       include: "scope"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    groups:
-      backend-dependencies:
-        patterns:
-          - "*"
+
+    labels:
+      - "dependencies"
+      - "frontend"
