@@ -23,8 +23,7 @@
         "multer": "2.0.2",
         "mysql": "^2.18.1",
         "mysqldump": "^3.2.0",
-        "path": "^0.12.7",
-        "pg": "^8.16.3",
+        "pg": "^8.17.1",
         "sanitize-filename": "^1.6.3",
         "streamifier": "^0.1.1"
     }

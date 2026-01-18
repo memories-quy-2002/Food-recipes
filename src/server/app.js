@@ -12,7 +12,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-const PORT = process.env.PORT || process.env.REACT_APP_PORT;
+const PORT = 4000;
 const app = express();
 
 var limiter = rateLimit({

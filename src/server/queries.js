@@ -7,17 +7,18 @@ const sanitizeFilename = require("sanitize-filename");
 require("dotenv").config();
 const Pool = pg.Pool;
 const pool = new Pool({
-	user: process.env.REACT_APP_DATABASE_USER,
-	host: process.env.REACT_APP_DATABASE_HOST,
-	database: process.env.REACT_APP_DATABASE_NAME,
-	password: process.env.REACT_APP_DATABASE_PASSWORD,
-	port: process.env.REACT_APP_DATABASE_PORT,
+	user: "avnadmin",
+	password: "AVNS_qTmsTLUkqMFizW9GdQF",
+	host: "food-recipes-digital-e-shop.h.aivencloud.com",
+	port: 13891,
+	database: "defaultdb",
 	ssl: {
-		rejectUnauthorized: false // Chỉ sử dụng trong môi trường phát triển, không dùng cho production
-	}
+		rejectUnauthorized: true,
+		ca: fs.readFileSync('./ca.pem').toString(),
+	},
 });
 
-const secretKey = process.env.REACT_APP_SECRET_KEY;
+const secretKey = 'secret-key';
 
 pool.connect((err) => {
 	if (err) {
