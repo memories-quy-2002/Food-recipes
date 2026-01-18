@@ -136,8 +136,8 @@ importers:
         specifier: ^25.0.9
         version: 25.0.9
       '@vitejs/plugin-react':
-        specifier: ^4.7.0
-        version: 4.7.0(vite@6.4.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.2)(terser@5.46.0)(yaml@2.8.0))
+        specifier: ^5.1.2
+        version: 5.1.2(vite@6.4.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.2)(terser@5.46.0)(yaml@2.8.0))
       babel-jest:
         specifier: ^29.7.0
         version: 29.7.0(@babel/core@7.28.6)
@@ -1206,8 +1206,8 @@ packages:
       react: '>=16.14.0'
       react-dom: '>=16.14.0'
 
-  '@rolldown/pluginutils@1.0.0-beta.27':
-    resolution: {integrity: sha512-+d0F4MKMCbeVUJwG96uQ4SgAznZNSq93I3V+9NHA4OpvqG8mRCpGdKmK8l/dl02h2CCDHwW2FqilnTyDcAnqjA==}
+  '@rolldown/pluginutils@1.0.0-beta.53':
+    resolution: {integrity: sha512-vENRlFU4YbrwVqNDZ7fLvy+JR1CRkyr01jhSiDpE1u6py3OMzQfztQU2jxykW3ALNxO4kSlqIDeYyD0Y9RcQeQ==}
 
   '@rollup/rollup-android-arm-eabi@4.55.1':
     resolution: {integrity: sha512-9R0DM/ykwfGIlNu6+2U09ga0WXeZ9MRC2Ter8jnz8415VbuIykVuc6bhdrbORFZANDmTDvq26mJrEVTl8TdnDg==}
@@ -1467,9 +1467,9 @@ packages:
   '@types/yargs@17.0.35':
     resolution: {integrity: sha512-qUHkeCyQFxMXg79wQfTtfndEC+N9ZZg76HJftDJp+qH2tV7Gj4OJi7l+PiWwJ+pWtW8GwSmqsDj/oymhrTWXjg==}
 
-  '@vitejs/plugin-react@4.7.0':
-    resolution: {integrity: sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==}
-    engines: {node: ^14.18.0 || >=16.0.0}
+  '@vitejs/plugin-react@5.1.2':
+    resolution: {integrity: sha512-EcA07pHJouywpzsoTUqNh5NwGayl2PPVEJKUSinGGSxFGYn+shYbqMGBg6FXDqgXum9Ou/ecb+411ssw8HImJQ==}
+    engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
 
@@ -3034,8 +3034,8 @@ packages:
       redux:
         optional: true
 
-  react-refresh@0.17.0:
-    resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
+  react-refresh@0.18.0:
+    resolution: {integrity: sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==}
     engines: {node: '>=0.10.0'}
 
   react-router-dom@7.12.0:
@@ -4929,7 +4929,7 @@ snapshots:
       uncontrollable: 8.0.4(react@18.3.1)
       warning: 4.0.3
 
-  '@rolldown/pluginutils@1.0.0-beta.27': {}
+  '@rolldown/pluginutils@1.0.0-beta.53': {}
 
   '@rollup/rollup-android-arm-eabi@4.55.1':
     optional: true
@@ -5163,14 +5163,14 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@vitejs/plugin-react@4.7.0(vite@6.4.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.2)(terser@5.46.0)(yaml@2.8.0))':
+  '@vitejs/plugin-react@5.1.2(vite@6.4.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.2)(terser@5.46.0)(yaml@2.8.0))':
     dependencies:
       '@babel/core': 7.28.6
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.6)
       '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.6)
-      '@rolldown/pluginutils': 1.0.0-beta.27
+      '@rolldown/pluginutils': 1.0.0-beta.53
       '@types/babel__core': 7.20.5
-      react-refresh: 0.17.0
+      react-refresh: 0.18.0
       vite: 6.4.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.2)(terser@5.46.0)(yaml@2.8.0)
     transitivePeerDependencies:
       - supports-color
@@ -7085,7 +7085,7 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       redux: 4.2.1
 
-  react-refresh@0.17.0: {}
+  react-refresh@0.18.0: {}
 
   react-router-dom@7.12.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
