@@ -40,7 +40,7 @@
     "redux": "^4.2.1",
     "sanitize-filename": "^1.6.3",
     "sass": "^1.97.2",
-    "web-vitals": "^2.1.4",
+    "web-vitals": "^5.1.0",
     "yup": "^1.7.1"
   },
   "scripts": {
