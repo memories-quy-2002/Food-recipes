@@ -13,7 +13,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
-    "axios": "^1.13.2",
+    "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "bootstrap": "^5.3.8",
