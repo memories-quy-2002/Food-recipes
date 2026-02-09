@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fortawesome/fontawesome-svg-core':
-        specifier: ^6.7.2
-        version: 6.7.2
+        specifier: ^7.1.0
+        version: 7.1.0
       '@fortawesome/free-regular-svg-icons':
         specifier: ^7.1.0
         version: 7.1.0
@@ -19,7 +19,7 @@ importers:
         version: 7.1.0
       '@fortawesome/react-fontawesome':
         specifier: ^3.2.0
-        version: 3.2.0(@fortawesome/fontawesome-svg-core@6.7.2)(react@18.3.1)
+        version: 3.2.0(@fortawesome/fontawesome-svg-core@7.1.0)(react@18.3.1)
       '@reduxjs/toolkit':
         specifier: ^1.9.7
         version: 1.9.7(react-redux@8.1.3(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(redux@5.0.1))(react@18.3.1)
@@ -133,23 +133,23 @@ importers:
         specifier: ^7.28.5
         version: 7.28.5(@babel/core@7.29.0)
       '@types/node':
-        specifier: ^25.0.9
-        version: 25.0.9
+        specifier: ^25.2.2
+        version: 25.2.2
       '@vitejs/plugin-react':
         specifier: ^4.7.0
-        version: 4.7.0(vite@7.3.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0))
+        version: 4.7.0(vite@7.3.1(@types/node@25.2.2)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0))
       babel-jest:
         specifier: ^30.2.0
         version: 30.2.0(@babel/core@7.29.0)
       jest:
         specifier: ^30.2.0
-        version: 30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))
+        version: 30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))
       react-test-renderer:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       vite:
         specifier: ^7.3.1
-        version: 7.3.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0)
+        version: 7.3.1(@types/node@25.2.2)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0)
 
 packages:
 
@@ -979,16 +979,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fortawesome/fontawesome-common-types@6.7.2':
-    resolution: {integrity: sha512-Zs+YeHUC5fkt7Mg1l6XTniei3k4bwG/yo3iFUtZWd/pMx9g3fdvkSK9E0FOC+++phXOka78uJcYb8JaFkW52Xg==}
-    engines: {node: '>=6'}
-
   '@fortawesome/fontawesome-common-types@7.1.0':
     resolution: {integrity: sha512-l/BQM7fYntsCI//du+6sEnHOP6a74UixFyOYUyz2DLMXKx+6DEhfR3F2NYGE45XH1JJuIamacb4IZs9S0ZOWLA==}
     engines: {node: '>=6'}
 
-  '@fortawesome/fontawesome-svg-core@6.7.2':
-    resolution: {integrity: sha512-yxtOBWDrdi5DD5o1pmVdq3WMCvnobT0LU6R8RyyVXPvFRd2o79/0NCuQoCjNTeZz9EzA9xS3JxNWfv54RIHFEA==}
+  '@fortawesome/fontawesome-svg-core@7.1.0':
+    resolution: {integrity: sha512-fNxRUk1KhjSbnbuBxlWSnBLKLBNun52ZBTcs22H/xEEzM6Ap81ZFTQ4bZBxVQGQgVY0xugKGoRcCbaKjLQ3XZA==}
     engines: {node: '>=6'}
 
   '@fortawesome/free-regular-svg-icons@7.1.0':
@@ -4396,13 +4392,11 @@ snapshots:
   '@esbuild/win32-x64@0.27.2':
     optional: true
 
-  '@fortawesome/fontawesome-common-types@6.7.2': {}
-
   '@fortawesome/fontawesome-common-types@7.1.0': {}
 
-  '@fortawesome/fontawesome-svg-core@6.7.2':
+  '@fortawesome/fontawesome-svg-core@7.1.0':
     dependencies:
-      '@fortawesome/fontawesome-common-types': 6.7.2
+      '@fortawesome/fontawesome-common-types': 7.1.0
 
   '@fortawesome/free-regular-svg-icons@7.1.0':
     dependencies:
@@ -4412,9 +4406,9 @@ snapshots:
     dependencies:
       '@fortawesome/fontawesome-common-types': 7.1.0
 
-  '@fortawesome/react-fontawesome@3.2.0(@fortawesome/fontawesome-svg-core@6.7.2)(react@18.3.1)':
+  '@fortawesome/react-fontawesome@3.2.0(@fortawesome/fontawesome-svg-core@7.1.0)(react@18.3.1)':
     dependencies:
-      '@fortawesome/fontawesome-svg-core': 6.7.2
+      '@fortawesome/fontawesome-svg-core': 7.1.0
       react: 18.3.1
 
   '@isaacs/cliui@8.0.2':
@@ -4439,13 +4433,13 @@ snapshots:
   '@jest/console@30.2.0':
     dependencies:
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       chalk: 4.1.2
       jest-message-util: 30.2.0
       jest-util: 30.2.0
       slash: 3.0.0
 
-  '@jest/core@30.2.0(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))':
+  '@jest/core@30.2.0(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))':
     dependencies:
       '@jest/console': 30.2.0
       '@jest/pattern': 30.0.1
@@ -4453,14 +4447,14 @@ snapshots:
       '@jest/test-result': 30.2.0
       '@jest/transform': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       ci-info: 4.4.0
       exit-x: 0.2.2
       graceful-fs: 4.2.11
       jest-changed-files: 30.2.0
-      jest-config: 30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))
+      jest-config: 30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))
       jest-haste-map: 30.2.0
       jest-message-util: 30.2.0
       jest-regex-util: 30.0.1
@@ -4487,7 +4481,7 @@ snapshots:
     dependencies:
       '@jest/fake-timers': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       jest-mock: 30.2.0
 
   '@jest/expect-utils@30.2.0':
@@ -4505,7 +4499,7 @@ snapshots:
     dependencies:
       '@jest/types': 30.2.0
       '@sinonjs/fake-timers': 13.0.5
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       jest-message-util: 30.2.0
       jest-mock: 30.2.0
       jest-util: 30.2.0
@@ -4523,7 +4517,7 @@ snapshots:
 
   '@jest/pattern@30.0.1':
     dependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       jest-regex-util: 30.0.1
 
   '@jest/reporters@30.2.0':
@@ -4534,7 +4528,7 @@ snapshots:
       '@jest/transform': 30.2.0
       '@jest/types': 30.2.0
       '@jridgewell/trace-mapping': 0.3.31
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       chalk: 4.1.2
       collect-v8-coverage: 1.0.3
       exit-x: 0.2.2
@@ -4611,7 +4605,7 @@ snapshots:
       '@jest/schemas': 30.0.5
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
@@ -5034,7 +5028,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@vitejs/plugin-react@4.7.0(vite@7.3.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0))':
+  '@vitejs/plugin-react@4.7.0(vite@7.3.1(@types/node@25.2.2)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0))':
     dependencies:
       '@babel/core': 7.28.6
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.6)
@@ -5042,7 +5036,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 7.3.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0)
+      vite: 7.3.1(@types/node@25.2.2)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -5787,7 +5781,7 @@ snapshots:
       '@jest/expect': 30.2.0
       '@jest/test-result': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       chalk: 4.1.2
       co: 4.6.0
       dedent: 1.7.1
@@ -5807,15 +5801,15 @@ snapshots:
       - babel-plugin-macros
       - supports-color
 
-  jest-cli@30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5)):
+  jest-cli@30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5)):
     dependencies:
-      '@jest/core': 30.2.0(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))
+      '@jest/core': 30.2.0(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))
       '@jest/test-result': 30.2.0
       '@jest/types': 30.2.0
       chalk: 4.1.2
       exit-x: 0.2.2
       import-local: 3.2.0
-      jest-config: 30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))
+      jest-config: 30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))
       jest-util: 30.2.0
       jest-validate: 30.2.0
       yargs: 17.7.2
@@ -5826,7 +5820,7 @@ snapshots:
       - supports-color
       - ts-node
 
-  jest-config@30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5)):
+  jest-config@30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5)):
     dependencies:
       '@babel/core': 7.29.0
       '@jest/get-type': 30.1.0
@@ -5853,8 +5847,8 @@ snapshots:
       slash: 3.0.0
       strip-json-comments: 3.1.1
     optionalDependencies:
-      '@types/node': 25.0.9
-      ts-node: 10.9.1(@types/node@25.0.9)(typescript@4.9.5)
+      '@types/node': 25.2.2
+      ts-node: 10.9.1(@types/node@25.2.2)(typescript@4.9.5)
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
@@ -5883,7 +5877,7 @@ snapshots:
       '@jest/environment': 30.2.0
       '@jest/fake-timers': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       jest-mock: 30.2.0
       jest-util: 30.2.0
       jest-validate: 30.2.0
@@ -5891,7 +5885,7 @@ snapshots:
   jest-haste-map@30.2.0:
     dependencies:
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       anymatch: 3.1.3
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
@@ -5930,7 +5924,7 @@ snapshots:
   jest-mock@30.2.0:
     dependencies:
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       jest-util: 30.2.0
 
   jest-pnp-resolver@1.2.3(jest-resolve@30.2.0):
@@ -5964,7 +5958,7 @@ snapshots:
       '@jest/test-result': 30.2.0
       '@jest/transform': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       chalk: 4.1.2
       emittery: 0.13.1
       exit-x: 0.2.2
@@ -5993,7 +5987,7 @@ snapshots:
       '@jest/test-result': 30.2.0
       '@jest/transform': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       chalk: 4.1.2
       cjs-module-lexer: 2.2.0
       collect-v8-coverage: 1.0.3
@@ -6040,7 +6034,7 @@ snapshots:
   jest-util@30.2.0:
     dependencies:
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
@@ -6059,7 +6053,7 @@ snapshots:
     dependencies:
       '@jest/test-result': 30.2.0
       '@jest/types': 30.2.0
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.13.1
@@ -6068,18 +6062,18 @@ snapshots:
 
   jest-worker@30.2.0:
     dependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       '@ungap/structured-clone': 1.3.0
       jest-util: 30.2.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  jest@30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5)):
+  jest@30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5)):
     dependencies:
-      '@jest/core': 30.2.0(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))
+      '@jest/core': 30.2.0(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))
       '@jest/types': 30.2.0
       import-local: 3.2.0
-      jest-cli: 30.2.0(@types/node@25.0.9)(ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5))
+      jest-cli: 30.2.0(@types/node@25.2.2)(ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5))
     transitivePeerDependencies:
       - '@types/node'
       - babel-plugin-macros
@@ -6878,14 +6872,14 @@ snapshots:
     dependencies:
       utf8-byte-length: 1.0.5
 
-  ts-node@10.9.1(@types/node@25.0.9)(typescript@4.9.5):
+  ts-node@10.9.1(@types/node@25.2.2)(typescript@4.9.5):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.12
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       acorn: 8.15.0
       acorn-walk: 8.3.4
       arg: 4.1.3
@@ -7001,7 +6995,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite@7.3.1(@types/node@25.0.9)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0):
+  vite@7.3.1(@types/node@25.2.2)(jiti@1.21.7)(sass@1.97.3)(terser@5.46.0)(yaml@2.8.0):
     dependencies:
       esbuild: 0.27.2
       fdir: 6.5.0(picomatch@4.0.3)
@@ -7010,7 +7004,7 @@ snapshots:
       rollup: 4.55.1
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 25.0.9
+      '@types/node': 25.2.2
       fsevents: 2.3.3
       jiti: 1.21.7
       sass: 1.97.3
