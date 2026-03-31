@@ -27,7 +27,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "2.1.1",
     "nodemon": "^3.1.14",
-    "nth-check": "^2.1.1",
+    "nth-check": "^3.0.1",
     "pg": "^8.20.0",
     "pg-hstore": "^2.3.4",
     "postcss": "^8.5.8",
@@ -77,6 +77,6 @@
     "babel-jest": "^30.3.0",
     "jest": "^30.3.0",
     "react-test-renderer": "^19.2.4",
-    "vite": "^7.3.1"
+    "vite": "^8.0.1"
   }
 }
