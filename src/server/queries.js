@@ -5,20 +5,42 @@ const fs = require("fs");
 const path = require("path");
 const sanitizeFilename = require("sanitize-filename");
 require("dotenv").config();
+const {
+	DB_USER,
+	DB_PASSWORD,
+	DB_HOST,
+	DB_PORT,
+	DB_NAME,
+	DB_SSL_CA_PATH,
+	JWT_SECRET,
+} = process.env;
 const Pool = pg.Pool;
+const caPath = DB_SSL_CA_PATH || path.join(__dirname, "ca.pem");
+
+if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DB_PORT || !DB_NAME) {
+	throw new Error("Missing required database environment variables.");
+}
+if (!JWT_SECRET) {
+	throw new Error("Missing JWT_SECRET environment variable.");
+}
 const pool = new Pool({
-	user: "avnadmin",
-	password: "AVNS_qTmsTLUkqMFizW9GdQF",
-	host: "food-recipes-digital-e-shop.h.aivencloud.com",
-	port: 13891,
-	database: "defaultdb",
+	user: DB_USER,
+	password: DB_PASSWORD,
+	host: DB_HOST,
+	port: Number(DB_PORT),
+	database: DB_NAME,
 	ssl: {
 		rejectUnauthorized: true,
-		ca: fs.readFileSync('./ca.pem').toString(),
+		ca: fs.readFileSync(caPath).toString(),
 	},
 });
 
-const secretKey = 'secret-key';
+const secretKey = JWT_SECRET;
+
+const handleDbError = (response, error, message = "Database error") => {
+	console.error(message, error);
+	return response.status(500).json({ message });
+};
 
 pool.connect((err) => {
 	if (err) {
@@ -31,11 +53,11 @@ pool.connect((err) => {
 const getUsersLogin = (request, response) => {
 	const { email, password } = request.body;
 	pool.query(
-		"SELECT * FROM accounts WHERE email=$1",
+		"SELECT * FROM accounts WHERE email=$1 LIMIT 1",
 		[email],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(response, error, "Failed to fetch user");
 			}
 			if (results.rowCount === 0) {
 				response.status(401).json({
@@ -61,7 +83,11 @@ const getUsersLogin = (request, response) => {
 					[user.user_id],
 					(error, results) => {
 						if (error) {
-							throw error;
+							return handleDbError(
+								response,
+								error,
+								"Failed to update last login"
+							);
 						}
 						const token = jwt.sign(
 							{
@@ -85,18 +111,29 @@ const getUsersLogin = (request, response) => {
 
 const getUserByJWT = (request, response) => {
 	const token = request.body.token;
+	if (!token) {
+		return response.status(400).json({ message: "Token is required" });
+	}
 	try {
 		const payload = jwt.verify(token, secretKey);
 		pool.query(
-			"SELECT * FROM accounts WHERE user_id = $1",
+			"SELECT * FROM accounts WHERE user_id = $1 LIMIT 1",
 			[payload.user_id],
 			(errors, results) => {
-				if (results.rowCount > 0) {
-					const user = results.rows[0];
-					response
-						.status(200)
-						.json({ user, message: "JWT Received" });
+				if (errors) {
+					return handleDbError(
+						response,
+						errors,
+						"Failed to fetch user by JWT"
+					);
 				}
+				if (results.rowCount === 0) {
+					return response
+						.status(404)
+						.json({ message: "User not found" });
+				}
+				const user = results.rows[0];
+				response.status(200).json({ user, message: "JWT Received" });
 			}
 		);
 	} catch (err) {
@@ -116,7 +153,7 @@ const createUser = (request, response) => {
 			[name.first + " " + name.last, email, hashedPassword],
 			(error, results) => {
 				if (error) {
-					throw error;
+					return handleDbError(response, error, "Failed to create user");
 				}
 				const user = results.rows[0];
 				const token = jwt.sign(
@@ -142,7 +179,7 @@ const updateUser = (request, response) => {
 		[name, phoneNumber, address, user_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(response, error, "Failed to update user");
 			}
 			const user = results.rows[0];
 			response.status(200).send({
@@ -159,9 +196,13 @@ const updatePassword = async (request, response) => {
 
 	try {
 		const result = await pool.query(
-			"SELECT * FROM accounts WHERE user_id = $1",
+			"SELECT * FROM accounts WHERE user_id = $1 LIMIT 1",
 			[user_id]
 		);
+
+		if (result.rowCount === 0) {
+			return response.status(404).json({ message: "User not found" });
+		}
 
 		const user = result.rows[0];
 		const match = await utils.checkPassword(currentPassword, user.password);
@@ -199,8 +240,7 @@ const getRecipes = (request, response) => {
 		"LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id GROUP BY r.recipe_id, m.meal_id, c.category_id ORDER BY r.recipe_id ASC",
 		(error, results) => {
 			if (error) {
-				console.error("Error executing query", error);
-				return;
+				return handleDbError(response, error, "Failed to fetch recipes");
 			}
 			const recipes = results.rows;
 			response.status(200).json({ recipes });
@@ -250,7 +290,14 @@ const getRecipesByRecipeId = (request, response) => {
 		[recipe_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(
+					response,
+					error,
+					"Failed to fetch recipe by id"
+				);
+			}
+			if (results.rowCount === 0) {
+				return response.status(404).json({ message: "Recipe not found" });
 			}
 			const recipe = results.rows[0];
 			console.log(recipe);
@@ -270,8 +317,11 @@ const getRecipesByUserId = (request, response) => {
 		[user_id],
 		(error, results) => {
 			if (error) {
-				console.error("Error executing query", error);
-				return;
+				return handleDbError(
+					response,
+					error,
+					"Failed to fetch recipes by user"
+				);
 			}
 			const recipes = results.rows;
 			response.status(200).json({ recipes });
@@ -280,6 +330,11 @@ const getRecipesByUserId = (request, response) => {
 };
 
 const addRecipe = (request, response) => {
+	if (!request.file) {
+		return response
+			.status(400)
+			.json({ message: "Recipe image is required" });
+	}
 	// Access uploaded file through req.file
 	const newFilename = `${sanitizeFilename(request.body.recipeName)
 		.toLowerCase()
@@ -338,8 +393,7 @@ const addRecipe = (request, response) => {
 		],
 		(error, results) => {
 			if (error) {
-				console.error("Error executing query", error);
-				return;
+				return handleDbError(response, error, "Failed to add recipe");
 			}
 			response.status(200).json({ message: "Recipe added successfully" });
 		}
@@ -353,7 +407,10 @@ const deleteRecipe = (request, response) => {
 		[recipeId],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(response, error, "Failed to delete recipe");
+			}
+			if (results.rowCount === 0) {
+				return response.status(404).json({ message: "Recipe not found" });
 			}
 			response
 				.status(200)
@@ -369,7 +426,7 @@ const getCategories = (request, response) => {
 		"GROUP BY c.category_id, c.category_name ORDER BY c.category_id ASC;",
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(response, error, "Failed to fetch categories");
 			}
 			const categories = results.rows;
 			response.status(200).json({ categories });
@@ -384,7 +441,7 @@ const getMeals = (request, response) => {
 		"GROUP BY m.meal_id, m.meal_name ORDER BY m.meal_id ASC;",
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(response, error, "Failed to fetch meals");
 			}
 			const meals = results.rows;
 			response.status(200).json({ meals });
@@ -399,7 +456,11 @@ const addItemsToWishlist = (request, response) => {
 		[user_id, recipe_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(
+					response,
+					error,
+					"Failed to add wishlist item"
+				);
 			}
 			if (results.rowCount === 0) {
 				response.status(200).json({
@@ -420,7 +481,11 @@ const getWishlistByUserId = (request, response) => {
 		[user_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(
+					response,
+					error,
+					"Failed to fetch wishlist"
+				);
 			}
 			response.status(200).json({
 				wishlist: results.rows,
@@ -437,7 +502,11 @@ const deleteWishlistItems = (request, response) => {
 		[user_id, recipe_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(
+					response,
+					error,
+					"Failed to delete wishlist item"
+				);
 			}
 			response.status(200).json({
 				message: `Item with user_id = ${user_id} and recipe_id = ${recipe_id} has been deleted successfully`,
@@ -456,7 +525,7 @@ const addRating = (request, response) => {
 		[user_id, recipe_id, score, review],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(response, error, "Failed to add rating");
 			}
 			response.status(200).json({
 				message: `Rating with user_id = ${user_id}, recipe_id = ${recipe_id} has been added successfully.`,
@@ -472,7 +541,11 @@ const getRatingsByUserId = (request, response) => {
 		[user_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(
+					response,
+					error,
+					"Failed to fetch ratings"
+				);
 			}
 			const ratings = results.rows;
 			response.status(200).json({
@@ -491,7 +564,11 @@ const getReviewsByRecipeId = (request, response) => {
 		[recipe_id],
 		(error, results) => {
 			if (error) {
-				throw error;
+				return handleDbError(
+					response,
+					error,
+					"Failed to fetch reviews"
+				);
 			}
 			const reviews = results.rows;
 			response.status(200).json({

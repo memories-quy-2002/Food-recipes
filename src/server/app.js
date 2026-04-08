@@ -28,7 +28,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/uploads", express.static("../client/assets/images/"));
 app.use(
 	cors({
-		origin: "http://localhost:5173",
+		origin: [
+			"http://localhost:5173",
+			"https://foodrecipes1.vercel.app",
+		],
 		credentials: true,
 	})
 );

@@ -1,4 +1,6 @@
 import axios from "axios";
 export default axios.create({
-	baseURL: "http://localhost:4000",
+	baseURL:
+		import.meta.env.VITE_API_BASE_URL ||
+		"https://food-recipes-server-omega.vercel.app",
 });
