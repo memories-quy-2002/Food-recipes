@@ -30,7 +30,7 @@
     "nth-check": "^3.0.1",
     "pg": "^8.20.0",
     "pg-hstore": "^2.3.4",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.9",
     "react": "^19.2.4",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.4",
@@ -77,6 +77,6 @@
     "babel-jest": "^30.3.0",
     "jest": "^30.3.0",
     "react-test-renderer": "^19.2.4",
-    "vite": "^8.0.3"
+    "vite": "^8.0.7"
   }
 }
