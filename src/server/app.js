@@ -35,7 +35,7 @@ app.get("/meal/", db.getMeals);
 app.get("/wishlist/:uid", db.getWishlistByUserId);
 app.get("/rating/:uid", db.getRatingsByUserId);
 app.get("/review/:rid", db.getReviewsByRecipeId);
-app.post("/recipe/add", upload.single("recipeImage"), db.addRecipe);
+// app.post("/recipe/add", upload.single("recipeImage"), db.addRecipe);
 app.post("/wishlist/", db.addItemsToWishlist);
 app.post("/account/jwt", db.getUserByJWT);
 app.post("/account/login", db.getUsersLogin);
