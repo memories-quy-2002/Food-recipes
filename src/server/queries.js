@@ -15,7 +15,7 @@ const {
 	JWT_SECRET,
 } = process.env;
 const Pool = pg.Pool;
-const caPath = DB_SSL_CA_PATH || path.join(__dirname, "ca.pem");
+const caPath = path.join(__dirname, "ca.pem");
 
 if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DB_PORT || !DB_NAME) {
 	throw new Error("Missing required database environment variables.");
