@@ -90,7 +90,7 @@ importers:
         specifier: ^2.3.4
         version: 2.3.4
       postcss:
-        specifier: ^8.5.9
+        specifier: ^8.5.8
         version: 8.5.9
       react:
         specifier: ^19.2.4
@@ -151,7 +151,7 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
       vite:
-        specifier: ^8.0.7
+        specifier: ^8.0.3
         version: 8.0.7(@types/node@25.5.2)(esbuild@0.27.4)(jiti@1.21.7)(sass@1.99.0)(terser@5.46.0)(yaml@2.8.0)
 
 packages:
