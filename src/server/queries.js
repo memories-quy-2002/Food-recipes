@@ -23,7 +23,7 @@ const {
 	JWT_SECRET,
 } = process.env;
 const Pool = pg.Pool;
-const caPath = path.join(__dirname, "ca.pem");
+const caPath = path.join(__dirname, "prod-ca-2021.crt");
 const poolKey = "__foodRecipesPgPool";
 const requiredDbEnvVars = {
 	DB_USER,
@@ -62,22 +62,57 @@ const validateDatabaseConfig = () => {
 	}
 };
 
+const getCaPathCandidates = () => {
+	if (!DB_SSL_CA_PATH) return [caPath];
+
+	if (path.isAbsolute(DB_SSL_CA_PATH)) return [DB_SSL_CA_PATH];
+
+	return [
+		path.resolve(process.cwd(), DB_SSL_CA_PATH),
+		path.resolve(__dirname, DB_SSL_CA_PATH),
+		path.resolve(__dirname, path.basename(DB_SSL_CA_PATH)),
+	].filter((candidate, index, candidates) => candidates.indexOf(candidate) === index);
+};
+
+const getExistingCaPath = () =>
+	getCaPathCandidates().find((candidate) => fs.existsSync(candidate));
+
 const getSslConfig = () => {
 	if (process.env.DB_SSL === "false") return false;
 
-	const resolvedCaPath = DB_SSL_CA_PATH
-		? path.resolve(DB_SSL_CA_PATH)
-		: caPath;
+	const resolvedCaPath = getExistingCaPath();
+	const shouldRejectUnauthorized =
+		process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false";
 
-	if (fs.existsSync(resolvedCaPath)) {
+	if (!shouldRejectUnauthorized) {
+		return {
+			rejectUnauthorized: false,
+		};
+	}
+
+	if (resolvedCaPath) {
 		return {
 			rejectUnauthorized: true,
 			ca: fs.readFileSync(resolvedCaPath).toString(),
 		};
 	}
 
+	if (DB_HOST?.includes("supabase.com")) {
+		console.warn(
+			`[database] SSL CA file was not found. Using SSL without certificate verification. Checked: ${getCaPathCandidates().join(
+				", "
+			)}`
+		);
+
+		return {
+			rejectUnauthorized: false,
+		};
+	}
+
 	console.error(
-		`[database] SSL CA file was not found at ${resolvedCaPath}. Falling back to default SSL verification.`
+		`[database] SSL CA file was not found. Checked: ${getCaPathCandidates().join(
+			", "
+		)}. Falling back to default SSL verification.`
 	);
 
 	return {
@@ -86,7 +121,7 @@ const getSslConfig = () => {
 };
 
 const getDatabaseHealth = async (request, response) => {
-	const sslCaPath = DB_SSL_CA_PATH ? path.resolve(DB_SSL_CA_PATH) : caPath;
+	const sslCaPath = getExistingCaPath();
 	const configStatus = {
 		dbUser: Boolean(DB_USER),
 		dbPassword: Boolean(DB_PASSWORD),
@@ -95,8 +130,11 @@ const getDatabaseHealth = async (request, response) => {
 		dbName: Boolean(DB_NAME),
 		jwtSecret: Boolean(JWT_SECRET),
 		dbSsl: process.env.DB_SSL || "default",
+		dbSslRejectUnauthorized:
+			process.env.DB_SSL_REJECT_UNAUTHORIZED || "default",
 		dbSslCaPath: DB_SSL_CA_PATH || null,
-		dbSslCaFileExists: fs.existsSync(sslCaPath),
+		dbSslCaResolvedPath: sslCaPath || null,
+		dbSslCaFileExists: Boolean(sslCaPath),
 	};
 
 	try {
