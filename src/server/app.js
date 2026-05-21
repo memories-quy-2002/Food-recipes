@@ -7,26 +7,51 @@ const rateLimit = require("express-rate-limit");
 
 const PORT = 4000;
 const app = express();
+const allowedOrigins = new Set([
+	"http://localhost:5173",
+	"http://127.0.0.1:5173",
+	"https://foodrecipes1.vercel.app",
+	"https://www.foodrecipes1.vercel.app",
+]);
+const isAllowedOrigin = (origin) =>
+	!origin ||
+	allowedOrigins.has(origin) ||
+	/^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+const corsOptions = {
+	origin(origin, callback) {
+		if (isAllowedOrigin(origin)) {
+			callback(null, true);
+			return;
+		}
+
+		callback(new Error(`CORS blocked origin: ${origin}`));
+	},
+	credentials: true,
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+	allowedHeaders: ["Content-Type", "Authorization"],
+	optionsSuccessStatus: 204,
+};
 
 var limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	max: 1000,
 });
 
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
+app.use((req, res, next) => {
+	if (req.url === "/api") {
+		req.url = "/";
+	} else if (req.url.startsWith("/api/")) {
+		req.url = req.url.slice(4);
+	}
+	next();
+});
 app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(
-	cors({
-		origin: [
-			"http://localhost:5173",
-			"https://foodrecipes1.vercel.app",
-		],
-		credentials: true,
-	})
-);
 app.get("/recipe/", db.getRecipes);
 app.get("/recipe/:rid", db.getRecipesByRecipeId);
 app.get("/recipe/user/:uid", db.getRecipesByUserId);
@@ -48,6 +73,19 @@ app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
 app.get("/", (req, res) => {
 	res.send("Hello World from Express");
 });
+app.use((req, res) => {
+	res.status(404).json({
+		message: `Route not found: ${req.method} ${req.originalUrl}`,
+	});
+});
+app.use((err, req, res, next) => {
+	console.error("Unhandled server error", err);
+	if (res.headersSent) {
+		next(err);
+		return;
+	}
+	res.status(500).json({ message: "Internal Server Error" });
+});
 
 if (process.env.VERCEL !== "1") {
 	app.listen(PORT, () => {
@@ -56,4 +94,3 @@ if (process.env.VERCEL !== "1") {
 }
 
 module.exports = app;
-

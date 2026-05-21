@@ -14,6 +14,7 @@ const initialState = {
 	},
 	validated: false,
 	errors: [],
+	isSubmitting: false,
 };
 
 const reducer = (state, action) => {
@@ -24,6 +25,8 @@ const reducer = (state, action) => {
 			return { ...state, validated: action.payload };
 		case "SET_ERRORS":
 			return { ...state, errors: action.payload };
+		case "SET_SUBMITTING":
+			return { ...state, isSubmitting: action.payload };
 		default:
 			return state;
 	}
@@ -45,6 +48,9 @@ const useSignupForm = () => {
 				},
 			},
 		});
+		if (state.errors.length > 0) {
+			dispatch({ type: "SET_ERRORS", payload: [] });
+		}
 	};
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -55,9 +61,13 @@ const useSignupForm = () => {
 				[name]: value,
 			},
 		});
+		if (state.errors.length > 0) {
+			dispatch({ type: "SET_ERRORS", payload: [] });
+		}
 	};
 	const handleSubmit = (e) => {
 		e.preventDefault();
+		dispatch({ type: "SET_SUBMITTING", payload: true });
 		const schema = Yup.object().shape({
 			name: Yup.object().shape({
 				first: Yup.string().required("First name is required"),
@@ -91,16 +101,21 @@ const useSignupForm = () => {
 
 						const { user, token } = response.data;
 						loginDispatch(authActions.login({ user, token }));
-						console.log(response);
 						navigate("/");
 					}
 				} catch (err) {
-					console.error(err);
+					const message =
+						err.response?.data?.message ||
+						"Unable to create your account. Please try again.";
+					dispatch({ type: "SET_ERRORS", payload: [message] });
+				} finally {
+					dispatch({ type: "SET_SUBMITTING", payload: false });
 				}
 			})
 			.catch((err) => {
 				dispatch({ type: "SET_VALIDATED", payload: false });
 				dispatch({ type: "SET_ERRORS", payload: err.errors });
+				dispatch({ type: "SET_SUBMITTING", payload: false });
 			});
 	};
 
@@ -108,6 +123,7 @@ const useSignupForm = () => {
 		state.formData,
 		state.validated,
 		state.errors,
+		state.isSubmitting,
 		handleName,
 		handleChange,
 		handleSubmit,

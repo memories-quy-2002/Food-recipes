@@ -13,6 +13,7 @@ const initialState = {
 	remember: false,
 	validated: false,
 	errors: [],
+	isSubmitting: false,
 };
 
 const reducer = (state, action) => {
@@ -25,6 +26,8 @@ const reducer = (state, action) => {
 			return { ...state, validated: action.payload };
 		case "SET_ERRORS":
 			return { ...state, errors: action.payload };
+		case "SET_SUBMITTING":
+			return { ...state, isSubmitting: action.payload };
 		default:
 			return state;
 	}
@@ -44,6 +47,9 @@ const useLoginForm = () => {
 				[name]: value,
 			},
 		});
+		if (state.errors.length > 0) {
+			dispatch({ type: "SET_ERRORS", payload: [] });
+		}
 	};
 
 	const handleRemember = () => {
@@ -54,6 +60,7 @@ const useLoginForm = () => {
 
 	const handleSubmit = (e) => {
 		e.preventDefault();
+		dispatch({ type: "SET_SUBMITTING", payload: true });
 		const schema = Yup.object().shape({
 			email: Yup.string()
 				.email("Invalid email")
@@ -90,15 +97,21 @@ const useLoginForm = () => {
 						navigate("/");
 					}
 				} catch (err) {
+					const message =
+						err.response?.data?.message ||
+						"Unable to log in. Please try again.";
 					dispatch({
 						type: "SET_ERRORS",
-						payload: [err.response.data.message],
+						payload: [message],
 					});
+				} finally {
+					dispatch({ type: "SET_SUBMITTING", payload: false });
 				}
 			})
 			.catch((err) => {
 				dispatch({ type: "SET_VALIDATED", payload: false });
 				dispatch({ type: "SET_ERRORS", payload: err.errors });
+				dispatch({ type: "SET_SUBMITTING", payload: false });
 			});
 	};
 
@@ -107,6 +120,7 @@ const useLoginForm = () => {
 		state.remember,
 		state.validated,
 		state.errors,
+		state.isSubmitting,
 		handleChange,
 		handleRemember,
 		handleSubmit,
