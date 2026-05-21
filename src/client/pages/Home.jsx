@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "../api/axios";
+import { getArrayPayload } from "../api/payload";
 import Carousel from "../components/home/Carousel";
 import HomeMain from "../components/home/HomeMain";
 import PageHelmet from "../components/seo/PageHelmet";
@@ -12,8 +13,9 @@ const Home = () => {
 		const fetchMeals = async () => {
 			try {
 				const response = await axios.get("/meal");
+				const mealList = getArrayPayload(response.data, "meals");
 				setMeals(
-					response.data.meals
+					mealList
 						.filter(
 							(meal, index, self) =>
 								index ===

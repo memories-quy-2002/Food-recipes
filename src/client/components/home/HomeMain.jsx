@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
+import { getArrayPayload } from "../../api/payload";
 import { AuthContext } from "../../context/AuthProvider";
 import { RecipeContext } from "../../context/RecipeProvider";
 import CategorySection from "./main/CategorySection";
@@ -30,9 +31,9 @@ const HomeMain = () => {
 		const fetchCategories = async () => {
 			try {
 				const response = await axios.get("/category");
-				setCategories(response.data.categories);
+				setCategories(getArrayPayload(response.data, "categories"));
 			} catch (err) {
-				throw err;
+				console.error(err);
 			}
 		};
 		fetchCategories();
@@ -42,7 +43,7 @@ const HomeMain = () => {
 			try {
 				const response = await axios.get(`/wishlist/${userId}`);
 				if (response.status === 200) {
-					setWishlist(response.data.wishlist);
+					setWishlist(getArrayPayload(response.data, "wishlist"));
 				}
 			} catch (err) {
 				console.error(err);

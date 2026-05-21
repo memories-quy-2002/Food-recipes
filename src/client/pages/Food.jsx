@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useContext, useEffect, useState } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
+import { getArrayPayload } from "../api/payload";
 import FoodMenuBar from "../components/food/FoodMenuBar";
 import PageHelmet from "../components/seo/PageHelmet";
 import { RecipeContext } from "../context/RecipeProvider";
@@ -82,7 +83,7 @@ const Food = () => {
 			try {
 				const response = await axios.get("/category");
 				if (response.status === 200) {
-					setCategories(response.data.categories);
+					setCategories(getArrayPayload(response.data, "categories"));
 				}
 			} catch (err) {
 				console.error(err);
@@ -96,7 +97,7 @@ const Food = () => {
 			try {
 				const response = await axios.get("/meal");
 				if (response.status === 200) {
-					setMeals(response.data.meals);
+					setMeals(getArrayPayload(response.data, "meals"));
 				}
 			} catch (err) {
 				console.error(err);

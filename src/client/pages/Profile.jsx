@@ -6,6 +6,7 @@ import PageHelmet from "../components/seo/PageHelmet";
 import { authActions } from "../redux/authSlice";
 import "../styles/Profile.scss";
 import axios from "../api/axios";
+import { getArrayPayload } from "../api/payload";
 import { CancelToken } from "axios";
 const ProfileMain = lazy(() => import("../components/profile/ProfileMain"));
 const profilePageList = [
@@ -46,9 +47,11 @@ const Profile = () => {
 
 	useEffect(() => {
 		const fetchReviews = async () => {
+			if (!user?.user_id) return;
+
 			try {
-				const response = await axios.get(`rating/${user?.user_id}`);
-				setRatings(response.data.ratings);
+				const response = await axios.get(`/rating/${user.user_id}`);
+				setRatings(getArrayPayload(response.data, "ratings"));
 			} catch (err) {
 				console.error(err);
 			}

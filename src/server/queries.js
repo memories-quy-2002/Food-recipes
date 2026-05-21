@@ -85,6 +85,47 @@ const getSslConfig = () => {
 	};
 };
 
+const getDatabaseHealth = async (request, response) => {
+	const sslCaPath = DB_SSL_CA_PATH ? path.resolve(DB_SSL_CA_PATH) : caPath;
+	const configStatus = {
+		dbUser: Boolean(DB_USER),
+		dbPassword: Boolean(DB_PASSWORD),
+		dbHost: Boolean(DB_HOST),
+		dbPort: Boolean(DB_PORT),
+		dbName: Boolean(DB_NAME),
+		jwtSecret: Boolean(JWT_SECRET),
+		dbSsl: process.env.DB_SSL || "default",
+		dbSslCaPath: DB_SSL_CA_PATH || null,
+		dbSslCaFileExists: fs.existsSync(sslCaPath),
+	};
+
+	try {
+		const result = await pool.query("SELECT 1 AS ok");
+		return response.status(200).json({
+			status: "ok",
+			config: configStatus,
+			database: result.rows[0],
+		});
+	} catch (error) {
+		console.error(
+			`[database] ${JSON.stringify({
+				type: "database_health_error",
+				errorCode: error?.code,
+				errorMessage: error?.message,
+				config: configStatus,
+			})}`
+		);
+
+		return response.status(500).json({
+			status: "error",
+			message: "Database health check failed",
+			errorCode: error?.code,
+			errorMessage: error?.message,
+			config: configStatus,
+		});
+	}
+};
+
 const normalizeQueryText = (queryConfig) => {
 	const queryText =
 		typeof queryConfig === "string" ? queryConfig : queryConfig?.text || "";
@@ -814,4 +855,5 @@ module.exports = {
 	addRating,
 	getRatingsByUserId,
 	getReviewsByRecipeId,
+	getDatabaseHealth,
 };

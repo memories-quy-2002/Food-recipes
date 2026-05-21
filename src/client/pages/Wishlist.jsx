@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import axios from "../api/axios";
+import { getArrayPayload } from "../api/payload";
 import FavoriteRecipe from "../components/wishlist/FavoriteRecipe";
 import PageHelmet from "../components/seo/PageHelmet";
 import { RecipeContext } from "../context/RecipeProvider";
@@ -28,7 +29,7 @@ const Wishlist = () => {
 
 			try {
 				const response = await axios.get(`/wishlist/${user_id}`);
-				setWishlist(response.data.wishlist);
+				setWishlist(getArrayPayload(response.data, "wishlist"));
 			} catch (err) {
 				console.error(err);
 			}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
+import { getArrayPayload } from "../../api/payload";
 import convertImage from "../../utils/convertImage";
 import { Row, Col } from "react-bootstrap";
 const PersonalRecipes = ({ user }) => {
@@ -10,19 +11,23 @@ const PersonalRecipes = ({ user }) => {
 	const navigate = useNavigate();
 	useEffect(() => {
 		const fetchPersonalRecipes = async () => {
+			if (!user?.user_id) return;
+
 			try {
 				const response = await axios.get(
 					`/recipe/user/${user.user_id}`
 				);
 				if (response.status === 200) {
-					setPersonalRecipes(response.data.recipes);
+					setPersonalRecipes(
+						getArrayPayload(response.data, "recipes")
+					);
 				}
 			} catch (err) {
 				console.error(err);
 			}
 		};
 		fetchPersonalRecipes();
-	}, [user.user_id]);
+	}, [user?.user_id]);
 	const isInPreviousSevenDays = (date) => {
 		const dateToCheck = new Date(date);
 		const currentDate = new Date();
