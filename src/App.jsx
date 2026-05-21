@@ -6,8 +6,10 @@ import AuthProvider from "./client/context/AuthProvider";
 import RecipeProvider from "./client/context/RecipeProvider";
 import Account from "./client/pages/Account";
 import AddRecipe from "./client/pages/AddRecipe";
+import About from "./client/pages/About";
 import Food from "./client/pages/Food";
 import Home from "./client/pages/Home";
+import News from "./client/pages/News";
 import Profile from "./client/pages/Profile";
 import Wishlist from "./client/pages/Wishlist";
 import React from "react";
@@ -22,6 +24,8 @@ function App() {
 						<Routes>
 							<Route path="/" element={<Home />} />
 							<Route path="/food" element={<Food />} />
+							<Route path="/news" element={<News />} />
+							<Route path="/about" element={<About />} />
 							<Route path="/account" element={<Account />} />
 							<Route path="/profile" element={<Profile />} />
 							<Route
