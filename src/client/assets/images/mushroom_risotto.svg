@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Mushroom Risotto">
+  <rect width="900" height="600" fill="#f8efe2"/>
+  <ellipse cx="450" cy="360" rx="315" ry="128" fill="#e8c99e"/>
+  <ellipse cx="450" cy="320" rx="285" ry="118" fill="#fffaf1"/>
+  <g fill="#f4d9a8">
+    <circle cx="330" cy="312" r="28"/>
+    <circle cx="394" cy="356" r="25"/>
+    <circle cx="475" cy="302" r="28"/>
+    <circle cx="558" cy="352" r="26"/>
+  </g>
+  <g fill="#8d5a35">
+    <path d="M280 286c22-52 114-47 130 0-31 25-97 26-130 0z"/>
+    <rect x="331" y="282" width="28" height="70" rx="14"/>
+    <path d="M510 272c22-52 114-47 130 0-31 25-97 26-130 0z"/>
+    <rect x="561" y="270" width="28" height="74" rx="14"/>
+  </g>
+  <path d="M315 405c88 34 230 34 322 0" fill="none" stroke="#d49d52" stroke-width="14" stroke-linecap="round"/>
+</svg>

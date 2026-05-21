@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Blueberry Pancakes">
+  <rect width="900" height="600" fill="#fff7e3"/>
+  <ellipse cx="450" cy="405" rx="265" ry="70" fill="#c78945"/>
+  <ellipse cx="450" cy="360" rx="255" ry="72" fill="#e2a95f"/>
+  <ellipse cx="450" cy="315" rx="245" ry="76" fill="#f0c579"/>
+  <rect x="410" y="245" width="92" height="54" rx="12" fill="#f8d568"/>
+  <path d="M456 278c52 15 82 45 84 86" fill="none" stroke="#a95f2a" stroke-width="16" stroke-linecap="round"/>
+  <g fill="#4056a1">
+    <circle cx="330" cy="320" r="24"/>
+    <circle cx="530" cy="332" r="24"/>
+    <circle cx="410" cy="372" r="20"/>
+    <circle cx="592" cy="386" r="20"/>
+  </g>
+</svg>

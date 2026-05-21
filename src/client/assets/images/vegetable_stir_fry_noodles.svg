@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Vegetable Stir Fry Noodles">
+  <rect width="900" height="600" fill="#fff3df"/>
+  <ellipse cx="450" cy="365" rx="310" ry="118" fill="#d9b38c"/>
+  <ellipse cx="450" cy="325" rx="282" ry="110" fill="#fffaf1"/>
+  <g fill="none" stroke="#e6b85c" stroke-width="18" stroke-linecap="round">
+    <path d="M260 330c88-65 172 64 260-5s133 38 188 5"/>
+    <path d="M282 378c104-54 170 34 260-20 64-38 116 15 154 24"/>
+    <path d="M312 292c95-44 150 25 226-24 52-33 102 3 144 25"/>
+  </g>
+  <g>
+    <rect x="346" y="245" width="42" height="128" rx="14" fill="#e63946" transform="rotate(20 367 309)"/>
+    <rect x="504" y="250" width="42" height="128" rx="14" fill="#43a047" transform="rotate(-18 525 314)"/>
+    <rect x="603" y="300" width="42" height="116" rx="14" fill="#f2c94c" transform="rotate(62 624 358)"/>
+    <circle cx="300" cy="370" r="24" fill="#43a047"/>
+  </g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Creamy Tomato Basil Soup">
+  <rect width="900" height="600" fill="#fff8e8"/>
+  <ellipse cx="450" cy="360" rx="300" ry="130" fill="#f7d9b5"/>
+  <ellipse cx="450" cy="320" rx="285" ry="128" fill="#fff"/>
+  <ellipse cx="450" cy="320" rx="235" ry="88" fill="#d94831"/>
+  <path d="M250 323c75 35 245 58 398-8" fill="none" stroke="#f77f66" stroke-width="24" stroke-linecap="round"/>
+  <path d="M330 292c31-52 92-48 118-8 24-39 88-42 120 3" fill="none" stroke="#ffcf9f" stroke-width="16" stroke-linecap="round"/>
+  <g fill="#2f9e44">
+    <ellipse cx="390" cy="252" rx="48" ry="18" transform="rotate(-32 390 252)"/>
+    <ellipse cx="475" cy="252" rx="52" ry="18" transform="rotate(28 475 252)"/>
+    <ellipse cx="540" cy="292" rx="42" ry="16" transform="rotate(-18 540 292)"/>
+  </g>
+</svg>

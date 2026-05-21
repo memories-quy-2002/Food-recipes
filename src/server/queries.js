@@ -515,14 +515,36 @@ const deleteWishlistItems = (request, response) => {
 	);
 };
 const addRating = (request, response) => {
-	const user_id = request.params.uid;
-	const recipe_id = request.params.rid;
+	const user_id = Number.parseInt(request.params.uid, 10);
+	const recipe_id = Number.parseInt(request.params.rid, 10);
 	const { score, review } = request.body;
+	const ratingScore = Number.parseInt(score, 10);
+
+	if (!Number.isInteger(user_id) || user_id <= 0) {
+		return response.status(400).json({ message: "Valid user_id is required" });
+	}
+
+	if (!Number.isInteger(recipe_id) || recipe_id <= 0) {
+		return response
+			.status(400)
+			.json({ message: "Valid recipe_id is required" });
+	}
+
+	if (
+		!Number.isInteger(ratingScore) ||
+		ratingScore < 1 ||
+		ratingScore > 5
+	) {
+		return response
+			.status(400)
+			.json({ message: "Rating score must be between 1 and 5" });
+	}
+
 	pool.query(
 		`INSERT INTO rating (user_id, recipe_id, score, review) VALUES ($1, $2, $3, $4) 
 		ON CONFLICT (user_id, recipe_id)
-		DO UPDATE SET score = EXCLUDED.score, review = EXCLUDED.review;`,
-		[user_id, recipe_id, score, review],
+		DO UPDATE SET score = EXCLUDED.score, review = EXCLUDED.review, date_added = CURRENT_TIMESTAMP;`,
+		[user_id, recipe_id, ratingScore, review || ""],
 		(error, results) => {
 			if (error) {
 				return handleDbError(response, error, "Failed to add rating");

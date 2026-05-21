@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Beef Tacos">
+  <rect width="900" height="600" fill="#fff2d9"/>
+  <path d="M222 390c22-142 135-220 228-220s206 78 228 220H222z" fill="#f6c453"/>
+  <path d="M270 382c33-94 102-144 180-144s147 50 180 144H270z" fill="#f8dd88"/>
+  <g fill="#7a3f22">
+    <circle cx="350" cy="338" r="28"/>
+    <circle cx="424" cy="306" r="28"/>
+    <circle cx="502" cy="332" r="28"/>
+    <circle cx="565" cy="365" r="24"/>
+  </g>
+  <g fill="#2f9e44">
+    <path d="M310 286l70 28-78 34z"/>
+    <path d="M470 262l78 24-58 44z"/>
+    <path d="M565 302l70 30-76 35z"/>
+  </g>
+  <g fill="#d94831">
+    <circle cx="392" cy="360" r="18"/>
+    <circle cx="530" cy="292" r="18"/>
+  </g>
+</svg>

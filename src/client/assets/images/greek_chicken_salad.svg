@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Greek Chicken Salad">
+  <rect width="900" height="600" fill="#eef8e8"/>
+  <ellipse cx="450" cy="355" rx="310" ry="130" fill="#dbecc8"/>
+  <ellipse cx="450" cy="315" rx="280" ry="112" fill="#ffffff"/>
+  <g fill="#43a047">
+    <ellipse cx="330" cy="310" rx="70" ry="28" transform="rotate(-22 330 310)"/>
+    <ellipse cx="520" cy="285" rx="78" ry="30" transform="rotate(18 520 285)"/>
+    <ellipse cx="438" cy="365" rx="86" ry="30" transform="rotate(-8 438 365)"/>
+  </g>
+  <g fill="#f4b183">
+    <rect x="352" y="250" width="64" height="142" rx="24" transform="rotate(24 384 321)"/>
+    <rect x="482" y="252" width="64" height="142" rx="24" transform="rotate(-22 514 323)"/>
+  </g>
+  <g fill="#d94831">
+    <circle cx="290" cy="360" r="28"/>
+    <circle cx="598" cy="342" r="28"/>
+  </g>
+  <g fill="#f7f0d9">
+    <rect x="402" y="290" width="38" height="38" rx="7"/>
+    <rect x="456" y="350" width="38" height="38" rx="7"/>
+    <rect x="548" y="294" width="38" height="38" rx="7"/>
+  </g>
+</svg>

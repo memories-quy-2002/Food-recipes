@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Lemon Herb Salmon">
+  <rect width="900" height="600" fill="#fff4df"/>
+  <circle cx="690" cy="120" r="82" fill="#ffd166"/>
+  <circle cx="690" cy="120" r="54" fill="#ffe8a3"/>
+  <ellipse cx="445" cy="330" rx="285" ry="135" fill="#ff8f70"/>
+  <path d="M190 330c75-88 237-126 408-81 58 15 101 42 122 81-53 65-204 109-365 81-77-14-132-41-165-81z" fill="#f75f4f"/>
+  <path d="M250 300c92 38 266 54 405 10" fill="none" stroke="#fff3e6" stroke-width="18" stroke-linecap="round"/>
+  <path d="M255 360c100 42 260 45 390 8" fill="none" stroke="#fff3e6" stroke-width="16" stroke-linecap="round"/>
+  <g fill="#2f9e44">
+    <ellipse cx="334" cy="238" rx="48" ry="16" transform="rotate(-18 334 238)"/>
+    <ellipse cx="493" cy="224" rx="48" ry="16" transform="rotate(17 493 224)"/>
+    <ellipse cx="594" cy="288" rx="44" ry="14" transform="rotate(-24 594 288)"/>
+  </g>
+</svg>

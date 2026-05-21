@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Chocolate Banana Bread">
+  <rect width="900" height="600" fill="#fff4df"/>
+  <rect x="260" y="245" width="380" height="190" rx="44" fill="#7a3f22"/>
+  <path d="M292 260c36-72 284-72 316 0 18 42-66 84-156 84s-180-42-160-84z" fill="#9a5a32"/>
+  <g fill="#3b2417">
+    <circle cx="352" cy="312" r="22"/>
+    <circle cx="438" cy="292" r="18"/>
+    <circle cx="522" cy="330" r="22"/>
+    <circle cx="585" cy="286" r="16"/>
+  </g>
+  <path d="M270 454c94 34 264 34 360 0" fill="none" stroke="#d8a84a" stroke-width="18" stroke-linecap="round"/>
+  <path d="M610 190c58 42 42 100-30 122" fill="none" stroke="#f2c94c" stroke-width="34" stroke-linecap="round"/>
+</svg>

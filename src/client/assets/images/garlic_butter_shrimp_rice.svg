@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" role="img" aria-label="Garlic Butter Shrimp Rice">
+  <rect width="900" height="600" fill="#fff7e8"/>
+  <ellipse cx="450" cy="360" rx="310" ry="132" fill="#ead7bd"/>
+  <ellipse cx="450" cy="320" rx="280" ry="112" fill="#fffdf5"/>
+  <g fill="#f4dfba">
+    <circle cx="330" cy="320" r="22"/>
+    <circle cx="390" cy="350" r="20"/>
+    <circle cx="455" cy="302" r="22"/>
+    <circle cx="522" cy="348" r="20"/>
+    <circle cx="590" cy="316" r="22"/>
+  </g>
+  <g fill="#ff8f70" stroke="#f15b43" stroke-width="10">
+    <path d="M300 274c80-48 154 50 78 104-30-22-68-56-78-104z"/>
+    <path d="M486 270c80-48 154 50 78 104-30-22-68-56-78-104z"/>
+  </g>
+  <path d="M300 421c95 34 230 34 312 0" fill="none" stroke="#f2c94c" stroke-width="16" stroke-linecap="round"/>
+  <circle cx="620" cy="232" r="28" fill="#f8e9d0"/>
+</svg>
