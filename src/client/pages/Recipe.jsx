@@ -5,6 +5,7 @@ import axios from "../api/axios";
 import RecipeContainerSummary from "../components/recipe/RecipeContainerSummary";
 import RecipeContent from "../components/recipe/RecipeContent";
 import RecipeOtherList from "../components/recipe/RecipeOtherList";
+import PageHelmet from "../components/seo/PageHelmet";
 import { AuthContext } from "../context/AuthProvider";
 import "../styles/Recipe.scss";
 import ErrorPage from "./ErrorPage";
@@ -189,6 +190,15 @@ const Recipe = () => {
 	}
 	return (
 		<>
+			<PageHelmet
+				title={recipe?.recipe_name || "Recipe"}
+				description={
+					recipe?.recipe_description ||
+					"Read recipe details, cooking time, ratings, and community reviews."
+				}
+				path={`/recipe?id=${id}`}
+				type="article"
+			/>
 			{recipe && (
 				<Container fluid style={{ padding: 0 }}>
 					<RecipeContainerSummary

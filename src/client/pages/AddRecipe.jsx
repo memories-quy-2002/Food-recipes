@@ -2,6 +2,7 @@ import cameraPreview from "../assets/images/cameraPreview.png";
 import React, { useContext, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import axios from "../api/axios";
+import PageHelmet from "../components/seo/PageHelmet";
 import "../styles/AddRecipe.scss";
 import convertTime from "../utils/convertTime";
 import { AuthContext } from "../context/AuthProvider";
@@ -156,6 +157,12 @@ const AddRecipe = () => {
 	};
 	return (
 		<div className="add">
+			<PageHelmet
+				title="Add Recipe"
+				description="Create and share a new recipe with ingredients, cooking steps, images, and preparation time."
+				path="/food/add"
+				noIndex
+			/>
 			<div className="blur">
 				<div className="add__container">
 					<div className="add__container__header">

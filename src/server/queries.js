@@ -25,15 +25,21 @@ const {
 const Pool = pg.Pool;
 const caPath = path.join(__dirname, "ca.pem");
 const poolKey = "__foodRecipesPgPool";
+const requiredDbEnvVars = {
+	DB_USER,
+	DB_PASSWORD,
+	DB_HOST,
+	DB_PORT,
+	DB_NAME,
+};
 
-if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DB_PORT || !DB_NAME) {
-	throw new Error("Missing required database environment variables.");
-}
-if (!JWT_SECRET) {
-	throw new Error("Missing JWT_SECRET environment variable.");
-}
+const getJwtSecret = () => {
+	if (!JWT_SECRET) {
+		throw new Error("Missing JWT_SECRET environment variable.");
+	}
 
-const secretKey = JWT_SECRET;
+	return JWT_SECRET;
+};
 
 const getPositiveInteger = (value, fallback) => {
 	const parsedValue = Number.parseInt(value, 10);
@@ -42,14 +48,132 @@ const getPositiveInteger = (value, fallback) => {
 		: fallback;
 };
 
-const getCa = () => {
+const validateDatabaseConfig = () => {
+	const missingEnvVars = Object.entries(requiredDbEnvVars)
+		.filter(([, value]) => !value)
+		.map(([name]) => name);
+
+	if (missingEnvVars.length > 0) {
+		throw new Error(
+			`Missing required database environment variables: ${missingEnvVars.join(
+				", "
+			)}`
+		);
+	}
+};
+
+const getSslConfig = () => {
+	if (process.env.DB_SSL === "false") return false;
+
 	const resolvedCaPath = DB_SSL_CA_PATH
 		? path.resolve(DB_SSL_CA_PATH)
 		: caPath;
-	return fs.readFileSync(resolvedCaPath).toString();
+
+	if (fs.existsSync(resolvedCaPath)) {
+		return {
+			rejectUnauthorized: true,
+			ca: fs.readFileSync(resolvedCaPath).toString(),
+		};
+	}
+
+	console.error(
+		`[database] SSL CA file was not found at ${resolvedCaPath}. Falling back to default SSL verification.`
+	);
+
+	return {
+		rejectUnauthorized: true,
+	};
+};
+
+const normalizeQueryText = (queryConfig) => {
+	const queryText =
+		typeof queryConfig === "string" ? queryConfig : queryConfig?.text || "";
+	return queryText.replace(/\s+/g, " ").trim();
+};
+
+const logDatabaseQuery = ({ queryText, durationMs, rowCount, error }) => {
+	if (process.env.DB_QUERY_LOGGING === "false") return;
+
+	const logEntry = {
+		type: "database_query",
+		status: error ? "error" : "success",
+		durationMs,
+		rowCount: rowCount ?? null,
+		errorCode: error?.code,
+		errorMessage: error?.message,
+	};
+	const logLevel = error ? "error" : "log";
+
+	console[logLevel](`[database] ${JSON.stringify(logEntry)}`);
+};
+
+const instrumentPoolQueries = (pool) => {
+	if (pool.__queryLoggingAttached) return pool;
+
+	const originalQuery = pool.query.bind(pool);
+
+	pool.query = (...args) => {
+		const queryText = normalizeQueryText(args[0]);
+		const startedAt = Date.now();
+		const callbackIndex =
+			typeof args[args.length - 1] === "function" ? args.length - 1 : -1;
+
+		if (callbackIndex >= 0) {
+			const originalCallback = args[callbackIndex];
+
+			args[callbackIndex] = (error, result) => {
+				logDatabaseQuery({
+					queryText,
+					durationMs: Date.now() - startedAt,
+					rowCount: result?.rowCount,
+					error,
+				});
+				originalCallback(error, result);
+			};
+
+			return originalQuery(...args);
+		}
+
+		const queryResult = originalQuery(...args);
+
+		if (queryResult && typeof queryResult.then === "function") {
+			return queryResult
+				.then((result) => {
+					logDatabaseQuery({
+						queryText,
+						durationMs: Date.now() - startedAt,
+						rowCount: result?.rowCount,
+					});
+					return result;
+				})
+				.catch((error) => {
+					logDatabaseQuery({
+						queryText,
+						durationMs: Date.now() - startedAt,
+						error,
+					});
+					throw error;
+				});
+		}
+
+		logDatabaseQuery({
+			queryText,
+			durationMs: Date.now() - startedAt,
+		});
+		return queryResult;
+	};
+
+	Object.defineProperty(pool, "__queryLoggingAttached", {
+		value: true,
+		enumerable: false,
+	});
+
+	return pool;
 };
 
 const createPool = () => {
+	validateDatabaseConfig();
+
 	const pool = new Pool({
 		user: DB_USER,
 		password: DB_PASSWORD,
@@ -71,10 +195,7 @@ const createPool = () => {
 			60
 		),
 		allowExitOnIdle: true,
-		ssl: {
-			rejectUnauthorized: true,
-			ca: getCa(),
-		},
+		ssl: getSslConfig(),
 	});
 
 	pool.on("error", (error) => {
@@ -85,14 +206,46 @@ const createPool = () => {
 		attachDatabasePool(pool);
 	}
 
+	return instrumentPoolQueries(pool);
+};
+
+const getPool = () => {
+	const pool = instrumentPoolQueries(globalThis[poolKey] || createPool());
+	globalThis[poolKey] = pool;
 	return pool;
 };
 
-const pool = globalThis[poolKey] || createPool();
-globalThis[poolKey] = pool;
+const pool = {
+	query(...args) {
+		try {
+			return getPool().query(...args);
+		} catch (error) {
+			const callback =
+				typeof args[args.length - 1] === "function"
+					? args[args.length - 1]
+					: null;
+
+			if (callback) {
+				callback(error);
+				return undefined;
+			}
+
+			return Promise.reject(error);
+		}
+	},
+};
 
 const handleDbError = (response, error, message = "Database error") => {
-	console.error(message, error);
+	console.error(
+		`[database] ${JSON.stringify({
+			type: "database_error",
+			message,
+			errorCode: error?.code,
+			errorMessage: error?.message,
+			detail: error?.detail,
+		})}`
+	);
+	if (response.headersSent) return;
 	return response.status(500).json({ message });
 };
 
@@ -140,7 +293,7 @@ const getUsersLogin = (request, response) => {
 								user_id: user.user_id,
 								email: user.email,
 							},
-							secretKey,
+							getJwtSecret(),
 							{ expiresIn: "30d" }
 						);
 						response.status(200).json({
@@ -161,7 +314,7 @@ const getUserByJWT = (request, response) => {
 		return response.status(400).json({ message: "Token is required" });
 	}
 	try {
-		const payload = jwt.verify(token, secretKey);
+		const payload = jwt.verify(token, getJwtSecret());
 		pool.query(
 			"SELECT * FROM accounts WHERE user_id = $1 LIMIT 1",
 			[payload.user_id],
@@ -204,7 +357,7 @@ const createUser = (request, response) => {
 				const user = results.rows[0];
 				const token = jwt.sign(
 					{ user_id: user.user_id, email: user.email },
-					secretKey,
+					getJwtSecret(),
 					{
 						expiresIn: "30d",
 					}
@@ -346,7 +499,6 @@ const getRecipesByRecipeId = (request, response) => {
 				return response.status(404).json({ message: "Recipe not found" });
 			}
 			const recipe = results.rows[0];
-			console.log(recipe);
 			response.status(200).json({ recipe });
 		}
 	);
@@ -404,10 +556,8 @@ const addRecipe = (request, response) => {
 		recipeInstructions,
 		userId,
 	} = request.body;
-	console.log(request.body);
 	const prepTime = recipePrepTime.number + " " + recipePrepTime.unit;
 	const cookTime = recipeCookTime.number + " " + recipeCookTime.unit;
-	console.log({ prepTime, cookTime });
 	pool.query(
 		`WITH meal_cte AS (
 			INSERT INTO meals (meal_name)

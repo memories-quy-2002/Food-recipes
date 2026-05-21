@@ -3,6 +3,7 @@ import { Container } from "react-bootstrap";
 import { useSelector } from "react-redux";
 import axios from "../api/axios";
 import FavoriteRecipe from "../components/wishlist/FavoriteRecipe";
+import PageHelmet from "../components/seo/PageHelmet";
 import { RecipeContext } from "../context/RecipeProvider";
 import "../styles/Wishlist.scss";
 
@@ -95,6 +96,12 @@ const Wishlist = () => {
 
 	return (
 		<Container fluid className="wishlist">
+			<PageHelmet
+				title="Wishlist"
+				description="Review and organize your saved Food Recipes favorites."
+				path="/wishlist"
+				noIndex
+			/>
 			<div className="wishlist__hero">
 				<div>
 					<span>Saved recipes</span>

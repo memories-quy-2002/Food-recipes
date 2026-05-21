@@ -3,6 +3,7 @@ import { Col, Container, Row } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
 import FoodMenuBar from "../components/food/FoodMenuBar";
+import PageHelmet from "../components/seo/PageHelmet";
 import { RecipeContext } from "../context/RecipeProvider";
 import "../styles/Food.scss";
 
@@ -106,6 +107,11 @@ const Food = () => {
 
 	return (
 		<Container fluid className="food">
+			<PageHelmet
+				title="Recipes"
+				description="Search, filter, and compare recipes by category, meal type, name, and rating."
+				path="/food"
+			/>
 			<div className="food__intro">
 				<div className="food__intro__content">
 					<span>Recipe finder</span>

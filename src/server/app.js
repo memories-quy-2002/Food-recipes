@@ -4,6 +4,11 @@ const multer = require("multer");
 const cors = require("cors");
 const db = require("./queries");
 const rateLimit = require("express-rate-limit");
+const requestLogger = require("./middleware/requestLogger");
+const {
+	errorHandler,
+	notFoundHandler,
+} = require("./middleware/errorHandler");
 
 const PORT = 4000;
 const app = express();
@@ -24,7 +29,9 @@ const corsOptions = {
 			return;
 		}
 
-		callback(new Error(`CORS blocked origin: ${origin}`));
+		const error = new Error(`CORS blocked origin: ${origin}`);
+		error.status = 403;
+		callback(error);
 	},
 	credentials: true,
 	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -37,6 +44,7 @@ var limiter = rateLimit({
 	max: 1000,
 });
 
+app.use(requestLogger);
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
 app.use((req, res, next) => {
@@ -73,19 +81,8 @@ app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
 app.get("/", (req, res) => {
 	res.send("Hello World from Express");
 });
-app.use((req, res) => {
-	res.status(404).json({
-		message: `Route not found: ${req.method} ${req.originalUrl}`,
-	});
-});
-app.use((err, req, res, next) => {
-	console.error("Unhandled server error", err);
-	if (res.headersSent) {
-		next(err);
-		return;
-	}
-	res.status(500).json({ message: "Internal Server Error" });
-});
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 if (process.env.VERCEL !== "1") {
 	app.listen(PORT, () => {

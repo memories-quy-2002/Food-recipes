@@ -1,4 +1,5 @@
 import React from "react";
+import PageHelmet from "../components/seo/PageHelmet";
 import "../styles/About.scss";
 
 const values = [
@@ -22,6 +23,11 @@ const values = [
 const About = () => {
 	return (
 		<main className="about">
+			<PageHelmet
+				title="About"
+				description="Learn how Food Recipes helps home cooks discover, save, rate, and share everyday dishes."
+				path="/about"
+			/>
 			<section className="about__hero">
 				<div>
 					<span>About Food Recipes</span>

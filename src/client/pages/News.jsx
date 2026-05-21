@@ -1,4 +1,5 @@
 import React from "react";
+import PageHelmet from "../components/seo/PageHelmet";
 import "../styles/News.scss";
 
 const newsItems = [
@@ -34,6 +35,11 @@ const quickTips = [
 const News = () => {
 	return (
 		<main className="news">
+			<PageHelmet
+				title="News"
+				description="Read Food Recipes updates, new recipe announcements, and practical cooking ideas."
+				path="/news"
+			/>
 			<section className="news__hero">
 				<div>
 					<span>Latest from Food Recipes</span>

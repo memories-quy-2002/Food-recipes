@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileAside from "../components/profile/ProfileAside";
+import PageHelmet from "../components/seo/PageHelmet";
 import { authActions } from "../redux/authSlice";
 import "../styles/Profile.scss";
 import axios from "../api/axios";
@@ -66,6 +67,12 @@ const Profile = () => {
 
 	return (
 		<Container fluid style={{ padding: 0 }}>
+			<PageHelmet
+				title="Profile"
+				description="Manage your Food Recipes profile, password, personal recipes, and reviews."
+				path="/profile"
+				noIndex
+			/>
 			<main className="profile__container">
 				<ProfileAside
 					name={user?.full_name}

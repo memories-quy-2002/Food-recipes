@@ -1,65 +1,120 @@
-# 🍲 Food Recipes Website
+# Food Recipes
 
-A full-stack web application that delivers a seamless experience for users to explore, read, and share food recipes. Built with **ReactJS**, **Node.js** **ExpressJS**, and **SCSS**, this project integrates frontend and backend technologies to create a modern, responsive platform for food lovers.
+Food Recipes is a full-stack recipe website for discovering meals, saving favorites, rating recipes, writing reviews, and sharing personal recipes. The frontend is built with React and Vite, while the backend uses Express and PostgreSQL.
 
-## 🛠️ Tech Stack
+## Features
 
-**Frontend**:
-- ReactJS (Vite)
-- SCSS Modules
-- React Router DOM
+- Browse recipes with search, category filters, meal filters, and sorting.
+- View recipe details with cooking time, ratings, reviews, and related recipes.
+- Create an account, log in, manage profile details, and change passwords.
+- Save recipes to a wishlist and manage saved recipes interactively.
+- Add new recipes with ingredients, instructions, timing, and image preview.
+- Read News and About pages for project updates and product context.
+- SEO metadata with React Helmet for page titles, descriptions, canonical URLs, and social previews.
+- Express request logging, centralized error handling, CORS handling, and PostgreSQL query logging.
 
-**Backend**:
-- Node.js, ExpressJS
-- PostgreSQL
+## Tech Stack
 
-**Database**:
-- Relational schema using PostgreSQL (recipes.sql included)
+- Frontend: React, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
+- Backend: Node.js, Express, PostgreSQL, pg
+- Auth and validation: JWT, bcryptjs, Yup
+- Deployment: Vercel frontend and serverless Express API
 
-## 🚀 Features
+## Project Structure
 
-- 📚 Browse and read recipes with detailed steps and ingredients
-- 🔍 Filter recipes by type or name
-- 📝 Add new recipes and blog posts (future enhancement)
-- ⚡ Optimized performance for mobile and desktop users
-- 🎨 Responsive UI built with custom SCSS styling
-
-## 🧪 Getting Started Locally
-
-### Clone the repository
-
-```bash
-git clone https://github.com/memories-quy-2002/Food-recipes.git
-cd Food-recipes
+```text
+Food-recipes/
+  src/
+    client/             React pages, components, hooks, styles, assets
+    server/             Express API, PostgreSQL queries, seeds, Vercel API entry
+  index.html            Vite HTML entry
+  package.json          Frontend scripts and shared dependencies
+  README.md
 ```
 
-### Install dependencies
+## Getting Started
+
+### Prerequisites
+
+- Node.js
+- npm or pnpm
+- PostgreSQL database
+
+### Install frontend dependencies
 
 ```bash
-pnpm install
+npm install
 ```
 
-### Run the app
+### Configure the server
+
+Create `src/server/.env` with:
+
+```env
+DB_USER=your_postgres_user
+DB_PASSWORD=your_postgres_password
+DB_HOST=your_postgres_host
+DB_PORT=5432
+DB_NAME=your_database_name
+JWT_SECRET=your_jwt_secret
+```
+
+Optional pool/logging settings:
+
+```env
+DB_POOL_MAX=2
+DB_POOL_MIN=0
+DB_POOL_IDLE_TIMEOUT_MS=5000
+DB_POOL_CONNECTION_TIMEOUT_MS=5000
+DB_POOL_MAX_LIFETIME_SECONDS=60
+DB_QUERY_LOGGING=true
+```
+
+### Run locally
+
+Start the backend:
+
 ```bash
-pnpm start
+cd src/server
+npm install
+npm start
 ```
 
-## Set up the backend
+Start the frontend from the project root:
 
-- Navigate to the ExpressJS backend folder (if structured separately)
-- Set environment variables for DB credentials
-- Import recipes.sql into MySQL
+```bash
+npm start
+```
 
-## 📌 TODOs
-- Authentication for content management
+Local URLs:
 
-- Admin panel for recipe moderation
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:4000`
 
-- User favorites and ratings
+During development, the frontend uses `http://localhost:4000` unless `VITE_API_BASE_URL` is set.
 
-- API documentation with Swagger
+## Build
 
-## 🤝 Contributing
-Contributions are welcome! Please fork the repository and submit a pull request with your feature or bugfix.
+```bash
+npm run build
+```
 
-Developed with passion by memories-quy-2002
+## Database Seeds
+
+Seed files live in `src/server/seeds/`. They include additional recipes and ratings used to enrich the recipe catalog.
+
+## Deployment Notes
+
+- The production frontend API defaults to `https://food-recipes-server-omega.vercel.app`.
+- Set `VITE_API_BASE_URL` if the API deployment URL changes.
+- Set `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
+- The server exports the Express app for Vercel and only calls `app.listen()` outside Vercel.
+
+## Documentation
+
+- [Changelog](./CHANGELOG.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+
+## License
+
+No license has been declared yet. Add a `LICENSE` file before publishing if you want to define reuse terms.
