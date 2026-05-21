@@ -1,23 +1,49 @@
 import React from "react";
 import FoodMenuSection from "./menu/FoodMenuSection";
+
 const FoodMenuBar = ({
 	categoryId,
 	mealId,
+	searchTerm,
 	categories,
 	meals,
 	onCategoryClick,
 	onMealClick,
 	onMenuAllClick,
 	onChangeSearchTerm,
+	onClearFilters,
 }) => {
+	const hasActiveFilters = Boolean(categoryId || mealId || searchTerm);
+
 	return (
-		<div className="food__menubar">
+		<aside className="food__menubar">
+			<div className="food__menubar__header">
+				<div>
+					<span>Filters</span>
+					<h2>Refine recipes</h2>
+				</div>
+				<button
+					type="button"
+					className="food__menubar__clear"
+					onClick={onClearFilters}
+					disabled={!hasActiveFilters}
+				>
+					Clear
+				</button>
+			</div>
 			<div className="food__menubar__section">
-				<h5 className="food__menubar__section__title">Search Food</h5>
+				<label
+					htmlFor="food-search"
+					className="food__menubar__section__title"
+				>
+					Search food
+				</label>
 				<input
+					id="food-search"
 					type="text"
 					name="search_recipe"
-					placeholder="Search..."
+					placeholder="Search recipes..."
+					value={searchTerm}
 					className="food__menubar__section__search"
 					onChange={onChangeSearchTerm}
 				/>
@@ -36,7 +62,7 @@ const FoodMenuBar = ({
 				onMenuClick={onMealClick}
 				onMenuAllClick={onMenuAllClick}
 			/>
-		</div>
+		</aside>
 	);
 };
 

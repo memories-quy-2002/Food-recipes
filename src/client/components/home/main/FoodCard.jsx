@@ -40,17 +40,15 @@ const FoodCard = ({
 			<h5 className="home__main__cardList__feature__item__name">
 				{name}
 			</h5>
-			<p className="home__main__cardList__feature__item__meal">
-				Meal: {meal}
-			</p>
-			<div
-				className="mx-3 d-flex gap-2 align-items-center"
-				style={{ height: "28px" }}
-			>
+			<div className="home__main__cardList__feature__item__meta">
+				<span>{meal}</span>
+				<span>{ratings} ratings</span>
+			</div>
+			<div className="home__main__cardList__feature__item__rating">
 				<div className="d-flex gap-1">
 					{ratingStar(score, "orange")}
 				</div>
-				<span style={{ fontSize: "12px" }}>{ratings} Ratings </span>
+				<span>{Number(score || 0).toFixed(1)}</span>
 			</div>
 		</div>
 	);

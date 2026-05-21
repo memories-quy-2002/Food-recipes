@@ -7,46 +7,40 @@ const FoodMenuSection = ({
 	onMenuClick,
 	onMenuAllClick,
 }) => {
+	const filterName = listName === "Categories" ? "categoryId" : "mealId";
+
 	return (
 		<div className="food__menubar__section">
-			<h5 className="food__menubar__section__title">{listName}</h5>
+			<h3 className="food__menubar__section__title">{listName}</h3>
 			<ul className="food__menubar__section__list">
 				<li>
-					<span
-						href={`/food`}
-						style={{
-							cursor: "pointer",
-							color: "orange",
-							fontWeight: `${listId ? "normal" : "bold"}`,
-						}}
-						onClick={() =>
-							onMenuAllClick(
-								listName === "Categories"
-									? "categoryId"
-									: "mealId"
-							)
-						}
+					<button
+						type="button"
+						className={`food__menubar__section__list__button${
+							listId ? "" : " food__menubar__section__list__button--active"
+						}`}
+						onClick={() => onMenuAllClick(filterName)}
 					>
-						All <span style={{ color: "black" }}></span>
-					</span>
+						<span>All</span>
+						<small>{list.length}</small>
+					</button>
 				</li>
 				{list.map(({ id, name }) => {
+					const isActive = parseInt(listId, 10) === id;
+
 					return (
 						<li key={id}>
-							<span
-								style={{
-									cursor: "pointer",
-									color: "orange",
-									fontWeight: `${
-										parseInt(listId) === id
-											? "bold"
-											: "normal"
-									}`,
-								}}
+							<button
+								type="button"
+								className={`food__menubar__section__list__button${
+									isActive
+										? " food__menubar__section__list__button--active"
+										: ""
+								}`}
 								onClick={() => onMenuClick(id)}
 							>
-								{name}{" "}
-							</span>
+								<span>{name}</span>
+							</button>
 						</li>
 					);
 				})}

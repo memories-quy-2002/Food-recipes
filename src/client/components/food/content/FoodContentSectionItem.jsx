@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import convertImage from "../../../utils/convertImage";
 import ratingStar from "../../../utils/ratingStar";
+
 const FoodContentSectionItem = ({ recipe }) => {
 	const navigate = useNavigate();
 	const {
@@ -12,11 +13,27 @@ const FoodContentSectionItem = ({ recipe }) => {
 		category_name,
 		meal_name,
 	} = recipe;
+
+	const handleOpenRecipe = () => {
+		navigate(`/recipe?id=${recipe_id}`);
+	};
+
+	const handleKeyDown = (event) => {
+		if (event.key === "Enter" || event.key === " ") {
+			event.preventDefault();
+			handleOpenRecipe();
+		}
+	};
+
 	return (
-		<div
+		<article
 			key={recipe_id}
 			className="food__content__section__list__item"
-			onClick={() => navigate(`/recipe?id=${recipe_id}`)}
+			onClick={handleOpenRecipe}
+			onKeyDown={handleKeyDown}
+			role="button"
+			tabIndex={0}
+			aria-label={`Open ${recipe_name}`}
 		>
 			{convertImage(
 				recipe_name,
@@ -24,20 +41,19 @@ const FoodContentSectionItem = ({ recipe }) => {
 			)}
 
 			<div className="food__content__section__list__item__context">
-				<strong>{recipe_name}</strong>
-				<p>Category: {category_name}</p>
-				<p>Meal: {meal_name}</p>
-			</div>
-			<div
-				className="mx-3 d-flex gap-2 align-items-center"
-				style={{ height: "28px" }}
-			>
-				<div className="d-flex gap-1">
-					{ratingStar(overall_score, "orange")}
+				<div className="food__content__section__list__item__chips">
+					<span>{category_name}</span>
+					<span>{meal_name}</span>
 				</div>
-				<span style={{ fontSize: "12px" }}>{num_ratings} Ratings </span>
+				<strong>{recipe_name}</strong>
+				<div className="food__content__section__list__item__rating">
+					<div>{ratingStar(overall_score, "orange")}</div>
+					<span>
+						{Number(overall_score || 0).toFixed(1)} ({num_ratings} ratings)
+					</span>
+				</div>
 			</div>
-		</div>
+		</article>
 	);
 };
 

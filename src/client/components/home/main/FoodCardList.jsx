@@ -11,7 +11,15 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite }) => {
 
 	return (
 		<div className="home__main__cardList">
-			<h3 className="home__main__cardList__title">Feature recipes</h3>
+			<div className="home__sectionHeader">
+				<div>
+					<span>Top rated</span>
+					<h3 className="home__main__cardList__title">Featured recipes</h3>
+				</div>
+				<a href="/food" className="home__main__cardList__link">
+					More recipes
+				</a>
+			</div>
 			<div className="home__main__cardList__feature">
 				{recipes
 					.sort((a, b) => b.num_ratings - a.num_ratings)
@@ -47,10 +55,6 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite }) => {
 						}
 					)}
 			</div>
-
-			<a href="/food" className="home__main__cardList__link">
-				&#x2192; More recipes
-			</a>
 		</div>
 	);
 };

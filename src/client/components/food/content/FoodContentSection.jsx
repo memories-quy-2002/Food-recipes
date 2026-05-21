@@ -1,16 +1,20 @@
 import React from "react";
 import FoodContentSectionItem from "./FoodContentSectionItem";
 
-const FoodContentSection = ({ id, name, recipes }) => {
+const FoodContentSection = ({ id, name, recipes, viewMode }) => {
 	return (
 		<div key={id} className="food__content__section">
 			<h4 className="food__content__section__title">{name}</h4>
-			<div className="food__content__section__list">
+			<div
+				className={`food__content__section__list food__content__section__list--${viewMode}`}
+			>
 				{recipes
-					.sort((a, b) => b.num_ratings - a.num_ratings)
 					.filter((recipe) => recipe.category_name === name)
-					.map((recipe, index) => (
-						<FoodContentSectionItem key={index} recipe={recipe} />
+					.map((recipe) => (
+						<FoodContentSectionItem
+							key={recipe.recipe_id}
+							recipe={recipe}
+						/>
 					))}
 			</div>
 		</div>
