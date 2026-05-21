@@ -7,8 +7,10 @@ const RecipeRating = ({
 	ratingScore,
 	review,
 	reviewList,
+	reviewMessage,
 	showReview,
 	isAuthenticated,
+	isSubmittingReview,
 	onSubmit,
 	onStarClick,
 	onToggleReview,
@@ -32,16 +34,13 @@ const RecipeRating = ({
 					<Form onSubmit={onSubmit}>
 						<Form.Group controlId="formBasicRating">
 							<Form.Label className="fw-bold fs-5 my-3">
-								Rating the recipe
+								Rate this recipe
 							</Form.Label>
 							<div className="recipe__content__rating__star">
 								{[1, 2, 3, 4, 5].map((star) => (
 									<span
 										key={star}
 										onClick={() => onStarClick(star)}
-										style={{
-											cursor: "pointer",
-										}}
 									>
 										{star <= ratingScore ? (
 											<BsStarFill
@@ -54,27 +53,30 @@ const RecipeRating = ({
 									</span>
 								))}
 								<span
-									style={{
-										fontWeight: "bold",
-										fontSize: "20px",
-										marginLeft: "0.5rem",
-									}}
+									className="recipe__content__rating__star__score"
 								>
 									({parseInt(ratingScore)})
 								</span>
 							</div>
 						</Form.Group>
+						{reviewMessage && (
+							<div
+								className={`recipe__content__rating__message recipe__content__rating__message--${reviewMessage.type}`}
+							>
+								{reviewMessage.text}
+							</div>
+						)}
 
 						<div className="recipe__content__rating__review">
-							<p
-								style={{ color: "orange" }}
+							<button
+								type="button"
 								className="recipe__content__rating__review__show"
 								onClick={onToggleReview}
 							>
 								{showReview
 									? "Hide review"
 									: "Show & edit review"}
-							</p>
+							</button>
 							{showReview && (
 								<Form.Group controlId="formBasicReview">
 									<Form.Label className="fw-bold fs-5 my-2">
@@ -86,7 +88,7 @@ const RecipeRating = ({
 										placeholder="Enter your review"
 										value={review}
 										onChange={onReviewChange}
-										className="border border-1 border-warning mb-3 recipe__content__rating__review__area"
+										className="recipe__content__rating__review__area"
 									/>
 								</Form.Group>
 							)}
@@ -95,8 +97,12 @@ const RecipeRating = ({
 							controlId="formBasicSubmit"
 							className="recipe__content__rating__submit"
 						>
-							<Button variant="primary" type="submit">
-								Submit
+							<Button
+								variant="primary"
+								type="submit"
+								disabled={isSubmittingReview}
+							>
+								{isSubmittingReview ? "Saving..." : "Submit"}
 							</Button>
 						</Form.Group>
 					</Form>

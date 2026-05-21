@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../api/axios";
@@ -18,6 +18,8 @@ const Recipe = () => {
 	const [review, setReview] = useState("");
 	const [showReview, setShowReview] = useState(false);
 	const [reviewList, setReviewList] = useState([]);
+	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+	const [reviewMessage, setReviewMessage] = useState(null);
 	const navigate = useNavigate();
 
 	const location = useLocation();
@@ -36,22 +38,65 @@ const Recipe = () => {
 		setReview(event.target.value);
 	};
 
+	const fetchReviews = useCallback(async (recipeId) => {
+		if (!recipeId) return;
+
+		const response = await axios.get(`/review/${recipeId}`);
+		if (response.status === 200) {
+			setReviewList(response.data.reviews || []);
+		}
+	}, []);
+
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+
+		if (!isAuthenticated) {
+			navigate("/account");
+			return;
+		}
+
+		if (!recipe) return;
+
+		if (!ratingScore) {
+			setReviewMessage({
+				type: "error",
+				text: "Choose a star rating before submitting your review.",
+			});
+			return;
+		}
+
+		setIsSubmittingReview(true);
+		setReviewMessage(null);
+
 		try {
 			await axios.post(`/rating/${userId}/${recipe.recipe_id}`, {
 				score: ratingScore,
-				review: review,
+				review,
 			});
-			window.location.reload(false);
+			await fetchReviews(recipe.recipe_id);
+			setReviewMessage({
+				type: "success",
+				text: "Your rating and review have been saved.",
+			});
 		} catch (err) {
 			console.error(err);
+			setReviewMessage({
+				type: "error",
+				text: "We could not save your review. Please try again.",
+			});
+		} finally {
+			setIsSubmittingReview(false);
 		}
 	};
 
 	const handleClickFavorite = async (event) => {
 		event.preventDefault();
-		if (!isAuthenticated) navigate("/account");
+		if (!isAuthenticated) {
+			navigate("/account");
+			return;
+		}
+		if (!recipe) return;
+
 		try {
 			if (favorite) {
 				const response = await axios.delete(
@@ -87,13 +132,19 @@ const Recipe = () => {
 
 	useEffect(() => {
 		const fetchFavorites = async () => {
+			if (!isAuthenticated || !recipe) {
+				setFavorite(false);
+				return;
+			}
+
 			try {
 				const response = await axios.get(`/wishlist/${userId}`);
-				if (response.status === 200 && recipe !== null) {
+				if (response.status === 200) {
 					setFavorite(
 						response.data.wishlist.some(
 							(wishlistRecipe) =>
-								wishlistRecipe.recipe_id === recipe.recipe_id
+								Number(wishlistRecipe.recipe_id) ===
+								Number(recipe.recipe_id)
 						)
 					);
 				}
@@ -102,47 +153,37 @@ const Recipe = () => {
 			}
 		};
 		fetchFavorites();
-	}, [recipe, userId]);
+	}, [isAuthenticated, recipe, userId]);
 	useEffect(() => {
 		const fetchRating = async () => {
+			if (!isAuthenticated || !recipe) {
+				setRatingScore(0);
+				setReview("");
+				return;
+			}
+
 			try {
-				if (recipe !== null) {
-					const response = await axios.get(`/rating/${userId}`);
-					if (response.status === 200) {
-						const myRecipeRating = response.data.ratings.filter(
-							(rating) => rating.recipe_id === recipe.recipe_id
-						);
-						if (myRecipeRating[0].score) {
-							setRatingScore(myRecipeRating[0].score);
-						}
-						if (myRecipeRating[0].review) {
-							setReview(myRecipeRating[0].review);
-						}
-					}
+				const response = await axios.get(`/rating/${userId}`);
+				if (response.status === 200) {
+					const myRecipeRating = (response.data.ratings || []).find(
+						(rating) =>
+							Number(rating.recipe_id) === Number(recipe.recipe_id)
+					);
+
+					setRatingScore(Number(myRecipeRating?.score || 0));
+					setReview(myRecipeRating?.review || "");
 				}
 			} catch (err) {
 				console.error(err);
 			}
 		};
 		fetchRating();
-	}, [recipe, userId]);
+	}, [isAuthenticated, recipe, userId]);
 	useEffect(() => {
-		const fetchReviews = async () => {
-			try {
-				if (recipe !== null) {
-					const response = await axios.get(
-						`/review/${recipe?.recipe_id}`
-					);
-					if (response.status === 200) {
-						setReviewList(response.data.reviews);
-					}
-				}
-			} catch (err) {
-				console.error(err);
-			}
-		};
-		fetchReviews();
-	}, [recipe]);
+		if (!recipe) return;
+
+		fetchReviews(recipe.recipe_id).catch((err) => console.error(err));
+	}, [fetchReviews, recipe]);
 	if (!id) {
 		return <ErrorPage />;
 	}
@@ -161,7 +202,9 @@ const Recipe = () => {
 						review={review}
 						showReview={showReview}
 						reviewList={reviewList}
+						reviewMessage={reviewMessage}
 						isAuthenticated={isAuthenticated}
+						isSubmittingReview={isSubmittingReview}
 						onSubmit={handleSubmit}
 						onStarClick={handleStarClick}
 						onToggleReview={handleToggleReview}

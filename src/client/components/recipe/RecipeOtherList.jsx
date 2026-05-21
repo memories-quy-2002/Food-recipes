@@ -9,10 +9,9 @@ const RecipeOtherList = ({ recipeId }) => {
 	const navigate = useNavigate();
 	const handleNavigation = (recipeId) => {
 		navigate(`/recipe?id=${recipeId}`);
-		window.location.reload();
 	};
 	useEffect(() => {
-		const sortRecipes = recipes.sort(() => Math.random() - 0.5);
+		const sortRecipes = [...recipes].sort(() => Math.random() - 0.5);
 		setShuffledRecipes(
 			sortRecipes
 				.filter((recipe) => recipe.recipe_id !== recipeId)

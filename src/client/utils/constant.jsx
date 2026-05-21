@@ -14,7 +14,7 @@ export const website_content = {
 		phone: "(+84) 123 456 7890",
 		address: "123 ABC Street, District 12, Ho Chi Minh City, Vietnam",
 	},
-	overview: ["Home", "Food", "Wishlist"],
+	overview: ["Home", "Food", "News", "About", "Wishlist"],
 	follow: [
 		{
 			href: "https://www.facebook.com",

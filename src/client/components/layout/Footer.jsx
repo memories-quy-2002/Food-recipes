@@ -11,12 +11,15 @@ const Footer = () => {
 	return (
 		<footer className="footer">
 			<Container fluid>
-				<Row>
-					<Col md={4}>
+				<Row className="footer__grid">
+					<Col lg={5} md={6}>
+						<a href="/" className="footer__brand">
+							Food Recipes
+						</a>
 						<h5 className="footer__title">About Us</h5>
 						<p className="footer__text">{about}</p>
 					</Col>
-					<Col md={4}>
+					<Col lg={4} md={6}>
 						<h5 className="footer__title">Contact Us</h5>
 						<ul className="footer__list">
 							<li className="footer__list__link">
@@ -30,7 +33,7 @@ const Footer = () => {
 							</li>
 						</ul>
 					</Col>
-					<Col md={4}>
+					<Col lg={3} md={12}>
 						<h5 className="footer__title">Overview</h5>
 						<ul className="footer__list">
 							{overview.map((item, index) => (
@@ -48,7 +51,7 @@ const Footer = () => {
 					<ul className="footer__social__list">
 						{follow.map(({ href, Icon }) => (
 							<a key={href} href={href} target="_blank" rel="noopener noreferrer">
-								<Icon color="white" size={24} />
+								<Icon size={20} />
 							</a>
 						))}
 					</ul>

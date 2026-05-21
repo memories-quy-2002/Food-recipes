@@ -1,0 +1,121 @@
+.about {
+	min-height: 100vh;
+	padding: 0 clamp(1rem, 4vw, 3rem) 4rem;
+	background: #fffaf3;
+	color: #211813;
+
+	&__hero,
+	&__story,
+	&__values {
+		max-width: 1180px;
+		margin: 0 auto;
+	}
+
+	&__hero {
+		padding: clamp(3.25rem, 7vw, 5rem) 0 2rem;
+
+		span {
+			display: block;
+			margin-bottom: 0.55rem;
+			color: #d56b00;
+			font-size: 0.82rem;
+			font-weight: 900;
+			text-transform: uppercase;
+		}
+
+		h1 {
+			max-width: 780px;
+			margin: 0;
+			font-size: clamp(2.7rem, 6vw, 5.2rem);
+			font-weight: 900;
+			line-height: 0.96;
+		}
+
+		p {
+			max-width: 660px;
+			margin: 1rem 0 0;
+			color: #6d6258;
+			font-size: 1.08rem;
+			line-height: 1.75;
+		}
+	}
+
+	&__story {
+		padding: clamp(1.25rem, 4vw, 2rem);
+		border: 1px solid rgba(98, 58, 18, 0.1);
+		border-radius: 8px;
+		background:
+			linear-gradient(135deg, rgba(24, 17, 12, 0.96), rgba(67, 35, 20, 0.92)),
+			#211813;
+		color: #fff8ef;
+		display: grid;
+		grid-template-columns: 0.85fr 1fr;
+		gap: 2rem;
+		align-items: start;
+		box-shadow: 0 18px 44px rgba(45, 32, 20, 0.12);
+
+		span {
+			display: block;
+			margin-bottom: 0.45rem;
+			color: #ffd18b;
+			font-size: 0.8rem;
+			font-weight: 900;
+			text-transform: uppercase;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: clamp(1.8rem, 4vw, 3rem);
+			font-weight: 900;
+			line-height: 1;
+		}
+
+		p {
+			margin: 0;
+			color: rgba(255, 248, 239, 0.78);
+			line-height: 1.75;
+		}
+	}
+
+	&__values {
+		margin-top: 1.25rem;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+
+		article {
+			padding: 1.25rem;
+			border: 1px solid rgba(98, 58, 18, 0.1);
+			border-radius: 8px;
+			background: #ffffff;
+			box-shadow: 0 16px 44px rgba(45, 32, 20, 0.08);
+		}
+
+		h3 {
+			margin: 0 0 0.65rem;
+			font-size: 1.2rem;
+			font-weight: 900;
+		}
+
+		p {
+			margin: 0;
+			color: #6d6258;
+			line-height: 1.7;
+		}
+	}
+}
+
+@media screen and (max-width: 900px) {
+	.about {
+		&__story,
+		&__values {
+			grid-template-columns: 1fr;
+		}
+	}
+}
+
+@media screen and (max-width: 576px) {
+	.about {
+		padding-inline: 0.8rem;
+	}
+}

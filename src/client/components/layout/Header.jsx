@@ -15,6 +15,14 @@ const items = [
 		href: "/food",
 	},
 	{
+		title: "News",
+		href: "/news",
+	},
+	{
+		title: "About",
+		href: "/about",
+	},
+	{
 		title: "Wishlist",
 		href: "/wishlist",
 	},

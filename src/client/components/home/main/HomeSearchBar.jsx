@@ -13,11 +13,16 @@ const HomeSearchBar = ({ recipes }) => {
 	);
 	return (
 		<div className="home__main__title">
-			<h3>Find your recipes</h3>
+			<span className="home__main__title__eyebrow">Browse the kitchen</span>
+			<h3>Find your next favorite recipe</h3>
+			<p>
+				Search crowd-loved dishes by name, or explore categories curated
+				for every craving.
+			</p>
 			<div className="home__main__search">
 				<input
 					type="text"
-					placeholder="Search..."
+					placeholder="Search recipes..."
 					className="home__main__search__input"
 					onChange={handleChange}
 				></input>

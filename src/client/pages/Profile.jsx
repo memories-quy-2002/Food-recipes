@@ -29,7 +29,9 @@ const Profile = () => {
 	const user = useSelector(
 		(state) => state.auth.local.user ?? state.auth.session.user
 	);
-	const [page, setPage] = useState("");
+	const [page, setPage] = useState(
+		window.location.hash.replace("#/", "") || ""
+	);
 	const dispatch = useDispatch();
 
 	const handleLogOut = () => {
@@ -67,6 +69,7 @@ const Profile = () => {
 			<main className="profile__container">
 				<ProfileAside
 					name={user?.full_name}
+					page={page}
 					handleLogOut={handleLogOut}
 					handleChangePage={handleChangePage}
 					profilePageList={profilePageList}

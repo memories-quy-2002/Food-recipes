@@ -2,6 +2,7 @@ import React from "react";
 import { IoPersonCircleSharp } from "react-icons/io5";
 const ProfileAside = ({
 	name,
+	page,
 	handleLogOut,
 	handleChangePage,
 	profilePageList,
@@ -20,6 +21,11 @@ const ProfileAside = ({
 						<li key={index}>
 							<a
 								href={`/profile#/${link}`}
+								className={
+									page === link
+										? "profile__container__aside__content__nav__link--active"
+										: ""
+								}
 								onClick={() => handleChangePage(link)}
 							>
 								<div>

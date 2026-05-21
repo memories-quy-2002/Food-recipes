@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Row } from "react-bootstrap";
 import Pagination from "react-bootstrap/Pagination";
 import convertImage from "../../../utils/convertImage";
@@ -11,6 +11,10 @@ const RecipeReviewList = ({ reviewList }) => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const numberReviews = reviewList.length;
 	const totalPages = Math.ceil(numberReviews / REVIEWS_PER_PAGE);
+
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [reviewList]);
 
 	const calculatePageNumbers = () => {
 		const pageNumbers = [];
@@ -43,73 +47,59 @@ const RecipeReviewList = ({ reviewList }) => {
 		setCurrentPage(pageNumber);
 	};
 
-	// Use 'displayedPages' and 'currentReviews' in your UI
-
 	return (
 		<>
-			{" "}
 			<Row className="recipe__content__reviews">
 				<h3>All reviews ({numberReviews})</h3>
-				<ul className="recipe__content__reviews__list">
-					{currentReviews.map((review) => (
-						<li
-							key={review.rating_id}
-							className="recipe__content__reviews__list__item"
-						>
-							<div className="recipe__content__reviews__list__item__container">
-								<div className="recipe__content__reviews__list__item__container__context">
-									<div>
-										{convertImage(
-											"avatar",
-											"recipe__content__reviews__list__item__container__context__img"
-										)}
-										<strong>{review.full_name}</strong>
-									</div>
-								</div>
-								<div className="recipe__content__reviews__list__item__container__info">
-									<div className="recipe__content__reviews__list__item__container__info__star">
-										{ratingStar(review.score, "orange")}{" "}
-									</div>
-									<div>
-										<span
-											style={{
-												fontSize: "12px",
-											}}
-										>
-											{formatTimestamp(review.date_added)}
-										</span>
-									</div>
-								</div>
-
-								<p>{review.review}</p>
-							</div>
-						</li>
-					))}
-				</ul>
-			</Row>
-			<Pagination className="food__content__section__pagination">
-				{totalPages <= 5 ? (
-					pageNumbers.map((number) => (
-						<Pagination.Item
-							key={number}
-							active={number === currentPage}
-							onClick={() => handlePagination(number)}
-						>
-							{number}
-						</Pagination.Item>
-					))
+				{numberReviews === 0 ? (
+					<p className="recipe__content__reviews__empty">
+						No reviews yet. Be the first to share one.
+					</p>
 				) : (
-					<>
-						<Pagination.First onClick={() => handlePagination(1)} />
-						<Pagination.Prev
-							onClick={() =>
-								handlePagination(
-									currentPage > 1 ? currentPage - 1 : 1
-								)
-							}
-						/>
+					<ul className="recipe__content__reviews__list">
+						{currentReviews.map((review) => (
+							<li
+								key={review.rating_id}
+								className="recipe__content__reviews__list__item"
+							>
+								<div className="recipe__content__reviews__list__item__container">
+									<div className="recipe__content__reviews__list__item__container__context">
+										<div>
+											{convertImage(
+												"avatar",
+												"recipe__content__reviews__list__item__container__context__img"
+											)}
+											<strong>{review.full_name}</strong>
+										</div>
+									</div>
+									<div className="recipe__content__reviews__list__item__container__info">
+										<div className="recipe__content__reviews__list__item__container__info__star">
+											{ratingStar(review.score, "orange")}{" "}
+										</div>
+										<div>
+											<span
+												style={{
+													fontSize: "12px",
+												}}
+											>
+												{formatTimestamp(
+													review.date_added
+												)}
+											</span>
+										</div>
+									</div>
 
-						{displayedPages.map((number) => (
+									<p>{review.review || "No written review."}</p>
+								</div>
+							</li>
+						))}
+					</ul>
+				)}
+			</Row>
+			{totalPages > 1 && (
+				<Pagination className="food__content__section__pagination">
+					{totalPages <= 5 ? (
+						pageNumbers.map((number) => (
 							<Pagination.Item
 								key={number}
 								active={number === currentPage}
@@ -117,32 +107,59 @@ const RecipeReviewList = ({ reviewList }) => {
 							>
 								{number}
 							</Pagination.Item>
-						))}
+						))
+					) : (
+						<>
+							<Pagination.First
+								onClick={() => handlePagination(1)}
+							/>
+							<Pagination.Prev
+								onClick={() =>
+									handlePagination(
+										currentPage > 1 ? currentPage - 1 : 1
+									)
+								}
+							/>
 
-						<Pagination.Next
-							onClick={() =>
-								handlePagination(
-									currentPage <
+							{displayedPages.map((number) => (
+								<Pagination.Item
+									key={number}
+									active={number === currentPage}
+									onClick={() => handlePagination(number)}
+								>
+									{number}
+								</Pagination.Item>
+							))}
+
+							<Pagination.Next
+								onClick={() =>
+									handlePagination(
+										currentPage <
+											Math.ceil(
+												numberReviews /
+													REVIEWS_PER_PAGE
+											)
+											? currentPage + 1
+											: Math.ceil(
+													numberReviews /
+														REVIEWS_PER_PAGE
+											  )
+									)
+								}
+							/>
+							<Pagination.Last
+								onClick={() =>
+									handlePagination(
 										Math.ceil(
 											numberReviews / REVIEWS_PER_PAGE
 										)
-										? currentPage + 1
-										: Math.ceil(
-												numberReviews / REVIEWS_PER_PAGE
-										  )
-								)
-							}
-						/>
-						<Pagination.Last
-							onClick={() =>
-								handlePagination(
-									Math.ceil(numberReviews / REVIEWS_PER_PAGE)
-								)
-							}
-						/>
-					</>
-				)}
-			</Pagination>
+									)
+								}
+							/>
+						</>
+					)}
+				</Pagination>
+			)}
 		</>
 	);
 };

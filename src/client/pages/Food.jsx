@@ -5,6 +5,7 @@ import axios from "../api/axios";
 import FoodMenuBar from "../components/food/FoodMenuBar";
 import { RecipeContext } from "../context/RecipeProvider";
 import "../styles/Food.scss";
+
 const FoodContent = lazy(() => import("../components/food/FoodContent"));
 
 const Food = () => {
@@ -14,36 +15,47 @@ const Food = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [selectedOptions, setSelectedOptions] = useState({
-		categoryId:
-			new URLSearchParams(location.search).get("categories") || "",
+		categoryId: new URLSearchParams(location.search).get("categories") || "",
 		mealId: new URLSearchParams(location.search).get("meals") || "",
 		q: new URLSearchParams(location.search).get("q") || "",
 	});
+
 	const handleCategoryClick = (categoryId) => {
 		setSelectedOptions((prevOptions) => ({
 			...prevOptions,
-			categoryId: categoryId,
+			categoryId,
 		}));
 	};
 
 	const handleMealClick = (mealId) => {
 		setSelectedOptions((prevOptions) => ({
 			...prevOptions,
-			mealId: mealId,
+			mealId,
 		}));
 	};
+
 	const handleChangeSearchTerm = (event) => {
 		setSelectedOptions((prevOptions) => ({
 			...prevOptions,
 			q: event.target.value,
 		}));
 	};
+
 	const handleMenuAllClick = (name) => {
 		setSelectedOptions((prevOptions) => ({
 			...prevOptions,
 			[name]: "",
 		}));
 	};
+
+	const handleClearFilters = () => {
+		setSelectedOptions({
+			categoryId: "",
+			mealId: "",
+			q: "",
+		});
+	};
+
 	useEffect(() => {
 		const params = new URLSearchParams();
 
@@ -54,11 +66,13 @@ const Food = () => {
 		if (selectedOptions.mealId) {
 			params.set("meals", selectedOptions.mealId);
 		}
+
 		if (selectedOptions.q) {
 			params.set("q", selectedOptions.q);
 		}
 
-		const newUrl = `/food?${params.toString()}`;
+		const queryString = params.toString();
+		const newUrl = queryString ? `/food?${queryString}` : "/food";
 		navigate(newUrl);
 	}, [selectedOptions, navigate]);
 
@@ -75,6 +89,7 @@ const Food = () => {
 		};
 		fetchCategories();
 	}, []);
+
 	useEffect(() => {
 		const fetchMeals = async () => {
 			try {
@@ -88,33 +103,49 @@ const Food = () => {
 		};
 		fetchMeals();
 	}, []);
+
 	return (
 		<Container fluid className="food">
 			<div className="food__intro">
-				<h2>🍽️ Explore Delicious Recipes</h2>
-				<p>Browse by category, meal type, or search for your favorite dishes. Find inspiration for your next meal!</p>
-				<div className="food__summary">
-					<ul>
-						<li><strong>Total Recipes:</strong> {recipes.length}</li>
-						<li><strong>Categories:</strong> {categories.length}</li>
-						<li><strong>Meal Types:</strong> {meals.length}</li>
-					</ul>
+				<div className="food__intro__content">
+					<span>Recipe finder</span>
+					<h1>Explore delicious recipes</h1>
+					<p>
+						Filter by category, meal type, or search by name to find
+						the right dish faster.
+					</p>
+				</div>
+				<div className="food__summary" aria-label="Recipe library summary">
+					<div>
+						<strong>{recipes.length}</strong>
+						<span>Total recipes</span>
+					</div>
+					<div>
+						<strong>{categories.length}</strong>
+						<span>Categories</span>
+					</div>
+					<div>
+						<strong>{meals.length}</strong>
+						<span>Meal types</span>
+					</div>
 				</div>
 			</div>
-			<Row>
-				<Col md={3}>
+			<Row className="food__layout">
+				<Col lg={3} md={4} className="food__layout__aside">
 					<FoodMenuBar
 						categoryId={selectedOptions.categoryId}
 						mealId={selectedOptions.mealId}
+						searchTerm={selectedOptions.q}
 						categories={categories}
 						meals={meals}
 						onCategoryClick={handleCategoryClick}
 						onMealClick={handleMealClick}
 						onMenuAllClick={handleMenuAllClick}
 						onChangeSearchTerm={handleChangeSearchTerm}
+						onClearFilters={handleClearFilters}
 					/>
 				</Col>
-				<Col md={9}>
+				<Col lg={9} md={8} className="food__layout__content">
 					<Suspense
 						fallback={
 							<div className="loaderContainer">

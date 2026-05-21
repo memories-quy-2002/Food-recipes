@@ -8,7 +8,6 @@ const Reviews = ({ reviewsData = [] }) => {
 	const handleClickEdit = (recipeId) => {
 		navigate(`/recipe?id=${recipeId}`);
 	};
-	console.log(reviewsData);
 	return (
 		<div className="profile__container__main__reviews">
 			<div>

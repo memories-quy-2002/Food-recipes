@@ -8,7 +8,9 @@ const RecipeContent = ({
 	showReview,
 	review,
 	reviewList,
+	reviewMessage,
 	isAuthenticated,
+	isSubmittingReview,
 	onSubmit,
 	onStarClick,
 	onToggleReview,
@@ -21,8 +23,10 @@ const RecipeContent = ({
 				ratingScore={ratingScore}
 				review={review}
 				reviewList={reviewList}
+				reviewMessage={reviewMessage}
 				showReview={showReview}
 				isAuthenticated={isAuthenticated}
+				isSubmittingReview={isSubmittingReview}
 				onSubmit={onSubmit}
 				onStarClick={onStarClick}
 				onToggleReview={onToggleReview}

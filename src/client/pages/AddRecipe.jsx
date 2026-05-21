@@ -1,5 +1,5 @@
 import cameraPreview from "../assets/images/cameraPreview.png";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import axios from "../api/axios";
 import "../styles/AddRecipe.scss";
@@ -70,7 +70,6 @@ const AddRecipe = () => {
 			};
 
 			reader.readAsDataURL(file);
-			console.log(preview);
 		}
 	};
 	const handleInputChange = (event) => {
@@ -89,6 +88,7 @@ const AddRecipe = () => {
 		setFormRecipe(updatedFormRecipe);
 	};
 	const handleDeleteField = (event, index) => {
+		setDisabled(false);
 		const { name } = event.target;
 		setFormRecipe({
 			...formRecipe,
@@ -96,12 +96,12 @@ const AddRecipe = () => {
 		});
 	};
 	const handleAddField = (event) => {
+		setDisabled(false);
 		const { name } = event.target;
 		setFormRecipe({
 			...formRecipe,
 			[name]: [...formRecipe[name], ""],
 		});
-		console.log(formRecipe);
 	};
 	const handleTimeNumberChange = (event) => {
 		setDisabled(false);
@@ -129,6 +129,7 @@ const AddRecipe = () => {
 
 	const handleReset = () => {
 		setFormRecipe(initialState);
+		setPreview(null);
 		setDisabled(true);
 	};
 
@@ -144,7 +145,6 @@ const AddRecipe = () => {
 				});
 
 				if (response.status === 200) {
-					console.log("File uploaded successfully");
 					navigate("/");
 				} else {
 					console.error("Failed to upload file");
@@ -154,7 +154,6 @@ const AddRecipe = () => {
 			}
 		}
 	};
-	useEffect(() => console.log(formRecipe));
 	return (
 		<div className="add">
 			<div className="blur">
@@ -279,7 +278,7 @@ const AddRecipe = () => {
 									className="add__container__form__time__input"
 								/>
 								<Form.Select
-									value={formRecipe.recipePrepTime.time}
+									value={formRecipe.recipePrepTime.unit}
 									name="recipePrepTime"
 									className="add__container__form__time__select"
 									onChange={handleSelectChange}
@@ -303,7 +302,7 @@ const AddRecipe = () => {
 									className="add__container__form__time__input"
 								/>
 								<Form.Select
-									value={formRecipe.recipeCookTime.time}
+									value={formRecipe.recipeCookTime.unit}
 									name="recipeCookTime"
 									className="add__container__form__time__select"
 									onChange={handleSelectChange}

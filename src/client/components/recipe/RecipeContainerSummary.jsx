@@ -27,15 +27,10 @@ const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
 								<BsHeart size={24} color="white" />
 							)}
 
-							<strong
-								style={{
-									color: "white",
-									fontSize: "1.1rem",
-								}}
-							>
-								{favorite
-									? "Remove from favorite"
-									: "Add to favorite"}
+						<strong>
+							{favorite
+								? "Remove from favorite"
+								: "Add to favorite"}
 							</strong>
 						</button>
 					</div>
