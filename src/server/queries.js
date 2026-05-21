@@ -5,6 +5,14 @@ const fs = require("fs");
 const path = require("path");
 const sanitizeFilename = require("sanitize-filename");
 require("dotenv").config();
+let attachDatabasePool;
+
+try {
+	({ attachDatabasePool } = require("@vercel/functions"));
+} catch {
+	attachDatabasePool = null;
+}
+
 const {
 	DB_USER,
 	DB_PASSWORD,
@@ -16,6 +24,7 @@ const {
 } = process.env;
 const Pool = pg.Pool;
 const caPath = path.join(__dirname, "ca.pem");
+const poolKey = "__foodRecipesPgPool";
 
 if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DB_PORT || !DB_NAME) {
 	throw new Error("Missing required database environment variables.");
@@ -23,32 +32,69 @@ if (!DB_USER || !DB_PASSWORD || !DB_HOST || !DB_PORT || !DB_NAME) {
 if (!JWT_SECRET) {
 	throw new Error("Missing JWT_SECRET environment variable.");
 }
-const pool = new Pool({
-	user: DB_USER,
-	password: DB_PASSWORD,
-	host: DB_HOST,
-	port: Number(DB_PORT),
-	database: DB_NAME,
-	ssl: {
-		rejectUnauthorized: true,
-		ca: fs.readFileSync(caPath).toString(),
-	},
-});
 
 const secretKey = JWT_SECRET;
+
+const getPositiveInteger = (value, fallback) => {
+	const parsedValue = Number.parseInt(value, 10);
+	return Number.isInteger(parsedValue) && parsedValue >= 0
+		? parsedValue
+		: fallback;
+};
+
+const getCa = () => {
+	const resolvedCaPath = DB_SSL_CA_PATH
+		? path.resolve(DB_SSL_CA_PATH)
+		: caPath;
+	return fs.readFileSync(resolvedCaPath).toString();
+};
+
+const createPool = () => {
+	const pool = new Pool({
+		user: DB_USER,
+		password: DB_PASSWORD,
+		host: DB_HOST,
+		port: Number(DB_PORT),
+		database: DB_NAME,
+		max: getPositiveInteger(process.env.DB_POOL_MAX, 2),
+		min: getPositiveInteger(process.env.DB_POOL_MIN, 0),
+		idleTimeoutMillis: getPositiveInteger(
+			process.env.DB_POOL_IDLE_TIMEOUT_MS,
+			5000
+		),
+		connectionTimeoutMillis: getPositiveInteger(
+			process.env.DB_POOL_CONNECTION_TIMEOUT_MS,
+			5000
+		),
+		maxLifetimeSeconds: getPositiveInteger(
+			process.env.DB_POOL_MAX_LIFETIME_SECONDS,
+			60
+		),
+		allowExitOnIdle: true,
+		ssl: {
+			rejectUnauthorized: true,
+			ca: getCa(),
+		},
+	});
+
+	pool.on("error", (error) => {
+		console.error("Unexpected PostgreSQL idle client error", error);
+	});
+
+	if (attachDatabasePool) {
+		attachDatabasePool(pool);
+	}
+
+	return pool;
+};
+
+const pool = globalThis[poolKey] || createPool();
+globalThis[poolKey] = pool;
 
 const handleDbError = (response, error, message = "Database error") => {
 	console.error(message, error);
 	return response.status(500).json({ message });
 };
-
-pool.connect((err) => {
-	if (err) {
-		console.error("Error connecting to the PostgreSQL database", err);
-	} else {
-		console.log("Connected to PostgreSQL database");
-	}
-});
 
 const getUsersLogin = (request, response) => {
 	const { email, password } = request.body;

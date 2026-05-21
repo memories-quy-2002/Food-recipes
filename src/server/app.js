@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const multer = require("multer");
 const cors = require("cors");
 const db = require("./queries");
-const rateLimit = require('express-rate-limit')
+const rateLimit = require("express-rate-limit");
 
 const PORT = 4000;
 const app = express();
@@ -45,11 +45,15 @@ app.put("/account/users/update/:uid", db.updateUser);
 app.put("/account/users/password/:uid", db.updatePassword);
 app.delete("/recipe/delete/:rid", db.deleteRecipe);
 app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
-
-app.listen(PORT, () => {
-	console.log(`Server is running on port ${PORT}.`);
-});
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
 	res.send("Hello World from Express");
 });
+
+if (process.env.VERCEL !== "1") {
+	app.listen(PORT, () => {
+		console.log(`Server is running on port ${PORT}.`);
+	});
+}
+
+module.exports = app;
 
