@@ -23,6 +23,10 @@ const items = [
 		href: "/about",
 	},
 	{
+		title: "Health",
+		href: "/health",
+	},
+	{
 		title: "Wishlist",
 		href: "/wishlist",
 	},
