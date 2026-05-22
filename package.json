@@ -46,7 +46,9 @@
     "yup": "^1.7.1"
   },
   "scripts": {
-    "start": "vite",
+    "start": "node scripts/start-dev.mjs",
+    "start:client": "vite",
+    "start:server": "cd src/server && node ../../node_modules/nodemon/bin/nodemon.js app.js",
     "build": "vite build",
     "test": "vitest",
     "test:ui": "vitest --ui",
