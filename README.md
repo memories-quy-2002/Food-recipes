@@ -9,6 +9,7 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Create an account, log in, manage profile details, and change passwords.
 - Save recipes to a wishlist and manage saved recipes interactively.
 - Add new recipes with ingredients, instructions, timing, and image preview.
+- Upload recipe images directly to Supabase Storage and save public image URLs.
 - Read News and About pages for project updates and product context.
 - SEO metadata with React Helmet for page titles, descriptions, canonical URLs, and social previews.
 - Express request logging, centralized error handling, CORS handling, and PostgreSQL query logging.
@@ -18,6 +19,7 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Frontend: React, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
 - Backend: Node.js, Express, PostgreSQL, pg
 - Auth and validation: JWT, bcryptjs, Yup
+- Storage: Supabase Storage for user-uploaded recipe images
 - Deployment: Vercel frontend and serverless Express API
 
 ## Project Structure
@@ -69,6 +71,46 @@ DB_POOL_CONNECTION_TIMEOUT_MS=5000
 DB_POOL_MAX_LIFETIME_SECONDS=60
 DB_QUERY_LOGGING=true
 ```
+
+### Configure Supabase Storage uploads
+
+1. In Supabase, create a Storage bucket named `recipe-images`.
+2. Make the bucket public, or add Storage policies that allow reads for uploaded recipe images.
+3. Allow browser uploads with Storage policies for the `recipe-images` bucket. For a public demo bucket, run:
+
+```sql
+CREATE POLICY "Public recipe image reads"
+ON storage.objects
+FOR SELECT
+USING (bucket_id = 'recipe-images');
+
+CREATE POLICY "Public recipe image uploads"
+ON storage.objects
+FOR INSERT
+WITH CHECK (bucket_id = 'recipe-images');
+```
+
+For a stricter app, replace the upload policy with authenticated-user policies.
+4. Add the image URL column to the database:
+
+```sql
+ALTER TABLE public.recipes
+ADD COLUMN IF NOT EXISTS image_url text;
+```
+
+The same migration is saved in `src/server/migrations/add_recipe_image_url.sql`.
+
+5. Add frontend environment variables in `.env.local` and in Vercel:
+
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_SUPABASE_RECIPE_BUCKET=recipe-images
+```
+
+For this direct Storage REST upload flow, `VITE_SUPABASE_ANON_KEY` should be the Legacy API keys `anon public` JWT. If you use a new `sb_publishable_...` key and Storage returns `Invalid Compact JWS`, replace it with the legacy anon public key from Supabase Project Settings.
+
+Recipe image uploads happen directly from the browser to Supabase Storage. The server only receives the public `imageUrl` and saves it with the recipe.
 
 ### Run locally
 

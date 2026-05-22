@@ -37,7 +37,8 @@ const FoodContentSectionItem = ({ recipe }) => {
 		>
 			{convertImage(
 				recipe_name,
-				"food__content__section__list__item__img"
+				"food__content__section__list__item__img",
+				recipe.image_url
 			)}
 
 			<div className="food__content__section__list__item__context">

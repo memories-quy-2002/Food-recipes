@@ -2,6 +2,10 @@ import cameraPreview from "../assets/images/cameraPreview.png";
 import React, { useContext, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import axios from "../api/axios";
+import {
+	isSupabaseStorageConfigured,
+	uploadRecipeImage,
+} from "../api/supabaseStorage";
 import PageHelmet from "../components/seo/PageHelmet";
 import "../styles/AddRecipe.scss";
 import convertTime from "../utils/convertTime";
@@ -20,18 +24,22 @@ const AddRecipe = () => {
 		recipeIngredients: ["", "", ""],
 		recipeInstructions: ["", "", ""],
 		recipePrepTime: {
-			number: 0,
-			unit: "seconds",
+			number: 15,
+			unit: "minutes",
 		},
 		recipeCookTime: {
-			number: 0,
-			unit: "seconds",
+			number: 30,
+			unit: "minutes",
 		},
 		userId: userId,
 	};
 	const [formRecipe, setFormRecipe] = useState(initialState);
 	const [preview, setPreview] = useState(null);
 	const [disabled, setDisabled] = useState(true);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submitError, setSubmitError] = useState("");
+	const [uploadStatus, setUploadStatus] = useState("idle");
+	const storageConfigured = isSupabaseStorageConfigured();
 
 	const calculateTotalTime = (timeField1, timeField2) => {
 		const unitsInSeconds = {
@@ -59,8 +67,20 @@ const AddRecipe = () => {
 		return totalTime;
 	};
 
+	const parsePastedList = (value) =>
+		value
+			.split(/\r?\n/)
+			.map((item) =>
+				item
+					.trim()
+					.replace(/^([•*+-]|\d+[.)])\s+/, "")
+					.trim()
+			)
+			.filter(Boolean);
+
 	const handleFileChange = (event) => {
 		setDisabled(false);
+		setSubmitError("");
 		const file = event.target.files[0];
 		setFormRecipe({ ...formRecipe, recipeImage: file });
 		if (file) {
@@ -75,6 +95,7 @@ const AddRecipe = () => {
 	};
 	const handleInputChange = (event) => {
 		setDisabled(false);
+		setSubmitError("");
 		const { name, value } = event.target;
 		setFormRecipe({
 			...formRecipe,
@@ -83,13 +104,34 @@ const AddRecipe = () => {
 	};
 	const handleArrayChange = (event, index) => {
 		setDisabled(false);
+		setSubmitError("");
 		const { name, value } = event.target;
 		const updatedFormRecipe = { ...formRecipe };
 		updatedFormRecipe[name][index] = value;
 		setFormRecipe(updatedFormRecipe);
 	};
+	const handleArrayPaste = (event, index) => {
+		const { name } = event.target;
+		const pastedText = event.clipboardData.getData("text");
+		const pastedItems = parsePastedList(pastedText);
+
+		if (pastedItems.length <= 1) return;
+
+		event.preventDefault();
+		setDisabled(false);
+		setSubmitError("");
+		setFormRecipe((currentRecipe) => {
+			const currentItems = [...currentRecipe[name]];
+			currentItems.splice(index, 1, ...pastedItems);
+			return {
+				...currentRecipe,
+				[name]: currentItems,
+			};
+		});
+	};
 	const handleDeleteField = (event, index) => {
 		setDisabled(false);
+		setSubmitError("");
 		const { name } = event.target;
 		setFormRecipe({
 			...formRecipe,
@@ -98,6 +140,7 @@ const AddRecipe = () => {
 	};
 	const handleAddField = (event) => {
 		setDisabled(false);
+		setSubmitError("");
 		const { name } = event.target;
 		setFormRecipe({
 			...formRecipe,
@@ -106,6 +149,7 @@ const AddRecipe = () => {
 	};
 	const handleTimeNumberChange = (event) => {
 		setDisabled(false);
+		setSubmitError("");
 		const { name, value } = event.target;
 		setFormRecipe((prevFormRecipe) => ({
 			...prevFormRecipe,
@@ -118,6 +162,7 @@ const AddRecipe = () => {
 
 	const handleSelectChange = (event) => {
 		setDisabled(false);
+		setSubmitError("");
 		const { name, value } = event.target;
 		setFormRecipe((prevFormRecipe) => ({
 			...prevFormRecipe,
@@ -132,27 +177,90 @@ const AddRecipe = () => {
 		setFormRecipe(initialState);
 		setPreview(null);
 		setDisabled(true);
+		setSubmitError("");
+		setUploadStatus("idle");
 	};
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 
-		if (formRecipe.recipeImage) {
-			try {
-				const response = await axios.post("/recipe/add", formRecipe, {
-					headers: {
-						"Content-Type": "multipart/form-data",
-					},
-				});
+		if (!formRecipe.recipeImage) {
+			setSubmitError("Please choose a recipe image before publishing.");
+			return;
+		}
 
-				if (response.status === 200) {
-					navigate("/");
-				} else {
-					console.error("Failed to upload file");
+		const cleanedRecipe = {
+			...formRecipe,
+			recipeName: formRecipe.recipeName.trim(),
+			recipeCategoryName: formRecipe.recipeCategoryName.trim(),
+			recipeMealName: formRecipe.recipeMealName.trim(),
+			recipeDescription: formRecipe.recipeDescription.trim(),
+			recipeIngredients: formRecipe.recipeIngredients
+				.map((ingredient) => ingredient.trim())
+				.filter(Boolean),
+			recipeInstructions: formRecipe.recipeInstructions
+				.map((instruction) => instruction.trim())
+				.filter(Boolean),
+			userId,
+		};
+
+		if (
+			!cleanedRecipe.recipeName ||
+			!cleanedRecipe.recipeCategoryName ||
+			!cleanedRecipe.recipeMealName ||
+			!cleanedRecipe.recipeDescription
+		) {
+			setSubmitError("Please fill in the recipe name, description, category, and meal.");
+			return;
+		}
+
+		if (
+			cleanedRecipe.recipeIngredients.length < 3 ||
+			cleanedRecipe.recipeInstructions.length < 3
+		) {
+			setSubmitError("Please add at least 3 ingredients and 3 instructions.");
+			return;
+		}
+
+		try {
+			setIsSubmitting(true);
+			setSubmitError("");
+			setUploadStatus("uploading");
+			const imageUpload = await uploadRecipeImage({
+				file: formRecipe.recipeImage,
+				recipeName: cleanedRecipe.recipeName,
+				userId,
+			});
+			setUploadStatus("saving");
+
+			const response = await axios.post(
+				"/recipe/add",
+				{
+					...cleanedRecipe,
+					recipeImage: undefined,
+					imageUrl: imageUpload.url,
+					imagePath: imageUpload.path,
+				},
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
 				}
-			} catch (error) {
-				console.error("Error uploading file:", error);
+			);
+
+			if (response.status === 200) {
+				navigate("/food");
 			}
+		} catch (error) {
+			console.error("Error publishing recipe:", error);
+			setSubmitError(
+				error.response?.data?.message ||
+					error.message ||
+					"Unable to publish this recipe. Please try again."
+			);
+			setUploadStatus("idle");
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 	return (
@@ -176,10 +284,47 @@ const AddRecipe = () => {
 						</p>
 					</div>
 					<div className="add__container__form">
+						{!storageConfigured && (
+							<div className="add__container__notice add__container__notice--warning">
+								<strong>Supabase Storage setup needed</strong>
+								<p>
+									Add VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY,
+									and VITE_SUPABASE_RECIPE_BUCKET before
+									publishing image uploads.
+								</p>
+							</div>
+						)}
+						{submitError && (
+							<div className="add__container__notice add__container__notice--error">
+								<strong>Recipe was not published</strong>
+								<p>{submitError}</p>
+							</div>
+						)}
+						{uploadStatus !== "idle" && (
+							<div className="add__container__steps" aria-live="polite">
+								<span
+									className={
+										uploadStatus === "uploading" ||
+										uploadStatus === "saving"
+											? "add__container__steps__item add__container__steps__item--active"
+											: "add__container__steps__item"
+									}
+								>
+									Upload image
+								</span>
+								<span
+									className={
+										uploadStatus === "saving"
+											? "add__container__steps__item add__container__steps__item--active"
+											: "add__container__steps__item"
+									}
+								>
+									Save recipe
+								</span>
+							</div>
+						)}
 						<Form
 							onSubmit={handleSubmit}
-							encType="multipart/form-data"
-							method="POST"
 						>
 							<Row className="add__container__form__field">
 								<Col md={6}>
@@ -193,6 +338,7 @@ const AddRecipe = () => {
 											name="recipeName"
 											value={formRecipe.recipeName}
 											onChange={handleInputChange}
+											required
 										/>
 									</Form.Group>
 									<Form.Group
@@ -207,6 +353,7 @@ const AddRecipe = () => {
 											name="recipeDescription"
 											value={formRecipe.recipeDescription}
 											onChange={handleInputChange}
+											required
 										/>
 									</Form.Group>
 								</Col>
@@ -235,7 +382,13 @@ const AddRecipe = () => {
 											accept="image/*"
 											onChange={handleFileChange}
 											style={{ marginTop: "10px" }}
+											required
 										/>
+										<p className="add__container__form__hint">
+											Images upload directly to Supabase
+											Storage, then the recipe saves the
+											public image URL.
+										</p>
 									</Form.Group>
 								</Col>
 							</Row>
@@ -253,6 +406,7 @@ const AddRecipe = () => {
 												formRecipe.recipeCategoryName
 											}
 											onChange={handleInputChange}
+											required
 										/>
 									</Form.Group>
 								</Col>
@@ -267,6 +421,7 @@ const AddRecipe = () => {
 											name="recipeMealName"
 											value={formRecipe.recipeMealName}
 											onChange={handleInputChange}
+											required
 										/>
 									</Form.Group>
 								</Col>
@@ -283,6 +438,7 @@ const AddRecipe = () => {
 									value={formRecipe.recipePrepTime.number}
 									onChange={handleTimeNumberChange}
 									className="add__container__form__time__input"
+									min="1"
 								/>
 								<Form.Select
 									value={formRecipe.recipePrepTime.unit}
@@ -307,6 +463,7 @@ const AddRecipe = () => {
 									value={formRecipe.recipeCookTime.number}
 									onChange={handleTimeNumberChange}
 									className="add__container__form__time__input"
+									min="1"
 								/>
 								<Form.Select
 									value={formRecipe.recipeCookTime.unit}
@@ -350,6 +507,12 @@ const AddRecipe = () => {
 												value={ingredient}
 												onChange={(event) =>
 													handleArrayChange(
+														event,
+														index
+													)
+												}
+												onPaste={(event) =>
+													handleArrayPaste(
 														event,
 														index
 													)
@@ -407,6 +570,12 @@ const AddRecipe = () => {
 														index
 													)
 												}
+												onPaste={(event) =>
+													handleArrayPaste(
+														event,
+														index
+													)
+												}
 											/>
 
 											<button
@@ -451,9 +620,9 @@ const AddRecipe = () => {
 								<Button
 									type="submit"
 									className="add__container__form__submit"
-									disabled={disabled}
+									disabled={disabled || isSubmitting}
 								>
-									Save Changes
+									{isSubmitting ? "Publishing..." : "Publish recipe"}
 								</Button>
 							</div>
 						</Form>
