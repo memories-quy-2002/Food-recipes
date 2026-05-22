@@ -22,10 +22,14 @@ const items = [
 		title: "About",
 		href: "/about",
 	},
-	{
-		title: "Health",
-		href: "/health",
-	},
+	...(import.meta.env.DEV
+		? [
+				{
+					title: "Health",
+					href: "/health",
+				},
+		  ]
+		: []),
 	{
 		title: "Wishlist",
 		href: "/wishlist",
