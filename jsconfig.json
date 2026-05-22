@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "ignoreDeprecations": "6.0",
+        "paths": {
+            "@/*": ["src/client/*"]
+        }
+    },
+    "include": ["src/client", "src/main.jsx", "vite.config.ts"]
+}
