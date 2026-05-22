@@ -7,10 +7,12 @@ import { RecipeContext } from "../../context/RecipeProvider";
 import CategorySection from "./main/CategorySection";
 import FoodCardList from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
+import PageState from "../ui/PageState";
 const HomeMain = () => {
 	const [categories, setCategories] = useState([]);
 	const [wishlist, setWishlist] = useState([]);
-	const { recipes } = useContext(RecipeContext);
+	const [categoryError, setCategoryError] = useState(null);
+	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { auth } = useContext(AuthContext);
 	const { isAuthenticated, userId } = auth.current;
 	const navigate = useNavigate();
@@ -30,10 +32,15 @@ const HomeMain = () => {
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {
+				setCategoryError(null);
 				const response = await axios.get("/category");
 				setCategories(getArrayPayload(response.data, "categories"));
 			} catch (err) {
 				console.error(err);
+				setCategoryError(
+					err.response?.data?.message ||
+						"Unable to load recipe categories."
+				);
 			}
 		};
 		fetchCategories();
@@ -53,13 +60,36 @@ const HomeMain = () => {
 	}, [userId]);
 	return (
 		<div className="home__main">
-			<HomeSearchBar recipes={recipes} />
-			<CategorySection categories={categories} />
-			<FoodCardList
-				recipes={recipes}
-				wishlist={wishlist}
-				onClickFavorite={handleClickFavorite}
-			/>
+			{isLoadingRecipes ? (
+				<PageState
+					title="Loading recipes"
+					message="Fetching recipes for search and featured cards."
+				/>
+			) : recipesError ? (
+				<PageState
+					type="error"
+					title="Recipes could not load"
+					message={recipesError}
+				/>
+			) : (
+				<>
+					<HomeSearchBar recipes={recipes} />
+					{categoryError ? (
+						<PageState
+							type="error"
+							title="Categories could not load"
+							message={categoryError}
+						/>
+					) : (
+						<CategorySection categories={categories} />
+					)}
+					<FoodCardList
+						recipes={recipes}
+						wishlist={wishlist}
+						onClickFavorite={handleClickFavorite}
+					/>
+				</>
+			)}
 		</div>
 	);
 };

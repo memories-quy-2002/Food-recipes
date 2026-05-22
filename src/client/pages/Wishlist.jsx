@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Container } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "../api/axios";
 import { getArrayPayload } from "../api/payload";
 import FavoriteRecipe from "../components/wishlist/FavoriteRecipe";
 import PageHelmet from "../components/seo/PageHelmet";
+import PageState from "../components/ui/PageState";
 import { RecipeContext } from "../context/RecipeProvider";
 import "../styles/Wishlist.scss";
 
@@ -14,7 +16,10 @@ const Wishlist = () => {
 	const [recipeId, setRecipeId] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [sortBy, setSortBy] = useState("recent");
-	const { recipes } = useContext(RecipeContext);
+	const [isLoadingWishlist, setIsLoadingWishlist] = useState(true);
+	const [wishlistError, setWishlistError] = useState(null);
+	const navigate = useNavigate();
+	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { local, session } = useSelector(({ auth }) => auth);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const user_id = isAuthenticated
@@ -25,13 +30,24 @@ const Wishlist = () => {
 
 	useEffect(() => {
 		const fetchFavorites = async () => {
-			if (!user_id) return;
+			if (!user_id) {
+				setIsLoadingWishlist(false);
+				return;
+			}
 
 			try {
+				setIsLoadingWishlist(true);
+				setWishlistError(null);
 				const response = await axios.get(`/wishlist/${user_id}`);
 				setWishlist(getArrayPayload(response.data, "wishlist"));
 			} catch (err) {
 				console.error(err);
+				setWishlistError(
+					err.response?.data?.message ||
+						"Unable to load your wishlist."
+				);
+			} finally {
+				setIsLoadingWishlist(false);
 			}
 		};
 		fetchFavorites();
@@ -153,14 +169,39 @@ const Wishlist = () => {
 					</label>
 				</div>
 				<div className="wishlist__main__content">
-					{visibleRecipes.length === 0 ? (
-						<div className="wishlist__empty">
-							<h4>No favorite recipes found</h4>
-							<p>
-								Browse recipes and add your favorites to see
-								them here.
-							</p>
-						</div>
+					{isLoadingRecipes || isLoadingWishlist ? (
+						<PageState
+							title="Loading wishlist"
+							message="Fetching your saved recipes."
+						/>
+					) : recipesError || wishlistError ? (
+						<PageState
+							type="error"
+							title="Wishlist could not load"
+							message={recipesError || wishlistError}
+							actionLabel="Try again"
+							onAction={() => window.location.reload()}
+						/>
+					) : visibleRecipes.length === 0 ? (
+						<PageState
+							type="empty"
+							title={
+								searchTerm
+									? "No saved recipes match your search"
+									: "Your wishlist is empty"
+							}
+							message={
+								searchTerm
+									? "Clear the search or browse all recipes to find something to save."
+									: "Browse recipes and tap the heart button to build your saved list."
+							}
+							actionLabel={searchTerm ? "Clear search" : "Browse recipes"}
+							onAction={() =>
+								searchTerm
+									? setSearchTerm("")
+									: navigate("/food")
+							}
+						/>
 					) : (
 						<ul className="wishlist__main__content__list">
 							{visibleRecipes.map((recipe) => (

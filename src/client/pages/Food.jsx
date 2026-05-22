@@ -5,6 +5,7 @@ import axios from "../api/axios";
 import { getArrayPayload } from "../api/payload";
 import FoodMenuBar from "../components/food/FoodMenuBar";
 import PageHelmet from "../components/seo/PageHelmet";
+import PageState from "../components/ui/PageState";
 import { RecipeContext } from "../context/RecipeProvider";
 import "../styles/Food.scss";
 
@@ -13,7 +14,9 @@ const FoodContent = lazy(() => import("../components/food/FoodContent"));
 const Food = () => {
 	const [categories, setCategories] = useState([]);
 	const [meals, setMeals] = useState([]);
-	const { recipes } = useContext(RecipeContext);
+	const [filtersError, setFiltersError] = useState(null);
+	const [isLoadingFilters, setIsLoadingFilters] = useState(true);
+	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [selectedOptions, setSelectedOptions] = useState({
@@ -79,31 +82,29 @@ const Food = () => {
 	}, [selectedOptions, navigate]);
 
 	useEffect(() => {
-		const fetchCategories = async () => {
+		const fetchFilters = async () => {
 			try {
-				const response = await axios.get("/category");
-				if (response.status === 200) {
-					setCategories(getArrayPayload(response.data, "categories"));
-				}
+				setIsLoadingFilters(true);
+				setFiltersError(null);
+				const [categoryResponse, mealResponse] = await Promise.all([
+					axios.get("/category"),
+					axios.get("/meal"),
+				]);
+				setCategories(
+					getArrayPayload(categoryResponse.data, "categories")
+				);
+				setMeals(getArrayPayload(mealResponse.data, "meals"));
 			} catch (err) {
 				console.error(err);
+				setFiltersError(
+					err.response?.data?.message ||
+						"Unable to load recipe filters."
+				);
+			} finally {
+				setIsLoadingFilters(false);
 			}
 		};
-		fetchCategories();
-	}, []);
-
-	useEffect(() => {
-		const fetchMeals = async () => {
-			try {
-				const response = await axios.get("/meal");
-				if (response.status === 200) {
-					setMeals(getArrayPayload(response.data, "meals"));
-				}
-			} catch (err) {
-				console.error(err);
-			}
-		};
-		fetchMeals();
+		fetchFilters();
 	}, []);
 
 	return (
@@ -137,38 +138,52 @@ const Food = () => {
 					</div>
 				</div>
 			</div>
-			<Row className="food__layout">
-				<Col lg={3} md={4} className="food__layout__aside">
-					<FoodMenuBar
-						categoryId={selectedOptions.categoryId}
-						mealId={selectedOptions.mealId}
-						searchTerm={selectedOptions.q}
-						categories={categories}
-						meals={meals}
-						onCategoryClick={handleCategoryClick}
-						onMealClick={handleMealClick}
-						onMenuAllClick={handleMenuAllClick}
-						onChangeSearchTerm={handleChangeSearchTerm}
-						onClearFilters={handleClearFilters}
-					/>
-				</Col>
-				<Col lg={9} md={8} className="food__layout__content">
-					<Suspense
-						fallback={
-							<div className="loaderContainer">
-								<div className="dot-elastic"></div>
-							</div>
-						}
-					>
-						<FoodContent
-							recipes={recipes}
+			{isLoadingRecipes || isLoadingFilters ? (
+				<PageState
+					title="Loading recipe library"
+					message="Fetching recipes, categories, and meal filters."
+				/>
+			) : recipesError || filtersError ? (
+				<PageState
+					type="error"
+					title="Recipe library could not load"
+					message={recipesError || filtersError}
+				/>
+			) : (
+				<Row className="food__layout">
+					<Col lg={3} md={4} className="food__layout__aside">
+						<FoodMenuBar
 							categoryId={selectedOptions.categoryId}
 							mealId={selectedOptions.mealId}
 							searchTerm={selectedOptions.q}
+							categories={categories}
+							meals={meals}
+							onCategoryClick={handleCategoryClick}
+							onMealClick={handleMealClick}
+							onMenuAllClick={handleMenuAllClick}
+							onChangeSearchTerm={handleChangeSearchTerm}
+							onClearFilters={handleClearFilters}
 						/>
-					</Suspense>
-				</Col>
-			</Row>
+					</Col>
+					<Col lg={9} md={8} className="food__layout__content">
+						<Suspense
+							fallback={
+								<PageState
+									title="Loading recipes"
+									message="Preparing the recipe list."
+								/>
+							}
+						>
+							<FoodContent
+								recipes={recipes}
+								categoryId={selectedOptions.categoryId}
+								mealId={selectedOptions.mealId}
+								searchTerm={selectedOptions.q}
+							/>
+						</Suspense>
+					</Col>
+				</Row>
+			)}
 		</Container>
 	);
 };
