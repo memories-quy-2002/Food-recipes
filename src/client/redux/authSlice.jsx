@@ -1,18 +1,33 @@
 import { createSlice } from "@reduxjs/toolkit";
 
+const parseStoredJson = (storage, key) => {
+	try {
+		const value = storage.getItem(key);
+		return value ? JSON.parse(value) : null;
+	} catch {
+		storage.removeItem(key);
+		return null;
+	}
+};
+
+const getStoredAuth = (storage) => {
+	const user = parseStoredJson(storage, "user");
+	const token = storage.getItem("jwt");
+	const isAuthenticated =
+		storage.getItem("isAuthenticated") === "true" && Boolean(user);
+
+	return {
+		isAuthenticated,
+		user: isAuthenticated ? user : null,
+		token: isAuthenticated ? token : null,
+	};
+};
+
 const authSlice = createSlice({
 	name: "auth",
 	initialState: {
-		local: {
-			isAuthenticated: localStorage.getItem("isAuthenticated") === "true",
-			user: JSON.parse(localStorage.getItem("user")),
-			token: localStorage.getItem("jwt"),
-		},
-		session: {
-			isAuthenticated:
-				sessionStorage.getItem("isAuthenticated") === "true",
-			user: JSON.parse(sessionStorage.getItem("user")),
-		},
+		local: getStoredAuth(localStorage),
+		session: getStoredAuth(sessionStorage),
 	},
 	reducers: {
 		updateUser(state, action) {
@@ -38,14 +53,16 @@ const authSlice = createSlice({
 			localStorage.setItem("jwt", token);
 		},
 		loginSession(state, action) {
-			const { user } = action.payload;
+			const { user, token } = action.payload;
 			state.session = {
 				...state.session,
 				isAuthenticated: true,
 				user: user,
+				token: token,
 			};
 			sessionStorage.setItem("isAuthenticated", true);
 			sessionStorage.setItem("user", JSON.stringify(user));
+			sessionStorage.setItem("jwt", token);
 		},
 		logout(state) {
 			state.local = {
@@ -58,12 +75,14 @@ const authSlice = createSlice({
 				...state.session,
 				isAuthenticated: false,
 				user: null,
+				token: null,
 			};
 			localStorage.setItem("isAuthenticated", false);
 			localStorage.removeItem("user");
 			localStorage.removeItem("jwt");
 			sessionStorage.setItem("isAuthenticated", false);
 			sessionStorage.removeItem("user");
+			sessionStorage.removeItem("jwt");
 		},
 	},
 });

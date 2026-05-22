@@ -92,7 +92,7 @@ const LoginForm = ({ onSignup }) => {
 					<label htmlFor="remember">Remember me</label>
 				</div>
 				{errors.length > 0 && (
-					<div className="form__login__container__error">
+					<div className="form__login__container__error" role="alert">
 						{errors.map((error) => (
 							<p className="alert alert-danger" key={error}>
 								{error}

@@ -141,6 +141,26 @@
 		}
 	}
 
+	&__notice {
+		margin-bottom: 1rem;
+		padding: 0.85rem 1rem;
+		border: 1px solid rgba(213, 107, 0, 0.2);
+		border-radius: 8px;
+		background: #fff7e8;
+		color: #704000;
+
+		strong {
+			display: block;
+			margin-bottom: 0.2rem;
+			font-weight: 900;
+		}
+
+		p {
+			margin: 0;
+			line-height: 1.45;
+		}
+	}
+
 	&__section {
 		width: 100%;
 	}
@@ -368,6 +388,29 @@
 
 			&--4 {
 				background: #2e7d47;
+			}
+		}
+	}
+
+	&__requirements {
+		margin: 0.65rem 0 0;
+		padding: 0;
+		list-style: none;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.45rem;
+
+		&__item {
+			padding: 0.35rem 0.55rem;
+			border-radius: 999px;
+			background: #f4eadc;
+			color: #6d6258;
+			font-size: 0.78rem;
+			font-weight: 900;
+
+			&--passed {
+				background: #e8f7ee;
+				color: #1f6f3f;
 			}
 		}
 	}

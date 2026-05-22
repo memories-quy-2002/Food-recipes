@@ -7,7 +7,9 @@ import RecipeProvider from "./client/context/RecipeProvider";
 import Account from "./client/pages/Account";
 import AddRecipe from "./client/pages/AddRecipe";
 import About from "./client/pages/About";
+import ProtectedRoute from "./client/components/auth/ProtectedRoute";
 import Food from "./client/pages/Food";
+import Health from "./client/pages/Health";
 import Home from "./client/pages/Home";
 import News from "./client/pages/News";
 import Profile from "./client/pages/Profile";
@@ -26,8 +28,16 @@ function App() {
 							<Route path="/food" element={<Food />} />
 							<Route path="/news" element={<News />} />
 							<Route path="/about" element={<About />} />
+							<Route path="/health" element={<Health />} />
 							<Route path="/account" element={<Account />} />
-							<Route path="/profile" element={<Profile />} />
+							<Route
+								path="/profile"
+								element={
+									<ProtectedRoute>
+										<Profile />
+									</ProtectedRoute>
+								}
+							/>
 							<Route
 								path="/recipe"
 								element={
@@ -44,8 +54,22 @@ function App() {
 									</Suspense>
 								}
 							/>
-							<Route path="/wishlist" element={<Wishlist />} />
-							<Route path="/food/add" element={<AddRecipe />} />
+							<Route
+								path="/wishlist"
+								element={
+									<ProtectedRoute>
+										<Wishlist />
+									</ProtectedRoute>
+								}
+							/>
+							<Route
+								path="/food/add"
+								element={
+									<ProtectedRoute>
+										<AddRecipe />
+									</ProtectedRoute>
+								}
+							/>
 						</Routes>
 					</Layout>
 				</BrowserRouter>

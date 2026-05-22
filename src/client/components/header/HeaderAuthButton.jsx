@@ -8,7 +8,7 @@ import { FaCaretDown } from "react-icons/fa";
 
 const HeaderAuthButton = ({ auth }) => {
 	const { local, session } = auth;
-	const { token } = local;
+	const token = local.token || session.token;
 	const [user, setUser] = useState({});
 	const [clicked, setClicked] = useState(false);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
@@ -30,7 +30,7 @@ const HeaderAuthButton = ({ auth }) => {
 						navigate("/");
 					}
 				}
-			} else {
+			} else if (session.user) {
 				setUser(session.user);
 			}
 		};
