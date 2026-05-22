@@ -17,6 +17,7 @@
     "bcryptjs": "^3.0.3",
     "body-parser": "^2.2.2",
     "bootstrap": "^5.3.8",
+    "codegraph": "^1.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
