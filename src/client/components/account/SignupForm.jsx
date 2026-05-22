@@ -39,6 +39,15 @@ const SignupForm = ({ onLogin }) => {
 			width: `${Math.max(score, password ? 1 : 0) * 25}%`,
 		};
 	}, [formData.password]);
+	const passwordChecks = [
+		{ label: "8 characters", passed: formData.password.length >= 8 },
+		{ label: "Uppercase letter", passed: /[A-Z]/.test(formData.password) },
+		{ label: "Number", passed: /[0-9]/.test(formData.password) },
+		{
+			label: "Special character",
+			passed: /[^A-Za-z0-9]/.test(formData.password),
+		},
+	];
 
 	return (
 		<div className="form__signup">
@@ -166,6 +175,20 @@ const SignupForm = ({ onLogin }) => {
 						</div>
 						<span>{passwordStrength.label}</span>
 					</div>
+					<ul className="form__requirements" aria-label="Password requirements">
+						{passwordChecks.map((check) => (
+							<li
+								key={check.label}
+								className={
+									check.passed
+										? "form__requirements__item form__requirements__item--passed"
+										: "form__requirements__item"
+								}
+							>
+								{check.label}
+							</li>
+						))}
+					</ul>
 				</Form.Group>
 				<Form.Group className="form__signup__container__pwd">
 					<Form.Label className="form__signup__container__label">
@@ -220,7 +243,7 @@ const SignupForm = ({ onLogin }) => {
 				)}
 
 				{errors.length > 0 && (
-					<div className="alert alert-danger text-center">
+					<div className="alert alert-danger text-center" role="alert">
 						{errors.map((error) => (
 							<p key={error}>{error}</p>
 						))}

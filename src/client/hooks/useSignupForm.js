@@ -1,5 +1,5 @@
 import { useReducer } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import axios from "../api/axios";
 import { authActions } from "../redux/authSlice";
@@ -36,6 +36,8 @@ const useSignupForm = () => {
 	const loginDispatch = useDispatch();
 	const [state, dispatch] = useReducer(reducer, initialState);
 	const navigate = useNavigate();
+	const location = useLocation();
+	const redirectPath = location.state?.from || "/";
 	const handleName = (e) => {
 		const { name, value } = e.target;
 		dispatch({
@@ -101,7 +103,7 @@ const useSignupForm = () => {
 
 						const { user, token } = response.data;
 						loginDispatch(authActions.login({ user, token }));
-						navigate("/");
+						navigate(redirectPath, { replace: true });
 					}
 				} catch (err) {
 					const message =

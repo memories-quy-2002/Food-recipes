@@ -9,6 +9,7 @@ const FoodCard = ({
 	meal,
 	ratings,
 	score,
+	imageUrl,
 	favorite,
 	onNavigate,
 	onClickFavorite,
@@ -18,7 +19,7 @@ const FoodCard = ({
 			className="home__main__cardList__feature__item"
 			onClick={onNavigate}
 		>
-			{convertImage(name, "home__main__cardList__feature__item__img")}
+			{convertImage(name, "home__main__cardList__feature__item__img", imageUrl)}
 			<div className="home__main__cardList__feature__item__fav">
 				<button
 					onClick={(e) => {

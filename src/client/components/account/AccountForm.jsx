@@ -7,6 +7,7 @@ const AccountForm = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const searchParams = new URLSearchParams(location.search);
+	const redirectPath = location.state?.from;
 	const [isSignup, setIsSignup] = useState(
 		searchParams.get("signup") === "true"
 	);
@@ -17,11 +18,17 @@ const AccountForm = () => {
 
 	const onSignup = () => {
 		setIsSignup(true);
-		navigate("/account?signup=true", { replace: true });
+		navigate("/account?signup=true", {
+			replace: true,
+			state: location.state,
+		});
 	};
 	const onLogin = () => {
 		setIsSignup(false);
-		navigate("/account?signup=false", { replace: true });
+		navigate("/account?signup=false", {
+			replace: true,
+			state: location.state,
+		});
 	};
 
 	return (
@@ -42,6 +49,15 @@ const AccountForm = () => {
 			</div>
 
 			<div className="form__card">
+				{redirectPath && (
+					<div className="form__notice" role="status">
+						<strong>Sign in required</strong>
+						<p>
+							Log in or create an account to continue to that
+							page.
+						</p>
+					</div>
+				)}
 				<div className="form__btnBox" role="tablist" aria-label="Account mode">
 					<div
 						className={`form__btnBox__slider ${

@@ -32,6 +32,7 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite }) => {
 							meal_name,
 							num_ratings,
 							overall_score,
+							image_url,
 						}) => {
 							return (
 								<FoodCard
@@ -42,6 +43,7 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite }) => {
 									meal={meal_name}
 									ratings={num_ratings}
 									score={overall_score}
+									imageUrl={image_url}
 									favorite={wishlist.some(
 										(recipe) =>
 											recipe.recipe_id === recipe_id

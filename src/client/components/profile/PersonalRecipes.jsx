@@ -2,18 +2,26 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../../api/axios";
 import { getArrayPayload } from "../../api/payload";
+import PageState from "../ui/PageState";
 import convertImage from "../../utils/convertImage";
 import { Row, Col } from "react-bootstrap";
 const PersonalRecipes = ({ user }) => {
 	const [personalRecipes, setPersonalRecipes] = useState([]);
 	const [showModal, setShowModal] = useState(false);
 	const [recipeId, setRecipeId] = useState(0);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState("");
 	const navigate = useNavigate();
 	useEffect(() => {
 		const fetchPersonalRecipes = async () => {
-			if (!user?.user_id) return;
+			if (!user?.user_id) {
+				setIsLoading(false);
+				return;
+			}
 
 			try {
+				setIsLoading(true);
+				setError("");
 				const response = await axios.get(
 					`/recipe/user/${user.user_id}`
 				);
@@ -24,6 +32,12 @@ const PersonalRecipes = ({ user }) => {
 				}
 			} catch (err) {
 				console.error(err);
+				setError(
+					err.response?.data?.message ||
+						"Unable to load your personal recipes."
+				);
+			} finally {
+				setIsLoading(false);
 			}
 		};
 		fetchPersonalRecipes();
@@ -46,8 +60,11 @@ const PersonalRecipes = ({ user }) => {
 		try {
 			const response = await axios.delete(`/recipe/delete/${recipeId}`);
 			if (response.status === 200) {
-				console.log(response.data.message);
-				window.location.reload();
+				setPersonalRecipes((recipes) =>
+					recipes.filter((recipe) => recipe.recipe_id !== recipeId)
+				);
+				setShowModal(false);
+				setRecipeId(0);
 			}
 		} catch (err) {
 			console.error(err);
@@ -61,7 +78,20 @@ const PersonalRecipes = ({ user }) => {
 			<p className="profile__container__main__personal__declaration">
 				Here is a list of recipe you have added to Food Recipe
 			</p>
-			{personalRecipes.length > 0 ? (
+			{isLoading ? (
+				<PageState
+					title="Loading your recipes"
+					message="Fetching recipes you have shared."
+				/>
+			) : error ? (
+				<PageState
+					type="error"
+					title="Personal recipes could not load"
+					message={error}
+					actionLabel="Try again"
+					onAction={() => window.location.reload()}
+				/>
+			) : personalRecipes.length > 0 ? (
 				<div className="profile__container__main__personal__container">
 					<Row className="profile__container__main__personal__container__summary">
 						<Col md={6}>
@@ -94,7 +124,8 @@ const PersonalRecipes = ({ user }) => {
 								<div>
 									{convertImage(
 										recipe.recipe_name,
-										"profile__container__main__personal__container__list__item__img"
+										"profile__container__main__personal__container__list__item__img",
+										recipe.image_url
 									)}
 								</div>
 								<div className="profile__container__main__personal__container__list__item__context">
@@ -144,23 +175,13 @@ const PersonalRecipes = ({ user }) => {
 					</ul>
 				</div>
 			) : (
-				<div className="profile__container__main__personal__container">
-					<strong
-						style={{ fontSize: "2rem", marginBottom: "0.5rem" }}
-					>
-						You haven't created any recipes yet
-					</strong>
-					<p style={{ marginBottom: "2rem" }}>
-						To add a recipe click the button below
-					</p>
-					<button
-						className="profile__container__main__personal__container__button"
-						type="button"
-						onClick={() => navigate("/food/add")}
-					>
-						Add a recipe +
-					</button>
-				</div>
+				<PageState
+					type="empty"
+					title="You have not created any recipes yet"
+					message="Start with one recipe image, a few ingredients, and the cooking steps."
+					actionLabel="Add a recipe"
+					onAction={() => navigate("/food/add")}
+				/>
 			)}
 
 			{showModal && (

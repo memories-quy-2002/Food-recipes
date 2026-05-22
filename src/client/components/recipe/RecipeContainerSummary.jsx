@@ -50,7 +50,11 @@ const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
 				</div>
 			</Col>
 			<Col md={6}>
-				{convertImage(recipe.recipe_name, "recipe__container__img")}
+				{convertImage(
+					recipe.recipe_name,
+					"recipe__container__img",
+					recipe.image_url
+				)}
 			</Col>
 		</Row>
 	);

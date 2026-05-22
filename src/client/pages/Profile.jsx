@@ -3,6 +3,7 @@ import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import ProfileAside from "../components/profile/ProfileAside";
 import PageHelmet from "../components/seo/PageHelmet";
+import PageState from "../components/ui/PageState";
 import { authActions } from "../redux/authSlice";
 import "../styles/Profile.scss";
 import axios from "../api/axios";
@@ -44,16 +45,29 @@ const Profile = () => {
 	};
 
 	const [ratings, setRatings] = useState([]);
+	const [isLoadingRatings, setIsLoadingRatings] = useState(true);
+	const [ratingsError, setRatingsError] = useState(null);
 
 	useEffect(() => {
 		const fetchReviews = async () => {
-			if (!user?.user_id) return;
+			if (!user?.user_id) {
+				setIsLoadingRatings(false);
+				return;
+			}
 
 			try {
+				setIsLoadingRatings(true);
+				setRatingsError(null);
 				const response = await axios.get(`/rating/${user.user_id}`);
 				setRatings(getArrayPayload(response.data, "ratings"));
 			} catch (err) {
 				console.error(err);
+				setRatingsError(
+					err.response?.data?.message ||
+						"Unable to load your profile reviews."
+				);
+			} finally {
+				setIsLoadingRatings(false);
 			}
 		};
 
@@ -86,16 +100,30 @@ const Profile = () => {
 				/>
 				<Suspense
 					fallback={
-						<div className="profile__container__main">
-							Loading...
-						</div>
+						<PageState
+							title="Loading profile"
+							message="Preparing your account tools."
+						/>
 					}
 				>
-					<ProfileMain
-						user={user}
-						page={page}
-						reviewsData={ratings}
-					/>
+					{page === "reviews" && isLoadingRatings ? (
+						<PageState
+							title="Loading reviews"
+							message="Fetching your recipe reviews."
+						/>
+					) : page === "reviews" && ratingsError ? (
+						<PageState
+							type="error"
+							title="Reviews could not load"
+							message={ratingsError}
+						/>
+					) : (
+						<ProfileMain
+							user={user}
+							page={page}
+							reviewsData={ratings}
+						/>
+					)}
 				</Suspense>
 			</main>
 		</Container>

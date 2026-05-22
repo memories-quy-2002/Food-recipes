@@ -9,7 +9,26 @@ const images = import.meta.glob("../assets/images/*.{png,jpg,jpeg,webp,svg}", {
 	import: "default",
 });
 
-const convertImage = (name, className = "") => {
+const isRemoteImage = (src) =>
+	typeof src === "string" &&
+	(src.startsWith("http://") ||
+		src.startsWith("https://") ||
+		src.startsWith("data:") ||
+		src.startsWith("blob:"));
+
+const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
+	if (isRemoteImage(imageUrl)) {
+		return (
+			<img
+				src={imageUrl}
+				alt={name[0].toUpperCase() + name.substring(1)}
+				className={`object-cover ${className}`}
+				loading="lazy"
+				decoding="async"
+			/>
+		);
+	}
+
 	const normalizedName = name.toLowerCase().replaceAll(" ", "_");
 
 	const imageEntry = Object.entries(images).find(([path]) =>

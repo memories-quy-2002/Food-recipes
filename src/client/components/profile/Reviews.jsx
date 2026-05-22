@@ -3,6 +3,7 @@ import convertImage from "../../utils/convertImage";
 import ratingStar from "../../utils/ratingStar";
 import { Row, Col } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import PageState from "../ui/PageState";
 const Reviews = ({ reviewsData = [] }) => {
 	const navigate = useNavigate();
 	const handleClickEdit = (recipeId) => {
@@ -35,50 +36,61 @@ const Reviews = ({ reviewsData = [] }) => {
 						</div>{" "}
 					</Col>
 				</Row>
-				<ul className="profile__container__main__reviews__list">
-					{reviewsData.map((review) => (
-						<li
-							key={review.rating_id}
-							className="profile__container__main__reviews__list__item"
-						>
-							<div>
-								<div
-									className="d-flex gap-4 align-items-center mb-3 border border-1 p-2"
-									style={{ borderRadius: "1rem" }}
-								>
-									<div>
-										{convertImage(
-											review.recipe_name,
-											"profile__container__main__reviews__list__item__img"
-										)}
-									</div>
-									{review.recipe_name}
-								</div>
+				{reviewsData.length === 0 ? (
+					<PageState
+						type="empty"
+						title="You have not reviewed any recipes yet"
+						message="Open a recipe, choose a rating, and leave a note for your future self."
+						actionLabel="Browse recipes"
+						onAction={() => navigate("/food")}
+					/>
+				) : (
+					<ul className="profile__container__main__reviews__list">
+						{reviewsData.map((review) => (
+							<li
+								key={review.rating_id}
+								className="profile__container__main__reviews__list__item"
+							>
 								<div>
-									<div className="d-flex gap-3 mb-3">
-										<div className="d-flex gap-2">
-											{ratingStar(review.score, "orange")}
-										</div>
-										<div>{parseInt(review.score)}</div>
-									</div>
-
-									<p>{review.review}</p>
-								</div>
-								<div className="w-100 d-flex justify-content-end">
-									<button
-										className="btn btn-primary"
-										type="button"
-										onClick={() =>
-											handleClickEdit(review.recipe_id)
-										}
+									<div
+										className="d-flex gap-4 align-items-center mb-3 border border-1 p-2"
+										style={{ borderRadius: "1rem" }}
 									>
-										Edit review
-									</button>
+										<div>
+											{convertImage(
+												review.recipe_name,
+												"profile__container__main__reviews__list__item__img",
+												review.image_url
+											)}
+										</div>
+										{review.recipe_name}
+									</div>
+									<div>
+										<div className="d-flex gap-3 mb-3">
+											<div className="d-flex gap-2">
+												{ratingStar(review.score, "orange")}
+											</div>
+											<div>{parseInt(review.score)}</div>
+										</div>
+
+										<p>{review.review || "No written review yet."}</p>
+									</div>
+									<div className="w-100 d-flex justify-content-end">
+										<button
+											className="btn btn-primary"
+											type="button"
+											onClick={() =>
+												handleClickEdit(review.recipe_id)
+											}
+										>
+											Edit review
+										</button>
+									</div>
 								</div>
-							</div>
-						</li>
-					))}
-				</ul>
+							</li>
+						))}
+					</ul>
+				)}
 			</div>
 		</div>
 	);

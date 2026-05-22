@@ -3,7 +3,6 @@ const utils = require("./utils");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-const sanitizeFilename = require("sanitize-filename");
 require("dotenv").config();
 let attachDatabasePool;
 
@@ -510,7 +509,7 @@ const updatePassword = async (request, response) => {
 
 const getRecipes = (request, response) => {
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, m.meal_id, m.meal_name, " +
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, r.image_url, m.meal_id, m.meal_name, " +
 		"m.meal_description, c.category_id, c.category_name, " +
 		"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
 		"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
@@ -536,6 +535,7 @@ const getRecipesByRecipeId = (request, response) => {
 		r.prep_time, 
 		r.cook_time, 
 		r.date_added,
+		r.image_url,
 		r.ingredients,
 		r.instructions,
 		CASE 
@@ -561,6 +561,7 @@ const getRecipesByRecipeId = (request, response) => {
 		r.prep_time, 
 		r.cook_time, 
 		r.date_added,
+		r.image_url,
 		a.full_name,
 		m.meal_name, 
 		c.category_name;
@@ -586,7 +587,7 @@ const getRecipesByRecipeId = (request, response) => {
 const getRecipesByUserId = (request, response) => {
 	const user_id = request.params.uid;
 	pool.query(
-		`SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, r.prep_time, r.cook_time, m.meal_id, m.meal_name,
+		`SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, r.image_url, r.prep_time, r.cook_time, m.meal_id, m.meal_name,
 		m.meal_description, c.category_id, c.category_name FROM recipes r 
 		JOIN meals m ON m.meal_id = r.meal_id 
 		JOIN categories c ON c.category_id = r.category_id 
@@ -607,23 +608,6 @@ const getRecipesByUserId = (request, response) => {
 };
 
 const addRecipe = (request, response) => {
-	if (!request.file) {
-		return response
-			.status(400)
-			.json({ message: "Recipe image is required" });
-	}
-	// Access uploaded file through req.file
-	const newFilename = `${sanitizeFilename(request.body.recipeName)
-		.toLowerCase()
-		.replaceAll(" ", "_")}.png`;
-
-	// Construct the new file path
-	const newFilePath = path.join(path.dirname(request.file.path), newFilename);
-
-	// Rename the file synchronously
-	fs.renameSync(request.file.path, newFilePath);
-
-	// Access other form fields through req.body
 	const {
 		recipeName,
 		recipeDescription,
@@ -634,7 +618,15 @@ const addRecipe = (request, response) => {
 		recipeIngredients,
 		recipeInstructions,
 		userId,
+		imageUrl,
 	} = request.body;
+
+	if (!imageUrl) {
+		return response
+			.status(400)
+			.json({ message: "Recipe image URL is required" });
+	}
+
 	const prepTime = recipePrepTime.number + " " + recipePrepTime.unit;
 	const cookTime = recipeCookTime.number + " " + recipeCookTime.unit;
 	pool.query(
@@ -650,11 +642,11 @@ const addRecipe = (request, response) => {
 			WHERE NOT EXISTS (SELECT 1 FROM categories WHERE category_name = $2)
 			RETURNING category_id
 		  )
-		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time, ingredients, instructions, user_id)
+		  INSERT INTO recipes (recipe_name, recipe_description, meal_id, category_id, prep_time, cook_time, ingredients, instructions, user_id, image_url)
 		  VALUES ($3,
 			$4, COALESCE((SELECT meal_id FROM meal_cte), (SELECT meal_id FROM meals WHERE meal_name = $1)::integer),
 			COALESCE((SELECT category_id FROM category_cte), (SELECT category_id FROM categories WHERE category_name = $2)::integer)
-			, $5, $6, $7, $8, $9)`,
+			, $5, $6, $7, $8, $9, $10)`,
 		[
 			recipeMealName,
 			recipeCategoryName,
@@ -665,6 +657,7 @@ const addRecipe = (request, response) => {
 			recipeIngredients,
 			recipeInstructions,
 			userId,
+			imageUrl,
 		],
 		(error, results) => {
 			if (error) {
@@ -833,7 +826,7 @@ const addRating = (request, response) => {
 const getRatingsByUserId = (request, response) => {
 	const user_id = request.params.uid;
 	pool.query(
-		`SELECT rt.rating_id, rt.recipe_id, r.recipe_name, rt.score, rt.review, rt.date_added FROM rating rt
+		`SELECT rt.rating_id, rt.recipe_id, r.recipe_name, r.image_url, rt.score, rt.review, rt.date_added FROM rating rt
 			JOIN recipes r ON rt.recipe_id = r.recipe_id WHERE rt.user_id = $1`,
 		[user_id],
 		(error, results) => {

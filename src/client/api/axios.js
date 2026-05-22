@@ -12,6 +12,19 @@ const apiBaseUrl =
 		: configuredApiBaseUrl ||
 		  (import.meta.env.DEV ? localApiBaseUrl : productionApiBaseUrl);
 
-export default axios.create({
+const api = axios.create({
 	baseURL: apiBaseUrl,
 });
+
+api.interceptors.response.use(
+	(response) => response,
+	(error) => {
+		if (error.response?.status === 401) {
+			window.dispatchEvent(new CustomEvent("auth:expired"));
+		}
+
+		return Promise.reject(error);
+	}
+);
+
+export default api;
