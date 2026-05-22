@@ -16,6 +16,7 @@ import Profile from "./client/pages/Profile";
 import Wishlist from "./client/pages/Wishlist";
 import React from "react";
 const Recipe = lazy(() => import("./client/pages/Recipe"));
+const isLocalHealthEnabled = import.meta.env.DEV;
 
 function App() {
 	return (
@@ -28,7 +29,9 @@ function App() {
 							<Route path="/food" element={<Food />} />
 							<Route path="/news" element={<News />} />
 							<Route path="/about" element={<About />} />
-							<Route path="/health" element={<Health />} />
+							{isLocalHealthEnabled && (
+								<Route path="/health" element={<Health />} />
+							)}
 							<Route path="/account" element={<Account />} />
 							<Route
 								path="/profile"
