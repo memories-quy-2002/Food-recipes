@@ -9,6 +9,9 @@ const RecipeContent = ({
 	review,
 	reviewList,
 	reviewMessage,
+	hasExistingRating,
+	isLoadingReviews,
+	reviewsError,
 	isAuthenticated,
 	isSubmittingReview,
 	onSubmit,
@@ -24,6 +27,9 @@ const RecipeContent = ({
 				review={review}
 				reviewList={reviewList}
 				reviewMessage={reviewMessage}
+				hasExistingRating={hasExistingRating}
+				isLoadingReviews={isLoadingReviews}
+				reviewsError={reviewsError}
 				showReview={showReview}
 				isAuthenticated={isAuthenticated}
 				isSubmittingReview={isSubmittingReview}

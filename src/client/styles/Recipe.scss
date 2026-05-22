@@ -274,7 +274,7 @@
 			&__star {
 				display: flex;
 				gap: 0.45rem;
-				margin-bottom: 1.25rem;
+				margin-bottom: 0.4rem;
 				align-items: center;
 
 				span {
@@ -287,6 +287,13 @@
 					font-size: 1.15rem;
 					font-weight: 900;
 				}
+			}
+
+			&__hint {
+				margin: 0 0 1rem;
+				color: #6d6258;
+				font-weight: 700;
+				line-height: 1.55;
 			}
 
 			&__review {
@@ -315,6 +322,14 @@
 						border-color: #ff9f1c;
 						box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 					}
+				}
+
+				&__count {
+					margin-top: 0.35rem;
+					color: #6d6258;
+					font-size: 0.85rem;
+					font-weight: 800;
+					text-align: right;
 				}
 			}
 

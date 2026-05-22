@@ -6,7 +6,9 @@ import RecipeContainerSummary from "../components/recipe/RecipeContainerSummary"
 import RecipeContent from "../components/recipe/RecipeContent";
 import RecipeOtherList from "../components/recipe/RecipeOtherList";
 import PageHelmet from "../components/seo/PageHelmet";
+import PageState from "../components/ui/PageState";
 import { AuthContext } from "../context/AuthProvider";
+import { getArrayPayload } from "../api/payload";
 import "../styles/Recipe.scss";
 import ErrorPage from "./ErrorPage";
 
@@ -14,11 +16,16 @@ const Recipe = () => {
 	const { auth } = useContext(AuthContext);
 	const { isAuthenticated, userId } = auth.current;
 	const [recipe, setRecipe] = useState(null);
+	const [isLoadingRecipe, setIsLoadingRecipe] = useState(true);
+	const [recipeError, setRecipeError] = useState(null);
 	const [favorite, setFavorite] = useState(false);
 	const [ratingScore, setRatingScore] = useState(0);
+	const [hasExistingRating, setHasExistingRating] = useState(false);
 	const [review, setReview] = useState("");
 	const [showReview, setShowReview] = useState(false);
 	const [reviewList, setReviewList] = useState([]);
+	const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+	const [reviewsError, setReviewsError] = useState(null);
 	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState(null);
 	const navigate = useNavigate();
@@ -26,6 +33,26 @@ const Recipe = () => {
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
 	const id = searchParams.get("id");
+
+	const fetchRecipe = useCallback(async ({ showLoading = true } = {}) => {
+		if (!id) return;
+
+		try {
+			if (showLoading) setIsLoadingRecipe(true);
+			setRecipeError(null);
+			const response = await axios.get(`/recipe/${id}`);
+			if (response.status === 200) {
+				setRecipe(response.data.recipe);
+			}
+		} catch (err) {
+			console.error(err);
+			setRecipeError(
+				err.response?.data?.message || "Unable to load this recipe."
+			);
+		} finally {
+			if (showLoading) setIsLoadingRecipe(false);
+		}
+	}, [id]);
 
 	const handleStarClick = (clickedRating) => {
 		setRatingScore(clickedRating);
@@ -36,15 +63,26 @@ const Recipe = () => {
 	};
 
 	const handleReviewChange = (event) => {
-		setReview(event.target.value);
+		setReview(event.target.value.slice(0, 500));
 	};
 
 	const fetchReviews = useCallback(async (recipeId) => {
 		if (!recipeId) return;
 
-		const response = await axios.get(`/review/${recipeId}`);
-		if (response.status === 200) {
-			setReviewList(response.data.reviews || []);
+		try {
+			setIsLoadingReviews(true);
+			setReviewsError(null);
+			const response = await axios.get(`/review/${recipeId}`);
+			if (response.status === 200) {
+				setReviewList(getArrayPayload(response.data, "reviews"));
+			}
+		} catch (err) {
+			console.error(err);
+			setReviewsError(
+				err.response?.data?.message || "Unable to load reviews."
+			);
+		} finally {
+			setIsLoadingReviews(false);
 		}
 	}, []);
 
@@ -72,12 +110,16 @@ const Recipe = () => {
 		try {
 			await axios.post(`/rating/${userId}/${recipe.recipe_id}`, {
 				score: ratingScore,
-				review,
+				review: review.trim(),
 			});
+			setHasExistingRating(true);
+			await fetchRecipe({ showLoading: false });
 			await fetchReviews(recipe.recipe_id);
 			setReviewMessage({
 				type: "success",
-				text: "Your rating and review have been saved.",
+				text: hasExistingRating
+					? "Your review has been updated."
+					: "Your rating and review have been saved.",
 			});
 		} catch (err) {
 			console.error(err);
@@ -118,18 +160,8 @@ const Recipe = () => {
 		}
 	};
 	useEffect(() => {
-		const fetchRecipe = async () => {
-			try {
-				const response = await axios.get(`/recipe/${id}`);
-				if (response.status === 200) {
-					setRecipe(response.data.recipe);
-				}
-			} catch (err) {
-				console.error(err);
-			}
-		};
 		fetchRecipe();
-	}, [id]);
+	}, [fetchRecipe]);
 
 	useEffect(() => {
 		const fetchFavorites = async () => {
@@ -142,7 +174,7 @@ const Recipe = () => {
 				const response = await axios.get(`/wishlist/${userId}`);
 				if (response.status === 200) {
 					setFavorite(
-						response.data.wishlist.some(
+						getArrayPayload(response.data, "wishlist").some(
 							(wishlistRecipe) =>
 								Number(wishlistRecipe.recipe_id) ===
 								Number(recipe.recipe_id)
@@ -159,6 +191,7 @@ const Recipe = () => {
 		const fetchRating = async () => {
 			if (!isAuthenticated || !recipe) {
 				setRatingScore(0);
+				setHasExistingRating(false);
 				setReview("");
 				return;
 			}
@@ -166,13 +199,18 @@ const Recipe = () => {
 			try {
 				const response = await axios.get(`/rating/${userId}`);
 				if (response.status === 200) {
-					const myRecipeRating = (response.data.ratings || []).find(
+					const myRecipeRating = getArrayPayload(
+						response.data,
+						"ratings"
+					).find(
 						(rating) =>
 							Number(rating.recipe_id) === Number(recipe.recipe_id)
 					);
 
 					setRatingScore(Number(myRecipeRating?.score || 0));
+					setHasExistingRating(Boolean(myRecipeRating));
 					setReview(myRecipeRating?.review || "");
+					setShowReview(Boolean(myRecipeRating?.review));
 				}
 			} catch (err) {
 				console.error(err);
@@ -199,7 +237,20 @@ const Recipe = () => {
 				path={`/recipe?id=${id}`}
 				type="article"
 			/>
-			{recipe && (
+			{isLoadingRecipe ? (
+				<PageState
+					title="Loading recipe"
+					message="Fetching recipe details, ratings, and reviews."
+				/>
+			) : recipeError ? (
+				<PageState
+					type="error"
+					title="Recipe could not load"
+					message={recipeError}
+					actionLabel="Back to recipes"
+					onAction={() => navigate("/food")}
+				/>
+			) : recipe && (
 				<Container fluid style={{ padding: 0 }}>
 					<RecipeContainerSummary
 						recipe={recipe}
@@ -213,6 +264,9 @@ const Recipe = () => {
 						showReview={showReview}
 						reviewList={reviewList}
 						reviewMessage={reviewMessage}
+						hasExistingRating={hasExistingRating}
+						isLoadingReviews={isLoadingReviews}
+						reviewsError={reviewsError}
 						isAuthenticated={isAuthenticated}
 						isSubmittingReview={isSubmittingReview}
 						onSubmit={handleSubmit}
