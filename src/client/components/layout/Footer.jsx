@@ -1,5 +1,6 @@
 import React from "react";
 import { Col, Container, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { BsMailbox } from "react-icons/bs";
 import { FaHouse, FaPhone } from "react-icons/fa6";
 import "../../styles/Footer.scss";
@@ -13,9 +14,9 @@ const Footer = () => {
 			<Container fluid>
 				<Row className="footer__grid">
 					<Col lg={5} md={6}>
-						<a href="/" className="footer__brand">
+						<Link to="/" className="footer__brand">
 							Food Recipes
-						</a>
+						</Link>
 						<h5 className="footer__title">About Us</h5>
 						<p className="footer__text">{about}</p>
 					</Col>
@@ -38,9 +39,9 @@ const Footer = () => {
 						<ul className="footer__list">
 							{overview.map((item, index) => (
 								<li key={index} className="footer__list__link">
-									<a href={`/${item.toLowerCase()}`}>
+									<Link to={item === "Home" ? "/" : `/${item.toLowerCase()}`}>
 										{item}
-									</a>
+									</Link>
 								</li>
 							))}
 						</ul>
