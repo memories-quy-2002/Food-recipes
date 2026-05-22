@@ -9,12 +9,25 @@ const images = import.meta.glob("../assets/images/*.{png,jpg,jpeg,webp,svg}", {
 	import: "default",
 });
 
+const imageAliases = {
+	cajun_seafood_pasta: "quick_shrimp_scampi",
+	molten_chocolate_mug_cake: "desserts",
+	vanilla_no_bake_cheesecake: "desserts",
+};
+
 const isRemoteImage = (src) =>
 	typeof src === "string" &&
 	(src.startsWith("http://") ||
 		src.startsWith("https://") ||
 		src.startsWith("data:") ||
 		src.startsWith("blob:"));
+
+const normalizeImageName = (value = "") =>
+	value
+		.toLowerCase()
+		.trim()
+		.replace(/[^a-z0-9]+/g, "_")
+		.replace(/^_+|_+$/g, "");
 
 const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
 	if (isRemoteImage(imageUrl)) {
@@ -29,10 +42,13 @@ const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
 		);
 	}
 
-	const normalizedName = name.toLowerCase().replaceAll(" ", "_");
+	const normalizedName = normalizeImageName(name);
+	const imageName = imageAliases[normalizedName] || normalizedName;
 
 	const imageEntry = Object.entries(images).find(([path]) =>
-		path.includes(`/assets/images/${normalizedName}.`)
+		normalizeImageName(path.split("/").pop()?.split(".")[0]).includes(
+			imageName
+		)
 	);
 
 	const imageSrc = imageEntry ? imageEntry[1] : default_image;
