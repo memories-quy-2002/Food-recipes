@@ -621,11 +621,8 @@ const addRecipe = (request, response) => {
 		imageUrl,
 	} = request.body;
 
-	if (!imageUrl) {
-		return response
-			.status(400)
-			.json({ message: "Recipe image URL is required" });
-	}
+	const normalizedImageUrl =
+		typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null;
 
 	const prepTime = recipePrepTime.number + " " + recipePrepTime.unit;
 	const cookTime = recipeCookTime.number + " " + recipeCookTime.unit;
@@ -657,7 +654,7 @@ const addRecipe = (request, response) => {
 			recipeIngredients,
 			recipeInstructions,
 			userId,
-			imageUrl,
+			normalizedImageUrl,
 		],
 		(error, results) => {
 			if (error) {

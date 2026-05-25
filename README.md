@@ -9,7 +9,6 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Create an account, log in, manage profile details, and change passwords.
 - Save recipes to a wishlist and manage saved recipes interactively.
 - Add new recipes with ingredients, instructions, timing, and image preview.
-- Upload recipe images directly to Supabase Storage and save public image URLs.
 - Read News and About pages for project updates and product context.
 - SEO metadata with React Helmet for page titles, descriptions, canonical URLs, and social previews.
 - Express request logging, centralized error handling, CORS handling, and PostgreSQL query logging.
@@ -19,34 +18,64 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Frontend: React, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
 - Backend: Node.js, Express, PostgreSQL, pg
 - Auth and validation: JWT, bcryptjs, Yup
-- Storage: Supabase Storage for user-uploaded recipe images
 - Deployment: Vercel frontend and serverless Express API
 
 ## Project Structure
 
 ```text
 Food-recipes/
-  src/
-    client/             React pages, components, hooks, styles, assets
-    server/             Express API, PostgreSQL queries, seeds, Vercel API entry
   index.html            Vite HTML entry
   package.json          Frontend scripts and shared dependencies
-  README.md
+  vercel.json           Frontend SPA rewrites for Vercel
+  vite.config.ts        Vite config with @ alias to src/client
+  src/
+    client/
+      app/              App shell, providers, route definitions, store, global app styles
+      features/
+        auth/           Account forms, auth hooks, auth state, protected route
+        content/        About, News, and error pages
+        diagnostics/    Local-only health page
+        food/           Food listing page and filters
+        home/           Home page, carousel, search, featured recipe sections
+        profile/        Profile details, personal recipes, reviews
+        recipes/        Recipe details and add-recipe flow
+        wishlist/       Wishlist page and saved recipe cards
+      shared/
+        api/            Axios client and payload helpers
+        assets/         Images and icons
+        layout/         Header, footer, and layout shell
+        seo/            Helmet helpers
+        ui/             Reusable UI states
+        utils/          Formatting, image, rating, and content helpers
+    server/
+      api/              Vercel serverless entrypoint
+      middleware/       Request logging and centralized error handling
+      migrations/       Database migrations
+      seeds/            Database seed data
+      app.js            Express app setup
+      queries.js        PostgreSQL query functions
 ```
+
+Frontend imports can use `@` for `src/client`, for example `@/shared/api/axios` or `@/features/recipes/Recipe`.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js
-- npm or pnpm
+- pnpm through Corepack, or npm
 - PostgreSQL database
 
-### Install frontend dependencies
+### Install dependencies
 
 ```bash
-npm install
+pnpm install
+cd src/server
+pnpm install
+cd ../..
 ```
+
+If `pnpm` is not available yet, run `corepack enable` first.
 
 ### Configure the server
 
@@ -72,60 +101,12 @@ DB_POOL_MAX_LIFETIME_SECONDS=60
 DB_QUERY_LOGGING=true
 ```
 
-### Configure Supabase Storage uploads
-
-1. In Supabase, create a Storage bucket named `recipe-images`.
-2. Make the bucket public, or add Storage policies that allow reads for uploaded recipe images.
-3. Allow browser uploads with Storage policies for the `recipe-images` bucket. For a public demo bucket, run:
-
-```sql
-CREATE POLICY "Public recipe image reads"
-ON storage.objects
-FOR SELECT
-USING (bucket_id = 'recipe-images');
-
-CREATE POLICY "Public recipe image uploads"
-ON storage.objects
-FOR INSERT
-WITH CHECK (bucket_id = 'recipe-images');
-```
-
-For a stricter app, replace the upload policy with authenticated-user policies.
-4. Add the image URL column to the database:
-
-```sql
-ALTER TABLE public.recipes
-ADD COLUMN IF NOT EXISTS image_url text;
-```
-
-The same migration is saved in `src/server/migrations/add_recipe_image_url.sql`.
-
-5. Add frontend environment variables in `.env.local` and in Vercel:
-
-```env
-VITE_SUPABASE_URL=https://your-project-ref.supabase.co
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-VITE_SUPABASE_RECIPE_BUCKET=recipe-images
-```
-
-For this direct Storage REST upload flow, `VITE_SUPABASE_ANON_KEY` should be the Legacy API keys `anon public` JWT. If you use a new `sb_publishable_...` key and Storage returns `Invalid Compact JWS`, replace it with the legacy anon public key from Supabase Project Settings.
-
-Recipe image uploads happen directly from the browser to Supabase Storage. The server only receives the public `imageUrl` and saves it with the recipe.
-
 ### Run locally
 
-Start the backend:
+Start the frontend and backend together from the project root:
 
 ```bash
-cd src/server
-npm install
-npm start
-```
-
-Start the frontend from the project root:
-
-```bash
-npm start
+pnpm start
 ```
 
 Local URLs:
@@ -133,12 +114,29 @@ Local URLs:
 - Frontend: `http://localhost:5173`
 - Backend: `http://localhost:4000`
 
-During development, the frontend uses `http://localhost:4000` unless `VITE_API_BASE_URL` is set.
+During development, `pnpm start` runs Vite on `http://localhost:5173` and the Express server on `http://localhost:4000`. If `5173` is already in use, Vite prints the next available port. The frontend uses `http://localhost:4000` unless `VITE_API_BASE_URL` is set.
+
+To run only one side:
+
+```bash
+pnpm run start:client
+pnpm run start:server
+```
 
 ## Build
 
 ```bash
-npm run build
+pnpm run build
+```
+
+## Verification
+
+Run these checks after restructuring or changing shared modules:
+
+```bash
+pnpm run build
+node --check src/server/app.js
+node --check src/server/queries.js
 ```
 
 ## Database Seeds
