@@ -509,12 +509,12 @@ const updatePassword = async (request, response) => {
 
 const getRecipes = (request, response) => {
 	pool.query(
-		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, r.image_url, m.meal_id, m.meal_name, " +
+		"SELECT r.recipe_id, r.recipe_name, r.recipe_description, r.date_added, r.image_url, r.prep_time, r.cook_time, m.meal_id, m.meal_name, " +
 		"m.meal_description, c.category_id, c.category_name, " +
 		"COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score, COALESCE(COUNT(rt.rating_id), 0) AS num_ratings " +
 		"FROM recipes r JOIN meals m ON r.meal_id = m.meal_id " +
 		"JOIN categories c ON r.category_id = c.category_id " +
-		"LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id GROUP BY r.recipe_id, m.meal_id, c.category_id ORDER BY r.recipe_id ASC",
+		"LEFT JOIN rating rt ON r.recipe_id = rt.recipe_id GROUP BY r.recipe_id, r.prep_time, r.cook_time, m.meal_id, c.category_id ORDER BY r.recipe_id ASC",
 		(error, results) => {
 			if (error) {
 				return handleDbError(response, error, "Failed to fetch recipes");

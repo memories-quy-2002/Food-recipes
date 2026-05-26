@@ -2,12 +2,14 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import RecipeContainerSummary from "@/features/recipes/RecipeContainerSummary";
 import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { AuthContext } from "@/app/AuthProvider";
+import { useToast } from "@/app/ToastProvider";
 import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
 import "./Recipe.scss";
@@ -19,6 +21,7 @@ const Recipe = () => {
 	const [isLoadingRecipe, setIsLoadingRecipe] = useState(true);
 	const [recipeError, setRecipeError] = useState(null);
 	const [favorite, setFavorite] = useState(false);
+	const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
 	const [ratingScore, setRatingScore] = useState(0);
 	const [hasExistingRating, setHasExistingRating] = useState(false);
 	const [review, setReview] = useState("");
@@ -28,6 +31,7 @@ const Recipe = () => {
 	const [reviewsError, setReviewsError] = useState(null);
 	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState(null);
+	const { showToast } = useToast();
 	const navigate = useNavigate();
 
 	const location = useLocation();
@@ -40,7 +44,7 @@ const Recipe = () => {
 		try {
 			if (showLoading) setIsLoadingRecipe(true);
 			setRecipeError(null);
-			const response = await axios.get(`/recipe/${id}`);
+			const response = await axios.get(apiRoutes.recipe(id));
 			if (response.status === 200) {
 				setRecipe(response.data.recipe);
 			}
@@ -72,7 +76,7 @@ const Recipe = () => {
 		try {
 			setIsLoadingReviews(true);
 			setReviewsError(null);
-			const response = await axios.get(`/review/${recipeId}`);
+			const response = await axios.get(apiRoutes.recipeReviews(recipeId));
 			if (response.status === 200) {
 				setReviewList(getArrayPayload(response.data, "reviews"));
 			}
@@ -108,7 +112,7 @@ const Recipe = () => {
 		setReviewMessage(null);
 
 		try {
-			await axios.post(`/rating/${userId}/${recipe.recipe_id}`, {
+			await axios.put(apiRoutes.userRecipeRating(userId, recipe.recipe_id), {
 				score: ratingScore,
 				review: review.trim(),
 			});
@@ -138,25 +142,32 @@ const Recipe = () => {
 			navigate("/account");
 			return;
 		}
-		if (!recipe) return;
+		if (!recipe || isUpdatingFavorite) return;
 
 		try {
+			setIsUpdatingFavorite(true);
 			if (favorite) {
 				const response = await axios.delete(
-					`/wishlist/${userId}/${recipe.recipe_id}`
+					apiRoutes.userWishlistItem(userId, recipe.recipe_id)
 				);
 				if (response.status === 200) {
-					window.location.reload(false);
+					setFavorite(false);
+					showToast({ title: "Removed from wishlist" });
 				}
 			} else {
-				await axios.post("/wishlist", {
+				const response = await axios.post(apiRoutes.userWishlist(userId), {
 					user_id: userId,
 					recipe_id: recipe.recipe_id,
 				});
-				window.location.reload(false);
+				if (response.status === 200) {
+					setFavorite(true);
+					showToast({ title: "Added to wishlist" });
+				}
 			}
 		} catch (err) {
 			console.error(err);
+		} finally {
+			setIsUpdatingFavorite(false);
 		}
 	};
 	useEffect(() => {
@@ -171,7 +182,7 @@ const Recipe = () => {
 			}
 
 			try {
-				const response = await axios.get(`/wishlist/${userId}`);
+				const response = await axios.get(apiRoutes.userWishlist(userId));
 				if (response.status === 200) {
 					setFavorite(
 						getArrayPayload(response.data, "wishlist").some(
@@ -197,7 +208,7 @@ const Recipe = () => {
 			}
 
 			try {
-				const response = await axios.get(`/rating/${userId}`);
+				const response = await axios.get(apiRoutes.userRatings(userId));
 				if (response.status === 200) {
 					const myRecipeRating = getArrayPayload(
 						response.data,
