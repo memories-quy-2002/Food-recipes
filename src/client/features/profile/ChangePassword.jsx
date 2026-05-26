@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import * as Yup from "yup";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 const ChangePassword = ({ user }) => {
 	const [formPassword, setFormPassword] = useState({
 		current: "",
@@ -34,7 +35,7 @@ const ChangePassword = ({ user }) => {
 			.then(async () => {
 				try {
 					const response = await axios.put(
-						`/account/users/password/${user.user_id}`,
+						apiRoutes.userPassword(user.user_id),
 						{
 							currentPassword: formPassword.current,
 							newPassword: formPassword.new,
