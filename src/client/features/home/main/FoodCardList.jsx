@@ -2,7 +2,19 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import FoodCard from "./FoodCard";
 
-const FoodCardList = ({ recipes, wishlist, onClickFavorite }) => {
+const featuredModes = [
+	{ id: "top-rated", label: "Top rated" },
+	{ id: "most-reviewed", label: "Most reviewed" },
+	{ id: "quick-meals", label: "Quick meals" },
+];
+
+const FoodCardList = ({
+	recipes,
+	wishlist,
+	onClickFavorite,
+	featuredMode,
+	onFeaturedModeChange,
+}) => {
 	const navigate = useNavigate();
 
 	const handleNavigate = (id) => {
@@ -16,14 +28,30 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite }) => {
 					<span>Top rated</span>
 					<h3 className="home__main__cardList__title">Featured recipes</h3>
 				</div>
-				<a href="/food" className="home__main__cardList__link">
-					More recipes
-				</a>
+				<div className="home__main__cardList__controls">
+					<div className="home__main__cardList__tabs" role="tablist">
+						{featuredModes.map((mode) => (
+							<button
+								key={mode.id}
+								type="button"
+								className={`home__main__cardList__tab ${
+									featuredMode === mode.id
+										? "home__main__cardList__tab--active"
+										: ""
+								}`}
+								onClick={() => onFeaturedModeChange(mode.id)}
+							>
+								{mode.label}
+							</button>
+						))}
+					</div>
+					<a href="/food" className="home__main__cardList__link">
+						Explore all recipes
+					</a>
+				</div>
 			</div>
 			<div className="home__main__cardList__feature">
 				{recipes
-					.sort((a, b) => b.num_ratings - a.num_ratings)
-					.slice(0, 8)
 					.map(
 						({
 							recipe_id,

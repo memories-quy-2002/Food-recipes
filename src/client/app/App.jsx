@@ -4,17 +4,20 @@ import "./App.scss";
 import AppRoutes from "./AppRoutes";
 import AuthProvider from "./AuthProvider";
 import RecipeProvider from "./RecipeProvider";
+import ToastProvider from "./ToastProvider";
 import Layout from "@/shared/layout/Layout";
 
 function App() {
 	return (
 		<AuthProvider>
 			<RecipeProvider>
-				<BrowserRouter>
-					<Layout>
-						<AppRoutes />
-					</Layout>
-				</BrowserRouter>
+				<ToastProvider>
+					<BrowserRouter>
+						<Layout>
+							<AppRoutes />
+						</Layout>
+					</BrowserRouter>
+				</ToastProvider>
 			</RecipeProvider>
 		</AuthProvider>
 	);

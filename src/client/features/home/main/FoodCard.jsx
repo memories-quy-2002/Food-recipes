@@ -1,4 +1,3 @@
-import React from "react";
 import { BsFillHeartFill, BsHeart } from "react-icons/bs";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
