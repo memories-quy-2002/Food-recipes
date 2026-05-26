@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 
@@ -14,13 +15,13 @@ const checks = [
 		key: "database",
 		label: "Database",
 		description: "Checks environment flags, SSL setup, and SELECT 1.",
-		request: () => axios.get("/health/database"),
+		request: () => axios.get(apiRoutes.databaseHealth),
 	},
 	{
 		key: "recipes",
 		label: "Recipes API",
 		description: "Checks whether recipe data can be fetched.",
-		request: () => axios.get("/recipe"),
+		request: () => axios.get(apiRoutes.recipes),
 	},
 ];
 

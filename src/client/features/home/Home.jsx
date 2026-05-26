@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
+import { apiRoutes } from "@/shared/api/routes";
 import Carousel from "@/features/home/Carousel";
 import HomeMain from "@/features/home/HomeMain";
 import PageHelmet from "@/shared/seo/PageHelmet";
@@ -17,7 +18,7 @@ const Home = () => {
 			try {
 				setIsLoadingMeals(true);
 				setMealsError(null);
-				const response = await axios.get("/meal");
+				const response = await axios.get(apiRoutes.meals);
 				const mealList = getArrayPayload(response.data, "meals");
 				setMeals(
 					mealList

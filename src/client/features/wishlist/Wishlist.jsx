@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
+import { apiRoutes } from "@/shared/api/routes";
 import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -38,13 +39,13 @@ const Wishlist = () => {
 			try {
 				setIsLoadingWishlist(true);
 				setWishlistError(null);
-				const response = await axios.get(`/wishlist/${user_id}`);
+				const response = await axios.get(apiRoutes.userWishlist(user_id));
 				setWishlist(getArrayPayload(response.data, "wishlist"));
 			} catch (err) {
 				console.error(err);
 				setWishlistError(
 					err.response?.data?.message ||
-						"Unable to load your wishlist."
+					"Unable to load your wishlist."
 				);
 			} finally {
 				setIsLoadingWishlist(false);
@@ -95,7 +96,7 @@ const Wishlist = () => {
 	const handleDelete = async () => {
 		try {
 			const response = await axios.delete(
-				`/wishlist/${user_id}/${recipeId}`
+				apiRoutes.userWishlistItem(user_id, recipeId)
 			);
 			if (response.status === 200) {
 				setWishlist((currentWishlist) =>

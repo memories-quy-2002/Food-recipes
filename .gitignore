@@ -4,6 +4,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.pnpm-store/
 
 # Environment variables
 .env
@@ -101,3 +102,6 @@ Dockerfile
 
 # Optional Windows files
 Thumbs.db
+
+# Codex file
+AGENTS.md

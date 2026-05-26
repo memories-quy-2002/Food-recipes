@@ -1,15 +1,28 @@
 import cameraPreview from "@/shared/assets/images/cameraPreview.png";
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
+import { getArrayPayload } from "@/shared/api/payload";
+import {
+	isSupabaseStorageConfigured,
+	uploadRecipeImage,
+} from "@/shared/api/supabaseStorage";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import "./AddRecipe.scss";
 import convertTime from "@/shared/utils/convertTime";
 import { AuthContext } from "@/app/AuthProvider";
+import { RecipeContext } from "@/app/RecipeProvider";
+import { useToast } from "@/app/ToastProvider";
 import { useNavigate } from "react-router-dom";
+
+const OTHER_OPTION = "__other__";
+
 const AddRecipe = () => {
 	const { auth } = useContext(AuthContext);
 	const { userId } = auth.current;
+	const { refreshRecipes } = useContext(RecipeContext);
+	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const initialState = {
 		recipeImage: null,
@@ -34,6 +47,13 @@ const AddRecipe = () => {
 	const [disabled, setDisabled] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submitError, setSubmitError] = useState("");
+	const [uploadStatus, setUploadStatus] = useState("idle");
+	const [categories, setCategories] = useState([]);
+	const [meals, setMeals] = useState([]);
+	const [listError, setListError] = useState("");
+	const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
+	const [selectedMealOption, setSelectedMealOption] = useState("");
+	const storageConfigured = isSupabaseStorageConfigured();
 
 	const calculateTotalTime = (timeField1, timeField2) => {
 		const unitsInSeconds = {
@@ -67,7 +87,7 @@ const AddRecipe = () => {
 			.map((item) =>
 				item
 					.trim()
-					.replace(/^([•*+-]|\d+[.)])\s+/, "")
+					.replace(/^([\u2022*+-]|\d+[.)])\s+/, "")
 					.trim()
 			)
 			.filter(Boolean);
@@ -167,15 +187,68 @@ const AddRecipe = () => {
 		}));
 	};
 
+	const handleCategoryOptionChange = (event) => {
+		const { value } = event.target;
+		setDisabled(false);
+		setSubmitError("");
+		setSelectedCategoryOption(value);
+		setFormRecipe((currentRecipe) => ({
+			...currentRecipe,
+			recipeCategoryName: value === OTHER_OPTION ? "" : value,
+		}));
+	};
+
+	const handleMealOptionChange = (event) => {
+		const { value } = event.target;
+		setDisabled(false);
+		setSubmitError("");
+		setSelectedMealOption(value);
+		setFormRecipe((currentRecipe) => ({
+			...currentRecipe,
+			recipeMealName: value === OTHER_OPTION ? "" : value,
+		}));
+	};
+
 	const handleReset = () => {
 		setFormRecipe(initialState);
 		setPreview(null);
 		setDisabled(true);
 		setSubmitError("");
+		setUploadStatus("idle");
+		setSelectedCategoryOption("");
+		setSelectedMealOption("");
 	};
+
+	useEffect(() => {
+		const fetchLists = async () => {
+			try {
+				setListError("");
+				const [categoriesResponse, mealsResponse] = await Promise.all([
+					axios.get(apiRoutes.categories),
+					axios.get(apiRoutes.meals),
+				]);
+
+				setCategories(getArrayPayload(categoriesResponse.data, "categories"));
+				setMeals(getArrayPayload(mealsResponse.data, "meals"));
+			} catch (error) {
+				console.error(error);
+				setListError(
+					error.response?.data?.message ||
+						"Unable to load the current category and meal lists."
+				);
+			}
+		};
+
+		fetchLists();
+	}, []);
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+
+		if (!formRecipe.recipeImage) {
+			setSubmitError("Please choose a recipe image before publishing.");
+			return;
+		}
 
 		const cleanedRecipe = {
 			...formRecipe,
@@ -213,13 +286,20 @@ const AddRecipe = () => {
 		try {
 			setIsSubmitting(true);
 			setSubmitError("");
+			setUploadStatus("uploading");
+
+			const imageUpload = await uploadRecipeImage({
+				file: formRecipe.recipeImage,
+				recipeName: cleanedRecipe.recipeName,
+			});
+			setUploadStatus("saving");
 
 			const response = await axios.post(
-				"/recipe/add",
+				apiRoutes.recipes,
 				{
 					...cleanedRecipe,
 					recipeImage: undefined,
-					imageUrl: null,
+					imageUrl: imageUpload.url,
 				},
 				{
 					headers: {
@@ -229,6 +309,10 @@ const AddRecipe = () => {
 			);
 
 			if (response.status === 200) {
+				await refreshRecipes().catch((refreshError) =>
+					console.error("Unable to refresh recipes after publish:", refreshError)
+				);
+				showToast({ title: "Recipe published successfully" });
 				navigate("/food");
 			}
 		} catch (error) {
@@ -238,6 +322,7 @@ const AddRecipe = () => {
 					error.message ||
 					"Unable to publish this recipe. Please try again."
 			);
+			setUploadStatus("idle");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -263,10 +348,43 @@ const AddRecipe = () => {
 						</p>
 					</div>
 					<div className="add__container__form">
+						{!storageConfigured && (
+							<div className="add__container__notice add__container__notice--error">
+								<strong>Supabase Storage setup needed</strong>
+								<p>
+									Add VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY,
+									and VITE_SUPABASE_RECIPE_BUCKET before
+									publishing image uploads.
+								</p>
+							</div>
+						)}
 						{submitError && (
 							<div className="add__container__notice add__container__notice--error">
 								<strong>Recipe was not published</strong>
 								<p>{submitError}</p>
+							</div>
+						)}
+						{listError && (
+							<div className="add__container__notice add__container__notice--warning">
+								<strong>Lists could not load</strong>
+								<p>
+									{listError} You can still choose <strong>Other</strong>
+									&nbsp;and type a new category or meal manually.
+								</p>
+							</div>
+						)}
+						{uploadStatus !== "idle" && (
+							<div className="add__container__notice" aria-live="polite">
+								<strong>
+									{uploadStatus === "uploading"
+										? "Uploading image"
+										: "Saving recipe"}
+								</strong>
+								<p>
+									{uploadStatus === "uploading"
+										? "Sending the recipe image to Supabase Storage."
+										: "Saving the recipe with the uploaded image URL."}
+								</p>
 							</div>
 						)}
 						<Form
@@ -328,11 +446,12 @@ const AddRecipe = () => {
 											accept="image/*"
 											onChange={handleFileChange}
 											style={{ marginTop: "10px" }}
+											required
 										/>
 										<p className="add__container__form__hint">
-											Image preview is local only. Published
-											recipes without a saved image use the
-											default recipe image.
+											Images upload to Supabase Storage, and
+											the saved public URL is stored with the
+											recipe.
 										</p>
 									</Form.Group>
 								</Col>
@@ -344,15 +463,38 @@ const AddRecipe = () => {
 										className="add__container__form__field"
 									>
 										<Form.Label>Category</Form.Label>
-										<Form.Control
-											type="text"
-											name="recipeCategoryName"
-											value={
-												formRecipe.recipeCategoryName
-											}
-											onChange={handleInputChange}
+										<Form.Select
+											name="recipeCategoryOption"
+											value={selectedCategoryOption}
+											onChange={handleCategoryOptionChange}
 											required
-										/>
+										>
+											<option value="" disabled>
+												Choose a category
+											</option>
+											{categories.map(({ id, name }) => (
+												<option key={id} value={name}>
+													{name}
+												</option>
+											))}
+											<option value={OTHER_OPTION}>Other</option>
+										</Form.Select>
+										{selectedCategoryOption === OTHER_OPTION && (
+											<>
+												<Form.Control
+													type="text"
+													name="recipeCategoryName"
+													value={formRecipe.recipeCategoryName}
+													onChange={handleInputChange}
+													placeholder="Type a new category"
+													className="mt-2"
+													required
+												/>
+												<p className="add__container__form__hint">
+													New categories are saved and reused for later recipes.
+												</p>
+											</>
+										)}
 									</Form.Group>
 								</Col>
 								<Col md={6}>
@@ -361,13 +503,38 @@ const AddRecipe = () => {
 										className="add__container__form__field"
 									>
 										<Form.Label>Meal</Form.Label>
-										<Form.Control
-											type="text"
-											name="recipeMealName"
-											value={formRecipe.recipeMealName}
-											onChange={handleInputChange}
+										<Form.Select
+											name="recipeMealOption"
+											value={selectedMealOption}
+											onChange={handleMealOptionChange}
 											required
-										/>
+										>
+											<option value="" disabled>
+												Choose a meal
+											</option>
+											{meals.map(({ id, name }) => (
+												<option key={id} value={name}>
+													{name}
+												</option>
+											))}
+											<option value={OTHER_OPTION}>Other</option>
+										</Form.Select>
+										{selectedMealOption === OTHER_OPTION && (
+											<>
+												<Form.Control
+													type="text"
+													name="recipeMealName"
+													value={formRecipe.recipeMealName}
+													onChange={handleInputChange}
+													placeholder="Type a new meal"
+													className="mt-2"
+													required
+												/>
+												<p className="add__container__form__hint">
+													New meals are added to the database when you publish.
+												</p>
+											</>
+										)}
 									</Form.Group>
 								</Col>
 							</Row>
@@ -579,3 +746,5 @@ const AddRecipe = () => {
 };
 
 export default AddRecipe;
+
+

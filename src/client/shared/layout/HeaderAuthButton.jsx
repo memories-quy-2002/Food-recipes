@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
 import convertImage from "@/shared/utils/convertImage";
 import { FaCaretDown } from "react-icons/fa";
@@ -19,7 +20,7 @@ const HeaderAuthButton = ({ auth }) => {
 		const fetchData = async () => {
 			if (token) {
 				try {
-					const response = await axios.post("/account/jwt", {
+					const response = await axios.post(apiRoutes.authToken, {
 						token,
 					});
 
@@ -41,7 +42,7 @@ const HeaderAuthButton = ({ auth }) => {
 		dispatch(authActions.logout());
 	};
 	const handleClick = () => {
-		navigate("/account?signup=true");
+		navigate("/account?login=true");
 	};
 	return (
 		<div className="header__auth">
@@ -76,7 +77,7 @@ const HeaderAuthButton = ({ auth }) => {
 						onClick={handleClick}
 						className="header__auth--signup__button"
 					>
-						Sign up
+						Login / Sign up
 					</button>
 				</div>
 			)}

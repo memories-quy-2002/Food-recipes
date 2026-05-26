@@ -123,7 +123,7 @@ importers:
         specifier: ^1.6.4
         version: 1.6.4
       sass:
-        specifier: ^1.100.0
+        specifier: ^1.99.0
         version: 1.100.0
       web-vitals:
         specifier: ^5.2.0
@@ -154,7 +154,7 @@ importers:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
       vite:
-        specifier: ^8.0.14
+        specifier: ^8.0.13
         version: 8.0.14(@types/node@25.9.1)(sass@1.100.0)
 
 packages:

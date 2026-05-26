@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button, Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
 const PersonalInfo = ({ user }) => {
 	const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ const PersonalInfo = ({ user }) => {
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 		const response = await axios.put(
-			`account/users/update/${user.user_id}`,
+			apiRoutes.userProfile(user.user_id),
 			{
 				formData,
 			}

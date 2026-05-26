@@ -368,16 +368,23 @@
 
 			&__list {
 				display: grid;
-				grid-template-columns: repeat(5, minmax(0, 1fr));
+				grid-template-columns: repeat(6, minmax(0, 1fr));
 				gap: 1rem;
 				z-index: 1;
 
 				&__item {
 					position: relative;
+					width: 100%;
 					min-height: 300px;
 					overflow: hidden;
+					padding: 0;
+					border: none;
 					border-radius: 8px;
+					appearance: none;
+					background: #211813;
 					box-shadow: 0 18px 44px rgba(45, 32, 20, 0.12);
+					cursor: pointer;
+					text-align: left;
 
 					img {
 						width: 100%;
@@ -399,15 +406,39 @@
 							font-weight: 900;
 						}
 
-						a {
-							text-decoration: none;
+						span {
 							color: rgba(255, 255, 255, 0.86);
 							font-weight: 800;
 						}
 
-						a:hover {
+						span:hover {
 							color: #ffd18b;
 						}
+					}
+
+					&--all {
+						background:
+							linear-gradient(145deg, rgba(24, 17, 12, 0.96), rgba(67, 35, 20, 0.92)),
+							#211813;
+						display: flex;
+						align-items: end;
+						padding: 1rem;
+
+						.home__main__category__list__item__content {
+							position: static;
+
+							p {
+								margin: 0.35rem 0 0;
+								color: rgba(255, 248, 239, 0.82);
+								font-weight: 700;
+								line-height: 1.55;
+							}
+						}
+					}
+
+					&--active {
+						outline: 3px solid rgba(255, 159, 28, 0.92);
+						outline-offset: -3px;
 					}
 
 					&:hover img {
@@ -419,6 +450,44 @@
 
 		&__cardList {
 			padding: 2.5rem 0 3rem;
+
+			&__controls {
+				display: flex;
+				align-items: center;
+				flex-wrap: wrap;
+				gap: 0.7rem;
+			}
+
+			&__tabs {
+				display: inline-flex;
+				flex-wrap: wrap;
+				gap: 0.45rem;
+			}
+
+			&__tab {
+				min-height: 2.5rem;
+				padding: 0 0.95rem;
+				border: 1px solid rgba(98, 58, 18, 0.12);
+				border-radius: 999px;
+				background: #ffffff;
+				color: #6d6258;
+				font-weight: 900;
+				transition:
+					border-color 0.2s ease,
+					background-color 0.2s ease,
+					color 0.2s ease;
+
+				&:hover {
+					border-color: rgba(255, 159, 28, 0.5);
+					color: #211813;
+				}
+
+				&--active {
+					border-color: transparent;
+					background: #211813;
+					color: #fff8ef;
+				}
+			}
 
 			&__feature {
 				display: grid;
@@ -573,6 +642,12 @@
 			}
 
 			&__cardList {
+				&__controls {
+					width: 100%;
+					align-items: stretch;
+					flex-direction: column;
+				}
+
 				&__feature {
 					grid-template-columns: repeat(2, minmax(0, 1fr));
 				}

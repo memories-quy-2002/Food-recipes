@@ -1,10 +1,8 @@
-// imageLoader.js or utils/convertImage.js
-
 // Import fallback/default image
 import default_image from "@/shared/assets/images/default_image.png";
-import React from "react";
+
 // Load all images with common extensions
-const images = import.meta.glob("../assets/images/*.{png,jpg,jpeg,webp,svg}", {
+const images = import.meta.glob(`../assets/images/*.{png,jpg,jpeg,webp,svg}`, {
 	eager: true,
 	import: "default",
 });

@@ -3,6 +3,7 @@ import { Col, Container, Row } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
+import { apiRoutes } from "@/shared/api/routes";
 import FoodMenuBar from "@/features/food/FoodMenuBar";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -87,8 +88,8 @@ const Food = () => {
 				setIsLoadingFilters(true);
 				setFiltersError(null);
 				const [categoryResponse, mealResponse] = await Promise.all([
-					axios.get("/category"),
-					axios.get("/meal"),
+					axios.get(apiRoutes.categories),
+					axios.get(apiRoutes.meals),
 				]);
 				setCategories(
 					getArrayPayload(categoryResponse.data, "categories")
