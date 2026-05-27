@@ -30,7 +30,8 @@ const RecipeOtherList = ({ recipeId }) => {
 					>
 						{convertImage(
 							recipe.recipe_name,
-							"recipe__container__other__list__item__img"
+							"recipe__container__other__list__item__img",
+							recipe.image_url
 						)}
 
 						<div className="recipe__container__other__list__item__context">

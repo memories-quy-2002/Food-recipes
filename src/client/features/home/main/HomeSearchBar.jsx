@@ -40,7 +40,8 @@ const HomeSearchBar = ({ recipes }) => {
 								>
 									{convertImage(
 										recipe.recipe_name,
-										"home__main__search__result__img"
+										"home__main__search__result__img",
+										recipe.image_url
 									)}
 									<p>{recipe.recipe_name}</p>
 								</li>

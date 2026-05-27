@@ -8,6 +8,7 @@ import { authActions } from "@/features/auth/state/authSlice";
 import "./Profile.scss";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
+import { apiRoutes } from "@/shared/api/routes";
 import { CancelToken } from "axios";
 const ProfileMain = lazy(() => import("@/features/profile/ProfileMain"));
 const profilePageList = [
@@ -58,7 +59,7 @@ const Profile = () => {
 			try {
 				setIsLoadingRatings(true);
 				setRatingsError(null);
-				const response = await axios.get(`/rating/${user.user_id}`);
+				const response = await axios.get(apiRoutes.userRatings(user.user_id));
 				setRatings(getArrayPayload(response.data, "ratings"));
 			} catch (err) {
 				console.error(err);

@@ -6,13 +6,13 @@ import ratingStar from "@/shared/utils/ratingStar";
 
 const FavoriteRecipe = ({ recipe, handleShowModal }) => {
 	const navigate = useNavigate();
-
 	return (
 		<li className="wishlist__main__content__list__item">
 			<div className="wishlist__main__content__list__item__media">
 				{convertImage(
 					recipe.recipe_name,
-					"wishlist__main__content__list__item__img"
+					"wishlist__main__content__list__item__img",
+					recipe.image_url
 				)}
 			</div>
 			<div className="wishlist__main__content__list__item__context">

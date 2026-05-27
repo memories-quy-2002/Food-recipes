@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
+import { apiRoutes } from "@/shared/api/routes";
 import PageState from "@/shared/ui/PageState";
 import convertImage from "@/shared/utils/convertImage";
 import { Row, Col } from "react-bootstrap";
@@ -22,9 +23,7 @@ const PersonalRecipes = ({ user }) => {
 			try {
 				setIsLoading(true);
 				setError("");
-				const response = await axios.get(
-					`/recipe/user/${user.user_id}`
-				);
+				const response = await axios.get(apiRoutes.userRecipes(user.user_id));
 				if (response.status === 200) {
 					setPersonalRecipes(
 						getArrayPayload(response.data, "recipes")
@@ -58,7 +57,7 @@ const PersonalRecipes = ({ user }) => {
 	};
 	const handleDeleteRecipe = async () => {
 		try {
-			const response = await axios.delete(`/recipe/delete/${recipeId}`);
+			const response = await axios.delete(apiRoutes.recipe(recipeId));
 			if (response.status === 200) {
 				setPersonalRecipes((recipes) =>
 					recipes.filter((recipe) => recipe.recipe_id !== recipeId)

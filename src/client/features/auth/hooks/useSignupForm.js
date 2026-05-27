@@ -2,6 +2,7 @@ import { useReducer } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
 import { useDispatch } from "react-redux";
 
@@ -91,7 +92,7 @@ const useSignupForm = () => {
 				try {
 					const { name, email, password } = state.formData;
 					const response = await axios.post(
-						"/account/signup",
+						apiRoutes.authSignup,
 						JSON.stringify({ name, email, password }),
 						{
 							headers: { "Content-Type": "application/json" },

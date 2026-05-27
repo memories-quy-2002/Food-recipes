@@ -1,5 +1,5 @@
 {
-  "name": "my-react-project",
+  "name": "food-recipes",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -53,24 +53,6 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "preview": "vite preview"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.5",

@@ -1,9 +1,9 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const db = require("./queries");
 const rateLimit = require("express-rate-limit");
 const requestLogger = require("./middleware/requestLogger");
+const { registerRoutes } = require("./routes");
 const {
 	errorHandler,
 	notFoundHandler,
@@ -59,25 +59,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.get("/recipe/", db.getRecipes);
-app.get("/recipe/:rid", db.getRecipesByRecipeId);
-app.get("/recipe/user/:uid", db.getRecipesByUserId);
-app.get("/category/", db.getCategories);
-app.get("/meal/", db.getMeals);
-app.get("/wishlist/:uid", db.getWishlistByUserId);
-app.get("/rating/:uid", db.getRatingsByUserId);
-app.get("/review/:rid", db.getReviewsByRecipeId);
-app.get("/health/database", db.getDatabaseHealth);
-app.post("/recipe/add", db.addRecipe);
-app.post("/wishlist/", db.addItemsToWishlist);
-app.post("/account/jwt", db.getUserByJWT);
-app.post("/account/login", db.getUsersLogin);
-app.post("/account/signup", db.createUser);
-app.post("/rating/:uid/:rid", db.addRating);
-app.put("/account/users/update/:uid", db.updateUser);
-app.put("/account/users/password/:uid", db.updatePassword);
-app.delete("/recipe/delete/:rid", db.deleteRecipe);
-app.delete("/wishlist/:uid/:rid", db.deleteWishlistItems);
+registerRoutes(app);
 app.get("/", (req, res) => {
 	res.send("Hello World from Express");
 });
