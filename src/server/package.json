@@ -25,6 +25,7 @@
         "mysql": "^2.18.1",
         "mysqldump": "^3.2.0",
         "pg": "^8.21.0",
+        "prompts": "^2.4.2",
         "sanitize-filename": "^1.6.4",
         "streamifier": "^0.1.1"
     }
