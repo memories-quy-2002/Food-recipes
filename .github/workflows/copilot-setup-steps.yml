@@ -1,0 +1,43 @@
+name: "Copilot Setup Steps"
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create client env file
+        run: |
+          echo "VITE_API_URL=http://localhost:3000" > src/client/.env
+
+      - name: Create server env file
+        run: |
+          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/server/.env
+          echo "JWT_SECRET=test-secret-for-agent-sandbox" >> src/server/.env
+
+      - name: Typecheck client
+        run: pnpm --filter client exec tsc --noEmit
+        continue-on-error: true
