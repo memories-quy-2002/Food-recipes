@@ -2,7 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
-import { RecipeQueryDto } from './dto/recipe-query.dto';
+import {
+  DEFAULT_RECIPE_LIMIT,
+  DEFAULT_RECIPE_PAGE,
+  MAX_RECIPE_LIMIT,
+  RecipeQueryDto,
+  RecipeSort,
+} from './dto/recipe-query.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 
 export type RecipeRecord = {
@@ -36,14 +42,57 @@ export interface RecipesRepositoryPort {
   delete(id: number): Promise<void>;
 }
 
+export const recipeOrderBySql = (sort: RecipeSort = 'popular'): string => {
+  switch (sort) {
+    case 'rating':
+      return 'overall_score DESC, num_ratings DESC, r.recipe_id ASC';
+    case 'name':
+      return 'LOWER(r.recipe_name) ASC, r.recipe_name ASC, r.recipe_id ASC';
+    case 'popular':
+    default:
+      return 'num_ratings DESC, overall_score DESC, r.recipe_id ASC';
+  }
+};
+
+const toSafeInteger = (value: number | bigint): number => Number(value);
+
+const toJsonSafeRecipe = (recipe: RecipeRecord): RecipeRecord => {
+  const safeRecipe = { ...recipe };
+  safeRecipe.recipe_id = toSafeInteger(recipe.recipe_id);
+  safeRecipe.prep_time_minutes = toSafeInteger(recipe.prep_time_minutes);
+  safeRecipe.cook_time_minutes = toSafeInteger(recipe.cook_time_minutes);
+  safeRecipe.total_time_minutes = toSafeInteger(recipe.total_time_minutes);
+  safeRecipe.user_id = toSafeInteger(recipe.user_id);
+  if (recipe.meal_id !== undefined) safeRecipe.meal_id = toSafeInteger(recipe.meal_id);
+  if (recipe.category_id !== undefined) {
+    safeRecipe.category_id = toSafeInteger(recipe.category_id);
+  }
+  if (recipe.overall_score !== undefined) {
+    safeRecipe.overall_score = Number(recipe.overall_score);
+  }
+  if (recipe.num_ratings !== undefined) {
+    safeRecipe.num_ratings = toSafeInteger(recipe.num_ratings);
+  }
+  return safeRecipe;
+};
+
+const normalizePage = (page: number | undefined): number =>
+  Number.isSafeInteger(page) && (page as number) >= 1 ? (page as number) : DEFAULT_RECIPE_PAGE;
+
+const normalizeLimit = (limit: number | undefined): number =>
+  Number.isInteger(limit) && (limit as number) >= 1
+    ? Math.min(limit as number, MAX_RECIPE_LIMIT)
+    : DEFAULT_RECIPE_LIMIT;
+
 @Injectable()
 export class RecipesRepository implements RecipesRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  list(query: RecipeQueryDto): Promise<RecipeRecord[]> {
+  async list(query: RecipeQueryDto): Promise<RecipeRecord[]> {
     const conditions: Prisma.Sql[] = [Prisma.sql`1 = 1`];
-    if (query.search) {
-      const search = `%${query.search.trim()}%`;
+    const searchTerm = query.q?.trim() || query.search?.trim();
+    if (searchTerm) {
+      const search = `%${searchTerm}%`;
       conditions.push(
         Prisma.sql`(r.recipe_name ILIKE ${search} OR r.recipe_description ILIKE ${search})`,
       );
@@ -51,7 +100,11 @@ export class RecipesRepository implements RecipesRepositoryPort {
     if (query.categoryId) conditions.push(Prisma.sql`r.category_id = ${query.categoryId}`);
     if (query.mealId) conditions.push(Prisma.sql`r.meal_id = ${query.mealId}`);
 
-    return this.prisma.$queryRaw<RecipeRecord[]>(Prisma.sql`
+    const page = normalizePage(query.page);
+    const limit = normalizeLimit(query.limit);
+    const offset = (page - 1) * limit;
+
+    const rows = await this.prisma.$queryRaw<RecipeRecord[]>(Prisma.sql`
       SELECT
         r.recipe_id,
         r.recipe_name,
@@ -67,16 +120,20 @@ export class RecipesRepository implements RecipesRepositoryPort {
         m.meal_description,
         c.category_id,
         c.category_name,
-        COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score,
-        COALESCE(COUNT(rt.rating_id), 0) AS num_ratings
+        COALESCE(ROUND(AVG(rt.score), 1), 0)::float8 AS overall_score,
+        COALESCE(COUNT(rt.rating_id), 0)::int AS num_ratings
       FROM recipes r
       JOIN meals m ON m.meal_id = r.meal_id
       JOIN categories c ON c.category_id = r.category_id
       LEFT JOIN rating rt ON rt.recipe_id = r.recipe_id
       WHERE ${Prisma.join(conditions, ' AND ')}
       GROUP BY r.recipe_id, m.meal_id, c.category_id
-      ORDER BY r.recipe_id ASC
+      ORDER BY ${Prisma.raw(recipeOrderBySql(query.sort))}
+      LIMIT ${limit}
+      OFFSET ${offset}
     `);
+
+    return rows.map(toJsonSafeRecipe);
   }
 
   async findById(id: number): Promise<RecipeRecord | null> {
@@ -98,8 +155,8 @@ export class RecipesRepository implements RecipesRepositoryPort {
         m.meal_name,
         c.category_id,
         c.category_name,
-        COALESCE(ROUND(AVG(rt.score), 1), 0) AS overall_score,
-        COALESCE(COUNT(rt.rating_id), 0) AS num_ratings
+        COALESCE(ROUND(AVG(rt.score), 1), 0)::float8 AS overall_score,
+        COALESCE(COUNT(rt.rating_id), 0)::int AS num_ratings
       FROM recipes r
       JOIN meals m ON m.meal_id = r.meal_id
       JOIN categories c ON c.category_id = r.category_id
@@ -108,11 +165,11 @@ export class RecipesRepository implements RecipesRepositoryPort {
       WHERE r.recipe_id = ${id}
       GROUP BY r.recipe_id, a.full_name, m.meal_id, c.category_id
     `);
-    return rows[0] ?? null;
+    return rows[0] ? toJsonSafeRecipe(rows[0]) : null;
   }
 
-  findByUserId(userId: number): Promise<RecipeRecord[]> {
-    return this.prisma.$queryRaw<RecipeRecord[]>(Prisma.sql`
+  async findByUserId(userId: number): Promise<RecipeRecord[]> {
+    const rows = await this.prisma.$queryRaw<RecipeRecord[]>(Prisma.sql`
       SELECT
         r.recipe_id,
         r.recipe_name,
@@ -134,6 +191,7 @@ export class RecipesRepository implements RecipesRepositoryPort {
       WHERE r.user_id = ${userId}
       ORDER BY r.recipe_id ASC
     `);
+    return rows.map(toJsonSafeRecipe);
   }
 
   async create(userId: number, dto: CreateRecipeDto): Promise<RecipeRecord> {

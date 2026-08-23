@@ -151,7 +151,15 @@ describe('Swagger document', () => {
     const queryParameterNames = (recipeList.parameters ?? [])
       .filter((parameter) => parameter.in === 'query')
       .map((parameter) => parameter.name);
-    expect(queryParameterNames).toEqual(['search', 'categoryId', 'mealId']);
+    expect(queryParameterNames).toEqual([
+      'q',
+      'search',
+      'categoryId',
+      'mealId',
+      'sort',
+      'page',
+      'limit',
+    ]);
     expect(new Set(queryParameterNames).size).toBe(queryParameterNames.length);
 
     const recipeSchema = document.components.schemas.RecipeResponseDto;

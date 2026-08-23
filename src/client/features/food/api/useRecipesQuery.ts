@@ -6,6 +6,7 @@ import type { QueryFunctionContext } from "@tanstack/react-query";
 
 export const RECIPE_DISCOVERY_ENDPOINT = (apiRoutes as { recipes: string }).recipes;
 export const DEFAULT_RECIPE_LIMIT = 6;
+export const MAX_RECIPE_LIMIT = 100;
 const supportedSorts = new Set(["popular", "rating", "name"]);
 
 export type RecipeDiscoveryState = {
@@ -17,9 +18,15 @@ export type RecipeDiscoveryState = {
 	limit: number;
 };
 
-const positiveInteger = (value: string | null, fallback: number) => {
+const positiveInteger = (
+	value: string | null,
+	fallback: number,
+	maximum = Number.MAX_SAFE_INTEGER
+) => {
 	const parsed = Number(value);
-	return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+	return Number.isSafeInteger(parsed) && parsed > 0
+		? Math.min(parsed, maximum)
+		: fallback;
 };
 
 export const parseRecipeDiscoveryState = (
@@ -34,15 +41,24 @@ export const parseRecipeDiscoveryState = (
 		mealId: params.get("mealId") || params.get("meals") || "",
 		sort: supportedSorts.has(sort || "") ? (sort as RecipeDiscoveryState["sort"]) : "popular",
 		page: positiveInteger(params.get("page"), 1),
-		limit: positiveInteger(params.get("limit"), DEFAULT_RECIPE_LIMIT),
+		limit: positiveInteger(params.get("limit"), DEFAULT_RECIPE_LIMIT, MAX_RECIPE_LIMIT),
 	};
 };
 
 export const createRecipeQueryKey = (state: RecipeDiscoveryState) => ["recipes", state] as const;
 
 export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
-	const params: Record<string, number | string> = {};
-	if (state.q.trim()) params.search = state.q.trim();
+	const params: Record<string, number | string> = {
+		sort: state.sort,
+		page: Number.isSafeInteger(state.page) && state.page > 0 ? state.page : 1,
+		limit: Math.min(Math.max(state.limit, 1), MAX_RECIPE_LIMIT),
+	};
+	if (state.q.trim()) {
+		const query = state.q.trim();
+		params.q = query;
+		// Express still consumes `search` while the Nest contract consumes `q`.
+		params.search = query;
+	}
 	if (/^\d+$/.test(state.categoryId)) params.categoryId = Number(state.categoryId);
 	if (/^\d+$/.test(state.mealId)) params.mealId = Number(state.mealId);
 	return params;
@@ -87,8 +103,6 @@ const fetchRecipes = async ({
 }: QueryFunctionContext<ReturnType<typeof createRecipeQueryKey>>): Promise<RecipeSummary[]> => {
 	const [, state] = queryKey;
 	const response = await axios.get(RECIPE_DISCOVERY_ENDPOINT, {
-		// The current NestJS DTO supports these three filters only. Keep URL sort/page/limit
-	// in the key for shareable state, but do not invent unsupported server fields.
 		params: createRecipeRequestParams(state),
 		signal,
 	});

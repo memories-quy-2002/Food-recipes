@@ -3,6 +3,7 @@ import type { RecipeSummary } from "@/shared/api/contracts";
 import {
 	createRecipeQueryKey,
 	createRecipeRequestParams,
+	MAX_RECIPE_LIMIT,
 	parseRecipeListPayload,
 	parseRecipeDiscoveryState,
 	useRecipesQuery,
@@ -24,15 +25,30 @@ describe("recipe discovery query state", () => {
 		});
 	});
 
-	it("maps only contract-supported filters to the request", () => {
+	it("maps the complete server-side discovery contract to the request", () => {
 		const state = parseRecipeDiscoveryState(
 			"?q=pasta&categoryId=2&mealId=3&sort=rating&page=2&limit=12"
 		);
 
 		expect(createRecipeRequestParams(state)).toEqual({
+			q: "pasta",
 			search: "pasta",
 			categoryId: 2,
 			mealId: 3,
+			sort: "rating",
+			page: 2,
+			limit: 12,
+		});
+	});
+
+	it("keeps URL pagination within the API limit", () => {
+		const state = parseRecipeDiscoveryState("?page=4&limit=1000");
+
+		expect(state.limit).toBe(MAX_RECIPE_LIMIT);
+		expect(createRecipeRequestParams(state)).toMatchObject({
+			sort: "popular",
+			page: 4,
+			limit: MAX_RECIPE_LIMIT,
 		});
 	});
 
