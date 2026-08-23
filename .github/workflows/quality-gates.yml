@@ -165,12 +165,36 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Typecheck frontend
+        run: pnpm typecheck
+      - name: Run frontend unit tests
+        run: pnpm test:ci
       - name: Build frontend
         run: pnpm build
 
+  frontend-e2e:
+    name: Frontend Playwright E2E
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run frontend Playwright E2E
+        run: pnpm test:e2e:ci
+
   docker-runtime-build:
     name: Docker runtime build
-    needs: frontend
+    needs: frontend-e2e
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

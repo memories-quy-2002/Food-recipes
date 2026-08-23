@@ -55,8 +55,10 @@
     "start:server": "cd src/server && node ../../node_modules/nodemon/bin/nodemon.js app.js",
     "build": "vite build",
     "test": "vitest",
+    "test:ci": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:e2e": "playwright test",
+    "test:e2e:ci": "playwright test",
     "test:ui": "vitest --ui",
     "preview": "vite preview"
   },

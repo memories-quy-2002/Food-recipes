@@ -1,6 +1,6 @@
 # Food Recipes
 
-Food Recipes is a full-stack recipe website for discovering meals, saving favorites, rating recipes, writing reviews, and sharing personal recipes. The frontend is built with React and Vite, while the backend uses Express and PostgreSQL.
+Food Recipes is a full-stack recipe website for discovering meals, saving favorites, rating recipes, writing reviews, and sharing personal recipes. The frontend is a React + TypeScript + Vite application, while the backend provides the recipe API and persistence services.
 
 ## Features
 
@@ -15,10 +15,15 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 
 ## Tech Stack
 
-- Frontend: React, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
-- Backend: Node.js, Express, PostgreSQL, pg
-- Auth and validation: JWT, bcryptjs, Yup
+- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
+- Server state: TanStack Query
+- Forms and validation: React Hook Form + Zod for recipe forms
+- API: REST/OpenAPI-compatible NestJS `/api/v1` through opt-in Kong routing, with the Express fallback as the default
+- Backend: Node.js, Express, PostgreSQL, Prisma, JWT refresh tokens, and RBAC
+- Infrastructure: Docker and Kong enforcement
 - Deployment: Vercel frontend and serverless Express API
+
+PostgreSQL, Prisma, JWT refresh, RBAC, Docker, and Kong enforcement are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend.
 
 ## Project Structure
 
@@ -126,18 +131,28 @@ pnpm run start:server
 ## Build
 
 ```bash
-pnpm run build
+pnpm build
 ```
 
 ## Verification
 
-Run these checks after restructuring or changing shared modules:
+Run the deterministic frontend gates locally:
 
 ```bash
-pnpm run build
-node --check src/server/app.js
-node --check src/server/queries.js
+corepack pnpm typecheck
+corepack pnpm test:ci
+corepack pnpm build
+corepack pnpm test:e2e:ci
 ```
+
+The interactive development commands remain available:
+
+```bash
+pnpm test
+pnpm test:e2e
+```
+
+The Playwright suite runs against the Vite preview server and uses its existing browser-facing journey assertions. CI installs Chromium explicitly before running it.
 
 ## Database Seeds
 
@@ -146,8 +161,9 @@ Seed files live in `src/server/seeds/`. They include additional recipes and rati
 ## Deployment Notes
 
 - The production frontend API defaults to `https://food-recipes-server-omega.vercel.app`.
-- Set `VITE_API_BASE_URL` if the API deployment URL changes.
-- Set `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
+- Set public `VITE_API_BASE_URL` if the API deployment URL changes.
+- Set public `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
+- Vercel runs `pnpm build`, serves the `dist` output, and rewrites client-side routes to `index.html` while keeping asset paths safe.
 - The server exports the Express app for Vercel and only calls `app.listen()` outside Vercel.
 
 ## Documentation
