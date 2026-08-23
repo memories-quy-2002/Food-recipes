@@ -1,0 +1,204 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class ApiErrorResponseDto {
+  @ApiProperty({ example: 400 })
+  statusCode!: number;
+
+  @ApiProperty({ example: 'BAD_REQUEST' })
+  code!: string;
+
+  @ApiProperty({ example: 'Request validation failed' })
+  message!: string;
+
+  @ApiProperty({ example: 'request-id', nullable: true })
+  requestId!: string | null;
+}
+
+export class HealthResponseDto {
+  @ApiProperty({ example: 'ok' })
+  status!: 'ok';
+}
+
+export class PublicUserResponseDto {
+  @ApiProperty({ example: 7 })
+  user_id!: number;
+
+  @ApiProperty({ example: 'Ada Lovelace' })
+  full_name!: string;
+
+  @ApiProperty({ example: 'ada@example.com' })
+  email!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  created_on!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  last_login!: string | null;
+
+  @ApiProperty({ example: '+1 555 0100', nullable: true })
+  phone!: string | null;
+
+  @ApiProperty({ example: 'London', nullable: true })
+  address!: string | null;
+}
+
+export class AuthResponseDto {
+  @ApiProperty({ type: PublicUserResponseDto })
+  user!: PublicUserResponseDto;
+
+  @ApiProperty({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' })
+  token!: string;
+
+  @ApiProperty({ example: 'Logged in!' })
+  message!: string;
+}
+
+export class MessageResponseDto {
+  @ApiProperty({ example: 'Password updated successfully!' })
+  message!: string;
+}
+
+export class RecipeResponseDto {
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Pasta Carbonara' })
+  recipe_name!: string;
+
+  @ApiProperty({ example: 'A quick weeknight pasta.', nullable: true })
+  recipe_description!: string | null;
+
+  @ApiProperty({ example: 10 })
+  prep_time_minutes!: number;
+
+  @ApiProperty({ example: 20 })
+  cook_time_minutes!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  date_added!: string | null;
+
+  @ApiProperty({ example: 'https://example.com/pasta.jpg', nullable: true })
+  image_url!: string | null;
+
+  @ApiProperty({ type: [String], nullable: true })
+  ingredients!: string[] | null;
+
+  @ApiProperty({ type: [String], nullable: true })
+  instructions!: string[] | null;
+
+  @ApiProperty({ example: 7 })
+  user_id!: number;
+
+  @ApiPropertyOptional({ example: 'Ada Lovelace' })
+  full_name?: string | null;
+
+  @ApiPropertyOptional({ example: 1 })
+  meal_id?: number;
+
+  @ApiPropertyOptional({ example: 'Dinner' })
+  meal_name?: string;
+
+  @ApiPropertyOptional({ example: 8 })
+  category_id?: number;
+
+  @ApiPropertyOptional({ example: 'Pasta' })
+  category_name?: string;
+
+  @ApiPropertyOptional({ example: 4.5 })
+  overall_score?: number;
+
+  @ApiPropertyOptional({ example: 12 })
+  num_ratings?: number;
+}
+
+export class RecipeListResponseDto {
+  @ApiProperty({ type: [RecipeResponseDto] })
+  recipes!: RecipeResponseDto[];
+}
+
+export class RecipeDetailResponseDto {
+  @ApiProperty({ type: RecipeResponseDto })
+  recipe!: RecipeResponseDto;
+}
+
+export class RatingAggregateResponseDto {
+  @ApiProperty({ example: 4.5 })
+  overall_score!: number;
+
+  @ApiProperty({ example: 12 })
+  num_ratings!: number;
+}
+
+export class RatingMutationResponseDto {
+  @ApiProperty({ example: 'Rating saved successfully' })
+  message!: string;
+
+  @ApiProperty({ type: RatingAggregateResponseDto })
+  aggregate!: RatingAggregateResponseDto;
+}
+
+export class RatingResponseDto {
+  @ApiProperty({ example: 21 })
+  rating_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Pasta Carbonara' })
+  recipe_name!: string;
+
+  @ApiProperty({ example: 'https://example.com/pasta.jpg', nullable: true })
+  image_url!: string | null;
+
+  @ApiProperty({ example: 5 })
+  score!: number;
+
+  @ApiProperty({ example: 'Delicious!', nullable: true })
+  review!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  date_added!: string | null;
+}
+
+export class RatingsListResponseDto {
+  @ApiProperty({ type: [RatingResponseDto] })
+  ratings!: RatingResponseDto[];
+}
+
+export class ReviewResponseDto {
+  @ApiProperty({ example: 21 })
+  rating_id!: number;
+
+  @ApiProperty({ example: 5 })
+  score!: number;
+
+  @ApiProperty({ example: 'Delicious!', nullable: true })
+  review!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  date_added!: string | null;
+
+  @ApiProperty({ example: 'Ada Lovelace' })
+  full_name!: string;
+}
+
+export class ReviewsResponseDto {
+  @ApiProperty({ type: [ReviewResponseDto] })
+  reviews!: ReviewResponseDto[];
+
+  @ApiProperty({ type: RatingAggregateResponseDto })
+  aggregate!: RatingAggregateResponseDto;
+}
+
+export class WishlistItemResponseDto {
+  @ApiProperty({ type: RecipeResponseDto })
+  recipe!: RecipeResponseDto;
+
+  @ApiProperty({ example: '2026-08-23T06:30:00.000Z', format: 'date-time' })
+  savedAt!: string;
+}
+
+export class WishlistResponseDto {
+  @ApiProperty({ type: [WishlistItemResponseDto] })
+  wishlist!: WishlistItemResponseDto[];
+}

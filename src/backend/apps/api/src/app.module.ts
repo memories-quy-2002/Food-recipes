@@ -8,6 +8,7 @@ import { PrismaModule } from './infrastructure/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { RatingsModule } from './modules/ratings/ratings.module';
+import { RecipesModule } from './modules/recipes/recipes.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     PrismaModule,
     HealthModule,
     AuthModule,
+    RecipesModule,
     RatingsModule,
     WishlistModule,
   ],

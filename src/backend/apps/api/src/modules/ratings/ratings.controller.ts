@@ -4,17 +4,31 @@ import {
   Delete,
   Get,
   Inject,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBadRequestResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { UpsertRatingDto } from './dto/upsert-rating.dto';
 import { RatingsService, RatingsServicePort } from './ratings.service';
+import {
+  ApiErrorResponseDto,
+  RatingMutationResponseDto,
+  ReviewsResponseDto,
+} from '../../common/swagger/response.schemas';
 
 @ApiTags('Ratings')
 @Controller({ path: 'recipes', version: '1' })
@@ -28,6 +42,10 @@ export class RatingsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create or update the authenticated user rating' })
+  @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
+  @ApiOkResponse({ description: 'Rating saved', type: RatingMutationResponseDto })
+  @ApiBadRequestResponse({ description: 'Rating input is invalid', type: ApiErrorResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   upsert(
     @Param('recipeId', ParseIntPipe) recipeId: number,
     @CurrentUser() user: AuthUser,
@@ -40,6 +58,9 @@ export class RatingsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete the authenticated user rating' })
+  @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
+  @ApiOkResponse({ description: 'Rating removed', type: RatingMutationResponseDto })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   remove(
     @Param('recipeId', ParseIntPipe) recipeId: number,
     @CurrentUser() user: AuthUser,
@@ -49,6 +70,8 @@ export class RatingsController {
 
   @Get(':recipeId/reviews')
   @ApiOperation({ summary: 'List recipe reviews and aggregate rating' })
+  @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
+  @ApiOkResponse({ description: 'Reviews and aggregate rating', type: ReviewsResponseDto })
   listReviews(@Param('recipeId', ParseIntPipe) recipeId: number) {
     return this.ratingsService.listReviews(recipeId);
   }
