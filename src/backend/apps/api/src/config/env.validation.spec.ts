@@ -31,4 +31,17 @@ describe('validateEnvironment', () => {
       }),
     ).toThrow(/JWT_SECRET/);
   });
+
+  it.each([
+    'replace-with-a-random-secret-of-at-least-32-characters',
+    'change-me-to-a-random-secret-of-at-least-32-characters',
+    'generate-a-random-secret-of-at-least-32-characters',
+  ])('rejects the placeholder JWT secret %s', (jwtSecret) => {
+    expect(() =>
+      validateEnvironment({
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: jwtSecret,
+      }),
+    ).toThrow(/JWT_SECRET/);
+  });
 });

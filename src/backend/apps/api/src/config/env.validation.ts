@@ -3,6 +3,8 @@ export type Environment = Record<string, unknown>;
 const asString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
+const JWT_PLACEHOLDER_PATTERN = /replace-with|change-me|generate/i;
+
 export function validateEnvironment(environment: Environment): Environment {
   const databaseUrl = asString(environment.DATABASE_URL);
   const jwtSecret = asString(environment.JWT_SECRET);
@@ -11,8 +13,14 @@ export function validateEnvironment(environment: Environment): Environment {
     throw new Error('DATABASE_URL is required');
   }
 
-  if (!jwtSecret || jwtSecret.length < 32) {
-    throw new Error('JWT_SECRET must be at least 32 characters');
+  if (
+    !jwtSecret ||
+    jwtSecret.length < 32 ||
+    JWT_PLACEHOLDER_PATTERN.test(jwtSecret)
+  ) {
+    throw new Error(
+      'JWT_SECRET must be at least 32 characters and must not be a placeholder',
+    );
   }
 
   const rawPort = environment.PORT ?? '3000';
