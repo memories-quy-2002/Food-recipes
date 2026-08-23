@@ -13,6 +13,7 @@ const apiRoutes = {
 	authToken: "/auth/token",
 	authLogin: "/auth/login",
 	authSignup: "/auth/signup",
+	authRefresh: "/auth/refresh",
 	userProfile: "/users/me/profile",
 	userPassword: "/users/me/password",
 	databaseHealth: "/health/ready",

@@ -1,4 +1,4 @@
-const localKongBaseUrl = "http://localhost:3000";
+const localKongBaseUrl = "http://localhost:8000";
 
 const trimTrailingSlashes = (value) => value.replace(/\/+$/, "");
 
@@ -29,6 +29,18 @@ const getStorageToken = (storage) => {
 
 export const getStoredAuthToken = (storageLike = globalThis) => {
 	const localToken = getStorageToken(storageLike.localStorage);
-
 	return localToken || getStorageToken(storageLike.sessionStorage);
+};
+
+export const storeAuthToken = (token, storageLike = globalThis) => {
+	for (const storage of [storageLike.localStorage, storageLike.sessionStorage]) {
+		try {
+			if (storage?.getItem("isAuthenticated") === "true") {
+				storage.setItem("jwt", token);
+				return;
+			}
+		} catch {
+			// Ignore unavailable browser storage.
+		}
+	}
 };

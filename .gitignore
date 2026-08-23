@@ -33,6 +33,7 @@ coverage/
 test-results/
 playwright-report/
 blob-report/
+src/frontend/output/
 cypress/videos/
 cypress/screenshots/
 

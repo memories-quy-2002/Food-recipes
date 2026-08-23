@@ -4,26 +4,20 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
 
 permissions:
   contents: read
 
 jobs:
-  install:
-    name: Validate repository layout
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check Node runtime
-        run: node --version
-
   static:
     name: Static validators
-    needs: install
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Run DB-free static validators
         run: |
           node src/backend/test/ci-workflow.validation.mjs
@@ -32,8 +26,8 @@ jobs:
           node src/backend/test/docker-infrastructure.validation.mjs
           node src/backend/test/backend-product-security.validation.mjs
 
-  prisma:
-    name: Prisma validate and generate
+  backend:
+    name: Backend quality
     needs: static
     runs-on: ubuntu-latest
     steps:
@@ -49,109 +43,28 @@ jobs:
       - name: Install locked dependencies
         working-directory: src/backend
         run: pnpm install --frozen-lockfile
-      - name: Validate and generate Prisma Client offline
+      - name: Validate Prisma schema
         working-directory: src/backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          trap 'rm -f prisma.ci.config.ts' EXIT
-          cat > prisma.ci.config.ts <<'EOF'
-          import { defineConfig } from 'prisma/config';
-
-          export default defineConfig({
-            schema: 'prisma/schema.prisma',
-            migrations: { path: 'prisma/migrations' },
-            datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
-          });
-          EOF
-          pnpm exec prisma validate --config prisma.ci.config.ts
-          pnpm exec prisma generate --config prisma.ci.config.ts
-
-  api-quality:
-    name: API typecheck and unit tests
-    needs: prisma
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: src/backend/pnpm-lock.yaml
-      - name: Install locked dependencies
+        run: pnpm prisma:validate
+      - name: Generate Prisma client
         working-directory: src/backend
-        run: pnpm install --frozen-lockfile
-      - name: Generate Prisma Client offline
+        run: pnpm prisma:generate
+      - name: Typecheck and unit tests
         working-directory: src/backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          trap 'rm -f prisma.ci.config.ts' EXIT
-          cat > prisma.ci.config.ts <<'EOF'
-          import { defineConfig } from 'prisma/config';
-
-          export default defineConfig({
-            schema: 'prisma/schema.prisma',
-            migrations: { path: 'prisma/migrations' },
-            datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
-          });
-          EOF
-          pnpm exec prisma generate --config prisma.ci.config.ts
-      - name: Typecheck API
-        working-directory: src/backend
-        run: pnpm typecheck
-      - name: Run API unit tests
-        working-directory: src/backend
-        run: pnpm test
-      - name: Audit backend dependencies
-        working-directory: src/backend
-        # Prisma 7.9.1 currently pins deepmerge-ts 7.x; keep this upstream
-        # tooling advisory explicit until Prisma publishes a patched pin.
-        run: pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx
-
-  contract-e2e:
-    name: API contract E2E
-    needs: api-quality
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: src/backend/pnpm-lock.yaml
-      - name: Install locked dependencies
-        working-directory: src/backend
-        run: pnpm install --frozen-lockfile
-      - name: Generate Prisma Client offline
-        working-directory: src/backend
-        shell: bash
-        run: |
-          set -euo pipefail
-          trap 'rm -f prisma.ci.config.ts' EXIT
-          cat > prisma.ci.config.ts <<'EOF'
-          import { defineConfig } from 'prisma/config';
-
-          export default defineConfig({
-            schema: 'prisma/schema.prisma',
-            migrations: { path: 'prisma/migrations' },
-            datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
-          });
-          EOF
-          pnpm exec prisma generate --config prisma.ci.config.ts
+        run: pnpm check
       - name: Run API contract E2E tests
         working-directory: src/backend
         run: pnpm test:e2e
+      - name: Build API
+        working-directory: src/backend
+        run: pnpm build
+      - name: Audit backend dependencies
+        working-directory: src/backend
+        run: pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx
 
   frontend:
-    name: Frontend build
-    needs: contract-e2e
+    name: Frontend quality
+    needs: backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -166,12 +79,9 @@ jobs:
       - name: Install locked dependencies
         working-directory: src/frontend
         run: pnpm install --frozen-lockfile
-      - name: Typecheck frontend
+      - name: Lint, typecheck, and unit tests
         working-directory: src/frontend
-        run: pnpm typecheck
-      - name: Run frontend unit tests
-        working-directory: src/frontend
-        run: pnpm test:ci
+        run: pnpm check
       - name: Build frontend
         working-directory: src/frontend
         run: pnpm build
@@ -211,7 +121,7 @@ jobs:
 
   migration-release-handoff:
     name: One-shot migration gate / release handoff
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: docker-runtime-build
     runs-on: ubuntu-latest
     env:
@@ -229,6 +139,6 @@ jobs:
       - name: Install locked dependencies
         working-directory: src/backend
         run: pnpm install --frozen-lockfile
-      - name: Run one-shot Prisma migration gate
+      - name: Deploy Prisma migrations once per release
         working-directory: src/backend
-        run: pnpm exec prisma migrate deploy --config prisma.config.ts
+        run: pnpm prisma:migrate:deploy
