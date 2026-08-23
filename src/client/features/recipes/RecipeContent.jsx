@@ -10,11 +10,15 @@ const RecipeContent = ({
 	reviewList,
 	reviewMessage,
 	hasExistingRating,
+	isRecipeAuthor,
+	canDeleteReview,
 	isLoadingReviews,
 	reviewsError,
 	isAuthenticated,
 	isSubmittingReview,
+	isDeletingReview,
 	onSubmit,
+	onDelete,
 	onStarClick,
 	onToggleReview,
 	onReviewChange,
@@ -28,12 +32,16 @@ const RecipeContent = ({
 				reviewList={reviewList}
 				reviewMessage={reviewMessage}
 				hasExistingRating={hasExistingRating}
+				isRecipeAuthor={isRecipeAuthor}
+				canDeleteReview={canDeleteReview}
 				isLoadingReviews={isLoadingReviews}
 				reviewsError={reviewsError}
 				showReview={showReview}
 				isAuthenticated={isAuthenticated}
 				isSubmittingReview={isSubmittingReview}
+				isDeletingReview={isDeletingReview}
 				onSubmit={onSubmit}
+				onDelete={onDelete}
 				onStarClick={onStarClick}
 				onToggleReview={onToggleReview}
 				onReviewChange={onReviewChange}

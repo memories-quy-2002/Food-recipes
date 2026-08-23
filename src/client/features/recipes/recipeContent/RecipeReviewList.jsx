@@ -69,7 +69,7 @@ const RecipeReviewList = ({ reviewList }) => {
 												"avatar",
 												"recipe__content__reviews__list__item__container__context__img"
 											)}
-											<strong>{review.full_name}</strong>
+											<strong>{review.full_name || "Anonymous cook"}</strong>
 										</div>
 									</div>
 									<div className="recipe__content__reviews__list__item__container__info">
@@ -77,19 +77,19 @@ const RecipeReviewList = ({ reviewList }) => {
 											{ratingStar(review.score, "orange")}{" "}
 										</div>
 										<div>
-											<span
-												style={{
-													fontSize: "12px",
-												}}
-											>
-												{formatTimestamp(
-													review.date_added
-												)}
-											</span>
+													<time
+														dateTime={review.date_added || undefined}
+														style={{ fontSize: "12px" }}
+													>
+														{formatTimestamp(review.date_added)}
+													</time>
 										</div>
 									</div>
 
 									<p>{review.review || "No written review."}</p>
+									<p className="recipe__content__reviews__report-note" role="note">
+										Reporting reviews is not available yet because no backend report endpoint exists.
+									</p>
 								</div>
 							</li>
 						))}

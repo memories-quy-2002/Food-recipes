@@ -2,7 +2,8 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
-import { apiRoutes } from "@/shared/api/routes";
+import { apiRouteCompatibility, apiRoutes } from "@/shared/api/routes";
+import { getApiTarget } from "@/shared/api/config";
 import RecipeContainerSummary from "@/features/recipes/RecipeContainerSummary";
 import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
@@ -31,9 +32,13 @@ const Recipe = () => {
 	const [isLoadingReviews, setIsLoadingReviews] = useState(false);
 	const [reviewsError, setReviewsError] = useState(null);
 	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+	const [isDeletingReview, setIsDeletingReview] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
+	const canDeleteReview = Boolean(
+		apiRouteCompatibility.userRecipeRatingDelete[getApiTarget()]
+	);
 
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
@@ -135,6 +140,38 @@ const Recipe = () => {
 			});
 		} finally {
 			setIsSubmittingReview(false);
+		}
+	};
+
+	const handleDeleteReview = async () => {
+		if (!isAuthenticated || !recipe || !hasExistingRating || !canDeleteReview) {
+			return;
+		}
+
+		setIsDeletingReview(true);
+		setReviewMessage(null);
+		try {
+			await axios.delete(
+				apiRoutes.userRecipeRatingDelete(userId, recipe.recipe_id)
+			);
+			setRatingScore(0);
+			setReview("");
+			setShowReview(false);
+			setHasExistingRating(false);
+			await fetchRecipe({ showLoading: false });
+			await fetchReviews(recipe.recipe_id);
+			setReviewMessage({
+				type: "success",
+				text: "Your review has been deleted.",
+			});
+		} catch (err) {
+			console.error(err);
+			setReviewMessage({
+				type: "error",
+				text: "We could not delete your review. Please try again.",
+			});
+		} finally {
+			setIsDeletingReview(false);
 		}
 	};
 
@@ -283,11 +320,18 @@ const Recipe = () => {
 						reviewList={reviewList}
 						reviewMessage={reviewMessage}
 						hasExistingRating={hasExistingRating}
+						isRecipeAuthor={
+							Number(recipe.user_id) === Number(userId) &&
+							isAuthenticated
+						}
+						canDeleteReview={canDeleteReview}
 						isLoadingReviews={isLoadingReviews}
 						reviewsError={reviewsError}
 						isAuthenticated={isAuthenticated}
 						isSubmittingReview={isSubmittingReview}
+						isDeletingReview={isDeletingReview}
 						onSubmit={handleSubmit}
+						onDelete={handleDeleteReview}
 						onStarClick={handleStarClick}
 						onToggleReview={handleToggleReview}
 						onReviewChange={handleReviewChange}

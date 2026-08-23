@@ -13,15 +13,27 @@ const RecipeRating = ({
 	reviewsError,
 	showReview,
 	isAuthenticated,
+	isRecipeAuthor,
+	canDeleteReview,
 	isSubmittingReview,
+	isDeletingReview,
 	onSubmit,
+	onDelete,
 	onStarClick,
 	onToggleReview,
 	onReviewChange,
 }) => {
 	return (
 		<>
-			{!isAuthenticated ? (
+			{isRecipeAuthor ? (
+				<Row className="recipe__content__rating">
+					<div className="recipe__content__rating__signin" role="note">
+						<strong>
+							You cannot review your own recipe. Other cooks can rate and review it here.
+						</strong>
+					</div>
+				</Row>
+			) : !isAuthenticated ? (
 				<Row className="recipe__content__rating">
 					<div className="recipe__content__rating__signin">
 						<strong>
@@ -123,17 +135,29 @@ const RecipeRating = ({
 							controlId="formBasicSubmit"
 							className="recipe__content__rating__submit"
 						>
-							<Button
-								variant="primary"
-								type="submit"
-								disabled={isSubmittingReview || !ratingScore}
-							>
-								{isSubmittingReview
-									? "Saving..."
-									: hasExistingRating
-									? "Update review"
-									: "Submit review"}
-							</Button>
+							<div className="recipe__content__rating__actions">
+								<Button
+									variant="primary"
+									type="submit"
+									disabled={isSubmittingReview || isDeletingReview || !ratingScore}
+								>
+									{isSubmittingReview
+										? "Saving..."
+										: hasExistingRating
+										? "Update review"
+										: "Submit review"}
+								</Button>
+								{hasExistingRating && canDeleteReview && (
+									<Button
+										variant="outline-danger"
+										type="button"
+										disabled={isSubmittingReview || isDeletingReview}
+										onClick={onDelete}
+									>
+										{isDeletingReview ? "Deleting..." : "Delete my review"}
+									</Button>
+								)}
+							</div>
 						</Form.Group>
 					</Form>
 				</Row>

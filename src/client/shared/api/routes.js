@@ -47,6 +47,11 @@ const routeDefinitions = {
 		legacy: (userId, recipeId) => `/users/${userId}/ratings/${recipeId}`,
 		nest: (_userId, recipeId) => `/recipes/${recipeId}/rating`,
 	},
+	userRecipeRatingDelete: {
+		legacy: null,
+		nest: (_userId, recipeId) => `/recipes/${recipeId}/rating`,
+		reason: "The legacy Express API does not expose an ownership-preserving rating delete endpoint.",
+	},
 	recipeReviews: {
 		legacy: (recipeId) => `/recipes/${recipeId}/reviews`,
 		nest: (recipeId) => `/recipes/${recipeId}/reviews`,
