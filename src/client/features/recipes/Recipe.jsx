@@ -39,6 +39,9 @@ const Recipe = () => {
 	const canDeleteReview = Boolean(
 		apiRouteCompatibility.userRecipeRatingDelete[getApiTarget()]
 	);
+	const canMutateReview = Boolean(
+		apiRouteCompatibility.userRecipeRating.ownershipSafe[getApiTarget()]
+	);
 
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
@@ -105,7 +108,7 @@ const Recipe = () => {
 			return;
 		}
 
-		if (!recipe) return;
+		if (!recipe || !canMutateReview) return;
 
 		if (!ratingScore) {
 			setReviewMessage({
@@ -119,7 +122,7 @@ const Recipe = () => {
 		setReviewMessage(null);
 
 		try {
-			await axios.put(apiRoutes.userRecipeRating(userId, recipe.recipe_id), {
+			await axios.put(apiRoutes.userRecipeRating(recipe.recipe_id), {
 				score: ratingScore,
 				review: review.trim(),
 			});
@@ -144,7 +147,13 @@ const Recipe = () => {
 	};
 
 	const handleDeleteReview = async () => {
-		if (!isAuthenticated || !recipe || !hasExistingRating || !canDeleteReview) {
+		if (
+			!isAuthenticated ||
+			!recipe ||
+			!hasExistingRating ||
+			!canMutateReview ||
+			!canDeleteReview
+		) {
 			return;
 		}
 
@@ -152,7 +161,7 @@ const Recipe = () => {
 		setReviewMessage(null);
 		try {
 			await axios.delete(
-				apiRoutes.userRecipeRatingDelete(userId, recipe.recipe_id)
+				apiRoutes.userRecipeRatingDelete(recipe.recipe_id)
 			);
 			setRatingScore(0);
 			setReview("");
@@ -325,6 +334,7 @@ const Recipe = () => {
 							isAuthenticated
 						}
 						canDeleteReview={canDeleteReview}
+						canMutateReview={canMutateReview}
 						isLoadingReviews={isLoadingReviews}
 						reviewsError={reviewsError}
 						isAuthenticated={isAuthenticated}

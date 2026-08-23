@@ -6,7 +6,7 @@ describe("rating delete API contract Task 15", () => {
 		const nestRoutes = createApiRoutes("nest");
 		const legacyRoutes = createApiRoutes("legacy");
 
-		expect(nestRoutes.userRecipeRatingDelete(7, 15)).toBe("/recipes/15/rating");
+		expect(nestRoutes.userRecipeRatingDelete(15)).toBe("/recipes/15/rating");
 		expect(() => legacyRoutes.userRecipeRatingDelete(7, 15)).toThrow(
 			"legacy Express API does not expose"
 		);

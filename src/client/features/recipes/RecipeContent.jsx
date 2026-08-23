@@ -11,6 +11,7 @@ const RecipeContent = ({
 	reviewMessage,
 	hasExistingRating,
 	isRecipeAuthor,
+	canMutateReview,
 	canDeleteReview,
 	isLoadingReviews,
 	reviewsError,
@@ -33,6 +34,7 @@ const RecipeContent = ({
 				reviewMessage={reviewMessage}
 				hasExistingRating={hasExistingRating}
 				isRecipeAuthor={isRecipeAuthor}
+				canMutateReview={canMutateReview}
 				canDeleteReview={canDeleteReview}
 				isLoadingReviews={isLoadingReviews}
 				reviewsError={reviewsError}

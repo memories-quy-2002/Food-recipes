@@ -128,8 +128,19 @@ describe("API route compatibility", () => {
 		expect(routes.userWishlistItem(42, 7)).toBe(
 			"/users/me/wishlist/7"
 		);
-		expect(routes.userRecipeRating(42, 7)).toBe("/recipes/7/rating");
+		expect(routes.userRecipeRating(7)).toBe("/recipes/7/rating");
 		expect(routes.databaseHealth).toBe("/health/ready");
+	});
+
+	it("marks rating mutations ownership-safe only for Nest", () => {
+		expect(apiRouteCompatibility.userRecipeRating.ownershipSafe).toEqual({
+			legacy: false,
+			nest: true,
+		});
+		expect(apiRouteCompatibility.userRecipeRatingDelete.ownershipSafe).toEqual({
+			legacy: false,
+			nest: true,
+		});
 	});
 
 	it("keeps unsupported Nest routes explicit instead of guessing a path", () => {

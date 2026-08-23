@@ -45,11 +45,13 @@ const routeDefinitions = {
 	},
 	userRecipeRating: {
 		legacy: (userId, recipeId) => `/users/${userId}/ratings/${recipeId}`,
-		nest: (_userId, recipeId) => `/recipes/${recipeId}/rating`,
+		nest: (recipeId) => `/recipes/${recipeId}/rating`,
+		ownershipSafe: { legacy: false, nest: true },
 	},
 	userRecipeRatingDelete: {
 		legacy: null,
-		nest: (_userId, recipeId) => `/recipes/${recipeId}/rating`,
+		nest: (recipeId) => `/recipes/${recipeId}/rating`,
+		ownershipSafe: { legacy: false, nest: true },
 		reason: "The legacy Express API does not expose an ownership-preserving rating delete endpoint.",
 	},
 	recipeReviews: {
@@ -134,6 +136,7 @@ export const apiRouteCompatibility = Object.freeze(
 			{
 				legacy: Boolean(definition.legacy),
 				nest: Boolean(definition.nest),
+				ownershipSafe: definition.ownershipSafe || null,
 				reason: definition.reason || null,
 			},
 		])

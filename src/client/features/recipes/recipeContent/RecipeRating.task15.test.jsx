@@ -14,6 +14,7 @@ const baseProps = {
 	showReview: true,
 	isAuthenticated: true,
 	isRecipeAuthor: false,
+	canMutateReview: true,
 	canDeleteReview: true,
 	isSubmittingReview: false,
 	isDeletingReview: false,
@@ -53,6 +54,21 @@ describe("recipe rating Task 15", () => {
 		act(() => {
 			renderer.update(<RecipeRating {...baseProps} />);
 		});
+		expect(renderer.root.findAllByProps({ children: "Delete my review" })).toHaveLength(0);
+	});
+
+	it("renders legacy review mutations as an accessible read-only explanation", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<RecipeRating {...baseProps} canMutateReview={false} canDeleteReview={false} />
+			);
+		});
+
+		expect(renderer.root.findByType("strong").children.join(" ")).toContain(
+			"Community review mutations are unavailable until an ownership-safe API is configured"
+		);
+		expect(renderer.root.findAllByType("form")).toHaveLength(0);
 		expect(renderer.root.findAllByProps({ children: "Delete my review" })).toHaveLength(0);
 	});
 

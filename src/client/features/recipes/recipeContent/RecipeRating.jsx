@@ -14,6 +14,7 @@ const RecipeRating = ({
 	showReview,
 	isAuthenticated,
 	isRecipeAuthor,
+	canMutateReview,
 	canDeleteReview,
 	isSubmittingReview,
 	isDeletingReview,
@@ -30,6 +31,14 @@ const RecipeRating = ({
 					<div className="recipe__content__rating__signin" role="note">
 						<strong>
 							You cannot review your own recipe. Other cooks can rate and review it here.
+						</strong>
+					</div>
+				</Row>
+			) : !canMutateReview ? (
+				<Row className="recipe__content__rating">
+					<div className="recipe__content__rating__signin" role="note">
+						<strong>
+							Community review mutations are unavailable until an ownership-safe API is configured.
 						</strong>
 					</div>
 				</Row>
