@@ -14,10 +14,12 @@ const recipe = {
 	recipe_id: 7,
 	recipe_name: "Tomato soup",
 	recipe_description: null,
-	prep_time: "00:10:00",
-	cook_time: "00:20:00",
+	prep_time_minutes: 10,
+	cook_time_minutes: 20,
+	total_time_minutes: 30,
 	date_added: null,
 	image_url: null,
+	user_id: 1,
 };
 const signal = new AbortController().signal;
 const nestRecipe = {
@@ -41,26 +43,6 @@ describe("recipe query contracts", () => {
 		expect(recipeQueryKeys.all).toEqual(["recipes"]);
 		expect(recipeQueryKeys.list()).toEqual(["recipes", "list"]);
 		expect(recipeQueryKeys.detail(7)).toEqual(["recipes", "detail", "7"]);
-	});
-
-	it("preserves a legacy array response through the current route", async () => {
-		vi.mocked(axios.get).mockResolvedValueOnce({ data: [recipe] });
-
-		await expect(fetchAllRecipes({ signal })).resolves.toEqual([recipe]);
-		expect(axios.get).toHaveBeenCalledWith("/recipes", {
-			params: { page: 1, limit: 100 },
-			signal,
-		});
-	});
-
-	it("preserves a non-paginated recipe envelope", async () => {
-		vi.mocked(axios.get).mockResolvedValueOnce({ data: { recipes: [recipe] } });
-
-		await expect(fetchAllRecipes({ signal })).resolves.toEqual([recipe]);
-		expect(axios.get).toHaveBeenCalledWith("/recipes", {
-			params: { page: 1, limit: 100 },
-			signal,
-		});
 	});
 
 	it("aggregates sequential Nest pages with the bounded page size", async () => {

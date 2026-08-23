@@ -31,13 +31,13 @@ jobs:
 
       - name: Create client env file
         run: |
-          echo "VITE_API_URL=http://localhost:3000" > src/frontend/.env
+          echo "VITE_KONG_BASE_URL=http://localhost:3000" > src/frontend/.env
 
-      - name: Create server env file
+      - name: Create backend env file
         run: |
-          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/server/.env
-          echo "JWT_SECRET=test-secret-for-agent-sandbox" >> src/server/.env
+          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/backend/apps/api/.env
+          printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 48)" >> src/backend/apps/api/.env
 
       - name: Typecheck client
-        run: pnpm --filter client exec tsc --noEmit
+        run: pnpm exec tsc --noEmit
         continue-on-error: true

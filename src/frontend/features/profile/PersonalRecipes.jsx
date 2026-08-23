@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
-import { getApiTarget } from "@/shared/api/config";
 import { isRecipeDeleteSuccess } from "@/shared/api/mutations";
 import PageState from "@/shared/ui/PageState";
 import convertImage from "@/shared/utils/convertImage";
@@ -25,7 +24,7 @@ const PersonalRecipes = ({ user }) => {
 			try {
 				setIsLoading(true);
 				setError("");
-				const response = await axios.get(apiRoutes.userRecipes(user.user_id));
+				const response = await axios.get(apiRoutes.userRecipes);
 				if (response.status === 200) {
 					setPersonalRecipes(
 						getArrayPayload(response.data, "recipes")
@@ -60,7 +59,7 @@ const PersonalRecipes = ({ user }) => {
 	const handleDeleteRecipe = async () => {
 		try {
 			const response = await axios.delete(apiRoutes.recipe(recipeId));
-			if (isRecipeDeleteSuccess(getApiTarget(), response.status)) {
+			if (isRecipeDeleteSuccess(response.status)) {
 				setPersonalRecipes((recipes) =>
 					recipes.filter((recipe) => recipe.recipe_id !== recipeId)
 				);

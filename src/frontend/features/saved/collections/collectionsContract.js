@@ -1,5 +1,3 @@
-import { apiTargets } from "@/shared/api/routes";
-
 const unsupportedContract = Object.freeze({
 	status: "unsupported",
 	defaultCollection: Object.freeze({ id: "all-saved", name: "All saved" }),
@@ -13,13 +11,6 @@ const unsupportedContract = Object.freeze({
 });
 
 /**
- * Keep collection capability explicit until both API contracts can persist it.
- * The target argument makes the decision testable for every supported backend.
+ * Keep collection capability explicit until the API can persist it.
  */
-export const getSavedCollectionsContract = (target) => {
-	if (target !== apiTargets.LEGACY && target !== apiTargets.NEST) {
-		throw new Error(`Unknown API target: ${target}`);
-	}
-
-	return unsupportedContract;
-};
+export const getSavedCollectionsContract = () => unsupportedContract;

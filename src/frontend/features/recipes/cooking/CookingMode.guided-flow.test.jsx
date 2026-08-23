@@ -32,7 +32,7 @@ const findByRole = (renderer, role) =>
 const findText = (renderer, text) =>
 	renderer.root.findAll((node) => node.children.join("") === text)[0];
 
-describe("cooking mode Task 14", () => {
+describe("cooking mode guided flow", () => {
 	it("preserves instruction order and exact text while exposing the current step", () => {
 		expect(getCookingInstructions(recipe)).toEqual(recipe.instructions);
 		const renderer = renderCookingMode();

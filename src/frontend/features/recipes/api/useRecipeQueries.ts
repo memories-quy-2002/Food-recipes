@@ -65,26 +65,14 @@ const parseRecipePagination = (value: unknown): RecipePagination | undefined => 
 	return { page, limit, total, totalPages, hasNext };
 };
 
-const hasOwnProperty = (value: Record<string, unknown>, key: string) =>
-	Object.prototype.hasOwnProperty.call(value, key);
-
-const parseRecipeListResponse = (
-	payload: unknown,
-	allowLegacyResponse: boolean
-): RecipeListResponse => {
-	if (allowLegacyResponse && Array.isArray(payload)) {
-		return { recipes: payload as RecipeSummary[] };
-	}
-
+const parseRecipeListResponse = (payload: unknown): RecipeListResponse => {
 	if (!isRecord(payload) || !Array.isArray(payload.recipes)) {
 		throw new Error(
 			"Recipe catalog response is malformed: expected a recipes array."
 		);
 	}
 
-	if (!hasOwnProperty(payload, "pagination")) {
-		if (allowLegacyResponse) return { recipes: payload.recipes as RecipeSummary[] };
-
+	if (!Object.prototype.hasOwnProperty.call(payload, "pagination")) {
 		throw new Error(
 			"Recipe catalog response is missing pagination metadata for a requested page."
 		);
@@ -124,16 +112,16 @@ export const fetchAllRecipes = async ({
 	signal,
 }: Pick<RecipeListQueryContext, "signal">): Promise<RecipeSummary[]> => {
 	const endpoint = (apiRoutes as { recipes: string }).recipes;
-	const fetchPage = async (page: number, allowLegacyResponse: boolean) => {
+	const fetchPage = async (page: number) => {
 		const response = await axios.get(endpoint, {
 			params: { page, limit: RECIPE_CATALOG_PAGE_LIMIT },
 			signal,
 		});
-		return parseRecipeListResponse(response.data, allowLegacyResponse);
+		return parseRecipeListResponse(response.data);
 	};
 
 	let currentPage = 1;
-	const currentResponse = await fetchPage(currentPage, true);
+	const currentResponse = await fetchPage(currentPage);
 	const recipes = [...currentResponse.recipes];
 	let pagesFetched = 1;
 
@@ -157,7 +145,7 @@ export const fetchAllRecipes = async ({
 			throw new Error("Recipe catalog pagination could not advance safely.");
 		}
 
-		const nextResponse = await fetchPage(nextPage, false);
+		const nextResponse = await fetchPage(nextPage);
 		if (!nextResponse.pagination) {
 			throw new Error(
 				`Recipe catalog response is missing pagination metadata on page ${nextPage}.`

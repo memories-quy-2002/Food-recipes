@@ -5,7 +5,7 @@ import RecipeIngredientChecklist from "./RecipeIngredientChecklist";
 
 const recipeIngredients = ["2 cups flour", "1 egg", "1 egg"];
 
-describe("recipe ingredient checklist Task 12", () => {
+describe("recipe ingredient checklist", () => {
 
 	it("checks one duplicate ingredient without checking the other or mutating recipe data", () => {
 		const ingredients = [...recipeIngredients];

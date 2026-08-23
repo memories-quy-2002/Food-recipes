@@ -1,57 +1,21 @@
-const localApiBaseUrl = "http://localhost:4000";
-const productionApiBaseUrl = "https://food-recipes-server-omega.vercel.app";
 const localKongBaseUrl = "http://localhost:8000";
-
-export const apiTargets = Object.freeze({
-	LEGACY: "legacy",
-	NEST: "nest",
-});
 
 const trimTrailingSlashes = (value) => value.replace(/\/+$/, "");
 
-export const normalizeApiTarget = (value) => {
-	const normalizedValue = String(value || "").trim().toLowerCase();
-
-	return ["nest", "nestjs", "kong"].includes(normalizedValue)
-		? apiTargets.NEST
-		: apiTargets.LEGACY;
-};
-
 export const getApiConfig = (env = import.meta.env) => {
-	const target = normalizeApiTarget(env.VITE_API_TARGET);
+	const kongBaseUrl = env.VITE_KONG_BASE_URL || (env.DEV ? localKongBaseUrl : "");
 
-	if (target === apiTargets.NEST) {
-		const kongBaseUrl = env.VITE_KONG_BASE_URL || (env.DEV ? localKongBaseUrl : "");
-
-		if (!kongBaseUrl) {
-			throw new Error(
-				"Nest API mode requires VITE_KONG_BASE_URL to point to the Kong gateway."
-			);
-		}
-
-		return {
-			target,
-			baseURL: `${trimTrailingSlashes(kongBaseUrl)}/api/v1`,
-		};
+	if (!kongBaseUrl) {
+		throw new Error(
+			"Nest API requires VITE_KONG_BASE_URL to point to the Kong gateway."
+		);
 	}
 
-	const configuredApiBaseUrl = env.VITE_API_BASE_URL;
-	const isLocalConfiguredApi =
-		configuredApiBaseUrl?.includes("localhost") ||
-		configuredApiBaseUrl?.includes("127.0.0.1");
-
 	return {
-		target,
-		baseURL:
-			env.PROD && isLocalConfiguredApi
-				? productionApiBaseUrl
-				: configuredApiBaseUrl ||
-				  (env.DEV ? localApiBaseUrl : productionApiBaseUrl),
+		target: "nest",
+		baseURL: `${trimTrailingSlashes(kongBaseUrl)}/api/v1`,
 	};
 };
-
-export const getApiTarget = (env = import.meta.env) =>
-	getApiConfig(env).target;
 
 const getStorageToken = (storage) => {
 	try {

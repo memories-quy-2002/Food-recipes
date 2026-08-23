@@ -23,7 +23,7 @@ const isJwtLike = (value) => value?.split(".").length === 3;
 const getStorageHeaders = (file) => {
 	if (!isJwtLike(SUPABASE_ANON_KEY)) {
 		throw new Error(
-			"Supabase Storage upload needs the Legacy API keys anon public JWT. Replace VITE_SUPABASE_ANON_KEY with the legacy anon public key from Supabase Project Settings."
+			"Supabase Storage upload needs the anon public JWT. Set VITE_SUPABASE_ANON_KEY from Supabase Project Settings."
 		);
 	}
 
@@ -37,7 +37,7 @@ const getStorageHeaders = (file) => {
 
 const normalizeStorageError = (message) => {
 	if (message.includes("Invalid Compact JWS")) {
-		return "Supabase rejected the upload token. Use the Legacy API keys anon public JWT for VITE_SUPABASE_ANON_KEY, not a publishable key or service role key.";
+			return "Supabase rejected the upload token. Use the public anon JWT for VITE_SUPABASE_ANON_KEY, not a publishable key or service role key.";
 	}
 
 	if (message.includes("authorization") || message.includes("Unauthorized")) {

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { apiTargets } from "./config";
 import {
 	getUpdatedProfileUser,
 	isRecipeCreateSuccess,
@@ -22,20 +21,16 @@ const recipeForm = {
 	userId: 9,
 };
 
-describe("Nest mutation compatibility", () => {
-	it("serializes wishlist mutations to recipeId for Nest and preserves legacy fields", () => {
-		expect(serializeWishlistPayload(apiTargets.NEST, 9, 15)).toEqual({
+	describe("Nest mutation contracts", () => {
+	it("serializes wishlist mutations to recipeId", () => {
+		expect(serializeWishlistPayload(15)).toEqual({
 			recipeId: 15,
-		});
-		expect(serializeWishlistPayload(apiTargets.LEGACY, 9, 15)).toEqual({
-			user_id: 9,
-			recipe_id: 15,
 		});
 	});
 
 	it("serializes the existing recipe form into the Nest DTO", () => {
 		expect(
-			serializeCreateRecipePayload(apiTargets.NEST, {
+			serializeCreateRecipePayload({
 				recipe: recipeForm,
 				categories: [{ id: 8, name: "Pasta" }],
 				meals: [{ id: 3, name: "Dinner" }],
@@ -54,41 +49,18 @@ describe("Nest mutation compatibility", () => {
 		});
 	});
 
-	it("keeps the legacy recipe payload unchanged", () => {
-		expect(
-			serializeCreateRecipePayload(apiTargets.LEGACY, {
-				recipe: recipeForm,
-				categories: [],
-				meals: [],
-				imageUrl: "https://images.test/pasta.jpg",
-			})
-		).toEqual({
-			...recipeForm,
-			recipeImage: undefined,
-			imageUrl: "https://images.test/pasta.jpg",
-		});
-	});
-
-	it("accepts Nest mutation statuses without changing legacy statuses", () => {
-		expect(isWishlistAddSuccess(apiTargets.NEST, 201)).toBe(true);
-		expect(isWishlistAddSuccess(apiTargets.NEST, 200)).toBe(false);
-		expect(isWishlistAddSuccess(apiTargets.LEGACY, 200)).toBe(true);
-		expect(isRecipeCreateSuccess(apiTargets.NEST, 201)).toBe(true);
-		expect(isRecipeCreateSuccess(apiTargets.LEGACY, 200)).toBe(true);
-		expect(isRecipeDeleteSuccess(apiTargets.NEST, 204)).toBe(true);
-		expect(isRecipeDeleteSuccess(apiTargets.LEGACY, 200)).toBe(true);
+	it("accepts Nest mutation statuses", () => {
+		expect(isWishlistAddSuccess(201)).toBe(true);
+		expect(isWishlistAddSuccess(200)).toBe(false);
+		expect(isRecipeCreateSuccess(201)).toBe(true);
+		expect(isRecipeDeleteSuccess(204)).toBe(true);
+		expect(isRecipeDeleteSuccess(200)).toBe(false);
 	});
 
 	it("serializes profile updates and unwraps each API response shape", () => {
 		const profile = { name: "Ada", phoneNumber: "123", address: "London" };
 
-		expect(serializeProfilePayload(apiTargets.NEST, profile)).toEqual(profile);
-		expect(serializeProfilePayload(apiTargets.LEGACY, profile)).toEqual({
-			formData: profile,
-		});
-		expect(getUpdatedProfileUser(apiTargets.NEST, profile)).toEqual(profile);
-		expect(getUpdatedProfileUser(apiTargets.LEGACY, { user: profile })).toEqual(
-			profile
-		);
+		expect(serializeProfilePayload(profile)).toEqual(profile);
+		expect(getUpdatedProfileUser(profile)).toEqual(profile);
 	});
 });

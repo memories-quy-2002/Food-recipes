@@ -1,10 +1,6 @@
 import axios from "axios";
 
-import {
-	apiTargets,
-	getApiConfig,
-	getStoredAuthToken,
-} from "./config";
+import { getApiConfig, getStoredAuthToken } from "./config";
 
 export const dispatchAuthExpired = () => {
 	if (typeof window === "undefined") return;
@@ -23,8 +19,6 @@ export const createApiClient = (env = import.meta.env) => {
 	});
 
 	client.interceptors.request.use((config) => {
-		if (apiConfig.target !== apiTargets.NEST) return config;
-
 		const token = getStoredAuthToken();
 		if (!token) return config;
 

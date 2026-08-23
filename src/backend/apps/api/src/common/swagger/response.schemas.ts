@@ -149,6 +149,41 @@ export class PaginatedRecipeListResponseDto extends RecipeListResponseDto {
   pagination!: RecipePaginationResponseDto;
 }
 
+export class TaxonomyCategoryResponseDto {
+  @ApiProperty({ example: 2 })
+  id!: number;
+
+  @ApiProperty({ example: 'Soups' })
+  name!: string;
+
+  @ApiProperty({ example: 3 })
+  recipe_count!: number;
+}
+
+export class TaxonomyMealResponseDto {
+  @ApiProperty({ example: 4 })
+  id!: number;
+
+  @ApiProperty({ example: 'Dinner' })
+  name!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Hearty evening meals' })
+  description!: string | null;
+
+  @ApiProperty({ example: 2 })
+  recipe_count!: number;
+}
+
+export class CategoriesResponseDto {
+  @ApiProperty({ type: [TaxonomyCategoryResponseDto] })
+  categories!: TaxonomyCategoryResponseDto[];
+}
+
+export class MealsResponseDto {
+  @ApiProperty({ type: [TaxonomyMealResponseDto] })
+  meals!: TaxonomyMealResponseDto[];
+}
+
 export class RecipeDetailResponseDto {
   @ApiProperty({ type: RecipeResponseDto })
   recipe!: RecipeResponseDto;

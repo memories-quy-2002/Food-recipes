@@ -18,17 +18,11 @@ const wishlistRepositoryPath = path.join(
   apiDirectory,
   'src/modules/wishlist/wishlist.repository.ts',
 );
-const expressQueriesPath = path.resolve(
-  apiDirectory,
-  '../../../server/queries.js',
-);
-
-const [migration, schema, repository, wishlistRepository, expressQueries] = await Promise.all([
+const [migration, schema, repository, wishlistRepository] = await Promise.all([
   readFile(migrationPath, 'utf8'),
   readFile(schemaPath, 'utf8'),
   readFile(repositoryPath, 'utf8'),
   readFile(wishlistRepositoryPath, 'utf8'),
-  readFile(expressQueriesPath, 'utf8'),
 ]);
 
 const sql = migration
@@ -83,29 +77,8 @@ assert.match(repository, /make_interval\(mins => \$\{dto\.cookTimeMinutes\}\)/);
 assert.match(repository, /prep_time_minutes = COALESCE/);
 assert.match(repository, /cook_time_minutes = COALESCE/);
 
-const addRecipeStart = expressQueries.indexOf('const addRecipe =');
-const deleteRecipeStart = expressQueries.indexOf('const deleteRecipe =', addRecipeStart);
-assert.ok(addRecipeStart >= 0, 'legacy Express addRecipe handler is missing');
-assert.ok(deleteRecipeStart > addRecipeStart, 'could not isolate legacy Express addRecipe handler');
-const addRecipeSource = expressQueries.slice(addRecipeStart, deleteRecipeStart).replace(/\s+/g, ' ');
-assert.match(
-  addRecipeSource,
-  /INSERT INTO recipes \([^)]*prep_time, cook_time, prep_time_minutes, cook_time_minutes/,
-  'Express addRecipe must insert both legacy and native duration columns',
-);
-assert.match(
-  addRecipeSource,
-  /ROUND\(EXTRACT\(EPOCH FROM \$5::interval\) \/ 60\)::integer/,
-  'Express addRecipe must derive prep_time_minutes from the parameterized prep interval',
-);
-assert.match(
-  addRecipeSource,
-  /ROUND\(EXTRACT\(EPOCH FROM \$6::interval\) \/ 60\)::integer/,
-  'Express addRecipe must derive cook_time_minutes from the parameterized cook interval',
-);
-
 console.log(
   'Recipe duration migration static validation passed without database access: '
     + 'ordered backfill, positive checks, NOT NULL enforcement, native projections, '
-    + 'Nest and Express dual-write compatibility, and no interval-column drop were verified.',
+    + 'Nest dual-write compatibility, and no interval-column drop were verified.',
 );

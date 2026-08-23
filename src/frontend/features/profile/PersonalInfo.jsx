@@ -3,7 +3,6 @@ import { Button, Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import { getApiTarget } from "@/shared/api/config";
 import {
 	getUpdatedProfileUser,
 	serializeProfilePayload,
@@ -24,15 +23,14 @@ const PersonalInfo = ({ user }) => {
 	};
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		const apiTarget = getApiTarget();
 		const response = await axios.put(
-			apiRoutes.userProfile(user.user_id),
-			serializeProfilePayload(apiTarget, formData)
+			apiRoutes.userProfile,
+			serializeProfilePayload(formData)
 		);
 		if (response.status === 200) {
 			dispatch(
 				authActions.updateUser({
-					user: getUpdatedProfileUser(apiTarget, response.data),
+					user: getUpdatedProfileUser(response.data),
 				})
 			);
 		}

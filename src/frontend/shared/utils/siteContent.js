@@ -1,4 +1,3 @@
-// constant.jsx
 import {
 	FaFacebook,
 	FaInstagram,
@@ -6,7 +5,7 @@ import {
 	FaYoutube,
 } from "react-icons/fa6";
 
-export const website_content = {
+export const siteContent = {
 	about:
 		"Welcome to Food Recipes, a website dedicated to sharing delicious and healthy recipes from around the world. Our team of passionate chefs and food lovers are here to inspire you to cook and enjoy food. Whether you are looking for breakfast, lunch, dinner, or dessert ideas, we have something for you.",
 	contact: {
@@ -41,5 +40,5 @@ export const website_content = {
 			Icon: FaLinkedin,
 		},
 	],
-	bottom: "Food Recipe. Built with ReactJS, NodeJS and Express.",
+	bottom: "Food Recipe. Built with ReactJS, NestJS and PostgreSQL.",
 };

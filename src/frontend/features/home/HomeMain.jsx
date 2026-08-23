@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
-import { getApiTarget } from "@/shared/api/config";
 import {
 	isWishlistAddSuccess,
 	serializeWishlistPayload,
@@ -124,7 +123,7 @@ const HomeMain = () => {
 		try {
 			if (isFavorite) {
 				const response = await axios.delete(
-					apiRoutes.userWishlistItem(userId, recipeId)
+					apiRoutes.userWishlistItem(recipeId)
 				);
 				if (response.status === 200) {
 					setWishlist((currentWishlist) =>
@@ -140,10 +139,10 @@ const HomeMain = () => {
 			}
 
 			const response = await axios.post(
-				apiRoutes.userWishlist(userId),
-				serializeWishlistPayload(getApiTarget(), userId, recipeId)
+				apiRoutes.userWishlist,
+				serializeWishlistPayload(recipeId)
 			);
-			if (isWishlistAddSuccess(getApiTarget(), response.status)) {
+			if (isWishlistAddSuccess(response.status)) {
 				setWishlist((currentWishlist) => [
 					...currentWishlist,
 					{ recipe_id: recipeId },
@@ -205,7 +204,7 @@ const HomeMain = () => {
 			}
 
 			try {
-				const response = await axios.get(apiRoutes.userWishlist(userId));
+				const response = await axios.get(apiRoutes.userWishlist);
 				if (response.status === 200) {
 					setWishlist(getArrayPayload(response.data, "wishlist"));
 				}

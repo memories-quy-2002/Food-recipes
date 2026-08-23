@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { RatingsModule } from './modules/ratings/ratings.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
+import { TaxonomyModule } from './modules/taxonomy/taxonomy.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     HealthModule,
     AuthModule,
     RecipesModule,
+    TaxonomyModule,
     RatingsModule,
     WishlistModule,
   ],

@@ -33,7 +33,6 @@ describe("recipe discovery query state", () => {
 
 		expect(createRecipeRequestParams(state)).toEqual({
 			q: "pasta",
-			search: "pasta",
 			categoryId: 2,
 			mealId: 3,
 			sort: "rating",
@@ -72,21 +71,12 @@ describe("recipe discovery query state", () => {
 		>();
 	});
 
-	it("accepts the legacy and Nest recipe list duration contracts", () => {
+	it("accepts the Nest recipe list duration contract", () => {
 		expect(
 			parseRecipeListPayload({
 				recipes: [
 					{
 						recipe_id: 1,
-						recipe_name: "Legacy soup",
-						recipe_description: null,
-						prep_time: "00:10:00",
-						cook_time: "00:20:00",
-						date_added: null,
-						image_url: null,
-					},
-					{
-						recipe_id: 2,
 						recipe_name: "Nest soup",
 						recipe_description: null,
 						prep_time_minutes: 10,
@@ -99,10 +89,7 @@ describe("recipe discovery query state", () => {
 				],
 			})
 		).toEqual({
-			recipes: [
-				expect.objectContaining({ recipe_id: 1 }),
-				expect.objectContaining({ recipe_id: 2 }),
-			],
+			recipes: [expect.objectContaining({ recipe_id: 1 })],
 		});
 	});
 

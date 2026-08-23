@@ -121,7 +121,7 @@ const Wishlist = () => {
 			try {
 				setIsLoadingWishlist(true);
 				setWishlistError(null);
-				const response = await axios.get(apiRoutes.userWishlist(user_id));
+				const response = await axios.get(apiRoutes.userWishlist);
 				setWishlist(getArrayPayload(response.data, "wishlist"));
 			} catch (err) {
 				console.error(err);
@@ -194,7 +194,7 @@ const Wishlist = () => {
 		setRemoveError(null);
 		try {
 			const response = await axios.delete(
-				apiRoutes.userWishlistItem(user_id, capturedRecipeId)
+				apiRoutes.userWishlistItem(capturedRecipeId)
 			);
 			if (response.status === 200) {
 				setWishlist((currentWishlist) =>

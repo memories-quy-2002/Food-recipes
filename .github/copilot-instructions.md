@@ -3,20 +3,22 @@
 ## Project overview
 Website for food recipes and blogs. Monorepo structure:
 - `src/frontend/` — React + Vite + TypeScript frontend
-- `src/server/` — Express.js backend
+- `src/backend/apps/api/` — NestJS + Prisma backend API
 
 Database: PostgreSQL, hosted on Supabase. Package manager: pnpm.
 
 ## Setup & commands
 - Install dependencies: `pnpm install`
-- Run client dev server: `pnpm --filter client dev`
-- Run server dev: `pnpm --filter server dev`
-- Typecheck client: `pnpm --filter client exec tsc --noEmit`
+- Run the full dev stack: `pnpm start`
+- Run frontend dev server: `pnpm start:client`
+- Run backend dev server: `pnpm start:backend`
+- Typecheck frontend: `pnpm typecheck`
+- Test backend: `pnpm --filter @food-recipes/api test`
 
 ## Coding conventions
 - Use TypeScript strictly on the client — avoid `any`, prefer explicit types/interfaces.
-- Keep API route handlers in `src/server` thin — push business logic into service/helper modules rather than inline in route files.
-- Match existing file/folder naming conventions already used in `src/frontend` and `src/server` rather than introducing new patterns.
+- Keep Nest controllers in `src/backend/apps/api/src/modules` thin — push business logic into services and repositories rather than inline in controllers.
+- Match existing file/folder naming conventions already used in `src/frontend` and `src/backend` rather than introducing new patterns.
 
 ## Security-sensitive areas — flag issues here first
 - **Supabase keys**: flag any use of the service-role key in client-facing code — it should only ever be used server-side. The anon/public key is fine in the client.

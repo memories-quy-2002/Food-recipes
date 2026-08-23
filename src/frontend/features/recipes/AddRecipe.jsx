@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import { getApiTarget } from "@/shared/api/config";
 import {
 	isRecipeCreateSuccess,
 	serializeCreateRecipePayload,
@@ -370,10 +369,9 @@ const AddRecipe = () => {
 			});
 			setUploadStatus("saving");
 
-			const apiTarget = getApiTarget();
 			const response = await axios.post(
 				apiRoutes.recipes,
-				serializeCreateRecipePayload(apiTarget, {
+				serializeCreateRecipePayload({
 					recipe: cleanedRecipe,
 					categories,
 					meals,
@@ -386,7 +384,7 @@ const AddRecipe = () => {
 				}
 			);
 
-			if (isRecipeCreateSuccess(apiTarget, response.status)) {
+			if (isRecipeCreateSuccess(response.status)) {
 				clearRecipeDraft(window.localStorage, userId);
 				// Keep the existing compatibility boundary; the provider now invalidates the query cache.
 				await refreshRecipes().catch((refreshError) =>

@@ -1,37 +1,38 @@
-# Legacy API contract
+# Current API contract
 
-This document captures the Express API contract before the NestJS migration. The
-legacy server remains the fallback until the NestJS API reaches feature parity.
+This document records the current NestJS API contract after the Express
+migration.
 
 ## Base URL
 
-The legacy Express process listens on `http://localhost:4000`. Its routes are
-registered without the `/api` prefix; the Express app strips `/api` when the
-client sends that prefix.
+The NestJS API is served under `/api/v1`. Local development uses the API on
+`http://localhost:3000` or the Kong gateway on `http://localhost:8000`.
 
 ## Routes
 
-| Method | Legacy route | NestJS target | Auth target |
+| Method | Route | Auth target |
 | --- | --- | --- | --- |
-| GET | `/recipes` | `/api/v1/recipes` | Public |
-| GET | `/recipes/:rid` | `/api/v1/recipes/:id` | Public |
-| GET | `/users/:uid/recipes` | `/api/v1/users/me/recipes` | JWT |
-| POST | `/recipes` | `/api/v1/recipes` | JWT |
-| DELETE | `/recipes/:rid` | `/api/v1/recipes/:id` | JWT + owner |
-| GET | `/categories` | `/api/v1/categories` | Public |
-| GET | `/meals` | `/api/v1/meals` | Public |
-| GET | `/users/:uid/wishlist` | `/api/v1/users/me/wishlist` | JWT |
-| POST | `/users/:uid/wishlist` | `/api/v1/users/me/wishlist` | JWT |
-| DELETE | `/users/:uid/wishlist/:rid` | `/api/v1/users/me/wishlist/:recipeId` | JWT |
-| GET | `/users/:uid/ratings` | `/api/v1/users/me/ratings` | JWT |
-| PUT | `/users/:uid/ratings/:rid` | `/api/v1/recipes/:recipeId/rating` | JWT |
-| GET | `/recipes/:rid/reviews` | `/api/v1/recipes/:recipeId/reviews` | Public |
-| POST | `/auth/login` | `/api/v1/auth/login` | Public |
-| POST | `/auth/signup` | `/api/v1/auth/signup` | Public |
-| POST | `/auth/token` | `/api/v1/auth/token` | Legacy compatibility |
-| PUT | `/users/:uid/profile` | `/api/v1/users/me/profile` | JWT |
-| PUT | `/users/:uid/password` | `/api/v1/users/me/password` | JWT |
-| GET | `/health/database` | `/api/v1/health/ready` | Public |
+| GET | `/api/v1/recipes` | Public |
+| GET | `/api/v1/recipes/:id` | Public |
+| GET | `/api/v1/users/me/recipes` | JWT |
+| POST | `/api/v1/recipes` | JWT |
+| DELETE | `/api/v1/recipes/:id` | JWT + owner |
+| GET | `/api/v1/categories` | Public |
+| GET | `/api/v1/meals` | Public |
+| GET | `/api/v1/users/me/wishlist` | JWT |
+| POST | `/api/v1/users/me/wishlist` | JWT |
+| DELETE | `/api/v1/users/me/wishlist/:recipeId` | JWT |
+| GET | `/api/v1/users/me/ratings` | JWT |
+| PUT | `/api/v1/recipes/:recipeId/rating` | JWT |
+| DELETE | `/api/v1/recipes/:recipeId/rating` | JWT |
+| GET | `/api/v1/recipes/:recipeId/reviews` | Public |
+| POST | `/api/v1/auth/login` | Public |
+| POST | `/api/v1/auth/signup` | Public |
+| POST | `/api/v1/auth/token` | Compatibility bridge |
+| GET | `/api/v1/auth/me` | JWT |
+| PUT | `/api/v1/users/me/profile` | JWT |
+| PUT | `/api/v1/users/me/password` | JWT |
+| GET | `/api/v1/health/ready` | Public |
 
 ## Authentication response
 
@@ -71,7 +72,5 @@ normalization phase.
 ## Compatibility rules
 
 1. Do not reset or destructively migrate the existing database.
-2. Keep Express available until frontend cutover and NestJS regression tests pass.
-3. Keep the legacy response fields required by the current client during the
-   compatibility window.
-4. Treat JWT identity as server-owned for new protected endpoints.
+2. Keep response fields stable for the current client.
+3. Treat JWT identity as server-owned for all protected endpoints.

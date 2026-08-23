@@ -17,7 +17,7 @@ const recipe = {
 	ingredients: [],
 };
 
-describe("recipe instructions Task 13", () => {
+describe("recipe instructions", () => {
 	it("renders ordered steps with separate explicit numbers and exact text order", () => {
 		const instructions = [
 			" First step keeps its leading space.",

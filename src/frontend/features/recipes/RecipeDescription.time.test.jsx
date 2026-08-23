@@ -3,7 +3,7 @@ import TestRenderer, { act } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import RecipeContainerSummary from "./RecipeContainerSummary";
-import RecipeDescription, { getRecipeTimeSummary, normalizeRecipeTime } from "./recipeContent/RecipeDescription";
+import RecipeDescription, { getRecipeTimeSummary, normalizeRecipeTime } from "./content/RecipeDescription";
 
 const recipe = {
 	recipe_name: "Coconut Curry",
@@ -21,7 +21,7 @@ const recipe = {
 	instructions: ["Simmer until thickened"],
 };
 
-describe("recipe detail Task 10", () => {
+describe("recipe description time summary", () => {
 	it("normalizes supported time shapes without treating zero or missing data as truthy", () => {
 		expect(normalizeRecipeTime({ prep_time_minutes: 0 }, "prep")).toBe(0);
 		expect(normalizeRecipeTime({ prep_time: { hours: 1, minutes: 5 } }, "prep")).toBe(65);

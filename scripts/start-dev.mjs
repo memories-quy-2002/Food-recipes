@@ -3,21 +3,27 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const serverDir = path.join(rootDir, "src", "server");
+const backendDir = path.join(rootDir, "src", "backend", "apps", "api");
+const backendCommand =
+	process.platform === "win32"
+		? {
+				command: process.env.ComSpec ?? "cmd.exe",
+				args: ["/d", "/s", "/c", "pnpm.cmd", "start:dev"],
+			}
+		: { command: "pnpm", args: ["start:dev"] };
 
 const commands = [
 	{
 		name: "client",
+		command: process.execPath,
 		cwd: rootDir,
 		args: [path.join(rootDir, "node_modules", "vite", "bin", "vite.js")],
 	},
 	{
-		name: "server",
-		cwd: serverDir,
-		args: [
-			path.join(rootDir, "node_modules", "nodemon", "bin", "nodemon.js"),
-			"app.js",
-		],
+		name: "backend",
+		command: backendCommand.command,
+		cwd: backendDir,
+		args: backendCommand.args,
 	},
 ];
 
@@ -42,10 +48,16 @@ const stopChildren = () => {
 };
 
 for (const command of commands) {
-	const child = spawn(process.execPath, command.args, {
+	const child = spawn(command.command, command.args, {
 		cwd: command.cwd,
 		env: {
 			...process.env,
+			...(command.name === "client"
+				? {
+						VITE_KONG_BASE_URL:
+							process.env.VITE_KONG_BASE_URL ?? "http://localhost:3000",
+					}
+				: {}),
 			FORCE_COLOR: "1",
 		},
 		stdio: ["inherit", "pipe", "pipe"],

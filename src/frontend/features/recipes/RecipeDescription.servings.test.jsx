@@ -1,7 +1,7 @@
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
-import RecipeDescription, { normalizeServings } from "./recipeContent/RecipeDescription";
+import RecipeDescription, { normalizeServings } from "./content/RecipeDescription";
 
 const recipe = {
 	recipe_id: 1,
@@ -11,7 +11,7 @@ const recipe = {
 	instructions: ["Mix everything"],
 };
 
-describe("recipe servings Task 11", () => {
+describe("recipe servings", () => {
 	it("clamps valid servings and keeps the selected value visible", () => {
 		expect(normalizeServings(undefined)).toBe(4);
 		expect(normalizeServings(0)).toBe(1);

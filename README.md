@@ -11,17 +11,17 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Add new recipes with ingredients, instructions, timing, and image preview.
 - Read News and About pages for project updates and product context.
 - SEO metadata with React Helmet for page titles, descriptions, canonical URLs, and social previews.
-- Express request logging, centralized error handling, CORS handling, and PostgreSQL query logging.
+- NestJS request logging, centralized exception handling, CORS, validation, and PostgreSQL persistence.
 
 ## Tech Stack
 
 - Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
 - Server state: TanStack Query
 - Forms and validation: React Hook Form + Zod for recipe forms
-- API: REST/OpenAPI-compatible NestJS `/api/v1` through opt-in Kong routing, with the Express fallback as the default
-- Backend: Node.js, Express, PostgreSQL, Prisma, JWT refresh tokens, and RBAC
+- API: REST/OpenAPI-compatible NestJS `/api/v1`, optionally fronted by Kong
+- Backend: Node.js, NestJS, PostgreSQL, Prisma, JWT tokens, and RBAC
 - Infrastructure: Docker and Kong enforcement
-- Deployment: Vercel frontend and serverless Express API
+- Deployment: Vercel frontend and containerized NestJS API
 
 PostgreSQL, Prisma, JWT refresh, RBAC, Docker, and Kong enforcement are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend.
 
@@ -52,13 +52,8 @@ Food-recipes/
         seo/            Helmet helpers
         ui/             Reusable UI states
         utils/          Formatting, image, rating, and content helpers
-    server/
-      api/              Vercel serverless entrypoint
-      middleware/       Request logging and centralized error handling
-      migrations/       Database migrations
-      seeds/            Database seed data
-      app.js            Express app setup
-      queries.js        PostgreSQL query functions
+    backend/
+      apps/api/         NestJS API, Prisma schema, migrations, and tests
 ```
 
 Frontend imports can use `@` for `src/frontend`, for example `@/shared/api/axios` or `@/features/recipes/Recipe`.
@@ -75,35 +70,27 @@ Frontend imports can use `@` for `src/frontend`, for example `@/shared/api/axios
 
 ```bash
 pnpm install
-cd src/server
-pnpm install
-cd ../..
 ```
 
 If `pnpm` is not available yet, run `corepack enable` first.
 
-### Configure the server
+### Configure the backend
 
-Create `src/server/.env` with:
+Copy `src/backend/apps/api/.env.example` to `src/backend/apps/api/.env`, then
+set the Nest API environment variables before starting it:
 
 ```env
-DB_USER=your_postgres_user
-DB_PASSWORD=your_postgres_password
-DB_HOST=your_postgres_host
-DB_PORT=5432
-DB_NAME=your_database_name
-JWT_SECRET=your_jwt_secret
+DATABASE_URL=postgresql://your_postgres_user:your_postgres_password@localhost:5432/food_recipes
+JWT_SECRET=replace_with_a_random_value_at_least_32_characters_long
+CORS_ORIGINS=http://localhost:5173
 ```
 
-Optional pool/logging settings:
+`JWT_SECRET` must be a non-placeholder value with at least 32 characters. The
+Docker development stack can provide PostgreSQL and the Nest API; Kong can be
+run separately when gateway behavior is needed.
 
 ```env
-DB_POOL_MAX=2
-DB_POOL_MIN=0
-DB_POOL_IDLE_TIMEOUT_MS=5000
-DB_POOL_CONNECTION_TIMEOUT_MS=5000
-DB_POOL_MAX_LIFETIME_SECONDS=60
-DB_QUERY_LOGGING=true
+PORT=3000
 ```
 
 ### Run locally
@@ -117,15 +104,18 @@ pnpm start
 Local URLs:
 
 - Frontend: `http://localhost:5173`
-- Backend: `http://localhost:4000`
+- Nest API: `http://localhost:3000/api/v1`
 
-During development, `pnpm start` runs Vite on `http://localhost:5173` and the Express server on `http://localhost:4000`. If `5173` is already in use, Vite prints the next available port. The frontend uses `http://localhost:4000` unless `VITE_API_BASE_URL` is set.
+During development, `pnpm start` runs Vite on `http://localhost:5173` and the
+Nest API in watch mode from `src/backend/apps/api` on port `3000`. The combined
+runner points the frontend at the local Nest API under `/api/v1`. If `5173` is
+already in use, Vite prints the next available port.
 
 To run only one side:
 
 ```bash
 pnpm run start:client
-pnpm run start:server
+pnpm run start:backend
 ```
 
 ## Build
@@ -154,18 +144,17 @@ pnpm test:e2e
 
 The Playwright suite runs against the Vite preview server and uses its existing browser-facing journey assertions. CI installs Chromium explicitly before running it.
 
-## Database Seeds
+## Database and seeds
 
-Seed files live in `src/server/seeds/`. They include additional recipes and ratings used to enrich the recipe catalog.
+Prisma migrations and seed-related backend artifacts live under
+`src/backend/apps/api/prisma/`.
 
 ## Deployment Notes
 
-- The production frontend API defaults to `https://food-recipes-server-omega.vercel.app`.
-- Legacy Express mode is the default pairing: omit `VITE_API_TARGET` (or set `VITE_API_TARGET=legacy`) and set public `VITE_API_BASE_URL=https://food-recipes-server-omega.vercel.app` or the deployed legacy API URL.
-- Nest/Kong mode is opt-in: set public `VITE_API_TARGET=nest` and `VITE_KONG_BASE_URL=https://your-kong-gateway.example.com`; the frontend then uses the Kong `/api/v1` gateway.
+- Nest/Kong is the supported API deployment: set public `VITE_KONG_BASE_URL=https://your-kong-gateway.example.com`; the frontend then uses the Kong `/api/v1` gateway.
 - Set public `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
 - Vercel runs `pnpm build`, serves the `dist` output, and rewrites client-side routes to `index.html` while keeping asset paths safe.
-- The server exports the Express app for Vercel and only calls `app.listen()` outside Vercel.
+- The Nest API is built from `src/backend/apps/api` and should be deployed behind the configured Kong gateway.
 
 ## Documentation
 

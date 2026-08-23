@@ -1,9 +1,8 @@
 import React from "react";
-import { getApiTarget } from "@/shared/api/config";
 import { getSavedCollectionsContract } from "./collectionsContract";
 
 const SavedCollectionsNotice = () => {
-	const contract = getSavedCollectionsContract(getApiTarget());
+	const contract = getSavedCollectionsContract();
 
 	return (
 		<section

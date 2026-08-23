@@ -3,7 +3,7 @@ import TestRenderer, { act } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import RecipeReviewList from "./RecipeReviewList";
 
-describe("recipe review list Task 15", () => {
+describe("recipe review list", () => {
 	it("shows the review author's identity and timestamp", () => {
 		let renderer;
 		act(() => {

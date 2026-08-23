@@ -20,7 +20,7 @@ describe("Recently Saved sorting", () => {
 		expect(getVisibleSavedRecipes(recipes, wishlist).map((recipe) => recipe.recipe_id)).toEqual([2, 1]);
 	});
 
-	it("normalizes legacy flat wishlist items and applies search and sort", () => {
+	it("normalizes flat wishlist items and applies search and sort", () => {
 		const recipes = [
 			{ recipe_id: 1, recipe_name: "Apple Pie", overall_score: 4 },
 			{ recipe_id: 2, recipe_name: "Banana Bread", overall_score: 5 },
@@ -53,7 +53,7 @@ describe("Recently Saved sorting", () => {
 		expect(getVisibleSavedRecipes(recipes, wishlist).map((recipe) => recipe.recipe_id)).toEqual([3, 1, 2]);
 	});
 
-	it("normalizes legacy timestamp aliases without inventing a save date", () => {
+	it("normalizes timestamp aliases without inventing a save date", () => {
 		expect(
 			normalizeSavedRecipe({ recipe_id: 4, date_added: "2026-08-21T10:00:00.000Z" })
 		).toMatchObject({ recipe: { recipe_id: 4 }, savedAt: "2026-08-21T10:00:00.000Z" });

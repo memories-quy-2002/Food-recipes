@@ -26,7 +26,7 @@ const ratingProps = {
 	onReviewChange: vi.fn(),
 };
 
-describe("made-this-recipe contract behavior Task 16", () => {
+describe("made-this-recipe contract behavior", () => {
 	it("does not render an unsupported checkbox in the review form", () => {
 		let renderer;
 		act(() => {

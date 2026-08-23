@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { BsMailbox } from "react-icons/bs";
 import { FaHouse, FaPhone } from "react-icons/fa6";
 import "./Footer.scss";
-import { website_content } from "@/shared/utils/constant";
+import { siteContent } from "@/shared/utils/siteContent";
 const Footer = () => {
 	const d = new Date();
 	const {
@@ -14,7 +14,7 @@ const Footer = () => {
 		secondaryNavigation,
 		follow,
 		bottom,
-	} = website_content;
+	} = siteContent;
 
 	return (
 		<footer className="footer">

@@ -84,7 +84,7 @@ describe("Wishlist remove confirmation accessibility", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Removing…" }));
 
 		expect(axios.delete).toHaveBeenCalledTimes(1);
-		expect(axios.delete).toHaveBeenCalledWith("/users/7/wishlist/1");
+		expect(axios.delete).toHaveBeenCalledWith("/users/me/wishlist/1");
 		resolveDelete({ status: 200 });
 		await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 	});

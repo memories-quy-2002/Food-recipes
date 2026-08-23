@@ -35,7 +35,7 @@ const ChangePassword = ({ user }) => {
 			.then(async () => {
 				try {
 					const response = await axios.put(
-						apiRoutes.userPassword(user.user_id),
+						apiRoutes.userPassword,
 						{
 							currentPassword: formPassword.current,
 							newPassword: formPassword.new,

@@ -2,12 +2,7 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from "rea
 import { Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
-import {
-	apiRouteCompatibility,
-	apiRoutes,
-	getUserRecipeRatingRoute,
-} from "@/shared/api/routes";
-import { getApiTarget } from "@/shared/api/config";
+import { apiRoutes, getUserRecipeRatingRoute } from "@/shared/api/routes";
 import {
 	isWishlistAddSuccess,
 	serializeWishlistPayload,
@@ -49,13 +44,8 @@ const Recipe = () => {
 	const [reviewMessage, setReviewMessage] = useState(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
-	const apiTarget = getApiTarget();
-	const canDeleteReview = Boolean(
-		apiRouteCompatibility.userRecipeRatingDelete[apiTarget]
-	);
-	const canMutateReview = Boolean(
-		apiRouteCompatibility.userRecipeRating.ownershipSafe[apiTarget]
-	);
+	const canDeleteReview = true;
+	const canMutateReview = true;
 
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
@@ -146,7 +136,7 @@ const Recipe = () => {
 
 		try {
 			await axios.put(
-				getUserRecipeRatingRoute(apiTarget, userId, recipe.recipe_id),
+				getUserRecipeRatingRoute(recipe.recipe_id),
 				{
 					score: ratingScore,
 					review: review.trim(),
@@ -229,7 +219,7 @@ const Recipe = () => {
 			setIsUpdatingFavorite(true);
 			if (favorite) {
 				const response = await axios.delete(
-					apiRoutes.userWishlistItem(userId, recipe.recipe_id)
+					apiRoutes.userWishlistItem(recipe.recipe_id)
 				);
 				if (response.status === 200) {
 					setFavorite(false);
@@ -237,14 +227,10 @@ const Recipe = () => {
 				}
 			} else {
 				const response = await axios.post(
-					apiRoutes.userWishlist(userId),
-					serializeWishlistPayload(
-						getApiTarget(),
-						userId,
-						recipe.recipe_id
-					)
+					apiRoutes.userWishlist,
+					serializeWishlistPayload(recipe.recipe_id)
 				);
-				if (isWishlistAddSuccess(getApiTarget(), response.status)) {
+				if (isWishlistAddSuccess(response.status)) {
 					setFavorite(true);
 					showToast({ title: "Saved recipe" });
 				}
@@ -285,7 +271,7 @@ const Recipe = () => {
 			}
 
 			try {
-				const response = await axios.get(apiRoutes.userWishlist(userId));
+				const response = await axios.get(apiRoutes.userWishlist);
 				if (response.status === 200) {
 					setFavorite(
 						getArrayPayload(response.data, "wishlist").some(
@@ -316,7 +302,7 @@ const Recipe = () => {
 			}
 
 			try {
-				const response = await axios.get(apiRoutes.userRatings(userId));
+				const response = await axios.get(apiRoutes.userRatings);
 				if (response.status === 200) {
 					const myRecipeRating = getArrayPayload(
 						response.data,

@@ -18,16 +18,6 @@ type RecipeSummaryBase = {
 	num_ratings?: number;
 };
 
-export type LegacyRecipeSummary = RecipeSummaryBase & {
-	prep_time: string;
-	cook_time: string;
-	prep_time_minutes?: never;
-	cook_time_minutes?: never;
-	total_time_minutes?: never;
-	user_id?: number;
-	full_name?: string | null;
-};
-
 export type NestRecipeSummary = RecipeSummaryBase & {
 	prep_time?: never;
 	cook_time?: never;
@@ -38,7 +28,7 @@ export type NestRecipeSummary = RecipeSummaryBase & {
 	full_name?: string | null;
 };
 
-export type RecipeSummary = LegacyRecipeSummary | NestRecipeSummary;
+export type RecipeSummary = NestRecipeSummary;
 
 export type RecipeDetail = RecipeSummary & {
 	ingredients: string[] | null;

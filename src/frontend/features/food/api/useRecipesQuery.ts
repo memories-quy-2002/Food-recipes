@@ -59,8 +59,6 @@ export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
 	if (state.q.trim()) {
 		const query = state.q.trim();
 		params.q = query;
-		// Express still consumes `search` while the Nest contract consumes `q`.
-		params.search = query;
 	}
 	if (/^\d+$/.test(state.categoryId)) params.categoryId = Number(state.categoryId);
 	if (/^\d+$/.test(state.mealId)) params.mealId = Number(state.mealId);
@@ -79,15 +77,13 @@ const isRecipeSummary = (value: unknown): value is RecipeSummary => {
 		(value.recipe_description === null || typeof value.recipe_description === "string") &&
 		(value.date_added === null || typeof value.date_added === "string") &&
 		(value.image_url === null || typeof value.image_url === "string");
-	const isLegacyDuration =
-		typeof value.prep_time === "string" && typeof value.cook_time === "string";
 	const isNestDuration =
 		typeof value.prep_time_minutes === "number" &&
 		typeof value.cook_time_minutes === "number" &&
 		typeof value.total_time_minutes === "number" &&
 		typeof value.user_id === "number";
 
-	return hasCommonFields && (isLegacyDuration || isNestDuration);
+	return hasCommonFields && isNestDuration;
 };
 
 const parseRecipePagination = (value: unknown): RecipePagination | undefined => {
@@ -109,11 +105,9 @@ const parseRecipePagination = (value: unknown): RecipePagination | undefined => 
 };
 
 export const parseRecipeListPayload = (payload: unknown): RecipeListResponse => {
-	const recipes = Array.isArray(payload)
-		? payload
-		: isRecord(payload) && Array.isArray(payload.recipes)
-			? payload.recipes
-			: [];
+	const recipes = isRecord(payload) && Array.isArray(payload.recipes)
+		? payload.recipes
+		: [];
 
 	const pagination = isRecord(payload) ? parseRecipePagination(payload.pagination) : undefined;
 	return {

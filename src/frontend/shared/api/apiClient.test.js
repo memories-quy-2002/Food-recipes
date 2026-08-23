@@ -1,16 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
-	apiTargets,
 	getApiConfig,
 	getStoredAuthToken,
-	normalizeApiTarget,
 } from "./config";
 import { createApiClient } from "./axios";
-import {
-	ApiCompatibilityError,
-	apiRouteCompatibility,
-	createApiRoutes,
-} from "./routes";
+import { apiRoutes } from "./routes";
 
 const originalWindow = globalThis.window;
 const originalLocalStorage = globalThis.localStorage;
@@ -32,11 +26,10 @@ afterEach(() => {
 });
 
 describe("API target configuration", () => {
-	it("keeps legacy mode as the safe default", () => {
-		expect(normalizeApiTarget()).toBe(apiTargets.LEGACY);
+	it("defaults to the local Nest API through Kong in development", () => {
 		expect(
 			getApiConfig({ DEV: true, PROD: false }).baseURL
-		).toBe("http://localhost:4000");
+		).toBe("http://localhost:8000/api/v1");
 	});
 
 	it("uses the configured Kong host and Nest version prefix", () => {
@@ -44,21 +37,19 @@ describe("API target configuration", () => {
 			getApiConfig({
 				DEV: false,
 				PROD: true,
-				VITE_API_TARGET: "kong",
 				VITE_KONG_BASE_URL: "https://kong.example.test/",
 			})
 		).toEqual({
-			target: apiTargets.NEST,
+			target: "nest",
 			baseURL: "https://kong.example.test/api/v1",
 		});
 	});
 
-	it("does not send a legacy API base URL to Nest mode", () => {
+	it("does not fall back to the removed legacy API base URL", () => {
 		expect(() =>
 			getApiConfig({
 				DEV: false,
 				PROD: true,
-				VITE_API_TARGET: "nest",
 				VITE_API_BASE_URL: "https://legacy.example.test",
 			})
 		).toThrow(/VITE_KONG_BASE_URL/);
@@ -79,7 +70,6 @@ describe("Nest API authentication and expiry", () => {
 		const client = createApiClient({
 			DEV: false,
 			PROD: true,
-			VITE_API_TARGET: "nest",
 			VITE_KONG_BASE_URL: "https://kong.example.test",
 		});
 		const requestHandler = client.interceptors.request.handlers[0].fulfilled;
@@ -90,17 +80,17 @@ describe("Nest API authentication and expiry", () => {
 		expect(getStoredAuthToken()).toBe("session-token");
 	});
 
-	it("does not add a bearer token to legacy requests", () => {
+	it("uses the Nest bearer-token interceptor by default", () => {
 		globalThis.localStorage = createStorage({
 			isAuthenticated: "true",
-			jwt: "legacy-token",
+			jwt: "nest-token",
 		});
 
 		const client = createApiClient({ DEV: true, PROD: false });
 		const requestHandler = client.interceptors.request.handlers[0].fulfilled;
 		const request = requestHandler({ headers: {} });
 
-		expect(request.headers.Authorization).toBeUndefined();
+		expect(request.headers.Authorization).toBe("Bearer nest-token");
 	});
 
 	it("publishes auth:expired and preserves the rejected 401", async () => {
@@ -109,7 +99,6 @@ describe("Nest API authentication and expiry", () => {
 		const client = createApiClient({
 			DEV: false,
 			PROD: true,
-			VITE_API_TARGET: "nest",
 			VITE_KONG_BASE_URL: "https://kong.example.test",
 		});
 		const responseErrorHandler =
@@ -124,39 +113,22 @@ describe("Nest API authentication and expiry", () => {
 });
 
 describe("API route compatibility", () => {
-	it("maps authenticated Nest routes to server-owned user identity", () => {
-		const routes = createApiRoutes(apiTargets.NEST);
-
-		expect(routes.recipes).toBe("/recipes");
-		expect(routes.userRecipes(42)).toBe("/users/me/recipes");
-		expect(routes.userWishlist(42)).toBe("/users/me/wishlist");
-		expect(routes.userWishlistItem(42, 7)).toBe(
-			"/users/me/wishlist/7"
-		);
-		expect(routes.userRecipeRating(7)).toBe("/recipes/7/rating");
-		expect(routes.databaseHealth).toBe("/health/ready");
+	it("exposes every frontend route on the Nest v1 contract", () => {
+		expect(apiRoutes.recipes).toBe("/recipes");
+		expect(apiRoutes.recipe(7)).toBe("/recipes/7");
+		expect(apiRoutes.userRecipes).toBe("/users/me/recipes");
+		expect(apiRoutes.categories).toBe("/categories");
+		expect(apiRoutes.meals).toBe("/meals");
+		expect(apiRoutes.userWishlist).toBe("/users/me/wishlist");
+		expect(apiRoutes.userWishlistItem(7)).toBe("/users/me/wishlist/7");
+		expect(apiRoutes.userRecipeRating(7)).toBe("/recipes/7/rating");
+		expect(apiRoutes.userRecipeRatingDelete(7)).toBe("/recipes/7/rating");
+		expect(apiRoutes.databaseHealth).toBe("/health/ready");
 	});
 
-	it("marks rating mutations ownership-safe only for Nest", () => {
-		expect(apiRouteCompatibility.userRecipeRating.ownershipSafe).toEqual({
-			legacy: false,
-			nest: true,
-		});
-		expect(apiRouteCompatibility.userRecipeRatingDelete.ownershipSafe).toEqual({
-			legacy: false,
-			nest: true,
-		});
-	});
-
-	it("keeps unsupported Nest routes explicit instead of guessing a path", () => {
-		const routes = createApiRoutes(apiTargets.NEST);
-
-		expect(apiRouteCompatibility.categories).toMatchObject({
-			legacy: true,
-			nest: false,
-		});
-		expect(() => routes.categories).toThrow(ApiCompatibilityError);
-		expect(() => routes.meals).toThrow(/meals controller/);
-		expect(createApiRoutes(apiTargets.LEGACY).categories).toBe("/categories");
+	it("keeps route paths relative so the client base URL supplies /api/v1", () => {
+		for (const route of [apiRoutes.recipes, apiRoutes.categories, apiRoutes.meals]) {
+			expect(route).not.toMatch(/^\/api\/v1/);
+		}
 	});
 });

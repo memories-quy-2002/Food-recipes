@@ -31,7 +31,7 @@ describe("FavoriteRecipe saved metadata", () => {
 		expect(renderer.root.findByProps({ className: "wishlist__main__content__list__item__saved-at" }).children.join("")).toContain("Saved");
 	});
 
-	it("truthfully labels legacy entries without a save date", () => {
+	it("truthfully labels entries without a save date", () => {
 		let renderer;
 		act(() => {
 			renderer = TestRenderer.create(

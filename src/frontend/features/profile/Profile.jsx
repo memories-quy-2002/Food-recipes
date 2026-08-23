@@ -59,7 +59,7 @@ const Profile = () => {
 			try {
 				setIsLoadingRatings(true);
 				setRatingsError(null);
-				const response = await axios.get(apiRoutes.userRatings(user.user_id));
+				const response = await axios.get(apiRoutes.userRatings);
 				setRatings(getArrayPayload(response.data, "ratings"));
 			} catch (err) {
 				console.error(err);

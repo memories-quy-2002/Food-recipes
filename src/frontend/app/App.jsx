@@ -7,7 +7,7 @@ import AuthProvider from "./AuthProvider";
 import RecipeProvider from "./RecipeProvider";
 import ToastProvider from "./ToastProvider";
 import Layout from "@/shared/layout/Layout";
-import { queryClient } from "@/shared/api/query-client";
+import { queryClient } from "@/shared/api/queryClient";
 
 function App() {
 	return (
