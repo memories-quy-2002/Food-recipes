@@ -2,9 +2,10 @@ import React, { useContext } from "react";
 import { Button, Offcanvas } from "react-bootstrap";
 import { FaBars } from "react-icons/fa6";
 import { useDispatch } from "react-redux";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "@/app/AuthProvider";
 import { authActions } from "@/features/auth/state/authSlice";
+import { isNavigationItemActive } from "./navigation";
 
 const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 	const dispatch = useDispatch();
@@ -12,8 +13,6 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 	const { pathname } = useLocation();
 	const { auth } = useContext(AuthContext);
 	const { user, isAuthenticated } = auth.current;
-	const isActive = (href) =>
-		href === "/" ? pathname === href : pathname.startsWith(href);
 	const handleNavigate = (href) => {
 		navigate(href);
 		handleClose();
@@ -51,18 +50,23 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 								key={index}
 								className="header__toggle__list__item"
 							>
-								<button
+								<Link
 									type="button"
 									className={`header__toggle__list__item__link${
-										isActive(href)
+										isNavigationItemActive(pathname, href, items)
 											? " header__toggle__list__item__link--active"
 											: ""
-										}`}
-									aria-current={isActive(href) ? "page" : undefined}
-									onClick={() => handleNavigate(href)}
+									}`}
+									aria-current={
+										isNavigationItemActive(pathname, href, items)
+											? "page"
+											: undefined
+									}
+									to={href}
+									onClick={handleClose}
 								>
 									{title}
-								</button>
+								</Link>
 							</li>
 						))}
 						{isAuthenticated ? (

@@ -1,26 +1,29 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { isNavigationItemActive } from "./navigation";
 
 const HeaderMenu = ({ items }) => {
-	const navigate = useNavigate();
 	const { pathname } = useLocation();
-	const isActive = (href) =>
-		href === "/" ? pathname === href : pathname.startsWith(href);
 
 	return (
 		<nav className="header__menu" aria-label="Primary navigation">
 			{items.map(({ title, href }, index) => (
-				<button
+				<Link
 					key={index}
-					type="button"
 					className={`header__menu__content${
-						isActive(href) ? " header__menu__content--active" : ""
+						isNavigationItemActive(pathname, href, items)
+							? " header__menu__content--active"
+							: ""
 					}`}
-					aria-current={isActive(href) ? "page" : undefined}
-					onClick={() => navigate(href)}
+					aria-current={
+						isNavigationItemActive(pathname, href, items)
+							? "page"
+							: undefined
+					}
+					to={href}
 				>
 					{title}
-				</button>
+				</Link>
 			))}
 		</nav>
 	);
