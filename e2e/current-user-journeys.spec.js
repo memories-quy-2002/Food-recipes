@@ -134,6 +134,69 @@ test("guest searches Home and opens recipe detail", async ({ page }) => {
 	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
 });
 
+test("guest navigates Home search results with accessible keyboard behavior", async ({ page }) => {
+	await page.goto("/?q=a");
+
+	const input = page.getByRole("combobox", { name: "Search recipes" });
+	const listbox = page.getByRole("listbox", { name: "Recipe search results" });
+	const options = listbox.getByRole("option");
+
+	await expect(input).toHaveAttribute("aria-expanded", "true");
+	await expect(input).toHaveAttribute("aria-controls", "recipe-search-results");
+	await expect(listbox).toBeVisible();
+	await expect(options).toHaveCount(2);
+	await expect(options.first()).toHaveAttribute("role", "option");
+
+	await input.focus();
+	await input.press("ArrowDown");
+	await expect(input).toHaveAttribute(
+		"aria-activedescendant",
+		"recipe-search-option-0"
+	);
+	await expect(options.first()).toHaveAttribute("aria-selected", "true");
+	await expect(input).toBeFocused();
+
+	await input.press("ArrowUp");
+	await expect(input).toHaveAttribute(
+		"aria-activedescendant",
+		"recipe-search-option-1"
+	);
+	await expect(input).toBeFocused();
+	await expect(options.nth(1)).toHaveAttribute("aria-selected", "true");
+
+	await input.press("ArrowDown");
+	await expect(input).toHaveAttribute(
+		"aria-activedescendant",
+		"recipe-search-option-0"
+	);
+	await expect(options.first()).toHaveAttribute("aria-selected", "true");
+	await expect(options.first()).toHaveAttribute("tabindex", "-1");
+
+	await input.press("Enter");
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
+	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
+
+	await page.goto("/?q=Chicken");
+	const reopenedInput = page.getByRole("combobox", { name: "Search recipes" });
+	const reopenedListbox = page.getByRole("listbox", { name: "Recipe search results" });
+	await reopenedInput.focus();
+	await reopenedInput.press("Escape");
+	await expect(reopenedInput).toBeFocused();
+	await expect(reopenedInput).toHaveValue("Chicken");
+	await expect(reopenedInput).toHaveAttribute("aria-expanded", "false");
+	await expect(reopenedListbox).toBeHidden();
+	await expect(page).toHaveURL(/\/\?q=Chicken$/);
+
+	await page.goto("/");
+	const emptyInput = page.getByRole("combobox", { name: "Search recipes" });
+	await emptyInput.fill("does-not-exist");
+	const emptyListbox = page.getByRole("listbox", { name: "Recipe search results" });
+	await expect(emptyListbox).toHaveAttribute("aria-live", "polite");
+	await expect(emptyListbox.getByRole("option")).toHaveText("No recipe found");
+	await expect(emptyInput).toBeFocused();
+	await expect(page).toHaveURL(/\/\?q=does-not-exist$/);
+});
+
 test("guest selects a Home category and opens a matching recipe", async ({ page }) => {
 	await page.goto("/");
 	await page.getByRole("button", { name: /Desserts.*Filter featured recipes/ }).click();
