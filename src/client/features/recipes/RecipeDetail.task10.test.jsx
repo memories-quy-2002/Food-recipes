@@ -30,7 +30,7 @@ describe("recipe detail Task 10", () => {
 		expect(getRecipeTimeSummary({ prep_time_minutes: 10 })).toEqual({ prep: 10, cook: null, total: null });
 	});
 
-	it("renders scannable metadata and honest absent servings state", () => {
+	it("renders scannable metadata and a stable servings control", () => {
 		let renderer;
 		act(() => { renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, prep_time_minutes: 10 }} />); });
 		const text = renderer.root.findAllByType("p").flatMap((node) => node.children).join(" ");
@@ -40,7 +40,7 @@ describe("recipe detail Task 10", () => {
 		expect(headings).toContain("Cook");
 		expect(text).toContain("25 min");
 		expect(text).toContain("35 min");
-		expect(text).toContain("Not provided");
+		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["4"]);
 		expect(renderer.root.findByType("ol")).toBeTruthy();
 		expect(renderer.root.findByProps({ id: "ingredients" })).toBeTruthy();
 	});

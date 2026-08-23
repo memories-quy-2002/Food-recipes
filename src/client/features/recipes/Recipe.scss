@@ -287,6 +287,36 @@
 			}
 		}
 
+		&__servings {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.65rem;
+			min-height: 2.4rem;
+
+			button {
+				width: 2.2rem;
+				height: 2.2rem;
+				border: 1px solid rgba(98, 58, 18, 0.25);
+				border-radius: 999px;
+				background: #ffffff;
+				color: #a84f00;
+				font-size: 1.35rem;
+				font-weight: 900;
+				line-height: 1;
+
+				&:disabled {
+					cursor: not-allowed;
+					opacity: 0.45;
+				}
+			}
+
+			span {
+				min-width: 1.5rem;
+				text-align: center;
+				font-weight: 900;
+			}
+		}
+
 		&__ingredient,
 		&__instruction {
 			h2 {
@@ -301,6 +331,13 @@
 				padding-left: 1.3rem;
 				color: #42372f;
 				line-height: 1.8;
+			}
+
+			[role="note"] {
+				margin: 0 0 0.75rem;
+				color: #6d6258;
+				font-size: 0.9rem;
+				line-height: 1.5;
 			}
 		}
 

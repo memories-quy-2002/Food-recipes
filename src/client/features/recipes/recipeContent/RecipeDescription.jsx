@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Row, Col } from "react-bootstrap";
+
+const DEFAULT_SERVINGS = 4;
+const MIN_SERVINGS = 1;
+const MAX_SERVINGS = 99;
 
 const firstDefined = (recipe, fields) => fields.map((field) => recipe?.[field]).find((value) => value !== undefined && value !== null && value !== "");
 
@@ -43,18 +47,34 @@ export const getRecipeTimeSummary = (recipe) => {
 
 const getServings = (recipe) => firstDefined(recipe, ["servings", "serving_count", "yield", "recipe_yield", "recipeYield"]);
 
+export const normalizeServings = (value) => {
+	const numericValue = typeof value === "number" ? value : Number.parseFloat(value);
+	if (!Number.isFinite(numericValue)) return DEFAULT_SERVINGS;
+	return Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, Math.round(numericValue)));
+};
+
 const RecipeDescription = ({ recipe }) => {
 	const { prep, cook, total } = getRecipeTimeSummary(recipe);
-	const servings = getServings(recipe);
+	const [servings, setServings] = useState(() => normalizeServings(getServings(recipe)));
+	const hasStructuredIngredients = Array.isArray(recipe.ingredients) && recipe.ingredients.some((ingredient) => ingredient && typeof ingredient === "object");
+	const adjustServings = (amount) => setServings((current) => normalizeServings(current + amount));
 	return (
 		<>
 			<Row className="recipe__content__desc"><div><h2>About</h2><p>{recipe.recipe_description ?? "There is no description for this recipe"}</p></div></Row>
 			<Row className="recipe__content__time">
-				{[["Prep", prep], ["Cook", cook], ["Total", total], ["Servings", servings]].map(([label, value]) => (
-					<Col xs={6} md={3} key={label}><h3>{label}</h3><p>{label === "Servings" ? value || "Not provided" : formatRecipeDuration(value)}</p></Col>
+				{[["Prep", prep], ["Cook", cook], ["Total", total]].map(([label, value]) => (
+					<Col xs={6} md={3} key={label}><h3>{label}</h3><p>{formatRecipeDuration(value)}</p></Col>
 				))}
+				<Col xs={6} md={3}>
+					<h3>Servings</h3>
+					<div className="recipe__content__servings" aria-label="Adjust servings">
+						<button type="button" aria-label="Decrease servings" onClick={() => adjustServings(-1)} disabled={servings === MIN_SERVINGS}>−</button>
+						<span aria-live="polite">{servings}</span>
+						<button type="button" aria-label="Increase servings" onClick={() => adjustServings(1)} disabled={servings === MAX_SERVINGS}>+</button>
+					</div>
+				</Col>
 			</Row>
-			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2><ul>{recipe.ingredients ? recipe.ingredients.map((ingredient, index) => <li key={index}>{ingredient}</li>) : "No information"}</ul></div></Row>
+			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2>{!hasStructuredIngredients && <p role="note">Ingredient quantities are shown as written because this recipe uses free-text ingredients.</p>}<ul>{recipe.ingredients ? recipe.ingredients.map((ingredient, index) => <li key={index}>{typeof ingredient === "string" ? ingredient : ingredient?.name ?? String(ingredient)}</li>) : "No information"}</ul></div></Row>
 			<Row className="recipe__content__instruction"><div><h2>Instructions</h2><ol>{recipe.instructions ? recipe.instructions.map((instruction, index) => <li key={index}>{instruction}</li>) : "No information"}</ol></div></Row>
 		</>
 	);
