@@ -388,6 +388,7 @@ const AddRecipe = () => {
 
 			if (isRecipeCreateSuccess(apiTarget, response.status)) {
 				clearRecipeDraft(window.localStorage, userId);
+				// Keep the existing compatibility boundary; the provider now invalidates the query cache.
 				await refreshRecipes().catch((refreshError) =>
 					console.error("Unable to refresh recipes after publish:", refreshError)
 				);
