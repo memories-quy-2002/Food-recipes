@@ -1,5 +1,6 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Container } from "react-bootstrap";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "@/shared/api/axios";
@@ -89,13 +90,16 @@ export const getVisibleSavedEntries = (
 const Wishlist = () => {
 	const [wishlist, setWishlist] = useState([]);
 	const [showModal, setShowModal] = useState(false);
-	const [recipeId, setRecipeId] = useState(null);
 	const [isRemoving, setIsRemoving] = useState(false);
 	const [removeError, setRemoveError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [sortBy, setSortBy] = useState("recent");
 	const [isLoadingWishlist, setIsLoadingWishlist] = useState(true);
 	const [wishlistError, setWishlistError] = useState(null);
+	const confirmButtonRef = useRef(null);
+	const triggeringButtonRef = useRef(null);
+	const pendingRecipeIdRef = useRef(null);
+	const isRemovingRef = useRef(false);
 	const navigate = useNavigate();
 	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { local, session } = useSelector(({ auth }) => auth);
@@ -141,30 +145,66 @@ const Wishlist = () => {
 		[recipes, wishlist, searchTerm, sortBy]
 	);
 
-	const handleShowModal = (recipe_id) => {
+	const handleShowModal = (recipe_id, triggeringButton) => {
+		pendingRecipeIdRef.current = recipe_id;
+		triggeringButtonRef.current = triggeringButton;
 		setShowModal(true);
-		setRecipeId(recipe_id);
 		setRemoveError(null);
 	};
 
+	const closeModal = () => {
+		if (isRemovingRef.current) return;
+		setShowModal(false);
+		setRemoveError(null);
+	};
+
+	useEffect(() => {
+		if (!showModal) {
+			triggeringButtonRef.current?.focus?.();
+			triggeringButtonRef.current = null;
+			return undefined;
+		}
+
+		confirmButtonRef.current?.focus?.();
+		const handleEscape = (event) => {
+			if (event.key === "Escape") closeModal();
+		};
+		window.addEventListener("keydown", handleEscape);
+		return () => window.removeEventListener("keydown", handleEscape);
+	}, [showModal, isRemoving]);
+
+	useEffect(() => {
+		if (!showModal) return undefined;
+		const appRoot = document.getElementById("root");
+		if (!appRoot) return undefined;
+		const wasInert = appRoot.hasAttribute("inert");
+		appRoot.setAttribute("inert", "");
+		return () => {
+			if (!wasInert) appRoot.removeAttribute("inert");
+		};
+	}, [showModal]);
+
 	const handleDelete = async () => {
-		if (isRemoving) return;
+		if (isRemovingRef.current) return;
+		const capturedRecipeId = pendingRecipeIdRef.current;
+		if (capturedRecipeId == null) return;
+		isRemovingRef.current = true;
 		setIsRemoving(true);
 		setRemoveError(null);
 		try {
 			const response = await axios.delete(
-				apiRoutes.userWishlistItem(user_id, recipeId)
+				apiRoutes.userWishlistItem(user_id, capturedRecipeId)
 			);
 			if (response.status === 200) {
 				setWishlist((currentWishlist) =>
 					currentWishlist.filter(
 						(item) =>
 							Number(item.recipe?.recipe_id ?? item.recipe_id) !==
-							Number(recipeId)
+							Number(capturedRecipeId)
 					)
 				);
 				setShowModal(false);
-				setRecipeId(null);
+				pendingRecipeIdRef.current = null;
 			}
 		} catch (err) {
 			console.error(err);
@@ -173,6 +213,7 @@ const Wishlist = () => {
 					"We could not remove this saved recipe. Please try again."
 			);
 		} finally {
+			isRemovingRef.current = false;
 			setIsRemoving(false);
 		}
 	};
@@ -275,17 +316,18 @@ const Wishlist = () => {
 									key={recipe.recipe_id}
 									recipe={recipe}
 									savedAt={savedAt}
-									handleShowModal={() =>
-										handleShowModal(recipe.recipe_id)
-									}
+									handleShowModal={(triggeringButton) =>
+										handleShowModal(recipe.recipe_id, triggeringButton)
+								}
 								/>
 							))}
 						</ul>
 					)}
 				</div>
 			</div>
-			{showModal && (
-				<div className="wishlist__modal" role="presentation">
+			{showModal &&
+				createPortal(
+					<div className="wishlist__modal" role="presentation">
 					<div
 						className="wishlist__modal__content"
 						role="dialog"
@@ -302,6 +344,7 @@ const Wishlist = () => {
 							<button
 								className="wishlist__modal__button wishlist__modal__button--danger"
 								type="button"
+								ref={confirmButtonRef}
 								onClick={handleDelete}
 								disabled={isRemoving}
 								aria-busy={isRemoving}
@@ -312,14 +355,15 @@ const Wishlist = () => {
 								className="wishlist__modal__button"
 								type="button"
 								disabled={isRemoving}
-								onClick={() => setShowModal(false)}
+								onClick={closeModal}
 							>
 								Cancel
 							</button>
 						</div>
 					</div>
-				</div>
-			)}
+					</div>,
+					document.body
+				)}
 		</Container>
 	);
 };

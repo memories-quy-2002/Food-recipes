@@ -44,7 +44,7 @@ const FavoriteRecipe = ({ recipe, savedAt, handleShowModal }) => {
 				<button
 					type="button"
 					className="wishlist__main__content__list__item__button wishlist__main__content__list__item__button--danger"
-					onClick={handleShowModal}
+					onClick={(event) => handleShowModal(event.currentTarget)}
 					aria-label={`Remove ${recipe.recipe_name}`}
 				>
 					<BsTrash3 />
