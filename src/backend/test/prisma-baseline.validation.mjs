@@ -24,21 +24,22 @@ const contents = Object.fromEntries(
 const withoutSqlComments = (sql) =>
   sql.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*--.*$/gm, '');
 const sql = withoutSqlComments(contents.migration).replace(/\s+/g, ' ');
+const legacySql = withoutSqlComments(contents.legacySchema);
 
 for (const tableName of ['accounts', 'categories', 'meals', 'recipes', 'wishlist', 'rating']) {
   assert.match(contents.migration, new RegExp(`CREATE TABLE "${tableName}"`), `baseline must create ${tableName}`);
-  assert.match(contents.legacySchema, new RegExp(`CREATE TABLE public\\.${tableName}`), `legacy schema must document ${tableName}`);
+  assert.match(legacySql, new RegExp(`CREATE TABLE public\\.${tableName}`), `legacy schema must document ${tableName}`);
 }
 
 assert.match(contents.schema, /prepTime\s+Unsupported\("interval"\)\s+@map\("prep_time"\)/);
 assert.match(contents.schema, /cookTime\s+Unsupported\("interval"\)\s+@map\("cook_time"\)/);
 assert.match(contents.schema, /imageUrl\s+String\?\s+@map\("image_url"\)/);
-assert.doesNotMatch(contents.legacySchema, /\bimage_url\b/i, 'legacy evidence must document the historical image_url discrepancy');
-assert.doesNotMatch(contents.legacySchema, /\bCOPY\b|\bINSERT\b/i, 'legacy evidence must be schema-only and contain no application rows');
-assert.doesNotMatch(contents.legacySchema, /@|gmail|bcrypt|\$2[aby]\$/i, 'legacy evidence must not contain user data or password hashes');
+assert.doesNotMatch(legacySql, /\bimage_url\b/i, 'legacy evidence must document the historical image_url discrepancy');
+assert.doesNotMatch(legacySql, /\bCOPY\b|\bINSERT\b/i, 'legacy evidence must be schema-only and contain no application rows');
+assert.doesNotMatch(legacySql, /@|gmail|bcrypt|\$2[aby]\$/i, 'legacy evidence must not contain user data or password hashes');
 
 assert.match(
-  contents.legacySchema,
+  legacySql,
   /date_added\s+timestamp without time zone DEFAULT CURRENT_TIMESTAMP/i,
   'legacy schema must preserve nullable wishlist date default evidence',
 );
