@@ -1,8 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
+import type { RecipeSummary } from "@/shared/api/contracts";
 import {
 	createRecipeQueryKey,
 	createRecipeRequestParams,
 	parseRecipeDiscoveryState,
+	useRecipesQuery,
 } from "./useRecipesQuery";
 
 describe("recipe discovery query state", () => {
@@ -37,5 +39,11 @@ describe("recipe discovery query state", () => {
 		const state = parseRecipeDiscoveryState("?q=soup&page=3");
 
 		expect(createRecipeQueryKey(state)).toEqual(["recipes", state]);
+	});
+
+	it("exposes typed recipe summaries from the query", () => {
+		expectTypeOf<ReturnType<typeof useRecipesQuery>["data"]>().toEqualTypeOf<
+			RecipeSummary[] | undefined
+		>();
 	});
 });

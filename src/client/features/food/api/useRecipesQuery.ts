@@ -2,8 +2,10 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
+import type { RecipeSummary } from "@/shared/api/contracts";
+import type { QueryFunctionContext } from "@tanstack/react-query";
 
-export const RECIPE_DISCOVERY_ENDPOINT = apiRoutes.recipes;
+export const RECIPE_DISCOVERY_ENDPOINT = (apiRoutes as { recipes: string }).recipes;
 export const DEFAULT_RECIPE_LIMIT = 6;
 const supportedSorts = new Set(["popular", "rating", "name"]);
 
@@ -47,7 +49,10 @@ export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
 	return params;
 };
 
-const fetchRecipes = async ({ queryKey, signal }) => {
+const fetchRecipes = async ({
+	queryKey,
+	signal,
+}: QueryFunctionContext<ReturnType<typeof createRecipeQueryKey>>): Promise<RecipeSummary[]> => {
 	const [, state] = queryKey;
 	const response = await axios.get(RECIPE_DISCOVERY_ENDPOINT, {
 		// The current NestJS DTO supports these three filters only. Keep URL sort/page/limit
@@ -55,7 +60,7 @@ const fetchRecipes = async ({ queryKey, signal }) => {
 		params: createRecipeRequestParams(state),
 		signal,
 	});
-	return getArrayPayload(response.data, "recipes");
+	return getArrayPayload(response.data as { recipes?: unknown }, "recipes") as RecipeSummary[];
 };
 
 export const useRecipesQuery = (state: RecipeDiscoveryState) => useQuery({
