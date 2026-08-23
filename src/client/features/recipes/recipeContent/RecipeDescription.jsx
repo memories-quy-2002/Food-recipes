@@ -50,6 +50,8 @@ const getServings = (recipe) => firstDefined(recipe, ["servings", "serving_count
 
 const getRecipeIdentity = (recipe) => firstDefined(recipe, ["recipe_id", "id", "publicId"]);
 
+const hasInstructions = (instructions) => Array.isArray(instructions) && instructions.length > 0;
+
 export const normalizeServings = (value) => {
 	const numericValue = typeof value === "number" ? value : Number.parseFloat(value);
 	if (!Number.isFinite(numericValue)) return DEFAULT_SERVINGS;
@@ -84,7 +86,16 @@ const RecipeDescription = ({ recipe }) => {
 				</Col>
 			</Row>
 			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2><p role="note">Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data.</p><RecipeIngredientChecklist key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(recipe.ingredients)}`} recipeIdentity={recipeIdentity} ingredients={recipe.ingredients} /></div></Row>
-			<Row className="recipe__content__instruction"><div><h2>Instructions</h2><ol>{recipe.instructions ? recipe.instructions.map((instruction, index) => <li key={index}>{instruction}</li>) : "No information"}</ol></div></Row>
+			<Row className="recipe__content__instruction"><div><h2>Instructions</h2>{hasInstructions(recipe.instructions) ? (
+				<ol className="recipe__instruction-steps">
+					{recipe.instructions.map((instruction, index) => (
+						<li className="recipe__instruction-step" key={index}>
+							<span className="recipe__instruction-step-number" aria-hidden="true">{index + 1}</span>
+							<span className="recipe__instruction-step-text">{instruction}</span>
+						</li>
+					))}
+				</ol>
+			) : <p className="recipe__instruction-empty" role="status">No information</p>}</div></Row>
 		</>
 	);
 };
