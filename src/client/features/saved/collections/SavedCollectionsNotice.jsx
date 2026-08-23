@@ -14,7 +14,7 @@ const SavedCollectionsNotice = () => {
 				<span className="wishlist__collections-notice__eyebrow">
 					Saved organization
 				</span>
-				<h2 id="saved-collections-title">Collections are coming soon</h2>
+				<h2 id="saved-collections-title">Collections are unavailable</h2>
 				<p>
 					{contract.reason} Saved recipes remain available in the default
 					<strong> {contract.defaultCollection.name}</strong> view.
