@@ -39,16 +39,16 @@
   },
   "scripts": {
     "start": "node scripts/start-dev.mjs",
-    "start:client": "vite",
+    "start:client": "vite --config src/frontend/vite.config.ts",
     "start:backend": "pnpm --dir src/backend/apps/api start:dev",
-    "build": "vite build",
-    "test": "vitest",
-    "test:ci": "vitest run src/frontend",
+    "build": "vite build --config src/frontend/vite.config.ts",
+    "test": "vitest --config src/frontend/vite.config.ts",
+    "test:ci": "vitest run --config src/frontend/vite.config.ts src/frontend",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:e2e": "playwright test",
-    "test:e2e:ci": "playwright test",
-    "test:ui": "vitest --ui",
-    "preview": "vite preview"
+    "test:e2e": "playwright test --config e2e/playwright.config.js",
+    "test:e2e:ci": "playwright test --config e2e/playwright.config.js",
+    "test:ui": "vitest --ui --config src/frontend/vite.config.ts",
+    "preview": "vite preview --config src/frontend/vite.config.ts"
   },
   "devDependencies": {
     "@babel/preset-env": "^8.0.2",

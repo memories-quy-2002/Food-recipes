@@ -29,12 +29,16 @@ PostgreSQL, Prisma, JWT refresh, RBAC, Docker, and Kong enforcement are backend 
 
 ```text
 Food-recipes/
-  index.html            Vite HTML entry
   package.json          Frontend scripts and shared dependencies
   vercel.json           Frontend SPA rewrites for Vercel
-  vite.config.ts        Vite config with @ alias to src/frontend
+  e2e/                  Browser journeys and Playwright config
   src/
     frontend/
+      index.html         Vite HTML entry
+      main.jsx           Frontend bootstrap
+      vite.config.ts     Vite config with @ alias to src/frontend
+      jsconfig.json      Frontend JavaScript editor settings
+      vite-env.d.ts      Vite environment types
       app/              App shell, providers, route definitions, store, global app styles
       features/
         auth/           Account forms, auth hooks, auth state, protected route
@@ -92,6 +96,11 @@ run separately when gateway behavior is needed.
 ```env
 PORT=3000
 ```
+
+### Configure the frontend
+
+Copy `src/frontend/.env.example` to `src/frontend/.env` and set only public
+`VITE_*` values. The local combined runner supplies the Nest API URL for you.
 
 ### Run locally
 

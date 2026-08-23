@@ -46,7 +46,7 @@ Logout
 ## Smoke E2E convention
 
 - Tests live in `e2e/` and use Playwright Test.
-- `playwright.config.js` builds the Vite app, serves `dist`, and runs Chromium against `http://127.0.0.1:4173`.
+- `e2e/playwright.config.js` builds the Vite app, serves `dist`, and runs Chromium against `http://127.0.0.1:4173`.
 - The smoke tests stub only the recipe/category/meal/review read APIs. This keeps discovery assertions deterministic while still exercising the real React routes, providers, navigation, filtering, sorting, and protected routing.
 - Authenticated mutation journeys are intentionally not mocked into a false success state. They require a documented test account or a backend fixture before they can be promoted to passing E2E coverage.
 

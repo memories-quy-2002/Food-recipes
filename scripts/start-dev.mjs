@@ -17,7 +17,11 @@ const commands = [
 		name: "client",
 		command: process.execPath,
 		cwd: rootDir,
-		args: [path.join(rootDir, "node_modules", "vite", "bin", "vite.js")],
+		args: [
+			path.join(rootDir, "node_modules", "vite", "bin", "vite.js"),
+			"--config",
+			path.join(rootDir, "src", "frontend", "vite.config.ts"),
+		],
 	},
 	{
 		name: "backend",

@@ -18,8 +18,8 @@
 	"include": [
 		"src/frontend/**/*.ts",
 		"src/frontend/**/*.tsx",
-		"src/vite-env.d.ts",
-		"vite.config.ts"
+		"src/frontend/vite-env.d.ts",
+		"src/frontend/vite.config.ts"
 	],
 	"exclude": ["src/backend"]
 }

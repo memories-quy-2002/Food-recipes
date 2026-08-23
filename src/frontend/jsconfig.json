@@ -3,8 +3,8 @@
         "baseUrl": ".",
         "ignoreDeprecations": "6.0",
         "paths": {
-            "@/*": ["src/frontend/*"]
+            "@/*": ["./*"]
         }
     },
-    "include": ["src/frontend", "src/main.jsx", "vite.config.ts"]
+    "include": ["."]
 }

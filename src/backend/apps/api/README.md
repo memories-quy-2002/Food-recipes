@@ -40,9 +40,10 @@ default.
 
 Known legacy evidence discrepancy: the checked-in `prisma/schema.prisma`
 declares nullable `Recipe.imageUrl` mapped to `recipes.image_url`, and the
-baseline migration includes that nullable `image_url` column. The checked-in
-`recipes.sql` evidence omits `image_url` from both the `CREATE TABLE
-public.recipes` definition and the `COPY public.recipes` column list. The
+baseline migration includes that nullable `image_url` column. The
+checked-in `recipes.sql` evidence omits `image_url` from both the `CREATE TABLE
+public.recipes` definition and the `COPY public.recipes` column list. This evidence
+file is stored under `prisma/legacy/`. The
 application schema and migration remain internally consistent with
 `image_url`, but static validation cannot prove that the existing legacy
 database has this column.

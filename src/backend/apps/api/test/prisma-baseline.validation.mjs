@@ -12,7 +12,7 @@ const files = {
   schema: path.join(apiDirectory, 'prisma/schema.prisma'),
   readme: path.join(apiDirectory, 'README.md'),
   report: path.join(repositoryRoot, '.superpowers/sdd/task-5-report.md'),
-  legacyDump: path.join(repositoryRoot, 'recipes.sql'),
+  legacyDump: path.join(apiDirectory, 'prisma/legacy/recipes.sql'),
   compose: path.join(repositoryRoot, 'infrastructure/docker/docker-compose.yml'),
 };
 
