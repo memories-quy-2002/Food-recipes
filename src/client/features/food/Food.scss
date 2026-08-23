@@ -349,6 +349,44 @@
 			}
 		}
 
+		&__error,
+		&__loading {
+			min-height: 620px;
+		}
+
+		&__error {
+			padding: 2rem;
+			border: 1px dashed rgba(170, 67, 0, 0.28);
+			border-radius: 8px;
+			background: rgba(255, 247, 239, 0.8);
+			text-align: center;
+
+			h3 {
+				margin: 0 0 0.4rem;
+				font-weight: 900;
+			}
+
+			p {
+				margin: 0;
+				color: #6d6258;
+			}
+		}
+
+		&__loading {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 1.25rem;
+		}
+
+		&__skeleton {
+			min-height: 392px;
+			border: 1px solid rgba(98, 58, 18, 0.08);
+			border-radius: 8px;
+			background: linear-gradient(110deg, #f5eee5 8%, #fffaf3 18%, #f5eee5 33%);
+			background-size: 200% 100%;
+			animation: food-skeleton 1.4s linear infinite;
+		}
+
 		&__section {
 			&:not(:last-child) {
 				margin-bottom: 2.5rem;
@@ -510,6 +548,12 @@
 	}
 }
 
+@keyframes food-skeleton {
+	to {
+		background-position-x: -200%;
+	}
+}
+
 @media screen and (max-width: 1100px) {
 	.food {
 		&__intro {
@@ -541,6 +585,10 @@
 		}
 
 		&__content {
+			&__loading {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
 			&__toolbar {
 				align-items: flex-start;
 				flex-direction: column;
@@ -563,6 +611,10 @@
 		}
 
 		&__content {
+			&__loading {
+				grid-template-columns: 1fr;
+			}
+
 			&__toolbar {
 				&__actions {
 					align-items: stretch;
