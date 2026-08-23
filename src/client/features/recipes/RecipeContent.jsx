@@ -20,7 +20,7 @@ const RecipeContent = ({
 	onReviewChange,
 }) => {
 	return (
-		<Row className="recipe__content">
+		<Row className="recipe__content" aria-label="Recipe cooking details">
 			<RecipeDescription recipe={recipe} />
 			<RecipeRating
 				ratingScore={ratingScore}
