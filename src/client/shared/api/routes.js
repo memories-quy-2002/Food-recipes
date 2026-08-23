@@ -99,6 +99,11 @@ export const getApiRoute = (routeName, target, ...args) => {
 	return route(...args);
 };
 
+export const getUserRecipeRatingRoute = (target, userId, recipeId) =>
+	target === apiTargets.NEST
+		? getApiRoute("userRecipeRating", target, recipeId)
+		: getApiRoute("userRecipeRating", target, userId, recipeId);
+
 export const createApiRoutes = (target = getApiTarget()) => {
 	const routes = {};
 

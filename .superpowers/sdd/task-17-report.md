@@ -11,6 +11,9 @@
 - Added explicit legacy/Nest route mappings. Categories and meals remain
   legacy-only and throw a compatibility error in Nest mode rather than calling
   a missing route.
+- Fixed rating mutation route argument selection so legacy keeps
+  `/users/:userId/ratings/:recipeId` while Nest/Kong uses
+  `/recipes/:recipeId/rating`; added a regression test for both targets.
 - Fixed concrete Nest consumer contracts without changing the legacy payloads:
   wishlist mutations use `recipeId` and accept `201`; create-recipe payloads
   map to `CreateRecipeDto` IDs/minutes and accept `201`; profile updates send
@@ -24,7 +27,7 @@
 ## Verification
 
 - Focused API client, mutation serializer, route, and affected consumer tests:
-  passed (`11 test files`, `45 tests`)
+  passed (`12 test files`, `47 tests`)
 - Frontend production build: passed (`vite build`)
 - Frontend typecheck: no root typecheck script/config is present; the build is
   the available frontend verification

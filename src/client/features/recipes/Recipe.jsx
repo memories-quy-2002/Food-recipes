@@ -2,7 +2,11 @@ import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
-import { apiRouteCompatibility, apiRoutes } from "@/shared/api/routes";
+import {
+	apiRouteCompatibility,
+	apiRoutes,
+	getUserRecipeRatingRoute,
+} from "@/shared/api/routes";
 import { getApiTarget } from "@/shared/api/config";
 import {
 	isWishlistAddSuccess,
@@ -40,11 +44,12 @@ const Recipe = () => {
 	const [reviewMessage, setReviewMessage] = useState(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
+	const apiTarget = getApiTarget();
 	const canDeleteReview = Boolean(
-		apiRouteCompatibility.userRecipeRatingDelete[getApiTarget()]
+		apiRouteCompatibility.userRecipeRatingDelete[apiTarget]
 	);
 	const canMutateReview = Boolean(
-		apiRouteCompatibility.userRecipeRating.ownershipSafe[getApiTarget()]
+		apiRouteCompatibility.userRecipeRating.ownershipSafe[apiTarget]
 	);
 
 	const location = useLocation();
@@ -126,10 +131,13 @@ const Recipe = () => {
 		setReviewMessage(null);
 
 		try {
-			await axios.put(apiRoutes.userRecipeRating(recipe.recipe_id), {
-				score: ratingScore,
-				review: review.trim(),
-			});
+			await axios.put(
+				getUserRecipeRatingRoute(apiTarget, userId, recipe.recipe_id),
+				{
+					score: ratingScore,
+					review: review.trim(),
+				}
+			);
 			setHasExistingRating(true);
 			await fetchRecipe({ showLoading: false });
 			await fetchReviews(recipe.recipe_id);
