@@ -3,6 +3,7 @@ import type { RecipeSummary } from "@/shared/api/contracts";
 import {
 	createRecipeQueryKey,
 	createRecipeRequestParams,
+	parseRecipeListPayload,
 	parseRecipeDiscoveryState,
 	useRecipesQuery,
 } from "./useRecipesQuery";
@@ -45,5 +46,34 @@ describe("recipe discovery query state", () => {
 		expectTypeOf<ReturnType<typeof useRecipesQuery>["data"]>().toEqualTypeOf<
 			RecipeSummary[] | undefined
 		>();
+	});
+
+	it("accepts the legacy and Nest recipe list duration contracts", () => {
+		expect(
+			parseRecipeListPayload({
+				recipes: [
+					{
+						recipe_id: 1,
+						recipe_name: "Legacy soup",
+						recipe_description: null,
+						prep_time: "00:10:00",
+						cook_time: "00:20:00",
+						date_added: null,
+						image_url: null,
+					},
+					{
+						recipe_id: 2,
+						recipe_name: "Nest soup",
+						recipe_description: null,
+						prep_time_minutes: 10,
+						cook_time_minutes: 20,
+						total_time_minutes: 30,
+						date_added: null,
+						image_url: null,
+						user_id: 7,
+					},
+				],
+			})
+		).toHaveLength(2);
 	});
 });

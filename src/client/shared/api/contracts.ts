@@ -3,16 +3,12 @@ export type CatalogItem = {
 	name: string;
 };
 
-export type RecipeSummary = {
+type RecipeSummaryBase = {
 	recipe_id: number;
 	recipe_name: string;
 	recipe_description: string | null;
-	prep_time_minutes: number;
-	cook_time_minutes: number;
-	total_time_minutes: number;
 	date_added: string | null;
 	image_url: string | null;
-	user_id: number;
 	meal_id?: number;
 	meal_name?: string;
 	meal_description?: string | null;
@@ -22,10 +18,31 @@ export type RecipeSummary = {
 	num_ratings?: number;
 };
 
+export type LegacyRecipeSummary = RecipeSummaryBase & {
+	prep_time: string;
+	cook_time: string;
+	prep_time_minutes?: never;
+	cook_time_minutes?: never;
+	total_time_minutes?: never;
+	user_id?: number;
+	full_name?: string | null;
+};
+
+export type NestRecipeSummary = RecipeSummaryBase & {
+	prep_time?: never;
+	cook_time?: never;
+	prep_time_minutes: number;
+	cook_time_minutes: number;
+	total_time_minutes: number;
+	user_id: number;
+	full_name?: string | null;
+};
+
+export type RecipeSummary = LegacyRecipeSummary | NestRecipeSummary;
+
 export type RecipeDetail = RecipeSummary & {
 	ingredients: string[] | null;
 	instructions: string[] | null;
-	full_name?: string | null;
 };
 
 export type RecipeListResponse = {

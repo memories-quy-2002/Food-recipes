@@ -1,6 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios from "@/shared/api/axios";
-import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
 import type { RecipeSummary } from "@/shared/api/contracts";
 import type { QueryFunctionContext } from "@tanstack/react-query";
@@ -49,6 +48,39 @@ export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
 	return params;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const isRecipeSummary = (value: unknown): value is RecipeSummary => {
+	if (!isRecord(value)) return false;
+
+	const hasCommonFields =
+		typeof value.recipe_id === "number" &&
+		typeof value.recipe_name === "string" &&
+		(value.recipe_description === null || typeof value.recipe_description === "string") &&
+		(value.date_added === null || typeof value.date_added === "string") &&
+		(value.image_url === null || typeof value.image_url === "string");
+	const isLegacyDuration =
+		typeof value.prep_time === "string" && typeof value.cook_time === "string";
+	const isNestDuration =
+		typeof value.prep_time_minutes === "number" &&
+		typeof value.cook_time_minutes === "number" &&
+		typeof value.total_time_minutes === "number" &&
+		typeof value.user_id === "number";
+
+	return hasCommonFields && (isLegacyDuration || isNestDuration);
+};
+
+export const parseRecipeListPayload = (payload: unknown): RecipeSummary[] => {
+	const recipes = Array.isArray(payload)
+		? payload
+		: isRecord(payload) && Array.isArray(payload.recipes)
+			? payload.recipes
+			: [];
+
+	return recipes.filter(isRecipeSummary);
+};
+
 const fetchRecipes = async ({
 	queryKey,
 	signal,
@@ -60,7 +92,7 @@ const fetchRecipes = async ({
 		params: createRecipeRequestParams(state),
 		signal,
 	});
-	return getArrayPayload(response.data as { recipes?: unknown }, "recipes") as RecipeSummary[];
+	return parseRecipeListPayload(response.data);
 };
 
 export const useRecipesQuery = (state: RecipeDiscoveryState) => useQuery({

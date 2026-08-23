@@ -1,11 +1,27 @@
 import React, { useEffect, useRef } from "react";
+import type { RecipeDetail } from "@/shared/api/contracts";
 import { useCookingMode, getCookingInstructions } from "./useCookingMode";
 import "./CookingMode.scss";
 
-const CookingMode = ({ recipe, onExit }) => {
-	const mainRef = useRef(null);
+type CookingRecipe = Partial<RecipeDetail> & {
+	id?: number | string;
+	slug?: string;
+};
+
+type CookingModeProps = {
+	recipe?: CookingRecipe | null;
+	onExit: () => void;
+};
+
+const useCookingModeWithIdentity = useCookingMode as (
+	instructions: CookingRecipe["instructions"],
+	recipeIdentity?: number | string | null
+) => ReturnType<typeof useCookingMode>;
+
+const CookingMode = ({ recipe, onExit }: CookingModeProps) => {
+	const mainRef = useRef<HTMLElement | null>(null);
 	const { steps, stepIndex, isFirstStep, isLastStep, goToPrevious, goToNext } =
-		useCookingMode(
+		useCookingModeWithIdentity(
 			recipe?.instructions,
 			recipe?.recipe_id ?? recipe?.id ?? recipe?.slug ?? null
 		);
@@ -14,7 +30,7 @@ const CookingMode = ({ recipe, onExit }) => {
 		mainRef.current?.focus();
 	}, []);
 
-	const handleKeyDown = (event) => {
+	const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
 		if (event.key === "ArrowLeft" && !isFirstStep) {
 			event.preventDefault();
 			goToPrevious();
