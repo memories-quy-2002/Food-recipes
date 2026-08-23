@@ -16,8 +16,8 @@ CREATE TABLE "accounts" (
     "full_name" VARCHAR(124) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
     "email" VARCHAR(255) NOT NULL,
-    "created_on" TIMESTAMP(3) NOT NULL,
-    "last_login" TIMESTAMP(3),
+    "created_on" TIMESTAMP(6) NOT NULL,
+    "last_login" TIMESTAMP(6),
     "phone" VARCHAR(20),
     "address" VARCHAR(255),
 
@@ -50,7 +50,7 @@ CREATE TABLE "recipes" (
     "category_id" INTEGER NOT NULL,
     "prep_time" interval NOT NULL,
     "cook_time" interval NOT NULL,
-    "date_added" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "date_added" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
     "user_id" INTEGER NOT NULL DEFAULT 0,
     "image_url" TEXT,
     "ingredients" TEXT[],
@@ -66,7 +66,7 @@ CREATE TABLE "wishlist" (
     "wishlist_id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
     "recipe_id" INTEGER NOT NULL,
-    "date_added" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date_added" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "wishlist_pkey" PRIMARY KEY ("wishlist_id")
 );
@@ -78,7 +78,7 @@ CREATE TABLE "rating" (
     "recipe_id" INTEGER NOT NULL,
     "score" DECIMAL(10,2),
     "review" TEXT,
-    "date_added" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
+    "date_added" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "rating_pkey" PRIMARY KEY ("rating_id"),
     CONSTRAINT "rating_score_check" CHECK ((((score)::double precision >= (0.0)::double precision) AND ((score)::double precision <= (5.0)::double precision)))

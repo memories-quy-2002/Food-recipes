@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int       @id @default(autoincrement()) @map("user_id")
+  fullName  String    @map("full_name") @db.VarChar(124)
+  password  String    @db.VarChar(255)
+  email     String    @unique @db.VarChar(255)
+  createdOn DateTime  @map("created_on") @db.Timestamp(6)
+  lastLogin DateTime? @map("last_login") @db.Timestamp(6)
+  phone     String?   @db.VarChar(20)
+  address   String?   @db.VarChar(255)
+
+  @@map("accounts")
+}
+
+model Category {
+  id   Int    @id @default(autoincrement()) @map("category_id")
+  name String @map("category_name") @db.VarChar(255)
+
+  @@map("categories")
+}
+
+model Meal {
+  id          Int     @id @default(autoincrement()) @map("meal_id")
+  name        String  @map("meal_name") @db.VarChar(50)
+  description String? @map("meal_description")
+
+  @@map("meals")
+}
+
+model Recipe {
+  id             Int                    @id @default(autoincrement()) @map("recipe_id")
+  name           String                 @map("recipe_name") @db.VarChar(255)
+  description    String?                @map("recipe_description")
+  mealId         Int                    @map("meal_id")
+  categoryId     Int                    @map("category_id")
+  prepTime       Unsupported("interval") @map("prep_time")
+  cookTime       Unsupported("interval") @map("cook_time")
+  dateAdded      DateTime?              @default(now()) @map("date_added") @db.Timestamp(6)
+  userId         Int                    @default(0) @map("user_id")
+  imageUrl       String?                @map("image_url")
+  ingredients    String[]
+  instructions   String[]
+
+  @@map("recipes")
+}
+
+model Wishlist {
+  id        Int      @id @default(autoincrement()) @map("wishlist_id")
+  userId    Int      @map("user_id")
+  recipeId  Int      @map("recipe_id")
+  dateAdded DateTime @default(now()) @map("date_added") @db.Timestamp(6)
+
+  @@unique([userId, recipeId], map: "user_recipe_constraint")
+  @@map("wishlist")
+}
+
+model Rating {
+  id        Int       @id @default(autoincrement()) @map("rating_id")
+  userId    Int       @map("user_id")
+  recipeId  Int       @map("recipe_id")
+  score     Decimal?  @db.Decimal(10, 2)
+  review    String?
+  dateAdded DateTime? @default(now()) @map("date_added") @db.Timestamp(6)
+
+  @@unique([userId, recipeId], map: "unique_user_recipe_pair")
+  @@map("rating")
+}

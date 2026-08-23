@@ -67,6 +67,12 @@ Implemented locally; no database connection or mutation was attempted.
 - Added `src/backend/apps/api/test/prisma-baseline.validation.mjs` for static
   schema, constraint, safety, and evidence checks that do not require Docker or
   PostgreSQL.
+- Aligned all legacy `timestamp without time zone` fields with explicit
+  `@db.Timestamp(6)` schema annotations and `TIMESTAMP(6)` baseline SQL for
+  `accounts.created_on`, `accounts.last_login`, and the three `date_added`
+  columns.
+- Extended validation to assert that `image_url` is absent from both the
+  legacy `CREATE TABLE public.recipes` definition and its `COPY` column list.
 - Preserved the existing frontend Task 5 report above; this addendum records the
   retroactive backend baseline evidence and remains scoped to Task 5.
 
@@ -81,6 +87,12 @@ application schema and migration remain internally consistent with
 `image_url`, but static validation cannot prove that the existing legacy
 database has this column.
 
+The legacy SQL uses timestamp precision 6 even though PostgreSQL omits the
+default precision from the textual type declaration. The checked-in Prisma
+schema and baseline migration now make this precision explicit for every
+legacy timestamp field; no application behavior or constraint semantics
+change.
+
 Before `prisma migrate resolve --applied 0_init`, inspect the live database or
 a disposable restored copy and reconcile this exact discrepancy. The static
 validator detects and documents the mismatch; it does not claim that baseline
@@ -92,8 +104,10 @@ application is safe or that migration history is complete.
   unreachable placeholder `DATABASE_URL` and no database connection.
 - `corepack pnpm exec prisma generate --config prisma.config.ts`: passed.
 - `node test/prisma-baseline.validation.mjs`: passed without Docker or database
-  access and reported the documented `image_url` discrepancy.
+  access; it checked timestamp precision and both legacy `image_url` omissions,
+  and reported the documented discrepancy.
 - `corepack pnpm --filter @food-recipes/api run build`: passed.
+- `corepack pnpm --filter @food-recipes/api exec tsc -p tsconfig.build.json --noEmit`: passed.
 - `git diff --check`: passed for the worktree and staged scoped files.
 
 ## Limitations

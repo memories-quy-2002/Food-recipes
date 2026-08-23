@@ -7,6 +7,12 @@ legacy `interval` duration columns and mapped table/column names. It contains
 schema statements only; it does not contain application data or sequence
 state.
 
+The legacy dump uses PostgreSQL's default `timestamp without time zone`
+precision of 6 for `accounts.created_on`, `accounts.last_login`, and every
+`date_added` column. The checked-in Prisma schema makes that contract explicit
+with `@db.Timestamp(6)`, and the baseline emits `TIMESTAMP(6)` accordingly;
+this records precision without changing application behavior.
+
 ## Known evidence discrepancy
 
 Known legacy evidence discrepancy: the checked-in `prisma/schema.prisma`
@@ -85,3 +91,20 @@ not match exactly.
 The migration service in `infrastructure/docker/docker-compose.yml` runs
 `prisma migrate deploy`; it is not a substitute for the backup, inspection,
 and baseline-resolution procedure for an existing database.
+
+## Static verification
+
+From `src/backend/apps/api`, run the following checks without Docker or a
+database connection:
+
+```bash
+node test/prisma-baseline.validation.mjs
+pnpm exec prisma validate --config prisma.config.ts
+pnpm exec prisma generate --config prisma.config.ts
+pnpm run build
+pnpm exec tsc -p tsconfig.build.json --noEmit
+```
+
+These checks verify the checked-in artifacts only. They do not prove that a
+live database matches the baseline or that `migrate resolve`/`migrate status`
+has succeeded.

@@ -44,14 +44,19 @@ const legacyRecipesTableMatch = contents.legacyDump.match(
 );
 assert.ok(legacyRecipesTableMatch, 'recipes.sql must contain the legacy recipes table definition');
 
+const legacyRecipesCopyMatch = contents.legacyDump.match(
+  /COPY public\.recipes \(([^)]*)\) FROM stdin;/m,
+);
+assert.ok(legacyRecipesCopyMatch, 'recipes.sql must contain the legacy recipes COPY column list');
+
 const requiredColumns = {
   accounts: [
     ['user_id', 'SERIAL NOT NULL'],
     ['full_name', 'VARCHAR\\(124\\) NOT NULL'],
     ['password', 'VARCHAR\\(255\\) NOT NULL'],
     ['email', 'VARCHAR\\(255\\) NOT NULL'],
-    ['created_on', 'TIMESTAMP\\(3\\) NOT NULL'],
-    ['last_login', 'TIMESTAMP\\(3\\)'],
+    ['created_on', 'TIMESTAMP\\(6\\) NOT NULL'],
+    ['last_login', 'TIMESTAMP\\(6\\)'],
     ['phone', 'VARCHAR\\(20\\)'],
     ['address', 'VARCHAR\\(255\\)'],
   ],
@@ -72,7 +77,7 @@ const requiredColumns = {
     ['category_id', 'INTEGER NOT NULL'],
     ['prep_time', 'interval NOT NULL'],
     ['cook_time', 'interval NOT NULL'],
-    ['date_added', 'TIMESTAMP\\(3\\) DEFAULT CURRENT_TIMESTAMP'],
+    ['date_added', 'TIMESTAMP\\(6\\) DEFAULT CURRENT_TIMESTAMP'],
     ['user_id', 'INTEGER NOT NULL DEFAULT 0'],
     ['image_url', 'TEXT'],
     ['ingredients', 'TEXT\\[\\]'],
@@ -82,7 +87,7 @@ const requiredColumns = {
     ['wishlist_id', 'SERIAL NOT NULL'],
     ['user_id', 'INTEGER NOT NULL'],
     ['recipe_id', 'INTEGER NOT NULL'],
-    ['date_added', 'TIMESTAMP\\(3\\) NOT NULL DEFAULT CURRENT_TIMESTAMP'],
+    ['date_added', 'TIMESTAMP\\(6\\) NOT NULL DEFAULT CURRENT_TIMESTAMP'],
   ],
   rating: [
     ['rating_id', 'SERIAL NOT NULL'],
@@ -90,7 +95,7 @@ const requiredColumns = {
     ['recipe_id', 'INTEGER NOT NULL'],
     ['score', 'DECIMAL\\(10,2\\)'],
     ['review', 'TEXT'],
-    ['date_added', 'TIMESTAMP\\(3\\) DEFAULT CURRENT_TIMESTAMP'],
+    ['date_added', 'TIMESTAMP\\(6\\) DEFAULT CURRENT_TIMESTAMP'],
   ],
 };
 
@@ -147,6 +152,18 @@ for (const [constraintName, tableName, columnName, referencedTable, referencedCo
 assert.match(contents.schema, /prepTime\s+Unsupported\("interval"\)\s+@map\("prep_time"\)/);
 assert.match(contents.schema, /cookTime\s+Unsupported\("interval"\)\s+@map\("cook_time"\)/);
 assert.match(contents.schema, /imageUrl\s+String\?\s+@map\("image_url"\)/);
+for (const field of ['createdOn', 'lastLogin']) {
+  assert.match(
+    contents.schema,
+    new RegExp(`^\\s*${field}\\s+DateTime\\??.*@db\\.Timestamp\\(6\\)`, 'm'),
+    `${field} must preserve legacy timestamp precision 6`,
+  );
+}
+assert.equal(
+  contents.schema.match(/^\s*dateAdded\s+DateTime\??.*@db\.Timestamp\(6\)/gm)?.length,
+  3,
+  'all dateAdded fields must preserve legacy timestamp precision 6',
+);
 assert.match(contents.migration, /CREATE SCHEMA IF NOT EXISTS "public";/);
 for (const index of [
   /CREATE UNIQUE INDEX "accounts_email_key" ON "accounts"\("email"\);/,
@@ -157,6 +174,7 @@ for (const index of [
 }
 
 assert.doesNotMatch(legacyRecipesTableMatch[1], /\bimage_url\b/i, 'recipes.sql evidence must document the missing image_url column');
+assert.doesNotMatch(legacyRecipesCopyMatch[1], /\bimage_url\b/i, 'recipes.sql COPY evidence must document the missing image_url column');
 for (const [name, document] of [['API README', contents.readme], ['Task 5 report', contents.report]]) {
   assert.match(document, /Known legacy evidence discrepancy:/i, `${name} must label the image_url discrepancy`);
   assert.match(document, /`prisma\/schema\.prisma`/, `${name} must name the checked-in Prisma schema`);
@@ -189,6 +207,6 @@ assert.match(contents.compose, /prisma migrate deploy|prisma",\s*"migrate",\s*"d
 
 console.log(
   'Prisma baseline static validation passed without Docker or database access; '
-    + 'the image_url discrepancy was detected and documented, so live or disposable-copy '
-    + 'inspection remains required before marking 0_init applied.',
+    + 'legacy timestamp precision and the image_url discrepancy were checked and documented, '
+    + 'so live or disposable-copy inspection remains required before marking 0_init applied.',
 );
