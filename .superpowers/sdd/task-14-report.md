@@ -16,7 +16,7 @@ Implemented and committed the NestJS Swagger/OpenAPI document for the public API
 - Removed duplicate recipe-list query parameters by relying on the reflected `RecipeQueryDto` once.
 - Aligned recipe, wishlist, rating, review, and user response schemas with repository payloads, including optional list arrays, nullable scalar types, and `meal_description`.
 - Added missing `400` metadata for query/`ParseIntPipe` routes, missing `401` metadata for protected routes, and a distinct delete-rating response example.
-- Added `403` and `404` metadata for rating mutation failures, relevant `404` metadata for authenticated user profile routes, and `409` metadata for duplicate-email signup.
+- Added `403` and `404` metadata for rating mutation failures, `404` metadata for authenticated user profile routes including `GET /api/v1/auth/me`, and `409` metadata for duplicate-email signup.
 - Added a dedicated wishlist-removal response schema whose message example matches the runtime response.
 - Verified both `/docs` and `/docs-json` through the focused document test without a live database.
 
@@ -52,7 +52,7 @@ corepack pnpm --dir src/backend/apps/api exec tsc -p tsconfig.json --noEmit
 Process exited with code 0.
 ```
 
-The focused document test verifies 23 versioned `/api/v1` operations, document title/description/version, both `/docs` and `/docs-json`, bearer JWT security metadata, protected versus public operation security, unique recipe query parameters, nullable scalar schemas, optional list/detail recipe fields, `meal_description`, the wishlist removal message, shared error response schemas for representative 403/404/409 failures, tags/operation summaries/responses on every operation, and representative request DTO schemas.
+The focused document test verifies 23 versioned `/api/v1` operations, document title/description/version, both `/docs` and `/docs-json`, bearer JWT security metadata, protected versus public operation security, unique recipe query parameters, nullable scalar schemas, optional list/detail recipe fields, `meal_description`, the wishlist removal message, shared error response schemas for representative 403/404/409 failures including `GET /api/v1/auth/me`, tags/operation summaries/responses on every operation, and representative request DTO schemas.
 
 `git diff --check` and the staged diff check passed with no whitespace errors.
 

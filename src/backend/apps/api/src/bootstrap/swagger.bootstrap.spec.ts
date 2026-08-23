@@ -263,6 +263,7 @@ describe('Swagger document', () => {
     assertSharedErrorResponse('/api/v1/recipes/{recipeId}/rating', 'delete', 404);
 
     for (const [path, method] of [
+      ['/api/v1/auth/me', 'get'],
       ['/api/v1/users/me', 'get'],
       ['/api/v1/users/me/profile', 'put'],
       ['/api/v1/users/me/password', 'put'],

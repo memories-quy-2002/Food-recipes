@@ -12,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiResponse,
@@ -61,6 +62,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get the authenticated account' })
   @ApiOkResponse({ description: 'Authenticated account', type: PublicUserResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
+  @ApiNotFoundResponse({ description: 'Authenticated account was not found', type: ApiErrorResponseDto })
   getMe(@CurrentUser() user: AuthUser) {
     return this.authService.getMe(user.id);
   }
