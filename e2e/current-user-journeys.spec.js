@@ -79,6 +79,41 @@ async function stubRecipeApi(page) {
 	);
 }
 
+async function authenticateAsTestUser(page) {
+	// This is a frontend smoke fixture, not an authorization bypass: backend
+	// authorization remains covered by the backend contract tests.
+	let saved = false;
+	await page.addInitScript(() => {
+		localStorage.setItem("isAuthenticated", "true");
+		localStorage.setItem(
+			"user",
+			JSON.stringify({ user_id: 7, full_name: "Smoke User" })
+		);
+		localStorage.setItem("jwt", "test-scoped-smoke-token");
+	});
+	await page.route("**/users/7/wishlist", (route) => {
+		if (route.request().method() === "GET") {
+			return route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({ wishlist: saved ? [{ recipe_id: 1 }] : [] }),
+			});
+		}
+		if (route.request().method() === "POST") {
+			saved = true;
+			return route.fulfill({ status: 200, body: "{}" });
+		}
+		return route.fallback();
+	});
+	await page.route("**/users/7/wishlist/1", (route) => {
+		if (route.request().method() === "DELETE") {
+			saved = false;
+			return route.fulfill({ status: 200, body: "{}" });
+		}
+		return route.fallback();
+	});
+}
+
 test.beforeEach(async ({ page }) => {
 	await stubRecipeApi(page);
 });
@@ -116,4 +151,20 @@ test("guest Save action redirects from recipe detail to login", async ({ page })
 
 	await expect(page).toHaveURL(/\/account$/);
 	await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+});
+
+test("authenticated user saves and unsaves a recipe", async ({ page }) => {
+	await authenticateAsTestUser(page);
+	await page.goto("/recipe?id=1");
+
+	const favoriteButton = page.getByRole("button", { name: "Add to favorite" });
+	await favoriteButton.click();
+	await expect(
+		page.getByRole("button", { name: "Remove from favorite" })
+	).toBeVisible();
+
+	await page.getByRole("button", { name: "Remove from favorite" }).click();
+	await expect(
+		page.getByRole("button", { name: "Add to favorite" })
+	).toBeVisible();
 });
