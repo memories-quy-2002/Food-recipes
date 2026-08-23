@@ -52,18 +52,14 @@ const FoodContentPagination = ({
 						onClick={() =>
 							onPagination(
 								currentPage <
-									Math.ceil(totalRecipes / recipesPerPage)
+									totalPages
 									? currentPage + 1
-									: Math.ceil(totalRecipes / recipesPerPage)
+									: totalPages
 							)
 						}
 					/>
 					<Pagination.Last
-						onClick={() =>
-							onPagination(
-								Math.ceil(totalRecipes / recipesPerPage)
-							)
-						}
+						onClick={() => onPagination(totalPages)}
 					/>
 				</>
 			)}

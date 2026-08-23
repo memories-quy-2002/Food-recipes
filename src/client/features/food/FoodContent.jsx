@@ -45,7 +45,7 @@ const FoodContent = ({ recipes = [], pagination, queryState, onQueryStateChange,
 			<div className="food__content__toolbar">
 				<div>
 					<span className="food__content__toolbar__eyebrow">Results</span>
-					<h2>{isLoading ? "Loading recipes" : `${recipes.length} recipes found`}</h2>
+					<h2>{isLoading ? "Loading recipes" : `${totalRecipes} recipes found`}</h2>
 				</div>
 				<div className="food__content__toolbar__actions">
 					<label>Sort<select value={queryState.sort} onChange={(event) => onQueryStateChange({ sort: event.target.value, page: 1 })}>
