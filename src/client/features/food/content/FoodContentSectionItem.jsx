@@ -1,10 +1,9 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
 
 const FoodContentSectionItem = ({ recipe }) => {
-	const navigate = useNavigate();
 	const {
 		recipe_id,
 		recipe_name,
@@ -14,34 +13,22 @@ const FoodContentSectionItem = ({ recipe }) => {
 		meal_name,
 	} = recipe;
 
-	const handleOpenRecipe = () => {
-		navigate(`/recipe?id=${recipe_id}`);
-	};
-
-	const handleKeyDown = (event) => {
-		if (event.key === "Enter" || event.key === " ") {
-			event.preventDefault();
-			handleOpenRecipe();
-		}
-	};
-
 	return (
 		<article
-			key={recipe_id}
 			className="food__content__section__list__item"
-			onClick={handleOpenRecipe}
-			onKeyDown={handleKeyDown}
-			role="button"
-			tabIndex={0}
-			aria-label={`Open ${recipe_name}`}
 		>
-			{convertImage(
-				recipe_name,
-				"food__content__section__list__item__img",
-				recipe.image_url
-			)}
+			<Link
+				className="food__content__section__list__item__link"
+				to={`/recipe?id=${recipe_id}`}
+				aria-label={`Open ${recipe_name}`}
+			>
+				{convertImage(
+					recipe_name,
+					"food__content__section__list__item__img",
+					recipe.image_url
+				)}
 
-			<div className="food__content__section__list__item__context">
+				<div className="food__content__section__list__item__context">
 				<div className="food__content__section__list__item__chips">
 					<span>{category_name}</span>
 					<span>{meal_name}</span>
@@ -53,7 +40,8 @@ const FoodContentSectionItem = ({ recipe }) => {
 						{Number(overall_score || 0).toFixed(1)} ({num_ratings} ratings)
 					</span>
 				</div>
-			</div>
+				</div>
+			</Link>
 		</article>
 	);
 };

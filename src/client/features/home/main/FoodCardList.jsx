@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import FoodCard from "./FoodCard";
 
 const featuredModes = [
@@ -22,12 +21,6 @@ const FoodCardList = ({
 	featuredMode,
 	onFeaturedModeChange,
 }) => {
-	const navigate = useNavigate();
-
-	const handleNavigate = (id) => {
-		navigate(`/recipe?id=${id}`);
-	};
-
 	return (
 		<div className="home__main__cardList">
 			<div className="home__sectionHeader">
@@ -80,7 +73,6 @@ const FoodCardList = ({
 									score={overall_score}
 									imageUrl={image_url}
 									favorite={isRecipeFavorite({ recipe_id }, wishlist)}
-									onNavigate={() => handleNavigate(recipe_id)}
 									onClickFavorite={() =>
 										onClickFavorite(recipe_id)
 									}

@@ -540,6 +540,18 @@
 						object-fit: cover;
 					}
 
+					&__link {
+						display: block;
+						height: 100%;
+						color: inherit;
+						text-decoration: none;
+
+						&:focus-visible {
+							outline: 4px solid rgba(255, 159, 28, 0.48);
+							outline-offset: -4px;
+						}
+					}
+
 					&__fav {
 						background-color: rgba(22, 18, 15, 0.7);
 						backdrop-filter: blur(6px);
@@ -559,6 +571,13 @@
 							aspect-ratio: inherit;
 							border-radius: inherit;
 							border: none;
+							color: #fff8ef;
+							cursor: pointer;
+
+							&:focus-visible {
+								outline: 3px solid #ffcf75;
+								outline-offset: 2px;
+							}
 						}
 					}
 
