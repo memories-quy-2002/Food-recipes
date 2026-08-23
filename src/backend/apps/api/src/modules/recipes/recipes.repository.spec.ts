@@ -63,7 +63,7 @@ describe('RecipesRepository duration normalization', () => {
     expect(sqlSource(query)).toContain('COUNT(rt.rating_id), 0)::int');
     expect(sqlSource(query)).toContain('ROUND(AVG(rt.score), 1), 0)::float8');
     expect(result.recipes[0]).toMatchObject({ overall_score: 4.5, num_ratings: 2 });
-    expect(result.pagination).toEqual({ page: 2, limit: 5, total: 2, totalPages: 1, hasNext: false });
+    expect(result.pagination).toEqual({ page: 1, limit: 5, total: 2, totalPages: 1, hasNext: false });
     expect(() => JSON.stringify(result)).not.toThrow();
     expect(recipeOrderBySql('rating')).toBe(
       'overall_score DESC, num_ratings DESC, r.recipe_id ASC',
@@ -71,7 +71,7 @@ describe('RecipesRepository duration normalization', () => {
   });
 
   it('supports q/search aliases, deterministic sorting, and bounded pagination', async () => {
-    mockList([recipe]);
+    mockList([recipe], 1_000);
     const repository = new RecipesRepository(prisma as never);
 
     await repository.list({ search: ' soup ', sort: 'name', page: 3, limit: 500 });
@@ -83,14 +83,38 @@ describe('RecipesRepository duration normalization', () => {
     );
   });
 
-  it('bounds page values before calculating the offset', async () => {
-    mockList([recipe]);
+  it('clamps an out-of-range page to the final page before calculating the offset', async () => {
+    mockList([recipe], 21);
     const repository = new RecipesRepository(prisma as never);
 
     await repository.list({ page: Number.MAX_SAFE_INTEGER, limit: 100 });
     const query = prisma.$queryRaw.mock.calls[1][0];
 
-    expect(query.values).toEqual(expect.arrayContaining([100, 99_999_900]));
+    expect(query.values).toEqual(expect.arrayContaining([100, 0]));
+  });
+
+  it('returns the final page when a request exceeds the filtered result set', async () => {
+    mockList([recipe], 21);
+    const repository = new RecipesRepository(prisma as never);
+
+    await expect(repository.list({ page: 1_000_000, limit: 20 })).resolves.toMatchObject({
+      recipes: [recipe],
+      pagination: { page: 2, limit: 20, total: 21, totalPages: 2, hasNext: false },
+    });
+    const query = prisma.$queryRaw.mock.calls[1][0];
+    expect(query.values).toEqual(expect.arrayContaining([20, 20]));
+  });
+
+  it('uses page one and zero offset for an empty result set', async () => {
+    mockList([], 0);
+    const repository = new RecipesRepository(prisma as never);
+
+    await expect(repository.list({ page: 1_000_000, limit: 20 })).resolves.toMatchObject({
+      recipes: [],
+      pagination: { page: 1, limit: 20, total: 0, totalPages: 1, hasNext: false },
+    });
+    const query = prisma.$queryRaw.mock.calls[1][0];
+    expect(query.values).toEqual(expect.arrayContaining([20, 0]));
   });
 
   it('normalizes aggregate values on recipe detail responses as well', async () => {

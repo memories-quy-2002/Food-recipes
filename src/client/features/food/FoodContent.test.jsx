@@ -126,4 +126,21 @@ describe("FoodContent", () => {
 			.filter(Boolean)).toEqual(["Open Toast", "Open Soup"]);
 		expect(renderer.root.findAllByType("h2")[0].props.children).toBe("4 recipes found");
 	});
+
+	it("uses the server-clamped page as the active pagination page", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<FoodContent
+					recipes={[recipes[0]]}
+					pagination={{ page: 2, limit: 1, total: 3, totalPages: 3, hasNext: true }}
+					queryState={{ page: 1000000, limit: 1, sort: "popular" }}
+				/>
+			);
+		});
+
+		const activeItems = renderer.root.findAll((node) => node.props?.active === true);
+		expect(activeItems).toHaveLength(1);
+		expect(activeItems[0].props.children).toBe(2);
+	});
 });

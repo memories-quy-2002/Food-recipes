@@ -36,6 +36,7 @@ const FoodContent = ({ recipes = [], pagination, queryState, onQueryStateChange,
 	const visibleRecipes = isServerPaginated ? sortedRecipes : getVisibleRecipes(sortedRecipes, queryState);
 	const totalRecipes = pagination?.total ?? sortedRecipes.length;
 	const totalPages = pagination?.totalPages ?? getRecipeContentState(sortedRecipes, queryState).totalPages;
+	const currentPage = pagination?.page ?? queryState.page;
 	const categories = useMemo(() => Array.from(new Map(visibleRecipes.map(({ category_id: id, category_name: name }) => [id, { id, name }])).values()).sort((a, b) => a.id - b.id), [visibleRecipes]);
 	const shouldGroupByCategory = Boolean(queryState.categoryId || queryState.mealId);
 	const listClassName = `food__content__section__list food__content__section__list--${viewMode}`;
@@ -70,7 +71,7 @@ const FoodContent = ({ recipes = [], pagination, queryState, onQueryStateChange,
 				<div className={listClassName}>{visibleRecipes.map((recipe) => <FoodContentSectionItem key={recipe.recipe_id} recipe={recipe} />)}</div>
 			)}
 
-			{!isLoading && !error && totalPages > 1 && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={totalRecipes} totalPages={totalPages} onPagination={(page) => onQueryStateChange({ page })} currentPage={queryState.page} />}
+			{!isLoading && !error && totalPages > 1 && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={totalRecipes} totalPages={totalPages} onPagination={(page) => onQueryStateChange({ page })} currentPage={currentPage} />}
 		</div>
 	);
 };

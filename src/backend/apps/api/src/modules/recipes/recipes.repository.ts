@@ -116,9 +116,8 @@ export class RecipesRepository implements RecipesRepositoryPort {
     if (query.categoryId) conditions.push(Prisma.sql`r.category_id = ${query.categoryId}`);
     if (query.mealId) conditions.push(Prisma.sql`r.meal_id = ${query.mealId}`);
 
-    const page = normalizePage(query.page);
+    const requestedPage = normalizePage(query.page);
     const limit = normalizeLimit(query.limit);
-    const offset = (page - 1) * limit;
 
     const countRows = await this.prisma.$queryRaw<{ total: number | bigint }[]>(Prisma.sql`
       SELECT COUNT(*)::int AS total
@@ -128,6 +127,9 @@ export class RecipesRepository implements RecipesRepositoryPort {
       WHERE ${Prisma.join(conditions, ' AND ')}
     `);
     const total = toSafeInteger(countRows[0]?.total ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const page = Math.min(requestedPage, totalPages);
+    const offset = (page - 1) * limit;
 
     const rows = await this.prisma.$queryRaw<RecipeRecord[]>(Prisma.sql`
       SELECT
@@ -158,7 +160,6 @@ export class RecipesRepository implements RecipesRepositoryPort {
       OFFSET ${offset}
     `);
 
-    const totalPages = Math.ceil(total / limit);
     return {
       recipes: rows.map(toJsonSafeRecipe),
       pagination: {
