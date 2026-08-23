@@ -60,6 +60,29 @@ describe("cooking mode Task 14", () => {
 		expect(findText(renderer, "Step 1 of 2")).toBeTruthy();
 	});
 
+	it("resets the step when the recipe changes to fewer instructions", () => {
+		const renderer = renderCookingMode();
+
+		act(() => findButton(renderer, "Next step").props.onClick());
+		expect(findText(renderer, "Step 2 of 2")).toBeTruthy();
+
+		act(() => {
+			renderer.update(
+				<CookingMode
+					recipe={{
+						recipe_id: 43,
+						recipe_name: "Quick Toast",
+						instructions: ["Toast the bread."],
+					}}
+					onExit={vi.fn()}
+				/>
+			);
+		});
+
+		expect(findText(renderer, "Step 1 of 1")).toBeTruthy();
+		expect(findText(renderer, "Toast the bread.")).toBeTruthy();
+	});
+
 	it("shows a usable empty state and still offers Exit cooking", () => {
 		const onExit = vi.fn();
 		let renderer;

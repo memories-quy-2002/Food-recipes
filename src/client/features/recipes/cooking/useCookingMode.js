@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const getCookingInstructions = (instructionsOrRecipe) => {
 	const instructions = Array.isArray(instructionsOrRecipe)
@@ -14,9 +14,14 @@ export const getCookingInstructions = (instructionsOrRecipe) => {
 		: [];
 };
 
-export const useCookingMode = (instructions) => {
-	const steps = useMemo(() => getCookingInstructions(instructions), [instructions]);
+export const useCookingMode = (instructions, recipeIdentity = null) => {
+	const steps = getCookingInstructions(instructions);
+	const instructionSignature = JSON.stringify(steps);
 	const [stepIndex, setStepIndex] = useState(0);
+
+	useEffect(() => {
+		setStepIndex(0);
+	}, [recipeIdentity, instructionSignature]);
 
 	const goToStep = useCallback((nextIndex) => {
 		setStepIndex((currentIndex) => {
@@ -25,12 +30,15 @@ export const useCookingMode = (instructions) => {
 		});
 	}, [steps.length]);
 
+	const safeStepIndex =
+		steps.length > 0 ? Math.min(Math.max(stepIndex, 0), steps.length - 1) : 0;
+
 	return {
 		steps,
-		stepIndex,
-		isFirstStep: stepIndex === 0,
-		isLastStep: steps.length > 0 && stepIndex === steps.length - 1,
-		goToPrevious: () => goToStep(stepIndex - 1),
-		goToNext: () => goToStep(stepIndex + 1),
+		stepIndex: safeStepIndex,
+		isFirstStep: safeStepIndex === 0,
+		isLastStep: steps.length > 0 && safeStepIndex === steps.length - 1,
+		goToPrevious: () => goToStep(safeStepIndex - 1),
+		goToNext: () => goToStep(safeStepIndex + 1),
 	};
 };

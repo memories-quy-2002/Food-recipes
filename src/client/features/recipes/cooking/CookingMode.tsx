@@ -5,7 +5,10 @@ import "./CookingMode.scss";
 const CookingMode = ({ recipe, onExit }) => {
 	const mainRef = useRef(null);
 	const { steps, stepIndex, isFirstStep, isLastStep, goToPrevious, goToNext } =
-		useCookingMode(recipe?.instructions);
+		useCookingMode(
+			recipe?.instructions,
+			recipe?.recipe_id ?? recipe?.id ?? recipe?.slug ?? null
+		);
 
 	useEffect(() => {
 		mainRef.current?.focus();
