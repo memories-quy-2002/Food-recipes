@@ -1,36 +1,55 @@
+import { JwtService } from '@nestjs/jwt';
 import { VersioningType, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { JwtAuthGuard } from '../src/modules/auth/guards/jwt-auth.guard';
-import { RatingsController } from '../src/modules/ratings/ratings.controller';
-import { RatingsService } from '../src/modules/ratings/ratings.service';
-import { UserRatingsController } from '../src/modules/ratings/user-ratings.controller';
+import { PrismaService } from '../src/infrastructure/prisma/prisma.service';
 
-describe('Ratings HTTP contract', () => {
-  const service = {
-    upsert: jest.fn(),
-    remove: jest.fn(),
-    listMine: jest.fn(),
-    listReviews: jest.fn(),
+type SqlQuery = {
+  strings: readonly string[];
+  values: readonly unknown[];
+};
+
+describe('Ratings module wiring', () => {
+  const database = {
+    $queryRaw: jest.fn(async (query: SqlQuery) => {
+      const sql = query.strings.join(' ').replace(/\s+/g, ' ');
+      if (sql.includes('SELECT user_id') && sql.includes('FROM recipes')) {
+        return [{ user_id: 42 }];
+      }
+      if (sql.includes('INSERT INTO rating')) {
+        return [{ overall_score: 5, num_ratings: 1 }];
+      }
+      if (sql.includes('DELETE FROM rating')) {
+        return [{ overall_score: 0, num_ratings: 0 }];
+      }
+      if (sql.includes('SELECT rt.rating_id')) {
+        return [];
+      }
+      if (sql.includes('COALESCE')) {
+        return [{ overall_score: 0, num_ratings: 0 }];
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    }),
   };
 
   let app: import('@nestjs/common').INestApplication;
+  let jwtService: JwtService;
+  const originalJwtSecret = process.env.JWT_SECRET;
+  const originalDatabaseUrl = process.env.DATABASE_URL;
 
   beforeAll(async () => {
+    process.env.JWT_SECRET = 'task-13-test-secret-that-is-at-least-32-chars';
+    process.env.DATABASE_URL = 'postgresql://user:password@127.0.0.1:5432/food_recipes';
+    const { AppModule } = await import('../src/app.module');
     const moduleRef = await Test.createTestingModule({
-      controllers: [RatingsController, UserRatingsController],
-      providers: [{ provide: RatingsService, useValue: service }],
+      imports: [AppModule],
     })
-      .overrideGuard(JwtAuthGuard)
-      .useValue({
-        canActivate: (context: import('@nestjs/common').ExecutionContext) => {
-          context.switchToHttp().getRequest().user = { id: 7, email: 'ada@example.com' };
-          return true;
-        },
-      })
+      .overrideProvider(PrismaService)
+      .useValue(database)
       .compile();
 
     app = moduleRef.createNestApplication();
+    jwtService = moduleRef.get(JwtService, { strict: false });
     app.setGlobalPrefix('api');
     app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
     app.useGlobalPipes(
@@ -39,60 +58,81 @@ describe('Ratings HTTP contract', () => {
     await app.init();
   });
 
-  afterAll(async () => app.close());
-  beforeEach(() => jest.clearAllMocks());
+  afterAll(async () => {
+    if (app) await app.close();
+    if (originalJwtSecret === undefined) {
+      delete process.env.JWT_SECRET;
+    } else {
+      process.env.JWT_SECRET = originalJwtSecret;
+    }
+    if (originalDatabaseUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    }
+  });
 
-  it('uses the JWT identity for upsert, delete, and user-owned lookup', async () => {
-    service.upsert.mockResolvedValue({
-      message: 'Rating saved successfully',
-      aggregate: { overall_score: 5, num_ratings: 1 },
-    });
-    service.remove.mockResolvedValue({
-      message: 'Rating removed successfully',
-      aggregate: { overall_score: 0, num_ratings: 0 },
-    });
-    service.listMine.mockResolvedValue({ ratings: [] });
-
+  it('enforces the real JWT guard for protected ratings routes', async () => {
     await request(app.getHttpServer())
       .put('/api/v1/recipes/15/rating')
-      .send({ score: 5, review: 'Great', userId: 999 })
-      .expect(400);
+      .send({ score: 5 })
+      .expect(401);
 
-    await request(app.getHttpServer())
-      .put('/api/v1/recipes/15/rating')
-      .send({ score: 5, review: 'Great' })
-      .expect(200);
-    await request(app.getHttpServer())
-      .delete('/api/v1/recipes/15/rating')
-      .expect(200);
     await request(app.getHttpServer())
       .get('/api/v1/users/me/ratings')
+      .set('Authorization', 'Bearer not-a-jwt')
+      .expect(401);
+  });
+
+  it('uses the JWT subject through the real module and controllers', async () => {
+    const token = await jwtService.signAsync({ sub: 7, email: 'ada@example.com' });
+
+    await request(app.getHttpServer())
+      .put('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ score: 5, review: 'Great' })
+      .expect(200)
+      .expect({
+        message: 'Rating saved successfully',
+        aggregate: { overall_score: 5, num_ratings: 1 },
+      });
+
+    await request(app.getHttpServer())
+      .delete('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200)
+      .expect({
+        message: 'Rating removed successfully',
+        aggregate: { overall_score: 0, num_ratings: 0 },
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/users/me/ratings')
+      .set('Authorization', `Bearer ${token}`)
       .expect(200)
       .expect({ ratings: [] });
 
-    expect(service.upsert).toHaveBeenCalledWith(7, 15, { score: 5, review: 'Great' });
-    expect(service.remove).toHaveBeenCalledWith(7, 15);
-    expect(service.listMine).toHaveBeenCalledWith(7);
+    const queries = database.$queryRaw.mock.calls.map(([query]) => query as SqlQuery);
+    expect(queries.some((query) => query.values.includes(7))).toBe(true);
+    expect(queries.some((query) => query.values.includes(15))).toBe(true);
   });
 
   it('rejects an invalid score at the HTTP boundary', async () => {
+    const token = await jwtService.signAsync({ sub: 7, email: 'ada@example.com' });
+
     await request(app.getHttpServer())
       .put('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
       .send({ score: 6 })
       .expect(400);
-    expect(service.upsert).not.toHaveBeenCalled();
   });
 
   it('keeps recipe reviews public', async () => {
-    service.listReviews.mockResolvedValue({
-      reviews: [],
-      aggregate: { overall_score: 0, num_ratings: 0 },
-    });
-
     await request(app.getHttpServer())
       .get('/api/v1/recipes/15/reviews')
       .expect(200)
       .expect({ reviews: [], aggregate: { overall_score: 0, num_ratings: 0 } });
-    expect(service.listReviews).toHaveBeenCalledWith(15);
+    const queries = database.$queryRaw.mock.calls.map(([query]) => query as SqlQuery);
+    expect(queries.some((query) => query.values.includes(15))).toBe(true);
   });
 });
