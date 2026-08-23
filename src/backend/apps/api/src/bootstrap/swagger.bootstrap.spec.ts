@@ -14,7 +14,7 @@ describe('Swagger document', () => {
 
   beforeAll(async () => {
     process.env.DATABASE_URL = 'postgresql://user:password@127.0.0.1:5432/food_recipes';
-    process.env.JWT_SECRET = 'task-14-swagger-test-secret-that-is-at-least-32-chars';
+    process.env.JWT_SECRET = '9qV!2mR#7xL@4pN$8cT%1wH&6jK^3sF*';
     process.env.PORT = '3000';
 
     const { AppModule } = await import('../app.module');

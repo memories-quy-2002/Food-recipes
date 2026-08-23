@@ -38,7 +38,7 @@ describe('Ratings module wiring', () => {
   const originalDatabaseUrl = process.env.DATABASE_URL;
 
   beforeAll(async () => {
-    process.env.JWT_SECRET = 'task-13-test-secret-that-is-at-least-32-chars';
+    process.env.JWT_SECRET = '4hP!8vC#1nQ@6zM$3rT%9xL&7kD^2wF*';
     process.env.DATABASE_URL = 'postgresql://user:password@127.0.0.1:5432/food_recipes';
     const { AppModule } = await import('../src/app.module');
     const moduleRef = await Test.createTestingModule({
