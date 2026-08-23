@@ -56,7 +56,9 @@ CREATE TABLE "recipes" (
     "ingredients" TEXT[],
     "instructions" TEXT[],
 
-    CONSTRAINT "recipes_pkey" PRIMARY KEY ("recipe_id")
+    CONSTRAINT "recipes_pkey" PRIMARY KEY ("recipe_id"),
+    CONSTRAINT "cook_time_check" CHECK (("cook_time" > '00:00:00'::interval)),
+    CONSTRAINT "prep_time_check" CHECK (("prep_time" > '00:00:00'::interval))
 );
 
 -- CreateTable
@@ -78,7 +80,8 @@ CREATE TABLE "rating" (
     "review" TEXT,
     "date_added" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "rating_pkey" PRIMARY KEY ("rating_id")
+    CONSTRAINT "rating_pkey" PRIMARY KEY ("rating_id"),
+    CONSTRAINT "rating_score_check" CHECK ((((score)::double precision >= (0.0)::double precision) AND ((score)::double precision <= (5.0)::double precision)))
 );
 
 -- CreateIndex
@@ -89,3 +92,31 @@ CREATE UNIQUE INDEX "user_recipe_constraint" ON "wishlist"("user_id", "recipe_id
 
 -- CreateIndex
 CREATE UNIQUE INDEX "unique_user_recipe_pair" ON "rating"("user_id", "recipe_id");
+
+-- AddForeignKey
+ALTER TABLE "recipes"
+    ADD CONSTRAINT "rafk_user_id" FOREIGN KEY ("user_id") REFERENCES "accounts"("user_id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "recipes"
+    ADD CONSTRAINT "rcfk_category_id" FOREIGN KEY ("category_id") REFERENCES "categories"("category_id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "recipes"
+    ADD CONSTRAINT "rmfk_meal_id" FOREIGN KEY ("meal_id") REFERENCES "meals"("meal_id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "rating"
+    ADD CONSTRAINT "rtafk_user_id" FOREIGN KEY ("user_id") REFERENCES "accounts"("user_id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "rating"
+    ADD CONSTRAINT "rtrfk_user_id" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("recipe_id") ON UPDATE CASCADE ON DELETE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "wishlist"
+    ADD CONSTRAINT "wafk_user_id" FOREIGN KEY ("user_id") REFERENCES "accounts"("user_id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "wishlist"
+    ADD CONSTRAINT "wrfk_recipe_id" FOREIGN KEY ("recipe_id") REFERENCES "recipes"("recipe_id") ON DELETE CASCADE ON UPDATE NO ACTION;

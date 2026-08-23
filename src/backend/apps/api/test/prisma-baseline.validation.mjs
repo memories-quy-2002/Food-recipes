@@ -11,12 +11,17 @@ const files = {
   migration: path.join(apiDirectory, 'prisma/migrations/0_init/migration.sql'),
   schema: path.join(apiDirectory, 'prisma/schema.prisma'),
   readme: path.join(apiDirectory, 'README.md'),
+  report: path.join(repositoryRoot, '.superpowers/sdd/task-5-report.md'),
+  legacyDump: path.join(repositoryRoot, 'recipes.sql'),
   compose: path.join(repositoryRoot, 'infrastructure/docker/docker-compose.yml'),
 };
 
 const contents = Object.fromEntries(
   await Promise.all(
-    Object.entries(files).map(async ([name, filePath]) => [name, await readFile(filePath, 'utf8')]),
+    Object.entries(files).map(async ([name, filePath]) => [
+      name,
+      await readFile(filePath, name === 'legacyDump' ? 'utf16le' : 'utf8'),
+    ]),
   ),
 );
 
@@ -33,6 +38,11 @@ const migrationTable = (tableName) => {
   assert.ok(match, `baseline must create ${tableName}`);
   return match[1].replace(/\s+/g, ' ');
 };
+
+const legacyRecipesTableMatch = contents.legacyDump.match(
+  /CREATE TABLE public\.recipes \(([\s\S]*?)\r?\n\);/m,
+);
+assert.ok(legacyRecipesTableMatch, 'recipes.sql must contain the legacy recipes table definition');
 
 const requiredColumns = {
   accounts: [
@@ -91,20 +101,76 @@ for (const [tableName, columns] of Object.entries(requiredColumns)) {
   }
 }
 
+for (const [tableName, constraintName, columnName] of [
+  ['accounts', 'accounts_pkey', 'user_id'],
+  ['categories', 'categories_pkey', 'category_id'],
+  ['meals', 'meals_pkey', 'meal_id'],
+  ['recipes', 'recipes_pkey', 'recipe_id'],
+  ['wishlist', 'wishlist_pkey', 'wishlist_id'],
+  ['rating', 'rating_pkey', 'rating_id'],
+]) {
+  assert.match(
+    migrationTable(tableName),
+    new RegExp(`CONSTRAINT "${constraintName}" PRIMARY KEY \\("${columnName}"\\)`),
+    `${tableName} must preserve ${constraintName}`,
+  );
+}
+
+for (const [tableName, constraintName, checkPattern] of [
+  ['recipes', 'prep_time_check', /"prep_time"\s*>\s*'00:00:00'::interval/],
+  ['recipes', 'cook_time_check', /"cook_time"\s*>\s*'00:00:00'::interval/],
+  ['rating', 'rating_score_check', /score\)::double precision\s*>=\s*\(0\.0\)::double precision[\s\S]*score\)::double precision\s*<=\s*\(5\.0\)::double precision/],
+]) {
+  const table = migrationTable(tableName);
+  assert.match(table, new RegExp(`CONSTRAINT "${constraintName}" CHECK`), `${tableName} must preserve ${constraintName}`);
+  assert.match(table, checkPattern, `${tableName}.${constraintName} has the wrong predicate`);
+}
+
+for (const [constraintName, tableName, columnName, referencedTable, referencedColumn, actions] of [
+  ['rafk_user_id', 'recipes', 'user_id', 'accounts', 'user_id', 'ON DELETE RESTRICT ON UPDATE NO ACTION'],
+  ['rcfk_category_id', 'recipes', 'category_id', 'categories', 'category_id', 'ON DELETE SET NULL ON UPDATE NO ACTION'],
+  ['rmfk_meal_id', 'recipes', 'meal_id', 'meals', 'meal_id', 'ON DELETE SET NULL ON UPDATE NO ACTION'],
+  ['rtafk_user_id', 'rating', 'user_id', 'accounts', 'user_id', 'ON UPDATE CASCADE ON DELETE CASCADE'],
+  ['rtrfk_user_id', 'rating', 'recipe_id', 'recipes', 'recipe_id', 'ON UPDATE CASCADE ON DELETE CASCADE'],
+  ['wafk_user_id', 'wishlist', 'user_id', 'accounts', 'user_id', 'ON DELETE CASCADE ON UPDATE NO ACTION'],
+  ['wrfk_recipe_id', 'wishlist', 'recipe_id', 'recipes', 'recipe_id', 'ON DELETE CASCADE ON UPDATE NO ACTION'],
+]) {
+  assert.match(
+    contents.migration,
+    new RegExp(
+      `CONSTRAINT "${constraintName}" FOREIGN KEY \\("${columnName}"\\) REFERENCES "${referencedTable}"\\("${referencedColumn}"\\) ${actions}`,
+    ),
+    `baseline must preserve foreign key ${constraintName}`,
+  );
+}
+
 assert.match(contents.schema, /prepTime\s+Unsupported\("interval"\)\s+@map\("prep_time"\)/);
 assert.match(contents.schema, /cookTime\s+Unsupported\("interval"\)\s+@map\("cook_time"\)/);
 assert.match(contents.schema, /imageUrl\s+String\?\s+@map\("image_url"\)/);
 assert.match(contents.migration, /CREATE SCHEMA IF NOT EXISTS "public";/);
-assert.match(contents.migration, /CREATE UNIQUE INDEX "accounts_email_key"/);
-assert.match(contents.migration, /CREATE UNIQUE INDEX "user_recipe_constraint"/);
-assert.match(contents.migration, /CREATE UNIQUE INDEX "unique_user_recipe_pair"/);
+for (const index of [
+  /CREATE UNIQUE INDEX "accounts_email_key" ON "accounts"\("email"\);/,
+  /CREATE UNIQUE INDEX "user_recipe_constraint" ON "wishlist"\("user_id", "recipe_id"\);/,
+  /CREATE UNIQUE INDEX "unique_user_recipe_pair" ON "rating"\("user_id", "recipe_id"\);/,
+]) {
+  assert.match(contents.migration, index, `baseline is missing required index ${index}`);
+}
+
+assert.doesNotMatch(legacyRecipesTableMatch[1], /\bimage_url\b/i, 'recipes.sql evidence must document the missing image_url column');
+for (const [name, document] of [['API README', contents.readme], ['Task 5 report', contents.report]]) {
+  assert.match(document, /Known legacy evidence discrepancy:/i, `${name} must label the image_url discrepancy`);
+  assert.match(document, /`prisma\/schema\.prisma`/, `${name} must name the checked-in Prisma schema`);
+  assert.match(document, /`recipes\.sql` evidence omits `image_url`/, `${name} must name the omitted legacy column`);
+  assert.match(document, /live database or\s+a disposable restored copy/i, `${name} must require live or disposable-copy inspection`);
+  assert.match(document, /Before `prisma migrate resolve --applied 0_init`/i, `${name} must gate baseline marking on inspection`);
+}
 
 for (const destructivePattern of [
   /\bDROP\b/i,
-  /\bDELETE\b/i,
+  /(?:^|;)\s*DELETE\b/i,
   /\bTRUNCATE\b/i,
   /\bINSERT\b/i,
-  /\bUPDATE\b/i,
+  /(?:^|;)\s*UPDATE\b/i,
   /\bCOPY\b/i,
   /\bRESET\b/i,
   /ALTER TABLE[\s\S]*?\bDROP\b/i,
@@ -121,4 +187,8 @@ assert.match(contents.readme, /Never run `prisma migrate reset`/i, 'README must 
 assert.doesNotMatch(contents.compose, /migrate reset/i, 'Docker migration configuration must not use migrate reset');
 assert.match(contents.compose, /prisma migrate deploy|prisma",\s*"migrate",\s*"deploy/, 'Docker migration service must use migrate deploy');
 
-console.log('Prisma baseline static validation passed without Docker or database access.');
+console.log(
+  'Prisma baseline static validation passed without Docker or database access; '
+    + 'the image_url discrepancy was detected and documented, so live or disposable-copy '
+    + 'inspection remains required before marking 0_init applied.',
+);

@@ -1,10 +1,29 @@
 # API database baseline
 
 `prisma/migrations/0_init/migration.sql` is the baseline for the legacy
-Food Recipes PostgreSQL schema. It is a create-schema artifact generated from
-the checked-in Prisma datamodel, including the legacy `interval` duration
-columns and mapped table/column names. It contains schema statements only; it
-does not contain application data or sequence state.
+Food Recipes PostgreSQL schema. It is a create-schema artifact based on the
+checked-in Prisma datamodel and evidenced legacy constraints, including the
+legacy `interval` duration columns and mapped table/column names. It contains
+schema statements only; it does not contain application data or sequence
+state.
+
+## Known evidence discrepancy
+
+Known legacy evidence discrepancy: the checked-in `prisma/schema.prisma`
+declares nullable `Recipe.imageUrl` mapped to `recipes.image_url`, and the
+baseline migration includes that nullable `image_url` column. The checked-in
+`recipes.sql` evidence omits `image_url` from both the `CREATE TABLE
+public.recipes` definition and the `COPY public.recipes` column list. The
+application schema and migration remain internally consistent with
+`image_url`, but static validation cannot prove that the existing legacy
+database has this column.
+
+Before `prisma migrate resolve --applied 0_init`, inspect the live database or
+a disposable restored copy and reconcile this exact discrepancy. Do not mark
+`0_init` as applied until that inspection confirms the schema that the
+application and migration will use. The static validator detects and
+documents this mismatch; it does not claim that baseline application is safe
+or that migration history is complete.
 
 ## Safe baseline procedure
 
