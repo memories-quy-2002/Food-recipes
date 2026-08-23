@@ -272,9 +272,33 @@ describe('Swagger document', () => {
     }
 
     assertSharedErrorResponse('/api/v1/auth/signup', 'post', 409);
+    assertSharedErrorResponse('/api/v1/auth/token', 'post', 404);
     expect(document.components.schemas.WishlistRemovalResponseDto.properties?.message).toEqual({
       type: 'string',
       example: 'Wishlist item removed',
     });
+  });
+
+  it('documents the shared internal server error response on every public operation', async () => {
+    const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
+    const document = response.body as {
+      paths: Record<string, Record<string, { responses?: Record<string, unknown> }>>;
+    };
+
+    for (const operations of Object.values(document.paths)) {
+      for (const operation of Object.values(operations)) {
+        const responseMetadata = operation.responses?.['500'] as {
+          content?: { 'application/json'?: { schema?: { $ref?: string } } };
+        };
+
+        expect(responseMetadata).toEqual(expect.objectContaining({
+          content: expect.objectContaining({
+            'application/json': expect.objectContaining({
+              schema: { $ref: '#/components/schemas/ApiErrorResponseDto' },
+            }),
+          }),
+        }));
+      }
+    }
   });
 });

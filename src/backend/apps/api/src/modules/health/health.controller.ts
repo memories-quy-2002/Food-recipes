@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ApiErrorResponseDto, HealthResponseDto } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 import { HealthService } from './health.service';
 
 @ApiTags('Health')
+@ApiInternalServerErrorResponse()
 @Controller({ path: 'health', version: '1' })
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}

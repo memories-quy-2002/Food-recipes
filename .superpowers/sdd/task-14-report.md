@@ -17,6 +17,8 @@ Implemented and committed the NestJS Swagger/OpenAPI document for the public API
 - Aligned recipe, wishlist, rating, review, and user response schemas with repository payloads, including optional list arrays, nullable scalar types, and `meal_description`.
 - Added missing `400` metadata for query/`ParseIntPipe` routes, missing `401` metadata for protected routes, and a distinct delete-rating response example.
 - Added `403` and `404` metadata for rating mutation failures, `404` metadata for authenticated user profile routes including `GET /api/v1/auth/me`, and `409` metadata for duplicate-email signup.
+- Added `404` metadata for `POST /api/v1/auth/token`, which can resolve a valid JWT whose user has since been deleted.
+- Added a reusable controller-level Swagger decorator for the existing global `500` error envelope and applied it to every public controller, covering all 23 `/api/v1` operations without changing runtime behavior or overriding specific error metadata.
 - Added a dedicated wishlist-removal response schema whose message example matches the runtime response.
 - Verified both `/docs` and `/docs-json` through the focused document test without a live database.
 
@@ -27,7 +29,7 @@ Focused Swagger document test:
 ```text
 corepack pnpm --dir src/backend/apps/api exec jest --runInBand src/bootstrap/swagger.bootstrap.spec.ts
 Test Suites: 1 passed, 1 total
-Tests:       5 passed, 5 total
+Tests:       6 passed, 6 total
 ```
 
 Full API unit suite:
@@ -35,7 +37,7 @@ Full API unit suite:
 ```text
 corepack pnpm --dir src/backend/apps/api exec jest --runInBand
 Test Suites: 12 passed, 12 total
-Tests:       41 passed, 41 total
+Tests:       42 passed, 42 total
 ```
 
 API build and typecheck:
@@ -52,7 +54,7 @@ corepack pnpm --dir src/backend/apps/api exec tsc -p tsconfig.json --noEmit
 Process exited with code 0.
 ```
 
-The focused document test verifies 23 versioned `/api/v1` operations, document title/description/version, both `/docs` and `/docs-json`, bearer JWT security metadata, protected versus public operation security, unique recipe query parameters, nullable scalar schemas, optional list/detail recipe fields, `meal_description`, the wishlist removal message, shared error response schemas for representative 403/404/409 failures including `GET /api/v1/auth/me`, tags/operation summaries/responses on every operation, and representative request DTO schemas.
+The focused document test verifies 23 versioned `/api/v1` operations, document title/description/version, both `/docs` and `/docs-json`, bearer JWT security metadata, protected versus public operation security, unique recipe query parameters, nullable scalar schemas, optional list/detail recipe fields, `meal_description`, the wishlist removal message, shared error response schemas for representative 403/404/409 failures including `GET /api/v1/auth/me` and `POST /api/v1/auth/token`, a shared `500` `ApiErrorResponseDto` response on every public operation, tags/operation summaries/responses on every operation, and representative request DTO schemas.
 
 `git diff --check` and the staged diff check passed with no whitespace errors.
 

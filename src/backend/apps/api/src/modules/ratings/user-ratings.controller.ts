@@ -5,8 +5,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { RatingsService, RatingsServicePort } from './ratings.service';
 import { ApiErrorResponseDto, RatingsListResponseDto } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Ratings')
+@ApiInternalServerErrorResponse()
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'users/me/ratings', version: '1' })

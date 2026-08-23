@@ -35,8 +35,10 @@ import {
   RecipeDetailResponseDto,
   RecipeListResponseDto,
 } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Recipes')
+@ApiInternalServerErrorResponse()
 @Controller({ path: 'recipes', version: '1' })
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}

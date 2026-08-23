@@ -24,8 +24,10 @@ import {
   MessageResponseDto,
   PublicUserResponseDto,
 } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Users')
+@ApiInternalServerErrorResponse()
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'users/me', version: '1' })

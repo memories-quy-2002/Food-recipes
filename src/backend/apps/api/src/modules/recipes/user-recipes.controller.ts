@@ -5,8 +5,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { RecipesService } from './recipes.service';
 import { ApiErrorResponseDto, RecipeListResponseDto } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Recipes')
+@ApiInternalServerErrorResponse()
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'users/me/recipes', version: '1' })

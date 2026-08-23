@@ -30,8 +30,10 @@ import {
   RatingRemovalResponseDto,
   ReviewsResponseDto,
 } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Ratings')
+@ApiInternalServerErrorResponse()
 @Controller({ path: 'recipes', version: '1' })
 export class RatingsController {
   constructor(

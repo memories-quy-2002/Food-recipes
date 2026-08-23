@@ -30,8 +30,10 @@ import {
   WishlistItemResponseDto,
   WishlistRemovalResponseDto,
 } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Wishlist')
+@ApiInternalServerErrorResponse()
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'users/me/wishlist', version: '1' })

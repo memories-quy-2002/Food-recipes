@@ -30,8 +30,10 @@ import {
   AuthResponseDto,
   PublicUserResponseDto,
 } from '../../common/swagger/response.schemas';
+import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
 @ApiTags('Auth')
+@ApiInternalServerErrorResponse()
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -73,6 +75,7 @@ export class AuthController {
   @ApiOkResponse({ description: 'Token resolved to a user', type: PublicUserResponseDto })
   @ApiBadRequestResponse({ description: 'Token is missing or malformed', type: ApiErrorResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is invalid or expired', type: ApiErrorResponseDto })
+  @ApiNotFoundResponse({ description: 'Token subject user was not found', type: ApiErrorResponseDto })
   token(@Body() dto: TokenDto) {
     if (!dto.token) {
       throw new BadRequestException({
