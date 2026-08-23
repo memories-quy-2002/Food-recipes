@@ -1,3 +1,7 @@
+jest.mock('./app.module', () => ({
+  AppModule: class MockAppModule {},
+}));
+
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { configureExceptionFilters } from './main';
