@@ -48,6 +48,7 @@ const Home = () => {
 				description="Explore featured meals, browse recipe categories, and find your next favorite dish."
 				path="/"
 			/>
+			<HomeMain />
 			{isLoadingMeals ? (
 				<PageState
 					title="Loading featured meals"
@@ -62,7 +63,6 @@ const Home = () => {
 			) : (
 				<Carousel items={meals} />
 			)}
-			<HomeMain />
 		</div>
 	);
 };
