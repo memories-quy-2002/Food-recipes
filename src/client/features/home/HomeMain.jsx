@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -15,6 +15,10 @@ import CategorySection from "./main/CategorySection";
 import FoodCardList from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
 import PageState from "@/shared/ui/PageState";
+import {
+	beginAuthIntent,
+	isMatchingSaveRecipeIntent,
+} from "@/features/auth/returnIntent";
 
 const normalizeMinutes = (value) => {
 	const minutes = Number(value);
@@ -58,6 +62,9 @@ const HomeMain = () => {
 	const { isAuthenticated, userId } = auth.current;
 	const { showToast } = useToast();
 	const navigate = useNavigate();
+	const location = useLocation();
+	const processedAuthIntent = useRef(null);
+	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 
 	const filteredRecipes = useMemo(() => {
 		if (selectedCategoryId === "all") return recipes;
@@ -86,7 +93,14 @@ const HomeMain = () => {
 
 	const handleClickFavorite = async (recipeId) => {
 		if (!isAuthenticated) {
-			navigate("/account");
+			beginAuthIntent({
+				returnTo: currentPath,
+				action: "saveRecipe",
+				recipeId,
+			});
+			navigate("/account?signup=false", {
+				state: { from: currentPath },
+			});
 			return;
 		}
 
@@ -137,6 +151,26 @@ const HomeMain = () => {
 			);
 		}
 	};
+	useEffect(() => {
+		const intent = location.state?.pendingAuthIntent;
+		if (
+			!isAuthenticated ||
+			!isMatchingSaveRecipeIntent(intent, currentPath, intent?.recipeId) ||
+			!recipes.some((recipe) => Number(recipe.recipe_id) === Number(intent.recipeId)) ||
+			processedAuthIntent.current === intent
+		) {
+			return;
+		}
+
+		processedAuthIntent.current = intent;
+		navigate(currentPath, { replace: true, state: null });
+		const isFavorite = wishlist.some(
+			(recipe) =>
+				Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) ===
+				Number(intent.recipeId)
+		);
+		if (!isFavorite) handleClickFavorite(Number(intent.recipeId));
+	}, [currentPath, handleClickFavorite, isAuthenticated, location.state, navigate, wishlist]);
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {

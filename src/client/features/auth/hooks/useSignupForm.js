@@ -5,6 +5,10 @@ import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
 import { useDispatch } from "react-redux";
+import {
+	consumeAuthIntent,
+	getAuthReturnPath,
+} from "@/features/auth/returnIntent";
 
 const initialState = {
 	formData: {
@@ -38,7 +42,6 @@ const useSignupForm = () => {
 	const [state, dispatch] = useReducer(reducer, initialState);
 	const navigate = useNavigate();
 	const location = useLocation();
-	const redirectPath = location.state?.from || "/";
 	const handleName = (e) => {
 		const { name, value } = e.target;
 		dispatch({
@@ -104,7 +107,12 @@ const useSignupForm = () => {
 
 						const { user, token } = response.data;
 						loginDispatch(authActions.login({ user, token }));
-						navigate(redirectPath, { replace: true });
+						const pendingIntent = consumeAuthIntent();
+						const redirectPath = getAuthReturnPath(location);
+						navigate(redirectPath, {
+							replace: true,
+							state: pendingIntent ? { pendingAuthIntent: pendingIntent } : null,
+						});
 					}
 				} catch (err) {
 					const message =

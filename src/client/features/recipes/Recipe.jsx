@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
@@ -22,6 +22,10 @@ import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
 import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
+import {
+	beginAuthIntent,
+	isMatchingSaveRecipeIntent,
+} from "@/features/auth/returnIntent";
 import "./Recipe.scss";
 
 const Recipe = () => {
@@ -56,6 +60,8 @@ const Recipe = () => {
 	const searchParams = new URLSearchParams(location.search);
 	const id = searchParams.get("id");
 	const isCookingMode = location.pathname === "/recipe/cooking";
+	const currentPath = `${location.pathname}${location.search}${location.hash}`;
+	const processedAuthIntent = useRef(null);
 
 	const fetchRecipe = useCallback(async ({ showLoading = true } = {}) => {
 		if (!id) return;
@@ -197,9 +203,16 @@ const Recipe = () => {
 	};
 
 	const handleClickFavorite = async (event) => {
-		event.preventDefault();
+		event?.preventDefault();
 		if (!isAuthenticated) {
-			navigate("/account");
+			beginAuthIntent({
+				returnTo: currentPath,
+				action: "saveRecipe",
+				recipeId: recipe?.recipe_id,
+			});
+			navigate("/account?signup=false", {
+				state: { from: currentPath },
+			});
 			return;
 		}
 		if (!recipe || isUpdatingFavorite) return;
@@ -234,6 +247,21 @@ const Recipe = () => {
 			setIsUpdatingFavorite(false);
 		}
 	};
+	useEffect(() => {
+		const intent = location.state?.pendingAuthIntent;
+		if (
+			!isAuthenticated ||
+			!recipe ||
+			!isMatchingSaveRecipeIntent(intent, currentPath, recipe.recipe_id) ||
+			processedAuthIntent.current === intent
+		) {
+			return;
+		}
+
+		processedAuthIntent.current = intent;
+		navigate(currentPath, { replace: true, state: null });
+		if (!favorite) handleClickFavorite();
+	}, [currentPath, favorite, handleClickFavorite, isAuthenticated, location.state, navigate, recipe]);
 	useEffect(() => {
 		fetchRecipe();
 	}, [fetchRecipe]);

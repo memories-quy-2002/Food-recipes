@@ -285,8 +285,96 @@ test("guest Save action redirects from recipe detail to login", async ({ page })
 	await page.goto("/recipe?id=1");
 	await page.getByRole("button", { name: "Add to favorite" }).click();
 
-	await expect(page).toHaveURL(/\/account$/);
+	await expect(page).toHaveURL(/\/account\?signup=false$/);
 	await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+});
+
+test("guest Save returns to the same recipe and completes only that save intent", async ({ page }) => {
+	let saved = false;
+	await page.route("**/auth/login", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				user: { user_id: 7, full_name: "Smoke User" },
+				token: "test-scoped-login-token",
+			}),
+		})
+	);
+	await page.route("**/users/7/wishlist", (route) => {
+		if (route.request().method() === "GET") {
+			return route.fulfill({
+				status: 200,
+				contentType: "application/json",
+				body: JSON.stringify({ wishlist: saved ? [{ recipe_id: 1 }] : [] }),
+			});
+		}
+		if (route.request().method() === "POST") {
+			saved = true;
+			return route.fulfill({ status: 200, body: "{}" });
+		}
+		return route.fallback();
+	});
+
+	await page.goto("/recipe?id=1");
+	await page.getByRole("button", { name: "Add to favorite" }).click();
+	await expect(page).toHaveURL(/\/account\?signup=false$/);
+
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
+	await expect(page.getByRole("button", { name: "Remove from favorite" })).toBeVisible();
+	await expect.poll(() => saved).toBe(true);
+});
+
+test("guest access to Saved and Add Recipe returns to the protected path after login", async ({ page }) => {
+	await page.route("**/auth/login", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({
+				user: { user_id: 7, full_name: "Smoke User" },
+				token: "test-scoped-protected-token",
+			}),
+		})
+	);
+	await page.route("**/users/7/wishlist", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ wishlist: [] }),
+		})
+	);
+	await page.route("**/categories", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ categories: [] }),
+		})
+	);
+	await page.route("**/meals", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ meals: [] }),
+		})
+	);
+
+	await page.goto("/wishlist?sort=recent");
+	await expect(page).toHaveURL(/\/account\?signup=false$/);
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+	await expect(page).toHaveURL(/\/wishlist\?sort=recent$/);
+
+	await page.evaluate(() => {
+		localStorage.clear();
+		sessionStorage.clear();
+	});
+	await page.goto("/food/add");
+	await expect(page).toHaveURL(/\/account\?signup=false$/);
 });
 
 test("guest enters, navigates, and exits guided cooking mode", async ({ page }) => {

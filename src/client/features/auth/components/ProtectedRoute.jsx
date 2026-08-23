@@ -1,6 +1,10 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
+import {
+	beginAuthIntent,
+	getAuthReturnPath,
+} from "@/features/auth/returnIntent";
 
 const ProtectedRoute = ({ children }) => {
 	const location = useLocation();
@@ -8,11 +12,14 @@ const ProtectedRoute = ({ children }) => {
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 
 	if (!isAuthenticated) {
+		const returnTo = `${location.pathname}${location.search}${location.hash}`;
+		const safeReturnTo = getAuthReturnPath({ state: { from: returnTo } });
+		beginAuthIntent({ returnTo: safeReturnTo });
 		return (
 			<Navigate
 				to="/account?signup=false"
 				replace
-				state={{ from: location.pathname + location.search }}
+				state={{ from: safeReturnTo }}
 			/>
 		);
 	}
