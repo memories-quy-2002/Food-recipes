@@ -55,4 +55,31 @@ describe("recipe description time summary", () => {
 		expect(renderer.root.findByType("button").props["aria-label"]).toBe("Add to favorite");
 		expect(renderer.root.findByProps({ "aria-label": "Recipe details" })).toBeTruthy();
 	});
+
+	it("renders summary rating stars with the Food Recipes orange", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<MemoryRouter>
+					<RecipeContainerSummary
+						recipe={{ ...recipe, recipe_id: 42 }}
+						favorite={false}
+						onClickFavorite={vi.fn()}
+					/>
+				</MemoryRouter>
+			);
+		});
+
+		const stars = renderer.root.findByProps({
+			className: "recipe__container__summary__review__stars",
+		});
+		const coloredIcons = stars.findAll(
+			(node) => typeof node.props?.color === "string"
+		);
+
+		expect(coloredIcons.length).toBeGreaterThan(0);
+		expect(coloredIcons.every((icon) => icon.props.color === "#ff9f1c")).toBe(
+			true
+		);
+	});
 });

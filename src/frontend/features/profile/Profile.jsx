@@ -84,14 +84,14 @@ const Profile = () => {
 	// Rest of your component...
 
 	return (
-		<Container fluid style={{ padding: 0 }}>
+		<Container fluid className="fr-page fr-profile" style={{ padding: 0 }}>
 			<PageHelmet
 				title="Profile"
 				description="Manage your Food Recipes profile, password, personal recipes, and reviews."
 				path="/profile"
 				noIndex
 			/>
-			<main className="profile__container">
+			<main className="profile__container fr-profile__container">
 				<ProfileAside
 					name={user?.full_name}
 					page={page}

@@ -62,33 +62,34 @@ const RecipeRating = ({
 									? "Update your review"
 									: "Rate this recipe"}
 							</Form.Label>
-							<div className="recipe__content__rating__star">
+							<div
+								className="recipe__content__rating__star"
+								role="group"
+								aria-label="Recipe rating"
+							>
 								{[1, 2, 3, 4, 5].map((star) => (
-									<span
+									<button
 										key={star}
-										role="button"
-										tabIndex={0}
+										type="button"
+										className="recipe__content__rating__star__button"
 										aria-label={`Rate ${star} out of 5`}
+										aria-pressed={star === ratingScore}
 										onClick={() => onStarClick(star)}
-										onKeyDown={(event) => {
-											if (
-												event.key === "Enter" ||
-												event.key === " "
-											) {
-												event.preventDefault();
-												onStarClick(star);
-											}
-										}}
 									>
 										{star <= ratingScore ? (
 											<BsStarFill
 												size={24}
 												color="orange"
+												aria-hidden="true"
 											/>
 										) : (
-											<BsStar size={24} color="orange" />
+											<BsStar
+												size={24}
+												color="orange"
+												aria-hidden="true"
+											/>
 										)}
-									</span>
+									</button>
 								))}
 								<span
 									className="recipe__content__rating__star__score"
@@ -105,6 +106,8 @@ const RecipeRating = ({
 						{reviewMessage && (
 							<div
 								className={`recipe__content__rating__message recipe__content__rating__message--${reviewMessage.type}`}
+								role={reviewMessage.type === "error" ? "alert" : "status"}
+								aria-live="polite"
 							>
 								{reviewMessage.text}
 							</div>
@@ -151,7 +154,7 @@ const RecipeRating = ({
 									disabled={isSubmittingReview || isDeletingReview || !ratingScore}
 								>
 									{isSubmittingReview
-										? "Saving..."
+										? "Saving…"
 										: hasExistingRating
 										? "Update review"
 										: "Submit review"}
@@ -163,7 +166,7 @@ const RecipeRating = ({
 										disabled={isSubmittingReview || isDeletingReview}
 										onClick={onDelete}
 									>
-										{isDeletingReview ? "Deleting..." : "Delete my review"}
+										{isDeletingReview ? "Deleting…" : "Delete my review"}
 									</Button>
 								)}
 							</div>
@@ -174,7 +177,7 @@ const RecipeRating = ({
 			{isLoadingReviews ? (
 				<Row className="recipe__content__reviews">
 					<p className="recipe__content__reviews__empty">
-						Loading reviews...
+						Loading reviews…
 					</p>
 				</Row>
 			) : reviewsError ? (

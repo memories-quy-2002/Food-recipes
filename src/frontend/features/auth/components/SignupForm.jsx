@@ -231,7 +231,7 @@ const SignupForm = ({ onLogin }) => {
 					className="form__signup__container__submit"
 					disabled={isSubmitting}
 				>
-					<span>{isSubmitting ? "Creating account..." : "Sign up"}</span>
+					<span>{isSubmitting ? "Creating account…" : "Sign up"}</span>
 					<BsArrowRight aria-hidden="true" />
 				</Button>
 

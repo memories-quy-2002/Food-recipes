@@ -28,7 +28,8 @@
     "prisma:seed": "prisma db seed --config prisma.config.ts",
     "prisma:studio": "prisma studio --config prisma.config.ts",
     "infra:up": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build",
-    "infra:down": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml down"
+    "infra:down": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml down",
+    "prepare": "cd ../.. && husky .husky"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.1",
@@ -50,12 +51,15 @@
     "rxjs": "^7.8.2"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "@nestjs/testing": "^11.2.1",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.13.3",
     "@types/passport-jwt": "^4.0.1",
     "@types/supertest": "^6.0.3",
+    "husky": "9.1.7",
     "jest": "^30.4.2",
     "prisma": "^7.9.1",
     "supertest": "^7.2.2",

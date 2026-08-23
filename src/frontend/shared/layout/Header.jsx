@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
-import "./Header.scss";
 import HeaderAuthButton from "./HeaderAuthButton";
 import HeaderBrand from "./HeaderBrand";
 import HeaderMenu from "./HeaderMenu";
@@ -12,11 +11,11 @@ const Header = () => {
 	const isAuthenticated =
 		auth.local?.isAuthenticated || auth.session?.isAuthenticated;
 	const items = getPrimaryNavigation(isAuthenticated);
-	const handleClose = () => setShow(false);
-	const handleShow = () => setShow(true);
+	const handleClose = useCallback(() => setShow(false), []);
+	const handleShow = useCallback(() => setShow(true), []);
 	return (
-		<header className="container-fluid header">
-			<div className="header__main">
+		<header className="fr-header">
+			<div className="fr-header__inner">
 				<HeaderBrand />
 				<HeaderMenu items={items} />
 				<HeaderAuthButton auth={auth} />

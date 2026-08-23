@@ -37,6 +37,8 @@ describe('RatingsRepository', () => {
     const sql = query.strings.join(' ');
     expect(sql).toContain('INSERT INTO rating');
     expect(sql).toContain('ON CONFLICT (user_id, recipe_id)');
+    expect(sql).toContain('NOT EXISTS');
+    expect(sql).toContain('UNION ALL');
     expect(sql).toContain('WHERE r.recipe_id =');
     expect(query.values).toEqual([7, 5, 'Great', 15, 15]);
   });

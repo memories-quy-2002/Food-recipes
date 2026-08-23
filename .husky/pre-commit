@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+git diff --cached --check
+corepack pnpm@11.18.0 --dir src/backend run typecheck

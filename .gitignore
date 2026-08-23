@@ -1,32 +1,59 @@
-# Node.js dependencies and build artifacts
+# Node.js dependencies and package-manager artifacts
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 .pnpm-store/
+.npm/
 
-# Environment variables
+# Generated package-manager metadata
+package-lock.json
+yarn.lock
+
+# Environment variables and local secrets
 .env
-.env.local
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
+!.env.*.example
+*.local
 
-# Build directories
+# Build output
 build/
 dist/
 out/
+.next/
+.vercel/
+storybook-static/
+.serverless/
+.expo/
 
-# Cache directories
+# Test and browser-runner output
+coverage/
+test-results/
+playwright-report/
+blob-report/
+cypress/videos/
+cypress/screenshots/
+
+# Tool caches
 .cache/
 .temp/
+.vite/
+.turbo/
+.nx/
+.eslintcache
+.jest_cache/
+*.tsbuildinfo
 
-# Logs
+# Logs and process/debug files
 logs/
 *.log
+*.pid
+*.seed
+*.pid.lock
 
-# IDE and Editor files
+# IDE and editor files
 .vscode/
 .idea/
 *.suo
@@ -35,73 +62,24 @@ logs/
 *.sln
 *.sw?
 
-# OS generated files
+# Operating-system files
 .DS_Store
-.DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 Thumbs.db
 
-# ReactJS specific
-/.eslintcache
-/.pnp
-.pnp.js
-/coverage/
-
-# Testing
-/cypress/videos/
-/cypress/screenshots/
-
-# Serverless directories
-.serverless/
-
-# Debug files
-*.pid
-*.seed
-*.pid.lock
-
-# Optional npm cache directory
-.npm
+# Local Docker overrides (checked-in Dockerfiles and Compose files are kept)
+docker-compose.override.yml
+docker-compose.local.yml
 
 # Optional REPL history
 .node_repl_history
 
-# Optional ESLint cache
-.eslintcache
+# Codex/local tool output
+.playwright-cli/
 
-# Optional Jest cache
-.jest_cache/
-
-# Optional TypeScript cache
-.tsbuildinfo
-
-# Optional Next.js build output
-.next/
-
-# Optional Storybook build output
-.storybook-out/
-storybook-static/
-
-# Optional Expo build output
-.expo/
-
-# Optional Firebase cache
-.firebase/
-
-# Optional Vercel build output
-.vercel/
-
-# Optional Docker files
-docker-compose.yml
-Dockerfile
-
-# Optional macOS files
-*.DS_Store
-
-# Optional Windows files
-Thumbs.db
-
-# Codex file
-AGENTS.md
+# Keep source-controlled project instructions and infrastructure files.
+# In particular, do not ignore AGENTS.md, Dockerfile, docker-compose*.yml,
+# pnpm-lock.yaml, pnpm-workspace.yaml, or .npmrc.

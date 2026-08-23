@@ -29,7 +29,7 @@ describe("API target configuration", () => {
 	it("defaults to the local Nest API through Kong in development", () => {
 		expect(
 			getApiConfig({ DEV: true, PROD: false }).baseURL
-		).toBe("http://localhost:8000/api/v1");
+		).toBe("http://localhost:3000/api/v1");
 	});
 
 	it("uses the configured Kong host and Nest version prefix", () => {

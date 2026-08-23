@@ -1,4 +1,4 @@
-const localKongBaseUrl = "http://localhost:8000";
+const localKongBaseUrl = "http://localhost:3000";
 
 const trimTrailingSlashes = (value) => value.replace(/\/+$/, "");
 

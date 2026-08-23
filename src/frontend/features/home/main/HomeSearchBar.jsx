@@ -127,7 +127,7 @@ const HomeSearchBar = ({ recipes = [] }) => {
 			<div className="home__main__search">
 				<input
 					type="text"
-					placeholder="Search recipes..."
+					placeholder="Search recipes…"
 					aria-label="Search recipes"
 					role="combobox"
 					aria-autocomplete="list"

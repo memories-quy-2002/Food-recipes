@@ -21,7 +21,7 @@ export default defineConfig({
 		cwd: path.resolve(__dirname, ".."),
 		command: "corepack pnpm run build && corepack pnpm exec vite preview --host 127.0.0.1 --port 4173",
 		env: {
-			VITE_KONG_BASE_URL: "http://127.0.0.1:8000",
+			VITE_KONG_BASE_URL: "http://127.0.0.1:3000",
 		},
 		url: "http://127.0.0.1:4173",
 		reuseExistingServer: !process.env.CI,

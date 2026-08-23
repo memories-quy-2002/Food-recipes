@@ -23,33 +23,38 @@ const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }) => {
 	if (!ingredientList.length) return "No information";
 
 	return (
-		<ul className="recipe__ingredient-checklist" aria-label="Ingredients checklist">
-			{ingredientList.map((ingredient, index) => {
-				const text = toIngredientText(ingredient);
-				const ingredientId = `${recipeScope}-ingredient-${index}`;
-				const isChecked = checkedIngredients.has(index);
+		<>
+			<p className="recipe__ingredient-checklist__hint">
+				Check off ingredients as you gather them. This checklist is local to this page.
+			</p>
+			<ul className="recipe__ingredient-checklist" aria-label="Ingredients checklist">
+				{ingredientList.map((ingredient, index) => {
+					const text = toIngredientText(ingredient);
+					const ingredientId = `${recipeScope}-ingredient-${index}`;
+					const isChecked = checkedIngredients.has(index);
 
-				return (
-					<li key={ingredientId}>
-						<label className={`recipe__ingredient-checklist__item${isChecked ? " is-checked" : ""}`} htmlFor={ingredientId}>
-							<input
-								id={ingredientId}
-								type="checkbox"
-								checked={isChecked}
-								aria-label={`Mark ${text} as complete`}
-								onChange={(event) => setCheckedIngredients((current) => {
-									const next = new Set(current);
-									if (event.target.checked) next.add(index);
-									else next.delete(index);
-									return next;
-								})}
-							/>
-							<span>{text}</span>
-						</label>
-					</li>
-				);
-			})}
-		</ul>
+					return (
+						<li key={ingredientId}>
+							<label className={`recipe__ingredient-checklist__item${isChecked ? " is-checked" : ""}`} htmlFor={ingredientId}>
+								<input
+									id={ingredientId}
+									type="checkbox"
+									checked={isChecked}
+									aria-label={`Mark ${text} as complete`}
+									onChange={(event) => setCheckedIngredients((current) => {
+										const next = new Set(current);
+										if (event.target.checked) next.add(index);
+										else next.delete(index);
+										return next;
+									})}
+								/>
+								<span>{text}</span>
+							</label>
+						</li>
+					);
+				})}
+			</ul>
+		</>
 	);
 };
 

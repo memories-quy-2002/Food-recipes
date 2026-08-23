@@ -66,4 +66,23 @@ describe("recipe rating review flow", () => {
 		const textarea = renderer.root.findByType("textarea");
 		expect(textarea.props.maxLength).toBe(500);
 	});
+
+	it("uses native buttons for keyboard-accessible star selection", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(<RecipeRating {...baseProps} />);
+		});
+
+		const starButtons = renderer.root.findAll(
+			(node) =>
+				node.type === "button" &&
+				typeof node.props["aria-label"] === "string" &&
+				node.props["aria-label"].startsWith("Rate ")
+		);
+
+		expect(starButtons).toHaveLength(5);
+		expect(starButtons.every((button) => button.props.type === "button")).toBe(
+			true
+		);
+	});
 });

@@ -180,11 +180,28 @@ describe('RecipesRepository duration normalization', () => {
 
     const query = prisma.$executeRaw.mock.calls[0][0];
     const source = sqlSource(query);
-    expect(source).toContain('prep_time_minutes = COALESCE');
-    expect(source).toContain('cook_time_minutes = COALESCE');
-    expect(source).toContain('prep_time = CASE');
-    expect(source).toContain('cook_time = CASE');
+    expect(source).toContain('prep_time_minutes =');
+    expect(source).toContain('cook_time_minutes =');
+    expect(source).toContain('prep_time = make_interval');
+    expect(source).toContain('cook_time = make_interval');
+    expect(source).not.toContain('COALESCE');
+    expect(source).not.toContain('IS NULL');
     expect(source).toContain('make_interval');
     expect(query.values).toEqual(expect.arrayContaining([15, 90]));
+  });
+
+  it('updates a partial recipe without binding untyped null parameters', async () => {
+    prisma.$executeRaw.mockResolvedValue(1);
+    prisma.$queryRaw.mockResolvedValue([{ ...recipe, recipe_description: 'Updated' }]);
+    const repository = new RecipesRepository(prisma as never);
+
+    await expect(repository.update(15, { description: 'Updated' })).resolves.toMatchObject({
+      recipe_description: 'Updated',
+    });
+
+    const query = prisma.$executeRaw.mock.calls[0][0];
+    expect(query.values).toEqual(['Updated', 15]);
+    expect(query.strings.join(' ')).toContain('recipe_description =');
+    expect(query.strings.join(' ')).not.toContain('IS NULL');
   });
 });

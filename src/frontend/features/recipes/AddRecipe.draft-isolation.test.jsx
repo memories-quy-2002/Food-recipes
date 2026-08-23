@@ -118,4 +118,13 @@ describe("recipe draft account isolation", () => {
 		);
 		expect(storedDraft.form.recipePrepTime).toEqual({ number: "45", unit: "minutes" });
 	});
+
+	it("does not use Tailwind's blur utility class for the recipe editor", async () => {
+		const view = render(<div />);
+		renderForUser("surface-user", view.rerender);
+
+		await screen.findByRole("heading", { name: "Create a new recipe" });
+		expect(document.querySelector(".add__surface")).toBeInTheDocument();
+		expect(document.querySelector(".add.blur")).not.toBeInTheDocument();
+	});
 });

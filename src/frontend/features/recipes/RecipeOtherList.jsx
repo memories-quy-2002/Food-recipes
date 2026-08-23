@@ -1,29 +1,25 @@
 import React, { useContext, useMemo } from "react";
 import { RecipeContext } from "@/app/RecipeProvider";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
 const RecipeOtherList = ({ recipeId }) => {
 	const { recipes } = useContext(RecipeContext);
-	const navigate = useNavigate();
 	const shuffledRecipes = useMemo(() => {
 		const sortRecipes = [...recipes].sort(() => Math.random() - 0.5);
 		return sortRecipes
 			.filter((recipe) => recipe.recipe_id !== recipeId)
 			.slice(0, 5);
 	}, [recipeId, recipes]);
-	const handleNavigation = (recipeId) => {
-		navigate(`/recipe?id=${recipeId}`);
-	};
 	return (
 		<div className="recipe__container__other">
-			<h5 className="recipe__container__other__title">Other Recipes</h5>
+			<h2 className="recipe__container__other__title">Other Recipes</h2>
 			<div className="recipe__container__other__list">
 				{shuffledRecipes.map((recipe) => (
-					<div
+					<Link
 						key={recipe.recipe_id}
+						to={`/recipe?id=${recipe.recipe_id}`}
 						className="recipe__container__other__list__item"
-						onClick={() => handleNavigation(recipe.recipe_id)}
 					>
 						{convertImage(
 							recipe.recipe_name,
@@ -45,7 +41,7 @@ const RecipeOtherList = ({ recipeId }) => {
 								{recipe.num_ratings} Ratings{" "}
 							</span>
 						</div>
-					</div>
+					</Link>
 				))}
 			</div>
 		</div>

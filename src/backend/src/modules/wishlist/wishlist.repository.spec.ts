@@ -63,7 +63,7 @@ describe('WishlistRepository', () => {
     expect(source).not.toContain('EXTRACT(EPOCH FROM r.prep_time)');
   });
 
-  it('uses the database unique constraint while returning the existing row on a repeated add', async () => {
+  it('targets the user-recipe unique key while returning the existing row on a repeated add', async () => {
     prisma.$queryRaw
       .mockResolvedValueOnce([])
       .mockResolvedValueOnce([row]);
@@ -74,6 +74,12 @@ describe('WishlistRepository', () => {
       savedAt: '2026-08-23T06:30:00.000Z',
     });
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
+    const query = prisma.$queryRaw.mock.calls[0][0];
+    const source = query.strings.join(' ');
+    expect(source).toContain('ON CONFLICT (');
+    expect(source).toContain('user_id');
+    expect(source).toContain('recipe_id');
+    expect(source).not.toContain('ON CONFLICT ON CONSTRAINT');
   });
 
   it('returns whether the authenticated user owned the removed wishlist row', async () => {

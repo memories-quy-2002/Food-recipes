@@ -144,10 +144,10 @@ corepack pnpm@11.18.0 prisma:migrate:deploy
 corepack pnpm@11.18.0 prisma:seed
 ```
 
-The seed creates three demo users, three categories, three meals, three recipes,
-four wishlist rows, and four ratings. Recipe rows reference the seeded author,
-category, and meal IDs; wishlist and rating rows reference the corresponding
-user and recipe IDs. It also writes both the normalized minute durations and
+The seed creates three demo users, three categories, three meals, 25 recipes,
+25 wishlist rows, and 25 ratings. Every recipe row references a seeded author,
+category, and meal ID; every wishlist and rating row references a seeded user
+and one of the inserted recipe IDs. It also writes both the normalized minute durations and
 the legacy PostgreSQL interval durations. Re-running the seed refreshes only the
 demo recipes and their dependent wishlist/rating rows; it does not reset the
 database.

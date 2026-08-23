@@ -220,7 +220,7 @@ const Wishlist = () => {
 	};
 
 	return (
-		<Container fluid className="wishlist">
+		<Container fluid className="fr-page wishlist">
 			<PageHelmet
 				title="Saved Recipes"
 				description="Review and organize the recipes you saved for later."
@@ -258,7 +258,7 @@ const Wishlist = () => {
 						Search
 						<input
 							type="text"
-							placeholder="Search saved recipes..."
+							placeholder="Search saved recipes…"
 							value={searchTerm}
 							onChange={(event) =>
 								setSearchTerm(event.target.value)

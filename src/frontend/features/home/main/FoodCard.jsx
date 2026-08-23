@@ -25,9 +25,9 @@ const FoodCard = ({
 				<strong className="home__main__cardList__feature__item__category">
 					{category.toUpperCase()}
 				</strong>
-				<h5 className="home__main__cardList__feature__item__name">
+				<h4 className="home__main__cardList__feature__item__name">
 					{name}
-				</h5>
+				</h4>
 				<div className="home__main__cardList__feature__item__meta">
 					<span>{meal}</span>
 					<span>{ratings} ratings</span>

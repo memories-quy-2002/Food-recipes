@@ -1,5 +1,4 @@
-import React from "react";
-import { Helmet } from "react-helmet";
+import React, { useEffect } from "react";
 
 const SITE_NAME = "Food Recipes";
 const DEFAULT_DESCRIPTION =
@@ -7,6 +6,16 @@ const DEFAULT_DESCRIPTION =
 const DEFAULT_IMAGE = "/hamburger.svg";
 const SITE_URL =
 	import.meta.env.VITE_SITE_URL || "https://foodrecipes1.vercel.app";
+const SEO_ATTRIBUTE = "data-food-recipes-seo";
+
+const appendMeta = (attributes) => {
+	const element = document.createElement("meta");
+	element.setAttribute(SEO_ATTRIBUTE, "true");
+	Object.entries(attributes).forEach(([name, value]) => {
+		element.setAttribute(name, value);
+	});
+	document.head.appendChild(element);
+};
 
 const PageHelmet = ({
 	title,
@@ -19,26 +28,42 @@ const PageHelmet = ({
 	const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 	const canonicalUrl = `${SITE_URL}${path}`;
 
-	return (
-		<Helmet>
-			<title>{pageTitle}</title>
-			<meta name="description" content={description} />
-			<link rel="canonical" href={canonicalUrl} />
-			{noIndex && <meta name="robots" content="noindex,nofollow" />}
+	useEffect(() => {
+		document.title = pageTitle;
+		document.head
+			.querySelectorAll(`[${SEO_ATTRIBUTE}]`)
+			.forEach((element) => element.remove());
 
-			<meta property="og:site_name" content={SITE_NAME} />
-			<meta property="og:type" content={type} />
-			<meta property="og:title" content={pageTitle} />
-			<meta property="og:description" content={description} />
-			<meta property="og:url" content={canonicalUrl} />
-			<meta property="og:image" content={image} />
+		appendMeta({ name: "description", content: description });
+		if (noIndex) {
+			appendMeta({ name: "robots", content: "noindex,nofollow" });
+		}
 
-			<meta name="twitter:card" content="summary_large_image" />
-			<meta name="twitter:title" content={pageTitle} />
-			<meta name="twitter:description" content={description} />
-			<meta name="twitter:image" content={image} />
-		</Helmet>
-	);
+		appendMeta({ property: "og:site_name", content: SITE_NAME });
+		appendMeta({ property: "og:type", content: type });
+		appendMeta({ property: "og:title", content: pageTitle });
+		appendMeta({ property: "og:description", content: description });
+		appendMeta({ property: "og:url", content: canonicalUrl });
+		appendMeta({ property: "og:image", content: image });
+		appendMeta({ name: "twitter:card", content: "summary_large_image" });
+		appendMeta({ name: "twitter:title", content: pageTitle });
+		appendMeta({ name: "twitter:description", content: description });
+		appendMeta({ name: "twitter:image", content: image });
+
+		const canonicalLink = document.createElement("link");
+		canonicalLink.setAttribute(SEO_ATTRIBUTE, "true");
+		canonicalLink.setAttribute("rel", "canonical");
+		canonicalLink.setAttribute("href", canonicalUrl);
+		document.head.appendChild(canonicalLink);
+
+		return () => {
+			document.head
+				.querySelectorAll(`[${SEO_ATTRIBUTE}]`)
+				.forEach((element) => element.remove());
+		};
+	}, [canonicalUrl, description, image, noIndex, pageTitle, type]);
+
+	return null;
 };
 
 export default PageHelmet;

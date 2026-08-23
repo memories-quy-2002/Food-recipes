@@ -25,18 +25,22 @@ export const siteContent = {
 	follow: [
 		{
 			href: "https://www.facebook.com",
+			label: "Facebook",
 			Icon: FaFacebook,
 		},
 		{
 			href: "https://www.youtube.com",
+			label: "YouTube",
 			Icon: FaYoutube,
 		},
 		{
 			href: "https://www.instagram.com",
+			label: "Instagram",
 			Icon: FaInstagram,
 		},
 		{
 			href: "https://www.linkedin.com",
+			label: "LinkedIn",
 			Icon: FaLinkedin,
 		},
 	],

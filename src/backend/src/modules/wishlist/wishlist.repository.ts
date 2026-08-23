@@ -68,7 +68,7 @@ export class WishlistRepository implements WishlistRepositoryPort {
       SELECT ${userId}, r.recipe_id
       FROM recipes r
       WHERE r.recipe_id = ${recipeId}
-      ON CONFLICT ON CONSTRAINT user_recipe_constraint DO NOTHING
+      ON CONFLICT (user_id, recipe_id) DO NOTHING
       RETURNING wishlist_id
     `);
 

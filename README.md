@@ -15,7 +15,7 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 
 ## Tech Stack
 
-- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, React Bootstrap, SCSS
+- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, and shadcn/ui as an incremental UI layer; Bootstrap/react-bootstrap and existing SCSS remain during migration
 - Server state: TanStack Query
 - Forms and validation: React Hook Form + Zod for recipe forms
 - API: REST/OpenAPI-compatible NestJS `/api/v1`, optionally fronted by Kong
@@ -36,6 +36,7 @@ Food-recipes/
       package.json       Frontend dependencies and scripts
       pnpm-lock.yaml     Frontend lockfile
       pnpm-workspace.yaml pnpm build-approval configuration
+      components.json     shadcn/ui metadata and aliases
       eslint.config.mjs  Frontend ESLint flat config
       index.html         Vite HTML entry
       main.jsx           Frontend bootstrap
@@ -60,17 +61,21 @@ Food-recipes/
         assets/         Images and icons
         layout/         Header, footer, and layout shell
         seo/            Helmet helpers
-        ui/             Reusable UI states
+        ui/             Reusable UI primitives and states
+        lib/            Shared frontend libraries
+          utils.ts      cn class-merging utility
         utils/          Formatting, image, rating, and content helpers
     backend/
-      package.json         Backend workspace scripts and package-manager pin
-      pnpm-workspace.yaml  Backend workspace definition
-      pnpm-lock.yaml       Backend workspace lockfile
-      .env.example         Backend Compose environment template
+      package.json         Backend dependencies and scripts
+      pnpm-workspace.yaml  Backend root build-script policy (no nested packages)
+      pnpm-lock.yaml       Backend lockfile
+      .env.example         Direct Nest API environment template
+      .env.compose.example Backend Compose environment template
+      Dockerfile           Backend API image definition
+      prisma/              Prisma schema, migrations, legacy evidence, and seed
+      src/                 NestJS API source
+      test/                Backend static and E2E tests
       infrastructure/      Docker Compose and Kong configuration
-      apps/api/            NestJS API package, Dockerfile, Prisma schema, migrations, and tests
-        package.json       API dependencies and scripts
-        .env.example       Direct Nest API environment template
 ```
 
 Frontend imports can use `@` for `src/frontend`, for example
@@ -99,12 +104,12 @@ corepack pnpm@11.18.0 install
 ```
 
 If `pnpm` is not available yet, run `corepack enable` first. The frontend and
-backend workspace packages declare `pnpm@11.18.0` in `package.json`.
+backend packages declare `pnpm@11.18.0` in `package.json`.
 
 ### Configure the backend
 
-For direct Nest development, copy `src/backend/apps/api/.env.example` to
-`src/backend/apps/api/.env`, then set the API environment variables.
+For direct Nest development, copy `src/backend/.env.example` to
+`src/backend/.env`, then set the API environment variables.
 
 ```env
 DATABASE_URL=postgresql://your_postgres_user:your_postgres_password@localhost:5432/food_recipes
@@ -114,7 +119,7 @@ CORS_ORIGINS=http://localhost:5173
 
 `JWT_SECRET` must be a non-placeholder value with at least 32 characters.
 
-For the backend container stack, copy `src/backend/.env.example` to
+For the backend container stack, copy `src/backend/.env.compose.example` to
 `src/backend/.env` and run Compose from `src/backend`:
 
 ```powershell
@@ -177,7 +182,7 @@ pnpm check
 pnpm test:e2e:ci
 ```
 
-Run the backend workspace gates from `src/backend`:
+Run the backend package gates from `src/backend`:
 
 ```powershell
 cd src/backend
@@ -194,18 +199,18 @@ browser-facing journey assertions. CI installs Chromium explicitly before
 running it.
 
 Use `corepack pnpm@11.18.0 infra:down` from `src/backend` to stop the development Compose
-stack. The backend workspace forwards API and Prisma commands to
-`@food-recipes/api` with pnpm filters.
+stack. All backend commands run directly from the single package at
+`src/backend`.
 
 ## Database and migrations
 
-Prisma schema and migrations live under `src/backend/apps/api/prisma/`.
+Prisma schema and migrations live under `src/backend/prisma/`.
 `corepack pnpm@11.18.0 prisma:validate` and `corepack pnpm@11.18.0 prisma:generate` validate checked-in
 artifacts without applying database changes. Migration and introspection
 commands require a configured database.
 
 The legacy baseline and the known `recipes.image_url` evidence discrepancy are
-documented in [the backend API README](./src/backend/apps/api/README.md). Do
+documented in [the backend Prisma README](./src/backend/README.prisma.md). Do
 not mark the baseline as applied to an existing database until that schema has
 been backed up and reconciled.
 
@@ -214,12 +219,12 @@ been backed up and reconciled.
 - Nest/Kong is the supported production-like API deployment: set public `VITE_KONG_BASE_URL=https://your-kong-gateway.example.com`; the frontend then uses the Kong `/api/v1` gateway.
 - Set public `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
 - Configure the Vercel project root directory as `src/frontend`; Vercel then runs that package's `pnpm build`, serves its `dist` output, and applies the SPA rewrites from `src/frontend/vercel.json`.
-- The backend Compose files live under `src/backend/infrastructure`; the API image uses `src/backend` as its build context and `apps/api/Dockerfile`, and should be deployed behind the configured Kong gateway.
+- The backend Compose files live under `src/backend/infrastructure`; the API image uses `src/backend` as its build context and `Dockerfile`, and should be deployed behind the configured Kong gateway.
 
 ## Documentation
 
 - [Changelog](./CHANGELOG.md)
-- [Backend API and migration notes](./src/backend/apps/api/README.md)
+- [Backend API and migration notes](./src/backend/README.prisma.md)
 - [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 ## License

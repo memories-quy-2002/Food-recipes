@@ -105,7 +105,7 @@ const LoginForm = ({ onSignup }) => {
 					className="form__login__container__submit"
 					disabled={isSubmitting}
 				>
-					<span>{isSubmitting ? "Signing in..." : "Log in"}</span>
+					<span>{isSubmitting ? "Signing in…" : "Log in"}</span>
 					<BsArrowRight aria-hidden="true" />
 				</Button>
 				<div className="form__login__container__bottom">

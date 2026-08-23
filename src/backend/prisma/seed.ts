@@ -73,7 +73,6 @@ const demoRecipes = [
       'Cook the noodles, assemble the bowls, and pour over the hot broth.',
       'Finish with herbs, lime, and sliced beef.',
     ],
-    dateAdded: new Date('2026-08-18T08:00:00.000Z'),
   },
   {
     name: 'Avocado Toast with Chili',
@@ -96,7 +95,6 @@ const demoRecipes = [
       'Mash the avocado with lemon juice, salt, and pepper.',
       'Spread over the toast and finish with chili flakes.',
     ],
-    dateAdded: new Date('2026-08-19T08:00:00.000Z'),
   },
   {
     name: 'Mango Coconut Chia Pudding',
@@ -120,43 +118,319 @@ const demoRecipes = [
       'Chill for at least 4 hours until thickened.',
       'Layer with diced mango and toasted coconut before serving.',
     ],
-    dateAdded: new Date('2026-08-20T08:00:00.000Z'),
   },
+  {
+    name: 'Lemongrass Chicken Rice',
+    description: 'Caramelized lemongrass chicken served over steamed jasmine rice.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 20,
+    cookTimeMinutes: 25,
+    imageUrl:
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['500 g chicken thighs', '2 stalks lemongrass', '2 tablespoons fish sauce', 'Jasmine rice, garlic, and scallions'],
+    instructions: ['Pound the lemongrass and mix it with garlic, fish sauce, and sugar.', 'Marinate the chicken for 20 minutes.', 'Sear until golden and cooked through, then serve with rice and scallions.'],
+  },
+  {
+    name: 'Banana Oat Pancakes',
+    description: 'Fluffy blender pancakes sweetened naturally with ripe banana.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Breakfast',
+    mealName: 'Breakfast',
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 15,
+    imageUrl:
+      'https://images.unsplash.com/photo-1528207776546-365bb710ee93?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['1 ripe banana', '100 g rolled oats', '1 egg', 'Milk, cinnamon, and baking powder'],
+    instructions: ['Blend the banana, oats, egg, milk, cinnamon, and baking powder.', 'Rest the batter for 5 minutes.', 'Cook small pancakes on a lightly greased skillet and serve warm.'],
+  },
+  {
+    name: 'Berry Yogurt Parfait',
+    description: 'Creamy yogurt layered with berries, granola, and a little honey.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Dessert',
+    mealName: 'Breakfast',
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 5,
+    imageUrl:
+      'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['400 g Greek yogurt', '150 g mixed berries', '80 g granola', '1 tablespoon honey'],
+    instructions: ['Spoon yogurt into two glasses.', 'Layer with berries and granola.', 'Drizzle with honey and serve chilled.'],
+  },
+  {
+    name: 'Garlic Butter Shrimp Pasta',
+    description: 'Silky pasta tossed with shrimp, garlic, lemon, and parsley.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 20,
+    imageUrl:
+      'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['250 g spaghetti', '300 g peeled shrimp', '4 garlic cloves', 'Butter, lemon, parsley, and parmesan'],
+    instructions: ['Boil the pasta until al dente and reserve some pasta water.', 'Sauté garlic and shrimp in butter until pink.', 'Toss with pasta, lemon, parsley, parmesan, and enough pasta water to coat.'],
+  },
+  {
+    name: 'Greek Chickpea Salad',
+    description: 'A crisp chickpea salad with cucumber, tomato, olives, and feta.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 5,
+    imageUrl:
+      'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['1 can chickpeas', '1 cucumber', '2 tomatoes', 'Olives, feta, red onion, and oregano'],
+    instructions: ['Rinse and drain the chickpeas.', 'Chop the vegetables and crumble the feta.', 'Toss everything with olive oil, lemon juice, oregano, salt, and pepper.'],
+  },
+  {
+    name: 'Tofu Banh Mi',
+    description: 'Crisp tofu, pickled vegetables, herbs, and chili inside a crusty baguette.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 25,
+    cookTimeMinutes: 15,
+    imageUrl:
+      'https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['2 baguettes', '300 g firm tofu', 'Carrot and daikon', 'Cucumber, cilantro, soy sauce, and chili mayo'],
+    instructions: ['Quick-pickle carrot and daikon with rice vinegar and sugar.', 'Pan-fry tofu until crisp and glaze with soy sauce.', 'Fill baguettes with tofu, pickles, cucumber, cilantro, and chili mayo.'],
+  },
+  {
+    name: 'Tomato Basil Bruschetta',
+    description: 'Toasted bread topped with juicy tomatoes, basil, garlic, and olive oil.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Breakfast',
+    mealName: 'Snack',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 8,
+    imageUrl:
+      'https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['1 baguette', '3 ripe tomatoes', 'Fresh basil', 'Garlic, olive oil, and balsamic vinegar'],
+    instructions: ['Dice tomatoes and mix with basil, olive oil, salt, and balsamic vinegar.', 'Toast baguette slices and rub them with garlic.', 'Spoon the tomato mixture over the toast just before serving.'],
+  },
+  {
+    name: 'Coconut Curry Lentils',
+    description: 'Creamy red lentils simmered with coconut milk, tomato, and warm spices.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 35,
+    imageUrl:
+      'https://images.unsplash.com/photo-1601050690117-94f5f6fa8bd7?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['250 g red lentils', '400 ml coconut milk', '1 can diced tomatoes', 'Onion, garlic, curry powder, and spinach'],
+    instructions: ['Sauté onion and garlic with curry powder.', 'Add lentils, tomatoes, coconut milk, and water.', 'Simmer until tender, fold in spinach, and serve with rice.'],
+  },
+  {
+    name: 'Lemon Herb Roasted Salmon',
+    description: 'Tender salmon roasted with lemon, dill, garlic, and seasonal vegetables.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 18,
+    imageUrl:
+      'https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['2 salmon fillets', '1 lemon', 'Fresh dill', 'Garlic, olive oil, asparagus, and baby potatoes'],
+    instructions: ['Place salmon and vegetables on a lined tray.', 'Season with garlic, lemon, dill, olive oil, salt, and pepper.', 'Roast until the salmon flakes easily and the vegetables are tender.'],
+  },
+  {
+    name: 'Chicken Caesar Wrap',
+    description: 'A portable wrap with grilled chicken, crunchy romaine, parmesan, and Caesar dressing.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 18,
+    imageUrl:
+      'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['2 chicken breasts', '2 large tortillas', 'Romaine lettuce', 'Parmesan, Caesar dressing, and black pepper'],
+    instructions: ['Season and grill the chicken until cooked through.', 'Slice the chicken and toss it with romaine, parmesan, and dressing.', 'Roll tightly in tortillas and slice in half.'],
+  },
+  {
+    name: 'Roasted Pumpkin Soup',
+    description: 'Velvety pumpkin soup with ginger, coconut milk, and toasted seeds.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 45,
+    imageUrl:
+      'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['800 g pumpkin', '1 onion', '500 ml vegetable stock', 'Ginger, coconut milk, and pumpkin seeds'],
+    instructions: ['Roast pumpkin and onion until caramelized.', 'Blend with stock, ginger, and coconut milk.', 'Simmer for 10 minutes, season, and garnish with toasted seeds.'],
+  },
+  {
+    name: 'Spicy Tuna Rice Bowl',
+    description: 'A quick rice bowl with spicy tuna, cucumber, avocado, and sesame.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 20,
+    imageUrl:
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['2 cans tuna', '2 bowls cooked rice', '1 avocado', 'Cucumber, mayonnaise, sriracha, soy sauce, and sesame'],
+    instructions: ['Mix tuna with mayonnaise, sriracha, and soy sauce.', 'Arrange rice, cucumber, and avocado in bowls.', 'Top with spicy tuna, sesame, and sliced scallions.'],
+  },
+  {
+    name: 'Vietnamese Fresh Spring Rolls',
+    description: 'Rice paper rolls packed with shrimp, vermicelli, herbs, and crunchy vegetables.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Snack',
+    prepTimeMinutes: 30,
+    cookTimeMinutes: 8,
+    imageUrl:
+      'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['Rice paper wrappers', '200 g shrimp', 'Rice vermicelli', 'Lettuce, mint, cucumber, and peanut dipping sauce'],
+    instructions: ['Cook the shrimp and vermicelli, then cool them.', 'Soften rice paper and layer lettuce, herbs, noodles, vegetables, and shrimp.', 'Roll tightly and serve with peanut dipping sauce.'],
+  },
+  {
+    name: 'Chocolate Banana Smoothie Bowl',
+    description: 'A thick cocoa smoothie bowl finished with banana, nuts, and cacao nibs.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Dessert',
+    mealName: 'Breakfast',
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 5,
+    imageUrl:
+      'https://images.unsplash.com/photo-1514995669114-6081e934b693?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['2 frozen bananas', '2 tablespoons cocoa powder', '100 ml milk', 'Peanut butter, almonds, and cacao nibs'],
+    instructions: ['Blend frozen bananas, cocoa, milk, and peanut butter until thick.', 'Pour into a bowl.', 'Top with sliced banana, almonds, and cacao nibs.'],
+  },
+  {
+    name: 'Apple Cinnamon Crumble',
+    description: 'Warm cinnamon apples under a golden oat and brown sugar topping.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Dessert',
+    mealName: 'Snack',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 35,
+    imageUrl:
+      'https://images.unsplash.com/photo-1535920527002-b35e96722eb9?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['5 apples', '100 g rolled oats', '80 g flour', 'Brown sugar, cinnamon, butter, and lemon juice'],
+    instructions: ['Toss sliced apples with lemon juice, cinnamon, and sugar.', 'Rub oats, flour, brown sugar, and butter into crumbs.', 'Bake over the apples until bubbling and golden.'],
+  },
+  {
+    name: 'Strawberry Shortcake Cups',
+    description: 'Individual dessert cups with macerated strawberries, sponge, and whipped cream.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Dessert',
+    mealName: 'Snack',
+    prepTimeMinutes: 20,
+    cookTimeMinutes: 5,
+    imageUrl:
+      'https://images.unsplash.com/photo-1464195244916-405fa0a82545?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['400 g strawberries', '200 g sponge cake', '250 ml whipping cream', 'Sugar and vanilla extract'],
+    instructions: ['Slice strawberries and macerate them with a little sugar.', 'Whip cream with vanilla until soft peaks form.', 'Layer cake, strawberries, and cream in small cups.'],
+  },
+  {
+    name: 'Sesame Peanut Noodles',
+    description: 'Chewy noodles coated in a savory sesame-peanut sauce with crisp vegetables.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 12,
+    imageUrl:
+      'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['250 g wheat noodles', '3 tablespoons peanut butter', 'Soy sauce, sesame oil, and rice vinegar', 'Carrot, cucumber, and scallions'],
+    instructions: ['Cook the noodles and rinse them under cold water.', 'Whisk peanut butter, soy sauce, sesame oil, and vinegar into a sauce.', 'Toss noodles with sauce and vegetables, then garnish with sesame.'],
+  },
+  {
+    name: 'Caprese Pasta Salad',
+    description: 'Chilled pasta salad with cherry tomatoes, mozzarella, basil, and pesto.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 10,
+    cookTimeMinutes: 12,
+    imageUrl:
+      'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['250 g short pasta', '200 g cherry tomatoes', '150 g mozzarella pearls', 'Basil, pesto, olive oil, and balsamic glaze'],
+    instructions: ['Boil pasta until al dente, drain, and cool.', 'Toss with tomatoes, mozzarella, basil, and pesto.', 'Finish with olive oil, pepper, and balsamic glaze.'],
+  },
+  {
+    name: 'Crispy Potato Tacos',
+    description: 'Golden potato tacos with cabbage slaw, lime, and smoky chipotle sauce.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Snack',
+    prepTimeMinutes: 20,
+    cookTimeMinutes: 30,
+    imageUrl:
+      'https://images.unsplash.com/photo-1552332386-f8dd00dc2f85?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['500 g potatoes', '8 corn tortillas', 'Cabbage, lime, and cilantro', 'Chipotle sauce, cumin, and cotija cheese'],
+    instructions: ['Boil and mash potatoes with cumin, salt, and pepper.', 'Fill tortillas with potato and fold them closed.', 'Pan-fry until crisp, then serve with slaw, lime, sauce, and cheese.'],
+  },
+  {
+    name: 'Honey Soy Glazed Tofu',
+    description: 'Crispy tofu coated in a glossy honey-soy glaze with broccoli and rice.',
+    authorEmail: 'demo.chef@foodrecipes.local',
+    categoryName: 'Main Course',
+    mealName: 'Lunch & Dinner',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 25,
+    imageUrl:
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['400 g firm tofu', '2 tablespoons soy sauce', '1 tablespoon honey', 'Broccoli, ginger, garlic, sesame, and rice'],
+    instructions: ['Press and cube the tofu, then pan-fry until crisp.', 'Simmer soy sauce, honey, ginger, and garlic into a glaze.', 'Toss tofu in the glaze and serve with steamed broccoli and rice.'],
+  },
+  {
+    name: 'Blueberry Lemon Muffins',
+    description: 'Tender lemon muffins bursting with blueberries and finished with lemon zest.',
+    authorEmail: 'demo.homecook@foodrecipes.local',
+    categoryName: 'Dessert',
+    mealName: 'Breakfast',
+    prepTimeMinutes: 15,
+    cookTimeMinutes: 22,
+    imageUrl:
+      'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['200 g flour', '150 g blueberries', '1 lemon', 'Milk, egg, butter, and sugar'],
+    instructions: ['Whisk flour, sugar, and lemon zest in a bowl.', 'Fold in the wet ingredients and blueberries without overmixing.', 'Bake in a muffin tin until risen and lightly golden.'],
+  },
+  {
+    name: 'Dark Chocolate Energy Bites',
+    description: 'No-bake oat and date bites with dark chocolate, peanut butter, and coconut.',
+    authorEmail: 'demo.foodie@foodrecipes.local',
+    categoryName: 'Dessert',
+    mealName: 'Snack',
+    prepTimeMinutes: 20,
+    cookTimeMinutes: 5,
+    imageUrl:
+      'https://images.unsplash.com/photo-1606312619070-d48b4c652a52?auto=format&fit=crop&w=1200&q=80',
+    ingredients: ['150 g dates', '100 g rolled oats', '2 tablespoons peanut butter', 'Dark chocolate, cocoa, and coconut'],
+    instructions: ['Blend dates, oats, peanut butter, and cocoa into a sticky mixture.', 'Fold in chopped dark chocolate.', 'Roll into bites and chill until firm.'],
+  },
+].map((recipe, index) => ({
+  ...recipe,
+  dateAdded: new Date(Date.UTC(2026, 7, 1 + index, 8, 0, 0)),
+}));
+
+if (demoRecipes.length !== 25) {
+  throw new Error(`Expected exactly 25 demo recipes, got ${demoRecipes.length}`);
+}
+
+const wishlistUserEmails = [
+  'demo.homecook@foodrecipes.local',
+  'demo.foodie@foodrecipes.local',
+  'demo.chef@foodrecipes.local',
 ] as const;
 
-const demoWishlists = [
-  { userEmail: 'demo.homecook@foodrecipes.local', recipeName: 'Classic Vietnamese Pho' },
-  { userEmail: 'demo.foodie@foodrecipes.local', recipeName: 'Classic Vietnamese Pho' },
-  { userEmail: 'demo.chef@foodrecipes.local', recipeName: 'Avocado Toast with Chili' },
-  { userEmail: 'demo.foodie@foodrecipes.local', recipeName: 'Mango Coconut Chia Pudding' },
-] as const;
+const demoWishlists = demoRecipes.map((recipe, index) => ({
+  userEmail: wishlistUserEmails[(index + 1) % wishlistUserEmails.length],
+  recipeName: recipe.name,
+}));
 
-const demoRatings = [
-  {
-    userEmail: 'demo.homecook@foodrecipes.local',
-    recipeName: 'Classic Vietnamese Pho',
-    score: 5,
-    review: 'The broth is rich and deeply aromatic. A weekend favorite.',
-  },
-  {
-    userEmail: 'demo.foodie@foodrecipes.local',
-    recipeName: 'Classic Vietnamese Pho',
-    score: 4,
-    review: 'Excellent flavor and the fresh herbs make the bowl feel light.',
-  },
-  {
-    userEmail: 'demo.foodie@foodrecipes.local',
-    recipeName: 'Avocado Toast with Chili',
-    score: 5,
-    review: 'Fast, bright, and exactly what I want for breakfast.',
-  },
-  {
-    userEmail: 'demo.chef@foodrecipes.local',
-    recipeName: 'Avocado Toast with Chili',
-    score: 4,
-    review: 'Simple ingredients, with just enough heat from the chili.',
-  },
-] as const;
+const demoRatings = demoRecipes.map((recipe, index) => ({
+  userEmail: wishlistUserEmails[(index + 2) % wishlistUserEmails.length],
+  recipeName: recipe.name,
+  score: 4 + (index % 2),
+  review: `A delicious demo recipe with a clear ${recipe.mealName.toLowerCase()} use case.`,
+}));
 
 type SeedRecipeRow = { recipe_id: number };
 
@@ -308,7 +582,7 @@ const seed = async (): Promise<void> => {
         data: {
           userId,
           recipeId,
-          dateAdded: new Date(`2026-08-${21 + index}T08:00:00.000Z`),
+          dateAdded: new Date(Date.UTC(2026, 7, 21 + index, 8, 0, 0)),
         },
       });
     }
@@ -324,7 +598,7 @@ const seed = async (): Promise<void> => {
           recipeId,
           score: new Prisma.Decimal(rating.score),
           review: rating.review,
-          dateAdded: new Date(`2026-08-${21 + index}T10:00:00.000Z`),
+          dateAdded: new Date(Date.UTC(2026, 7, 21 + index, 10, 0, 0)),
         },
       });
     }

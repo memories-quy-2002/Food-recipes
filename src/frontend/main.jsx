@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import App from "@/app/App";
 import store from "@/app/store";
 import "@/app/index.css";
+import "@/app/food-recipes-design.css";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

@@ -361,7 +361,7 @@ const Recipe = () => {
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (
-				<Container fluid style={{ padding: 0 }}>
+				<Container fluid className="fr-recipe" style={{ padding: 0 }}>
 					<RecipeContainerSummary
 						recipe={recipe}
 						favorite={favorite}

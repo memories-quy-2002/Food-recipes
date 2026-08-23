@@ -79,15 +79,25 @@ export class RatingsRepository implements RatingsRepositoryPort {
           score = EXCLUDED.score,
           review = EXCLUDED.review,
           date_added = CURRENT_TIMESTAMP
-        RETURNING recipe_id
+        RETURNING recipe_id, user_id, score
       )
       SELECT
-        COALESCE(ROUND(AVG(rt.score), 1), 0)::float8 AS overall_score,
-        COUNT(rt.rating_id)::int AS num_ratings
-      FROM rating rt
-      JOIN upserted u ON u.recipe_id = rt.recipe_id
-      WHERE rt.recipe_id = ${recipeId}
-      GROUP BY u.recipe_id
+        COALESCE(ROUND(AVG(source.score), 1), 0)::float8 AS overall_score,
+        COUNT(*)::int AS num_ratings
+      FROM (
+        SELECT rt.score
+        FROM rating rt
+        WHERE rt.recipe_id = ${recipeId}
+          AND NOT EXISTS (
+            SELECT 1
+            FROM upserted u
+            WHERE u.recipe_id = rt.recipe_id
+              AND u.user_id = rt.user_id
+          )
+        UNION ALL
+        SELECT u.score
+        FROM upserted u
+      ) AS source
     `);
 
     return rows[0] ? { aggregate: this.toAggregate(rows[0]) } : null;

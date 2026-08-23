@@ -3,7 +3,7 @@
 	background: #fffaf3;
 	color: #211813;
 
-	.blur {
+	.add__surface {
 		min-height: inherit;
 		padding: clamp(1rem, 4vw, 3rem);
 	}
@@ -295,7 +295,7 @@
 
 @media screen and (max-width: 576px) {
 	.add {
-		.blur {
+		.add__surface {
 			padding: 0.8rem;
 		}
 

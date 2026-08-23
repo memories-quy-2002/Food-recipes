@@ -252,28 +252,43 @@ export class RecipesRepository implements RecipesRepositoryPort {
   }
 
   async update(id: number, dto: UpdateRecipeDto): Promise<RecipeRecord> {
-    await this.prisma.$executeRaw(Prisma.sql`
-      UPDATE recipes
-      SET
-        recipe_name = COALESCE(${dto.name ?? null}, recipe_name),
-        recipe_description = COALESCE(${dto.description ?? null}, recipe_description),
-        meal_id = COALESCE(${dto.mealId ?? null}, meal_id),
-        category_id = COALESCE(${dto.categoryId ?? null}, category_id),
-        prep_time_minutes = COALESCE(${dto.prepTimeMinutes ?? null}, prep_time_minutes),
-        cook_time_minutes = COALESCE(${dto.cookTimeMinutes ?? null}, cook_time_minutes),
-        prep_time = CASE
-          WHEN ${dto.prepTimeMinutes ?? null} IS NULL THEN prep_time
-          ELSE make_interval(mins => ${dto.prepTimeMinutes ?? null})
-        END,
-        cook_time = CASE
-          WHEN ${dto.cookTimeMinutes ?? null} IS NULL THEN cook_time
-          ELSE make_interval(mins => ${dto.cookTimeMinutes ?? null})
-        END,
-        ingredients = COALESCE(${dto.ingredients ?? null}, ingredients),
-        instructions = COALESCE(${dto.instructions ?? null}, instructions),
-        image_url = COALESCE(${dto.imageUrl ?? null}, image_url)
-      WHERE recipe_id = ${id}
-    `);
+    const updates: Prisma.Sql[] = [];
+
+    if (dto.name !== undefined) updates.push(Prisma.sql`recipe_name = ${dto.name}`);
+    if (dto.description !== undefined) {
+      updates.push(Prisma.sql`recipe_description = ${dto.description}`);
+    }
+    if (dto.mealId !== undefined) updates.push(Prisma.sql`meal_id = ${dto.mealId}`);
+    if (dto.categoryId !== undefined) {
+      updates.push(Prisma.sql`category_id = ${dto.categoryId}`);
+    }
+    if (dto.prepTimeMinutes !== undefined) {
+      updates.push(Prisma.sql`prep_time_minutes = ${dto.prepTimeMinutes}`);
+      updates.push(
+        Prisma.sql`prep_time = make_interval(mins => ${dto.prepTimeMinutes})`,
+      );
+    }
+    if (dto.cookTimeMinutes !== undefined) {
+      updates.push(Prisma.sql`cook_time_minutes = ${dto.cookTimeMinutes}`);
+      updates.push(
+        Prisma.sql`cook_time = make_interval(mins => ${dto.cookTimeMinutes})`,
+      );
+    }
+    if (dto.ingredients !== undefined) {
+      updates.push(Prisma.sql`ingredients = ${dto.ingredients}`);
+    }
+    if (dto.instructions !== undefined) {
+      updates.push(Prisma.sql`instructions = ${dto.instructions}`);
+    }
+    if (dto.imageUrl !== undefined) updates.push(Prisma.sql`image_url = ${dto.imageUrl}`);
+
+    if (updates.length > 0) {
+      await this.prisma.$executeRaw(Prisma.sql`
+        UPDATE recipes
+        SET ${Prisma.join(updates, ', ')}
+        WHERE recipe_id = ${id}
+      `);
+    }
     const recipe = await this.findById(id);
     if (!recipe) throw new Error('Recipe not found after update');
     return recipe;

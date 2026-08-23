@@ -66,4 +66,20 @@ describe("recipe ingredient checklist", () => {
 		expect(label.props.className).toContain("recipe__ingredient-checklist__item");
 		expect(label.findByType("span").children).toEqual(["500 g chicken breast"]);
 	});
+
+	it("explains that the checkbox is a local cooking checklist", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<RecipeIngredientChecklist
+					recipeIdentity="recipe-1"
+					ingredients={["flour"]}
+				/>
+			);
+		});
+
+		expect(
+			renderer.root.findByProps({ className: "recipe__ingredient-checklist__hint" }).children.join(" ")
+		).toContain("Check off ingredients as you gather them");
+	});
 });

@@ -6,15 +6,16 @@ const HeaderMenu = ({ items }) => {
 	const { pathname } = useLocation();
 
 	return (
-		<nav className="header__menu" aria-label="Primary navigation">
+		<nav className="fr-nav" aria-label="Primary navigation">
 			{items.map(({ title, href }, index) => (
 				<Link
 					key={index}
-					className={`header__menu__content${
-						isNavigationItemActive(pathname, href, items)
-							? " header__menu__content--active"
-							: ""
-					}`}
+					className={
+						"fr-nav__link" +
+						(isNavigationItemActive(pathname, href, items)
+							? " fr-nav__link--active"
+							: "")
+					}
 					aria-current={
 						isNavigationItemActive(pathname, href, items)
 							? "page"

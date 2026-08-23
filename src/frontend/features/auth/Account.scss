@@ -7,7 +7,7 @@
 		url("../../shared/assets/images/background.png") center / cover no-repeat;
 }
 
-.blur {
+.account__surface {
 	min-height: inherit;
 	padding: clamp(1rem, 4vw, 4rem);
 	display: flex;
@@ -53,6 +53,7 @@
 		h1 {
 			margin: 0;
 			max-width: 9ch;
+			color: #fff8ef;
 			font-size: clamp(2.8rem, 5vw, 5rem);
 			font-weight: 900;
 			line-height: 0.95;
@@ -460,7 +461,7 @@
 }
 
 @media screen and (max-width: 640px) {
-	.blur {
+	.account__surface {
 		padding: 0.8rem;
 		align-items: flex-start;
 	}

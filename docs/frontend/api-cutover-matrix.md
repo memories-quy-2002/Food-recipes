@@ -37,4 +37,4 @@ authenticated journey checks against Kong with a real Nest API and PostgreSQL:
 4. Record the live evidence before treating the cutover as production-ready.
 
 The frontend lives under `src/frontend`; the NestJS implementation lives under
-`src/backend/apps/api`.
+`src/backend`.

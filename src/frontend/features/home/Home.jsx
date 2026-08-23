@@ -42,7 +42,7 @@ const Home = () => {
 		fetchMeals();
 	}, []);
 	return (
-		<div className="container-fluid home">
+		<div className="fr-page home">
 			<PageHelmet
 				title="Home"
 				description="Explore featured meals, browse recipe categories, and find your next favorite dish."

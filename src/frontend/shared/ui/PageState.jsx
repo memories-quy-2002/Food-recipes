@@ -1,4 +1,5 @@
 import React from "react";
+import Button from "./Button";
 
 const PageState = ({
 	type = "loading",
@@ -16,9 +17,9 @@ const PageState = ({
 				<h2>{title || (isLoading ? "Loading" : "Something went wrong")}</h2>
 				{message && <p>{message}</p>}
 				{actionLabel && onAction && (
-					<button type="button" onClick={onAction}>
+					<Button type="button" className="page-state__action mt-4" onClick={onAction}>
 						{actionLabel}
-					</button>
+					</Button>
 				)}
 			</div>
 		</div>

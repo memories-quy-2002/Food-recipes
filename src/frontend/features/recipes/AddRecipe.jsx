@@ -406,21 +406,21 @@ const AddRecipe = () => {
 		}
 	};
 	return (
-		<div className="add">
+		<div className="fr-page fr-add add">
 			<PageHelmet
 				title="Add Recipe"
 				description="Create and share a new recipe with ingredients, cooking steps, images, and preparation time."
 				path="/food/add"
 				noIndex
 			/>
-			<div className="blur">
+			<div className="add__surface">
 				<div className="add__container">
 					<div className="add__container__header">
 						<div className="add__container__header__meta" aria-label="Recipe status">
 							<span className="add__container__header__status">Draft</span>
 							<span className="add__container__header__autosave" aria-live="polite">
 								{draftStatus === "saving"
-									? "Saving draft..."
+									? "Saving draft…"
 									: draftStatus === "saved"
 										? "Saved just now"
 										: draftStatus === "error"
@@ -781,7 +781,7 @@ const AddRecipe = () => {
 									className="add__container__form__submit"
 									disabled={disabled || isSubmitting}
 								>
-									{isSubmitting ? "Publishing..." : "Publish"}
+									{isSubmitting ? "Publishing…" : "Publish"}
 								</Button>
 							</div>
 						</Form>

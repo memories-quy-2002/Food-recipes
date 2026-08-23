@@ -16,7 +16,7 @@ const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
 					<div className="recipe__container__summary__title"><h1>{recipe.recipe_name}</h1></div>
 					<div className="recipe__container__summary__review" aria-label={`Rated ${recipe.overall_score ?? 0} out of 5 from ${recipe.num_ratings ?? 0} ratings`}>
 						<div className="recipe__container__summary__review__score"><strong>{Number(recipe.overall_score || 0).toFixed(1)}</strong></div>
-						<div className="recipe__container__summary__review__stars" aria-hidden="true">{ratingStar(recipe.overall_score, "").map((star) => star)}</div>
+						<div className="recipe__container__summary__review__stars" aria-hidden="true">{ratingStar(recipe.overall_score, "#ff9f1c").map((star) => star)}</div>
 						<div className="recipe__container__summary__review__count"><strong>{recipe.num_ratings ?? 0} ratings</strong></div>
 					</div>
 					<div className="recipe__container__summary__author"><p>By {recipe.full_name ?? "Food recipe"}</p></div>
