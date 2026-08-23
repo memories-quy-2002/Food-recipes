@@ -97,6 +97,16 @@ describe('Swagger document', () => {
     }
   });
 
+  it('serves both Swagger UI and the JSON document without a live database', async () => {
+    const docsResponse = await request(app.getHttpServer()).get('/docs').expect(200);
+    expect(docsResponse.headers['content-type']).toMatch(/text\/html/);
+    expect(docsResponse.text).toContain('Swagger UI');
+
+    const jsonResponse = await request(app.getHttpServer()).get('/docs-json').expect(200);
+    expect(jsonResponse.headers['content-type']).toMatch(/json/);
+    expect(jsonResponse.body).toHaveProperty('openapi');
+  });
+
   it('documents bearer security and representative request DTO schemas', async () => {
     const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
     const document = response.body as {
@@ -217,5 +227,53 @@ describe('Swagger document', () => {
     expect(document.paths['/api/v1/recipes'].get.security).toBeUndefined();
     expect(document.paths['/api/v1/recipes/{recipeId}/reviews'].get.security).toBeUndefined();
     expect(document.paths['/api/v1/users/me/recipes'].get.security).toEqual([{ bearer: [] }]);
+  });
+
+  it('documents mutation and authenticated-user error responses with the shared error schema', async () => {
+    const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
+    const document = response.body as {
+      paths: Record<string, Record<string, { responses?: Record<string, unknown> }>>;
+      components: {
+        schemas: Record<string, { properties?: Record<string, unknown> }>;
+      };
+    };
+
+    const assertSharedErrorResponse = (path: string, method: string, status: number) => {
+      const operation = document.paths[path][method];
+      const responseMetadata = operation.responses?.[String(status)] as {
+        content?: { 'application/json'?: { schema?: { $ref?: string } } };
+      };
+
+      expect(responseMetadata).toEqual(expect.objectContaining({
+        content: expect.objectContaining({
+          'application/json': expect.objectContaining({
+            schema: { $ref: '#/components/schemas/ApiErrorResponseDto' },
+          }),
+        }),
+      }));
+    };
+
+    const upsertRating = document.paths['/api/v1/recipes/{recipeId}/rating'].put;
+    expect(upsertRating.responses).toEqual(expect.objectContaining({ '403': expect.anything(), '404': expect.anything() }));
+    assertSharedErrorResponse('/api/v1/recipes/{recipeId}/rating', 'put', 403);
+    assertSharedErrorResponse('/api/v1/recipes/{recipeId}/rating', 'put', 404);
+
+    const deleteRating = document.paths['/api/v1/recipes/{recipeId}/rating'].delete;
+    expect(deleteRating.responses).toEqual(expect.objectContaining({ '404': expect.anything() }));
+    assertSharedErrorResponse('/api/v1/recipes/{recipeId}/rating', 'delete', 404);
+
+    for (const [path, method] of [
+      ['/api/v1/users/me', 'get'],
+      ['/api/v1/users/me/profile', 'put'],
+      ['/api/v1/users/me/password', 'put'],
+    ]) {
+      assertSharedErrorResponse(path, method, 404);
+    }
+
+    assertSharedErrorResponse('/api/v1/auth/signup', 'post', 409);
+    expect(document.components.schemas.WishlistRemovalResponseDto.properties?.message).toEqual({
+      type: 'string',
+      example: 'Wishlist item removed',
+    });
   });
 });

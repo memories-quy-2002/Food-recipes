@@ -40,6 +40,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Create an account' })
   @ApiCreatedResponse({ description: 'Account created', type: AuthResponseDto })
   @ApiBadRequestResponse({ description: 'Invalid signup data', type: ApiErrorResponseDto })
+  @ApiResponse({ status: HttpStatus.CONFLICT, description: 'Email is already registered', type: ApiErrorResponseDto })
   signup(@Body() dto: SignupDto) {
     return this.authService.signup(dto);
   }

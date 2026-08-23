@@ -47,6 +47,8 @@ export class RatingsController {
   @ApiOkResponse({ description: 'Rating saved', type: RatingMutationResponseDto })
   @ApiBadRequestResponse({ description: 'Rating input or recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, description: 'Recipe authors cannot review their own recipes', type: ApiErrorResponseDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Recipe was not found', type: ApiErrorResponseDto })
   upsert(
     @Param('recipeId', ParseIntPipe) recipeId: number,
     @CurrentUser() user: AuthUser,
@@ -63,6 +65,7 @@ export class RatingsController {
   @ApiOkResponse({ description: 'Rating removed', type: RatingRemovalResponseDto })
   @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Rating was not found', type: ApiErrorResponseDto })
   remove(
     @Param('recipeId', ParseIntPipe) recipeId: number,
     @CurrentUser() user: AuthUser,

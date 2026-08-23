@@ -36,6 +36,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Get the authenticated user' })
   @ApiOkResponse({ description: 'Authenticated user profile', type: PublicUserResponseDto })
   @ApiResponse({ status: 401, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Authenticated user was not found', type: ApiErrorResponseDto })
   getMe(@CurrentUser() user: AuthUser) {
     return this.usersService.findById(user.id);
   }
@@ -45,6 +46,7 @@ export class UsersController {
   @ApiOkResponse({ description: 'Updated user profile', type: PublicUserResponseDto })
   @ApiBadRequestResponse({ description: 'Profile input is invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: 401, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Authenticated user was not found', type: ApiErrorResponseDto })
   updateProfile(@CurrentUser() user: AuthUser, @Body() dto: UpdateProfileDto) {
     return this.usersService.updateProfile(user.id, dto);
   }
@@ -54,6 +56,7 @@ export class UsersController {
   @ApiOkResponse({ description: 'Password changed', type: MessageResponseDto })
   @ApiBadRequestResponse({ description: 'Password input is invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: 401, description: 'JWT is missing, invalid, or current password is incorrect', type: ApiErrorResponseDto })
+  @ApiResponse({ status: 404, description: 'Authenticated user was not found', type: ApiErrorResponseDto })
   async changePassword(
     @CurrentUser() user: AuthUser,
     @Body() dto: ChangePasswordDto,

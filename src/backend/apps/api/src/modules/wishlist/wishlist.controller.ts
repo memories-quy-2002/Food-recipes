@@ -26,9 +26,9 @@ import { AddWishlistDto } from './dto/add-wishlist.dto';
 import { WishlistService, WishlistServicePort } from './wishlist.service';
 import {
   ApiErrorResponseDto,
-  MessageResponseDto,
   WishlistResponseDto,
   WishlistItemResponseDto,
+  WishlistRemovalResponseDto,
 } from '../../common/swagger/response.schemas';
 
 @ApiTags('Wishlist')
@@ -63,7 +63,7 @@ export class WishlistController {
   @ApiOperation({ summary: 'Remove a saved recipe for the authenticated user' })
   @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
   @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
-  @ApiOkResponse({ description: 'Recipe removed from the wishlist', type: MessageResponseDto })
+  @ApiOkResponse({ description: 'Recipe removed from the wishlist', type: WishlistRemovalResponseDto })
   @ApiResponse({ status: 401, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: 404, description: 'Wishlist item was not found', type: ApiErrorResponseDto })
   remove(

@@ -58,6 +58,11 @@ export class MessageResponseDto {
   message!: string;
 }
 
+export class WishlistRemovalResponseDto {
+  @ApiProperty({ example: 'Wishlist item removed' })
+  message!: string;
+}
+
 export class RecipeResponseDto {
   @ApiProperty({ example: 15 })
   recipe_id!: number;
