@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
 
 const DEFAULT_SERVINGS = 4;
@@ -47,6 +47,8 @@ export const getRecipeTimeSummary = (recipe) => {
 
 const getServings = (recipe) => firstDefined(recipe, ["servings", "serving_count", "yield", "recipe_yield", "recipeYield"]);
 
+const getRecipeIdentity = (recipe) => firstDefined(recipe, ["recipe_id", "id", "publicId"]);
+
 export const normalizeServings = (value) => {
 	const numericValue = typeof value === "number" ? value : Number.parseFloat(value);
 	if (!Number.isFinite(numericValue)) return DEFAULT_SERVINGS;
@@ -56,8 +58,14 @@ export const normalizeServings = (value) => {
 const RecipeDescription = ({ recipe }) => {
 	const { prep, cook, total } = getRecipeTimeSummary(recipe);
 	const [servings, setServings] = useState(() => normalizeServings(getServings(recipe)));
-	const hasStructuredIngredients = Array.isArray(recipe.ingredients) && recipe.ingredients.some((ingredient) => ingredient && typeof ingredient === "object");
-	const adjustServings = (amount) => setServings((current) => normalizeServings(current + amount));
+	const recipeIdentity = getRecipeIdentity(recipe);
+	useEffect(() => {
+		setServings(normalizeServings(getServings(recipe)));
+	}, [recipeIdentity]);
+	const adjustServings = (amount) => setServings((current) => {
+		if ((current === MIN_SERVINGS && amount < 0) || (current === MAX_SERVINGS && amount > 0)) return current;
+		return normalizeServings(current + amount);
+	});
 	return (
 		<>
 			<Row className="recipe__content__desc"><div><h2>About</h2><p>{recipe.recipe_description ?? "There is no description for this recipe"}</p></div></Row>
@@ -74,7 +82,7 @@ const RecipeDescription = ({ recipe }) => {
 					</div>
 				</Col>
 			</Row>
-			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2>{!hasStructuredIngredients && <p role="note">Ingredient quantities are shown as written because this recipe uses free-text ingredients.</p>}<ul>{recipe.ingredients ? recipe.ingredients.map((ingredient, index) => <li key={index}>{typeof ingredient === "string" ? ingredient : ingredient?.name ?? String(ingredient)}</li>) : "No information"}</ul></div></Row>
+			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2><p role="note">Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data.</p><ul>{recipe.ingredients ? recipe.ingredients.map((ingredient, index) => <li key={index}>{typeof ingredient === "string" ? ingredient : JSON.stringify(ingredient)}</li>) : "No information"}</ul></div></Row>
 			<Row className="recipe__content__instruction"><div><h2>Instructions</h2><ol>{recipe.instructions ? recipe.instructions.map((instruction, index) => <li key={index}>{instruction}</li>) : "No information"}</ol></div></Row>
 		</>
 	);
