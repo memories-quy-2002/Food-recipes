@@ -73,7 +73,7 @@ describe("recipe servings Task 11", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={recipe} />);
 		});
 
-		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("li").flatMap((node) => node.children);
+		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node) => node.children);
 		expect(ingredientText).toEqual(["2 cups flour", "1 egg"]);
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("shown as written");
 	});
@@ -84,7 +84,7 @@ describe("recipe servings Task 11", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, ingredients: [{ name: "flour", quantity: 2, unit: "cups" }] }} />);
 		});
 
-		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("li").flatMap((node) => node.children);
+		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node) => node.children);
 		expect(ingredientText).toEqual([JSON.stringify({ name: "flour", quantity: 2, unit: "cups" })]);
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("unsupported");
 	});

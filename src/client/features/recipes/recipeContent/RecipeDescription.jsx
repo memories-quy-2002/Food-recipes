@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Row, Col } from "react-bootstrap";
+import RecipeIngredientChecklist, { getIngredientSignature } from "./RecipeIngredientChecklist";
 
 const DEFAULT_SERVINGS = 4;
 const MIN_SERVINGS = 1;
@@ -82,7 +83,7 @@ const RecipeDescription = ({ recipe }) => {
 					</div>
 				</Col>
 			</Row>
-			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2><p role="note">Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data.</p><ul>{recipe.ingredients ? recipe.ingredients.map((ingredient, index) => <li key={index}>{typeof ingredient === "string" ? ingredient : JSON.stringify(ingredient)}</li>) : "No information"}</ul></div></Row>
+			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2><p role="note">Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data.</p><RecipeIngredientChecklist key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(recipe.ingredients)}`} recipeIdentity={recipeIdentity} ingredients={recipe.ingredients} /></div></Row>
 			<Row className="recipe__content__instruction"><div><h2>Instructions</h2><ol>{recipe.instructions ? recipe.instructions.map((instruction, index) => <li key={index}>{instruction}</li>) : "No information"}</ol></div></Row>
 		</>
 	);
