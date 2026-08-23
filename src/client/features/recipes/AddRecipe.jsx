@@ -1,6 +1,8 @@
 import cameraPreview from "@/shared/assets/images/cameraPreview.png";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { getApiTarget } from "@/shared/api/config";
@@ -25,27 +27,7 @@ import {
 	loadRecipeDraft,
 	saveRecipeDraft,
 } from "./recipeDraftStorage";
-
-const DURATION_UNITS = new Set(["seconds", "minutes", "hours", "days"]);
-
-const normalizeCatalogName = (value) => String(value || "").trim().toLowerCase();
-
-const hasSupportedCatalogValue = (value, items) => {
-	const normalizedValue = normalizeCatalogName(value);
-
-	return Boolean(
-		normalizedValue &&
-		items.some((item) =>
-			normalizeCatalogName(item.name ?? item.category_name ?? item.meal_name) ===
-				normalizedValue
-		)
-	);
-};
-
-const hasPositiveDuration = (time) =>
-	Number.isFinite(Number(time?.number)) &&
-	Number(time.number) > 0 &&
-	DURATION_UNITS.has(time?.unit);
+import { createRecipeFormSchema } from "./recipeForm.schema";
 
 const createInitialRecipeState = (userId) => ({
 	recipeImage: null,
@@ -57,7 +39,6 @@ const createInitialRecipeState = (userId) => ({
 	recipeInstructions: [""],
 	recipePrepTime: { number: 15, unit: "minutes" },
 	recipeCookTime: { number: 30, unit: "minutes" },
-	userId,
 });
 
 const hasDraftContent = (recipe) =>
@@ -78,45 +59,22 @@ export const validateRecipeForm = (
 	recipe,
 	{ categories = [], meals = [], isPublishing = true } = {}
 ) => {
-	const errors = [];
-	const ingredients = (recipe.recipeIngredients || [])
-		.map((ingredient) => String(ingredient || "").trim())
-		.filter(Boolean);
-	const instructions = (recipe.recipeInstructions || [])
-		.map((instruction) => String(instruction || "").trim())
-		.filter(Boolean);
-
-	if (!String(recipe.recipeName || "").trim()) {
-		errors.push("Recipe name is required.");
-	}
-	if (!hasSupportedCatalogValue(recipe.recipeCategoryName, categories)) {
-		errors.push("Choose a supported category.");
-	}
-	if (!hasSupportedCatalogValue(recipe.recipeMealName, meals)) {
-		errors.push("Choose a supported meal.");
-	}
-	if (!ingredients.length) {
-		errors.push("Add at least one ingredient.");
-	}
-	if (!instructions.length) {
-		errors.push("Add at least one instruction.");
-	}
-	if (!hasPositiveDuration(recipe.recipePrepTime)) {
-		errors.push("Preparation time must be a positive number.");
-	}
-	if (!hasPositiveDuration(recipe.recipeCookTime)) {
-		errors.push("Cooking time must be a positive number.");
-	}
-	if (isPublishing && !recipe.recipeImage) {
-		errors.push("Choose a recipe image before publishing.");
-	} else if (
-		isPublishing &&
-		!String(recipe.recipeImage?.type || "").startsWith("image/")
-	) {
-		errors.push("Choose a valid recipe image before publishing.");
-	}
-
-	return { errors };
+	const normalizedRecipe = {
+		recipeName: "",
+		recipeCategoryName: "",
+		recipeMealName: "",
+		recipeDescription: "",
+		recipeIngredients: [],
+		recipeInstructions: [],
+		recipePrepTime: { number: "", unit: "minutes" },
+		recipeCookTime: { number: "", unit: "minutes" },
+		recipeImage: null,
+		...recipe,
+	};
+	const result = createRecipeFormSchema({ categories, meals, isPublishing }).safeParse(normalizedRecipe);
+	return {
+		errors: result.success ? [] : result.error.issues.map(({ message }) => message),
+	};
 };
 
 const AddRecipe = () => {
@@ -125,7 +83,6 @@ const AddRecipe = () => {
 	const { refreshRecipes } = useContext(RecipeContext);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
-	const [formRecipe, setFormRecipe] = useState(() => createInitialRecipeState(userId));
 	const [preview, setPreview] = useState(null);
 	const [disabled, setDisabled] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,13 +91,29 @@ const AddRecipe = () => {
 	const [categories, setCategories] = useState([]);
 	const [meals, setMeals] = useState([]);
 	const [listError, setListError] = useState("");
-	const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
-	const [selectedMealOption, setSelectedMealOption] = useState("");
 	const [restoreCandidate, setRestoreCandidate] = useState(null);
 	const [isDraftHydrated, setIsDraftHydrated] = useState(false);
 	const [hydratedUserId, setHydratedUserId] = useState(null);
 	const [draftStatus, setDraftStatus] = useState("idle");
 	const storageConfigured = isSupabaseStorageConfigured();
+	const recipeSchema = useMemo(
+		() => createRecipeFormSchema({ categories, meals, isPublishing: true }),
+		[categories, meals]
+	);
+	const {
+		register,
+		handleSubmit: handleRecipeSubmit,
+		reset,
+		setValue,
+		watch,
+		getValues,
+		formState: { errors: formErrors },
+	} = useForm({
+		resolver: zodResolver(recipeSchema),
+		defaultValues: createInitialRecipeState(userId),
+	});
+	const formRecipe = watch();
+	const draftFingerprint = JSON.stringify(formRecipe);
 	const currentRestoreCandidate =
 		restoreCandidate?.userId === String(userId) ? restoreCandidate : null;
 
@@ -148,10 +121,8 @@ const AddRecipe = () => {
 		setRestoreCandidate(null);
 		setIsDraftHydrated(false);
 		setHydratedUserId(null);
-		setFormRecipe(createInitialRecipeState(userId));
+		reset(createInitialRecipeState(userId));
 		setPreview(null);
-		setSelectedCategoryOption("");
-		setSelectedMealOption("");
 
 		const savedDraft = loadRecipeDraft(window.localStorage, userId);
 		if (savedDraft) {
@@ -161,7 +132,7 @@ const AddRecipe = () => {
 		}
 		setIsDraftHydrated(true);
 		setHydratedUserId(userId);
-	}, [userId]);
+	}, [reset, userId]);
 
 	useEffect(() => {
 		if (
@@ -180,7 +151,7 @@ const AddRecipe = () => {
 		}, 500);
 
 		return () => window.clearTimeout(timeoutId);
-	}, [currentRestoreCandidate, formRecipe, hydratedUserId, isDraftHydrated, userId]);
+	}, [currentRestoreCandidate, draftFingerprint, hydratedUserId, isDraftHydrated, userId]);
 
 	const calculateTotalTime = (timeField1, timeField2) => {
 		const unitsInSeconds = {
@@ -223,7 +194,7 @@ const AddRecipe = () => {
 		setDisabled(false);
 		setSubmitError("");
 		const file = event.target.files[0];
-		setFormRecipe({ ...formRecipe, recipeImage: file });
+		setValue("recipeImage", file || null, { shouldDirty: true });
 		if (file) {
 			const reader = new FileReader();
 
@@ -238,21 +209,14 @@ const AddRecipe = () => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setFormRecipe({
-			...formRecipe,
-			[name]: value,
-		});
+		setValue(name, value, { shouldDirty: true });
 	};
-	const handleArrayChange = (event, index) => {
+	const handleArrayChange = (field, index, value) => {
 		setDisabled(false);
 		setSubmitError("");
-		const { name, value } = event.target;
-		const updatedFormRecipe = { ...formRecipe };
-		updatedFormRecipe[name][index] = value;
-		setFormRecipe(updatedFormRecipe);
+		setValue(`${field}.${index}`, value, { shouldDirty: true });
 	};
-	const handleArrayPaste = (event, index) => {
-		const { name } = event.target;
+	const handleArrayPaste = (field, event, index) => {
 		const pastedText = event.clipboardData.getData("text");
 		const pastedItems = parsePastedList(pastedText);
 
@@ -261,90 +225,57 @@ const AddRecipe = () => {
 		event.preventDefault();
 		setDisabled(false);
 		setSubmitError("");
-		setFormRecipe((currentRecipe) => {
-			const currentItems = [...currentRecipe[name]];
-			currentItems.splice(index, 1, ...pastedItems);
-			return {
-				...currentRecipe,
-				[name]: currentItems,
-			};
-		});
+		const currentItems = [...getValues(field)];
+		currentItems.splice(index, 1, ...pastedItems);
+		setValue(field, currentItems, { shouldDirty: true });
 	};
 	const handleDeleteField = (event, index) => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name } = event.target;
-		setFormRecipe({
-			...formRecipe,
-			[name]: [...formRecipe[name].filter((_, i) => i !== index)],
-		});
+		setValue(name, getValues(name).filter((_, i) => i !== index), { shouldDirty: true });
 	};
 	const handleAddField = (event) => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name } = event.target;
-		setFormRecipe({
-			...formRecipe,
-			[name]: [...formRecipe[name], ""],
-		});
+		setValue(name, [...getValues(name), ""], { shouldDirty: true });
 	};
 	const handleTimeNumberChange = (event) => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setFormRecipe((prevFormRecipe) => ({
-			...prevFormRecipe,
-			[name]: {
-				...prevFormRecipe[name],
-				number: value,
-			},
-		}));
+		setValue(`${name}.number`, value, { shouldDirty: true });
 	};
 
 	const handleSelectChange = (event) => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setFormRecipe((prevFormRecipe) => ({
-			...prevFormRecipe,
-			[name]: {
-				...prevFormRecipe[name],
-				unit: value,
-			},
-		}));
+		setValue(`${name}.unit`, value, { shouldDirty: true });
 	};
 
 	const handleCategoryOptionChange = (event) => {
 		const { value } = event.target;
 		setDisabled(false);
 		setSubmitError("");
-		setSelectedCategoryOption(value);
-		setFormRecipe((currentRecipe) => ({
-			...currentRecipe,
-			recipeCategoryName: value,
-		}));
+		setValue("recipeCategoryName", value, { shouldDirty: true });
 	};
 
 	const handleMealOptionChange = (event) => {
 		const { value } = event.target;
 		setDisabled(false);
 		setSubmitError("");
-		setSelectedMealOption(value);
-		setFormRecipe((currentRecipe) => ({
-			...currentRecipe,
-			recipeMealName: value,
-		}));
+		setValue("recipeMealName", value, { shouldDirty: true });
 	};
 
 	const handleReset = () => {
 		clearRecipeDraft(window.localStorage, userId);
-		setFormRecipe(createInitialRecipeState(userId));
+		reset(createInitialRecipeState(userId));
 		setPreview(null);
 		setDisabled(true);
 		setSubmitError("");
 		setUploadStatus("idle");
-		setSelectedCategoryOption("");
-		setSelectedMealOption("");
 		setRestoreCandidate(null);
 		setIsDraftHydrated(true);
 		setDraftStatus("idle");
@@ -352,14 +283,11 @@ const AddRecipe = () => {
 
 	const handleRestoreDraft = () => {
 		if (!currentRestoreCandidate) return;
-		setFormRecipe({
+		reset({
 			...createInitialRecipeState(userId),
 			...currentRestoreCandidate.form,
 			recipeImage: null,
-			userId,
 		});
-		setSelectedCategoryOption(currentRestoreCandidate.form.recipeCategoryName || "");
-		setSelectedMealOption(currentRestoreCandidate.form.recipeMealName || "");
 		setDisabled(false);
 		setRestoreCandidate(null);
 		setIsDraftHydrated(true);
@@ -369,16 +297,14 @@ const AddRecipe = () => {
 	const handleStartFresh = () => {
 		clearRecipeDraft(window.localStorage, userId);
 		setRestoreCandidate(null);
-		setFormRecipe(createInitialRecipeState(userId));
-		setSelectedCategoryOption("");
-		setSelectedMealOption("");
+		reset(createInitialRecipeState(userId));
 		setIsDraftHydrated(true);
 		setDraftStatus("idle");
 	};
 
 	const handleSaveDraft = () => {
 		setDraftStatus(
-			saveRecipeDraft(window.localStorage, userId, formRecipe) ? "saved" : "error"
+			saveRecipeDraft(window.localStorage, userId, getValues()) ? "saved" : "error"
 		);
 	};
 
@@ -405,33 +331,33 @@ const AddRecipe = () => {
 		fetchLists();
 	}, []);
 
-	const handleSubmit = async (event) => {
-		event.preventDefault();
+	const handleInvalidSubmit = (invalidFields) => {
+		const messages = Object.values(invalidFields)
+			.flatMap((field) => {
+				if (field?.message) return [field.message];
+				return Object.values(field || {}).flatMap((nestedField) =>
+					nestedField?.message ? [nestedField.message] : []
+				);
+			})
+			.filter(Boolean);
+		setSubmitError(messages.join(" ") || "Please review the recipe form.");
+	};
 
+	const handleSubmit = async (values) => {
 		const cleanedRecipe = {
-			...formRecipe,
-			recipeName: formRecipe.recipeName.trim(),
-			recipeCategoryName: formRecipe.recipeCategoryName.trim(),
-			recipeMealName: formRecipe.recipeMealName.trim(),
-			recipeDescription: formRecipe.recipeDescription.trim(),
-			recipeIngredients: formRecipe.recipeIngredients
+			...values,
+			recipeName: values.recipeName.trim(),
+			recipeCategoryName: values.recipeCategoryName.trim(),
+			recipeMealName: values.recipeMealName.trim(),
+			recipeDescription: values.recipeDescription.trim(),
+			recipeIngredients: values.recipeIngredients
 				.map((ingredient) => ingredient.trim())
 				.filter(Boolean),
-			recipeInstructions: formRecipe.recipeInstructions
+			recipeInstructions: values.recipeInstructions
 				.map((instruction) => instruction.trim())
 				.filter(Boolean),
 			userId,
 		};
-
-		const validation = validateRecipeForm(cleanedRecipe, {
-			categories,
-			meals,
-			isPublishing: true,
-		});
-		if (validation.errors.length) {
-			setSubmitError(validation.errors.join(" "));
-			return;
-		}
 
 		try {
 			setIsSubmitting(true);
@@ -439,7 +365,7 @@ const AddRecipe = () => {
 			setUploadStatus("uploading");
 
 			const imageUpload = await uploadRecipeImage({
-				file: formRecipe.recipeImage,
+				file: values.recipeImage,
 				recipeName: cleanedRecipe.recipeName,
 			});
 			setUploadStatus("saving");
@@ -565,7 +491,7 @@ const AddRecipe = () => {
 								</p>
 							</div>
 						)}
-						<Form onSubmit={handleSubmit}>
+						<Form onSubmit={handleRecipeSubmit(handleSubmit, handleInvalidSubmit)}>
 							<Row className="add__container__form__field">
 								<Col md={6}>
 									<Form.Group
@@ -575,9 +501,9 @@ const AddRecipe = () => {
 										<Form.Label>Recipe Name</Form.Label>
 										<Form.Control
 											type="text"
-											name="recipeName"
+											{...register("recipeName", { onChange: handleInputChange })}
 											value={formRecipe.recipeName}
-											onChange={handleInputChange}
+											aria-invalid={Boolean(formErrors.recipeName)}
 											required
 										/>
 									</Form.Group>
@@ -590,9 +516,8 @@ const AddRecipe = () => {
 										<Form.Control
 											as="textarea"
 											rows={5}
-											name="recipeDescription"
+											{...register("recipeDescription", { onChange: handleInputChange })}
 											value={formRecipe.recipeDescription}
-											onChange={handleInputChange}
 											required
 										/>
 									</Form.Group>
@@ -618,7 +543,7 @@ const AddRecipe = () => {
 										)}
 										<Form.Control
 											type="file"
-											name="recipeImage"
+											{...register("recipeImage")}
 											accept="image/*"
 											onChange={handleFileChange}
 											style={{ marginTop: "10px" }}
@@ -638,9 +563,9 @@ const AddRecipe = () => {
 									>
 										<Form.Label>Category</Form.Label>
 										<Form.Select
-											name="recipeCategoryOption"
-											value={selectedCategoryOption}
-											onChange={handleCategoryOptionChange}
+											{...register("recipeCategoryName", { onChange: handleCategoryOptionChange })}
+											value={formRecipe.recipeCategoryName}
+											aria-invalid={Boolean(formErrors.recipeCategoryName)}
 											required
 										>
 											<option value="" disabled>
@@ -661,9 +586,9 @@ const AddRecipe = () => {
 									>
 										<Form.Label>Meal</Form.Label>
 										<Form.Select
-											name="recipeMealOption"
-											value={selectedMealOption}
-											onChange={handleMealOptionChange}
+											{...register("recipeMealName", { onChange: handleMealOptionChange })}
+											value={formRecipe.recipeMealName}
+											aria-invalid={Boolean(formErrors.recipeMealName)}
 											required
 										>
 											<option value="" disabled>
@@ -686,18 +611,16 @@ const AddRecipe = () => {
 								<Form.Label>Preparation Time</Form.Label>
 								<Form.Control
 									type="number"
-									name="recipePrepTime"
+									{...register("recipePrepTime.number", { onChange: handleTimeNumberChange })}
 									value={formRecipe.recipePrepTime.number}
-									onChange={handleTimeNumberChange}
 									className="add__container__form__time__input"
 									min="1"
 									step="any"
 								/>
 								<Form.Select
 									value={formRecipe.recipePrepTime.unit}
-									name="recipePrepTime"
+									{...register("recipePrepTime.unit", { onChange: handleSelectChange })}
 									className="add__container__form__time__select"
-									onChange={handleSelectChange}
 								>
 									<option value="seconds">seconds</option>
 									<option value="minutes">minutes</option>
@@ -712,18 +635,16 @@ const AddRecipe = () => {
 								<Form.Label>Cooking Time</Form.Label>
 								<Form.Control
 									type="number"
-									name="recipeCookTime"
+									{...register("recipeCookTime.number", { onChange: handleTimeNumberChange })}
 									value={formRecipe.recipeCookTime.number}
-									onChange={handleTimeNumberChange}
 									className="add__container__form__time__input"
 									min="1"
 									step="any"
 								/>
 								<Form.Select
 									value={formRecipe.recipeCookTime.unit}
-									name="recipeCookTime"
+									{...register("recipeCookTime.unit", { onChange: handleSelectChange })}
 									className="add__container__form__time__select"
-									onChange={handleSelectChange}
 								>
 									<option value="seconds">seconds</option>
 									<option value="minutes">minutes</option>
@@ -755,22 +676,12 @@ const AddRecipe = () => {
 											className="d-flex gap-2 mb-3"
 										>
 											<span>{index + 1}.</span>
-											<Form.Control
-												type="text"
-												name={`recipeIngredients`}
-												value={ingredient}
-												onChange={(event) =>
-													handleArrayChange(
-														event,
-														index
-													)
-												}
-												onPaste={(event) =>
-													handleArrayPaste(
-														event,
-														index
-													)
-												}
+													<Form.Control
+														type="text"
+														{...register(`recipeIngredients.${index}`)}
+														value={ingredient}
+														onChange={(event) => handleArrayChange("recipeIngredients", index, event.target.value)}
+														onPaste={(event) => handleArrayPaste("recipeIngredients", event, index)}
 											/>
 
 													<button
@@ -813,22 +724,12 @@ const AddRecipe = () => {
 											className="d-flex gap-2 mb-3"
 										>
 											<span>{index + 1}. </span>
-											<Form.Control
-												type="text"
-												name={`recipeInstructions`}
-												value={instruction}
-												onChange={(event) =>
-													handleArrayChange(
-														event,
-														index
-													)
-												}
-												onPaste={(event) =>
-													handleArrayPaste(
-														event,
-														index
-													)
-												}
+													<Form.Control
+														type="text"
+														{...register(`recipeInstructions.${index}`)}
+														value={instruction}
+														onChange={(event) => handleArrayChange("recipeInstructions", index, event.target.value)}
+														onPaste={(event) => handleArrayPaste("recipeInstructions", event, index)}
 											/>
 
 													<button
