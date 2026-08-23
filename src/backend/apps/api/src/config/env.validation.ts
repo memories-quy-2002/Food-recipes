@@ -3,8 +3,13 @@ export type Environment = Record<string, unknown>;
 const asString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
-const JWT_PLACEHOLDER_PATTERN =
-  /(?:^|[^a-z0-9])(?:replace[-_\s]?with|change[-_\s]?me|generate|dev|development|test|testing|local|localhost|default|example|sample|dummy|fake|placeholder|secret|password)(?:$|[^a-z0-9])/i;
+const JWT_PLACEHOLDER_PREFIX_PATTERN =
+  /^(?:replace[-_\s]?with|change[-_\s]?me|generate|dev|development|test|testing|local|localhost|default|example|sample|dummy|fake|placeholder|secret|password)/i;
+const JWT_PREDICTABLE_SHAPE_PATTERN = /^[a-z0-9_-]+$/i;
+
+const isJwtPlaceholder = (jwtSecret: string): boolean =>
+  JWT_PREDICTABLE_SHAPE_PATTERN.test(jwtSecret) &&
+  JWT_PLACEHOLDER_PREFIX_PATTERN.test(jwtSecret);
 
 export function validateEnvironment(environment: Environment): Environment {
   const databaseUrl = asString(environment.DATABASE_URL);
@@ -17,7 +22,7 @@ export function validateEnvironment(environment: Environment): Environment {
   if (
     !jwtSecret ||
     jwtSecret.length < 32 ||
-    JWT_PLACEHOLDER_PATTERN.test(jwtSecret)
+    isJwtPlaceholder(jwtSecret)
   ) {
     throw new Error(
       'JWT_SECRET must be at least 32 characters and must not be a placeholder',

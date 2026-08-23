@@ -18,7 +18,7 @@ describe('validateEnvironment', () => {
       validateEnvironment({
         NODE_ENV: 'development',
         PORT: '3000',
-        JWT_SECRET: 'development-secret-with-enough-length',
+        JWT_SECRET: '7fK2!mQ9#vL4@xR8$zN3%pT6&cW1^hJ5*',
       }),
     ).toThrow(/DATABASE_URL/);
   });
@@ -56,6 +56,10 @@ describe('validateEnvironment', () => {
     'replace-with-a-random-secret-of-at-least-32-characters',
     'change-me-to-a-random-secret-of-at-least-32-characters',
     'generate-a-random-secret-of-at-least-32-characters',
+    'developmentsecret12345678901234567890',
+    'dev123456789012345678901234567890',
+    'password1234567890123456789012345678',
+    'replacewith123456789012345678901234567',
   ])('rejects the placeholder JWT secret %s', (jwtSecret) => {
     expect(() =>
       validateEnvironment({
@@ -63,5 +67,14 @@ describe('validateEnvironment', () => {
         JWT_SECRET: jwtSecret,
       }),
     ).toThrow(/JWT_SECRET/);
+  });
+
+  it('accepts a random-looking secret that contains a placeholder marker', () => {
+    expect(() =>
+      validateEnvironment({
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
+      }),
+    ).not.toThrow();
   });
 });
