@@ -1,12 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   WishlistItem,
   WishlistRepositoryPort,
+  WISHLIST_REPOSITORY,
 } from './wishlist.repository';
 
 @Injectable()
 export class WishlistService {
-  constructor(private readonly repository: WishlistRepositoryPort) {}
+  constructor(
+    @Inject(WISHLIST_REPOSITORY)
+    private readonly repository: WishlistRepositoryPort,
+  ) {}
 
   async list(userId: number): Promise<{ wishlist: WishlistItem[] }> {
     return { wishlist: await this.repository.listByUserId(userId) };

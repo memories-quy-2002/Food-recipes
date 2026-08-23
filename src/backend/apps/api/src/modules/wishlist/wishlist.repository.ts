@@ -50,6 +50,8 @@ export interface WishlistRepositoryPort {
   remove(userId: number, recipeId: number): Promise<boolean>;
 }
 
+export const WISHLIST_REPOSITORY = Symbol('WISHLIST_REPOSITORY');
+
 @Injectable()
 export class WishlistRepository implements WishlistRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
