@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 
 const QUICK_FILTER_LIMIT = 4;
@@ -32,14 +32,29 @@ export const getQuickFilters = (recipes = []) => {
 };
 
 const HomeSearchBar = ({ recipes = [] }) => {
-	const [searchTerm, setSearchTerm] = useState("");
 	const navigate = useNavigate();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const searchTerm = searchParams.get("q") || "";
 	const quickFilters = getQuickFilters(recipes);
+	const updateSearchTerm = (value) => {
+		setSearchParams(
+			(currentParams) => {
+				const nextParams = new URLSearchParams(currentParams);
+				if (value.trim()) {
+					nextParams.set("q", value);
+				} else {
+					nextParams.delete("q");
+				}
+				return nextParams;
+			},
+			{ replace: true }
+		);
+	};
 	const handleChange = (e) => {
-		setSearchTerm(e.target.value);
+		updateSearchTerm(e.target.value);
 	};
 	const handleQuickFilter = (label) => {
-		setSearchTerm(label);
+		updateSearchTerm(label);
 	};
 	const filteredRecipes = recipes.filter((recipe) =>
 		[
@@ -64,6 +79,7 @@ const HomeSearchBar = ({ recipes = [] }) => {
 					type="text"
 					placeholder="Search recipes..."
 					className="home__main__search__input"
+					value={searchTerm}
 					onChange={handleChange}
 				></input>
 				{quickFilters.length > 0 && (
