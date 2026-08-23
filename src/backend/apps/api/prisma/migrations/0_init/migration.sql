@@ -66,7 +66,7 @@ CREATE TABLE "wishlist" (
     "wishlist_id" SERIAL NOT NULL,
     "user_id" INTEGER NOT NULL,
     "recipe_id" INTEGER NOT NULL,
-    "date_added" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "date_added" TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "wishlist_pkey" PRIMARY KEY ("wishlist_id")
 );

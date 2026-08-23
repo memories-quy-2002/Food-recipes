@@ -93,6 +93,10 @@ schema and baseline migration now make this precision explicit for every
 legacy timestamp field; no application behavior or constraint semantics
 change.
 
+The legacy `wishlist.date_added` column is nullable and defaults to
+`CURRENT_TIMESTAMP`; `Wishlist.dateAdded` is modeled as optional with the
+same default, and the baseline preserves that nullability.
+
 Before `prisma migrate resolve --applied 0_init`, inspect the live database or
 a disposable restored copy and reconcile this exact discrepancy. The static
 validator detects and documents the mismatch; it does not claim that baseline
@@ -104,8 +108,8 @@ application is safe or that migration history is complete.
   unreachable placeholder `DATABASE_URL` and no database connection.
 - `corepack pnpm exec prisma generate --config prisma.config.ts`: passed.
 - `node test/prisma-baseline.validation.mjs`: passed without Docker or database
-  access; it checked timestamp precision and both legacy `image_url` omissions,
-  and reported the documented discrepancy.
+  access; it checked timestamp precision, wishlist date nullability, and both
+  legacy `image_url` omissions, and reported the documented discrepancy.
 - `corepack pnpm --filter @food-recipes/api run build`: passed.
 - `corepack pnpm --filter @food-recipes/api exec tsc -p tsconfig.build.json --noEmit`: passed.
 - `git diff --check`: passed for the worktree and staged scoped files.

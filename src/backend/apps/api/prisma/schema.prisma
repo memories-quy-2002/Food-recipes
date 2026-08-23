@@ -55,7 +55,7 @@ model Wishlist {
   id        Int      @id @default(autoincrement()) @map("wishlist_id")
   userId    Int      @map("user_id")
   recipeId  Int      @map("recipe_id")
-  dateAdded DateTime @default(now()) @map("date_added") @db.Timestamp(6)
+  dateAdded DateTime? @default(now()) @map("date_added") @db.Timestamp(6)
 
   @@unique([userId, recipeId], map: "user_recipe_constraint")
   @@map("wishlist")

@@ -49,6 +49,11 @@ const legacyRecipesCopyMatch = contents.legacyDump.match(
 );
 assert.ok(legacyRecipesCopyMatch, 'recipes.sql must contain the legacy recipes COPY column list');
 
+const legacyWishlistTableMatch = contents.legacyDump.match(
+  /CREATE TABLE public\.wishlist \(([\s\S]*?)\r?\n\);/m,
+);
+assert.ok(legacyWishlistTableMatch, 'recipes.sql must contain the legacy wishlist table definition');
+
 const requiredColumns = {
   accounts: [
     ['user_id', 'SERIAL NOT NULL'],
@@ -87,7 +92,7 @@ const requiredColumns = {
     ['wishlist_id', 'SERIAL NOT NULL'],
     ['user_id', 'INTEGER NOT NULL'],
     ['recipe_id', 'INTEGER NOT NULL'],
-    ['date_added', 'TIMESTAMP\\(6\\) NOT NULL DEFAULT CURRENT_TIMESTAMP'],
+    ['date_added', 'TIMESTAMP\\(6\\) DEFAULT CURRENT_TIMESTAMP'],
   ],
   rating: [
     ['rating_id', 'SERIAL NOT NULL'],
@@ -152,6 +157,13 @@ for (const [constraintName, tableName, columnName, referencedTable, referencedCo
 assert.match(contents.schema, /prepTime\s+Unsupported\("interval"\)\s+@map\("prep_time"\)/);
 assert.match(contents.schema, /cookTime\s+Unsupported\("interval"\)\s+@map\("cook_time"\)/);
 assert.match(contents.schema, /imageUrl\s+String\?\s+@map\("image_url"\)/);
+const wishlistModelMatch = contents.schema.match(/model Wishlist \{([\s\S]*?)\n\}/m);
+assert.ok(wishlistModelMatch, 'schema must define Wishlist');
+assert.match(
+  wishlistModelMatch[1],
+  /^\s*dateAdded\s+DateTime\?\s+@default\(now\(\)\)\s+@map\("date_added"\)\s+@db\.Timestamp\(6\)/m,
+  'Wishlist.dateAdded must remain nullable with a now default and timestamp precision 6',
+);
 for (const field of ['createdOn', 'lastLogin']) {
   assert.match(
     contents.schema,
@@ -175,6 +187,16 @@ for (const index of [
 
 assert.doesNotMatch(legacyRecipesTableMatch[1], /\bimage_url\b/i, 'recipes.sql evidence must document the missing image_url column');
 assert.doesNotMatch(legacyRecipesCopyMatch[1], /\bimage_url\b/i, 'recipes.sql COPY evidence must document the missing image_url column');
+assert.match(
+  legacyWishlistTableMatch[1],
+  /date_added\s+timestamp without time zone DEFAULT CURRENT_TIMESTAMP/i,
+  'recipes.sql wishlist.date_added must be nullable with a current-timestamp default',
+);
+assert.doesNotMatch(
+  legacyWishlistTableMatch[1],
+  /date_added\s+timestamp without time zone\s+NOT NULL/i,
+  'recipes.sql wishlist.date_added must remain nullable',
+);
 for (const [name, document] of [['API README', contents.readme], ['Task 5 report', contents.report]]) {
   assert.match(document, /Known legacy evidence discrepancy:/i, `${name} must label the image_url discrepancy`);
   assert.match(document, /`prisma\/schema\.prisma`/, `${name} must name the checked-in Prisma schema`);
@@ -207,6 +229,6 @@ assert.match(contents.compose, /prisma migrate deploy|prisma",\s*"migrate",\s*"d
 
 console.log(
   'Prisma baseline static validation passed without Docker or database access; '
-    + 'legacy timestamp precision and the image_url discrepancy were checked and documented, '
+    + 'legacy timestamp precision, wishlist nullability, and the image_url discrepancy were checked and documented, '
     + 'so live or disposable-copy inspection remains required before marking 0_init applied.',
 );

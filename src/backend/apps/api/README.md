@@ -13,6 +13,13 @@ precision of 6 for `accounts.created_on`, `accounts.last_login`, and every
 with `@db.Timestamp(6)`, and the baseline emits `TIMESTAMP(6)` accordingly;
 this records precision without changing application behavior.
 
+The legacy `wishlist.date_added` column is nullable and defaults to
+`CURRENT_TIMESTAMP`. `Wishlist.dateAdded` is therefore an optional
+`DateTime?` with `@default(now())`, and the baseline keeps the column nullable
+as `TIMESTAMP(6) DEFAULT CURRENT_TIMESTAMP`. Explicit null legacy values remain
+representable while new rows that omit the field still receive the database
+default.
+
 ## Known evidence discrepancy
 
 Known legacy evidence discrepancy: the checked-in `prisma/schema.prisma`
