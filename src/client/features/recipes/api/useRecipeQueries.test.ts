@@ -135,6 +135,58 @@ describe("recipe query contracts", () => {
 		expect(axios.get).toHaveBeenCalledTimes(2);
 	});
 
+	it.each([
+		{
+			name: "huge totalPages",
+			pagination: {
+				page: 1,
+				limit: 100,
+				total: 101,
+				totalPages: Number.MAX_SAFE_INTEGER,
+				hasNext: true,
+			},
+		},
+		{
+			name: "inconsistent totalPages",
+			pagination: {
+				page: 1,
+				limit: 100,
+				total: 201,
+				totalPages: 2,
+				hasNext: true,
+			},
+		},
+	])("stops safely for $name metadata", async ({ pagination }) => {
+		vi.mocked(axios.get).mockResolvedValueOnce({
+			data: { recipes: [recipe], pagination },
+		});
+
+		await expect(fetchAllRecipes({ signal })).resolves.toEqual([recipe]);
+		expect(axios.get).toHaveBeenCalledTimes(1);
+	});
+
+	it("hard caps aggregation for a valid but impractically large catalog", async () => {
+		let page = 0;
+		vi.mocked(axios.get).mockImplementation(async () => {
+			page += 1;
+			return {
+				data: {
+					recipes: [{ ...recipe, recipe_id: page }],
+					pagination: {
+						page,
+						limit: 100,
+						total: 100_001,
+						totalPages: 1_001,
+						hasNext: page < 1_001,
+					},
+				},
+			};
+		});
+
+		await expect(fetchAllRecipes({ signal })).resolves.toHaveLength(1_000);
+		expect(axios.get).toHaveBeenCalledTimes(1_000);
+	});
+
 	it("preserves the recipe detail envelope through the current detail route", async () => {
 		vi.mocked(axios.get).mockResolvedValueOnce({ data: { recipe } });
 

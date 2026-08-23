@@ -10,6 +10,8 @@ import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
 
 const RECIPE_CATALOG_PAGE_LIMIT = 100;
+// Keep the compatibility aggregation bounded even if a valid API response advertises an enormous catalog.
+const MAX_RECIPE_CATALOG_PAGES = 1_000;
 
 export const recipeQueryKeys = {
 	all: ["recipes"] as const,
@@ -51,6 +53,16 @@ const parseRecipePagination = (value: unknown): RecipePagination | undefined => 
 		return undefined;
 	}
 
+	const expectedTotalPages = Math.max(1, Math.ceil(total / limit));
+	if (
+		limit !== RECIPE_CATALOG_PAGE_LIMIT ||
+		totalPages !== expectedTotalPages ||
+		page > totalPages ||
+		hasNext !== (page < totalPages)
+	) {
+		return undefined;
+	}
+
 	return { page, limit, total, totalPages, hasNext };
 };
 
@@ -78,8 +90,10 @@ export const fetchAllRecipes = async ({
 	let currentPage = 1;
 	let currentResponse = await fetchPage(currentPage);
 	const recipes = [...currentResponse.recipes];
+	let pagesFetched = 1;
 
 	while (
+		pagesFetched < MAX_RECIPE_CATALOG_PAGES &&
 		currentResponse.pagination?.hasNext &&
 		currentResponse.pagination.page === currentPage &&
 		currentResponse.pagination.page < currentResponse.pagination.totalPages
@@ -93,6 +107,7 @@ export const fetchAllRecipes = async ({
 		recipes.push(...nextResponse.recipes);
 		currentPage = nextPage;
 		currentResponse = nextResponse;
+		pagesFetched += 1;
 	}
 
 	return recipes;
