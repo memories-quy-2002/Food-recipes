@@ -7,6 +7,21 @@ const featuredModes = [
 	{ id: "quick-meals", label: "Quick meals" },
 ];
 
+export const featuredModeMeta = {
+	"top-rated": {
+		eyebrow: "Community favorites",
+		title: "Top rated recipes",
+	},
+	"most-reviewed": {
+		eyebrow: "Popular with cooks",
+		title: "Most reviewed recipes",
+	},
+	"quick-meals": {
+		eyebrow: "Short on time",
+		title: "Quick meals",
+	},
+};
+
 export const isRecipeFavorite = (recipe, wishlist) =>
 	wishlist.some(
 		(item) =>
@@ -21,12 +36,17 @@ const FoodCardList = ({
 	featuredMode,
 	onFeaturedModeChange,
 }) => {
+	const activeModeMeta =
+		featuredModeMeta[featuredMode] ?? featuredModeMeta["top-rated"];
+
 	return (
 		<div className="home__main__cardList">
 			<div className="home__sectionHeader">
 				<div>
-					<span>Top rated</span>
-					<h3 className="home__main__cardList__title">Featured recipes</h3>
+					<span>{activeModeMeta.eyebrow}</span>
+					<h3 className="home__main__cardList__title">
+						{activeModeMeta.title}
+					</h3>
 				</div>
 				<div className="home__main__cardList__controls">
 					<div className="home__main__cardList__tabs" role="tablist">
@@ -39,6 +59,8 @@ const FoodCardList = ({
 										? "home__main__cardList__tab--active"
 										: ""
 								}`}
+								role="tab"
+								aria-selected={featuredMode === mode.id}
 								onClick={() => onFeaturedModeChange(mode.id)}
 							>
 								{mode.label}
