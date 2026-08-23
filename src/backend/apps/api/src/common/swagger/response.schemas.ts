@@ -79,6 +79,9 @@ export class RecipeResponseDto {
   @ApiProperty({ example: 20 })
   cook_time_minutes!: number;
 
+  @ApiProperty({ example: 30, description: 'Preparation plus cooking time in minutes' })
+  total_time_minutes!: number;
+
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   date_added!: string | null;
 

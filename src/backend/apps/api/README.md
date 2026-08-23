@@ -115,3 +115,26 @@ pnpm exec tsc -p tsconfig.build.json --noEmit
 These checks verify the checked-in artifacts only. They do not prove that a
 live database matches the baseline or that `migrate resolve`/`migrate status`
 has succeeded.
+
+## Task 18 duration normalization deployment gate
+
+The Task 18 migration is a gated artifact and has not been deployed. It adds
+non-null native `recipes.prep_time_minutes` and `recipes.cook_time_minutes`
+after an exact interval-to-minute backfill. The legacy `prep_time` and
+`cook_time` interval columns remain intentionally present: Nest reads the
+native columns, while Nest create/update dual-writes both representations so
+the Express fallback remains coherent. Dropping the interval columns requires
+a separate reviewed migration after rollback risk is accepted.
+
+Before deployment, both of these preconditions must be complete:
+
+1. Reconcile the baseline `image_url` discrepancy against the live database or
+   a disposable restored copy, as documented above, after backup and schema
+   inspection.
+2. Prove live Nest/frontend parity for the current cutover, including the
+   authenticated recipe and wishlist journeys; static tests are not a
+   substitute for this gate.
+
+Only after those preconditions and a disposable migration rehearsal may an
+operator run the deployment procedure. No `prisma migrate deploy`, `prisma
+migrate resolve`, or `prisma migrate status` command was run for Task 18.

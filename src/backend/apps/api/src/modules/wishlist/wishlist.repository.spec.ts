@@ -13,6 +13,7 @@ describe('WishlistRepository', () => {
     recipe_description: 'A simple pasta dish',
     prep_time_minutes: 10,
     cook_time_minutes: 20,
+    total_time_minutes: 30,
     date_added: new Date('2026-08-20T06:30:00.000Z'),
     image_url: null,
     user_id: 2,
@@ -39,6 +40,7 @@ describe('WishlistRepository', () => {
           recipe_description: 'A simple pasta dish',
           prep_time_minutes: 10,
           cook_time_minutes: 20,
+          total_time_minutes: 30,
           date_added: row.date_added,
           image_url: null,
           user_id: 2,
@@ -53,6 +55,12 @@ describe('WishlistRepository', () => {
         savedAt: '2026-08-23T06:30:00.000Z',
       },
     ]);
+    const query = prisma.$queryRaw.mock.calls[0][0];
+    const source = query.strings.join(' ');
+    expect(source).toContain('r.prep_time_minutes');
+    expect(source).toContain('r.cook_time_minutes');
+    expect(source).toContain('total_time_minutes');
+    expect(source).not.toContain('EXTRACT(EPOCH FROM r.prep_time)');
   });
 
   it('uses the database unique constraint while returning the existing row on a repeated add', async () => {

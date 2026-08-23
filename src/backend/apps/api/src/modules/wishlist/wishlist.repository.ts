@@ -8,6 +8,7 @@ export type RecipeSummary = {
   recipe_description: string | null;
   prep_time_minutes: number;
   cook_time_minutes: number;
+  total_time_minutes: number;
   date_added: Date | null;
   image_url: string | null;
   user_id: number;
@@ -32,6 +33,7 @@ type WishlistRow = {
   recipe_description: string | null;
   prep_time_minutes: number;
   cook_time_minutes: number;
+  total_time_minutes: number;
   date_added: Date | null;
   image_url: string | null;
   user_id: number;
@@ -91,8 +93,9 @@ export class WishlistRepository implements WishlistRepositoryPort {
         r.recipe_id,
         r.recipe_name,
         r.recipe_description,
-        ROUND(EXTRACT(EPOCH FROM r.prep_time) / 60)::int AS prep_time_minutes,
-        ROUND(EXTRACT(EPOCH FROM r.cook_time) / 60)::int AS cook_time_minutes,
+        r.prep_time_minutes,
+        r.cook_time_minutes,
+        r.prep_time_minutes + r.cook_time_minutes AS total_time_minutes,
         r.date_added,
         r.image_url,
         r.user_id,
@@ -124,6 +127,7 @@ export class WishlistRepository implements WishlistRepositoryPort {
         recipe_description: row.recipe_description,
         prep_time_minutes: row.prep_time_minutes,
         cook_time_minutes: row.cook_time_minutes,
+        total_time_minutes: row.total_time_minutes,
         date_added: row.date_added,
         image_url: row.image_url,
         user_id: row.user_id,

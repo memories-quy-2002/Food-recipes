@@ -40,6 +40,8 @@ model Recipe {
   description    String?                @map("recipe_description")
   mealId         Int                    @map("meal_id")
   categoryId     Int                    @map("category_id")
+  prepTimeMinutes Int                   @map("prep_time_minutes")
+  cookTimeMinutes Int                   @map("cook_time_minutes")
   prepTime       Unsupported("interval") @map("prep_time")
   cookTime       Unsupported("interval") @map("cook_time")
   dateAdded      DateTime?              @default(now()) @map("date_added") @db.Timestamp(6)
