@@ -24,7 +24,7 @@ const HeaderAuthButton = ({ auth }) => {
 						token,
 					});
 
-					setUser(response.data.user);
+					setUser(response.data.user ?? response.data);
 				} catch (error) {
 					if (error.response && error.response.status === 401) {
 						dispatch(authActions.logout());

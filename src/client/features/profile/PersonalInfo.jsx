@@ -3,6 +3,11 @@ import { Button, Form } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
+import { getApiTarget } from "@/shared/api/config";
+import {
+	getUpdatedProfileUser,
+	serializeProfilePayload,
+} from "@/shared/api/mutations";
 import { authActions } from "@/features/auth/state/authSlice";
 const PersonalInfo = ({ user }) => {
 	const [formData, setFormData] = useState({
@@ -19,14 +24,17 @@ const PersonalInfo = ({ user }) => {
 	};
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+		const apiTarget = getApiTarget();
 		const response = await axios.put(
 			apiRoutes.userProfile(user.user_id),
-			{
-				formData,
-			}
+			serializeProfilePayload(apiTarget, formData)
 		);
 		if (response.status === 200) {
-			dispatch(authActions.updateUser({ user: response.data.user }));
+			dispatch(
+				authActions.updateUser({
+					user: getUpdatedProfileUser(apiTarget, response.data),
+				})
+			);
 		}
 
 		window.location.reload(false);

@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
+import { getApiTarget } from "@/shared/api/config";
+import { isRecipeDeleteSuccess } from "@/shared/api/mutations";
 import PageState from "@/shared/ui/PageState";
 import convertImage from "@/shared/utils/convertImage";
 import { Row, Col } from "react-bootstrap";
@@ -58,7 +60,7 @@ const PersonalRecipes = ({ user }) => {
 	const handleDeleteRecipe = async () => {
 		try {
 			const response = await axios.delete(apiRoutes.recipe(recipeId));
-			if (response.status === 200) {
+			if (isRecipeDeleteSuccess(getApiTarget(), response.status)) {
 				setPersonalRecipes((recipes) =>
 					recipes.filter((recipe) => recipe.recipe_id !== recipeId)
 				);

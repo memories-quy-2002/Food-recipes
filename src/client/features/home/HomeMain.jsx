@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
+import { getApiTarget } from "@/shared/api/config";
+import {
+	isWishlistAddSuccess,
+	serializeWishlistPayload,
+} from "@/shared/api/mutations";
 import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
 import { useToast } from "@/app/ToastProvider";
@@ -113,11 +118,11 @@ const HomeMain = () => {
 				return;
 			}
 
-			const response = await axios.post(apiRoutes.userWishlist(userId), {
-				user_id: userId,
-				recipe_id: recipeId,
-			});
-			if (response.status === 200) {
+			const response = await axios.post(
+				apiRoutes.userWishlist(userId),
+				serializeWishlistPayload(getApiTarget(), userId, recipeId)
+			);
+			if (isWishlistAddSuccess(getApiTarget(), response.status)) {
 				setWishlist((currentWishlist) => [
 					...currentWishlist,
 					{ recipe_id: recipeId },

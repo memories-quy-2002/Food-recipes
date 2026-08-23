@@ -4,6 +4,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { apiRouteCompatibility, apiRoutes } from "@/shared/api/routes";
 import { getApiTarget } from "@/shared/api/config";
+import {
+	isWishlistAddSuccess,
+	serializeWishlistPayload,
+} from "@/shared/api/mutations";
 import RecipeContainerSummary from "@/features/recipes/RecipeContainerSummary";
 import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
@@ -203,11 +207,15 @@ const Recipe = () => {
 					showToast({ title: "Removed from wishlist" });
 				}
 			} else {
-				const response = await axios.post(apiRoutes.userWishlist(userId), {
-					user_id: userId,
-					recipe_id: recipe.recipe_id,
-				});
-				if (response.status === 200) {
+				const response = await axios.post(
+					apiRoutes.userWishlist(userId),
+					serializeWishlistPayload(
+						getApiTarget(),
+						userId,
+						recipe.recipe_id
+					)
+				);
+				if (isWishlistAddSuccess(getApiTarget(), response.status)) {
 					setFavorite(true);
 					showToast({ title: "Added to wishlist" });
 				}
@@ -235,7 +243,10 @@ const Recipe = () => {
 					setFavorite(
 						getArrayPayload(response.data, "wishlist").some(
 							(wishlistRecipe) =>
-								Number(wishlistRecipe.recipe_id) ===
+								Number(
+									wishlistRecipe.recipe?.recipe_id ??
+										wishlistRecipe.recipe_id
+								) ===
 								Number(recipe.recipe_id)
 						)
 					);

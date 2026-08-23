@@ -3,6 +3,11 @@ import React, { useContext, useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
+import { getApiTarget } from "@/shared/api/config";
+import {
+	isRecipeCreateSuccess,
+	serializeCreateRecipePayload,
+} from "@/shared/api/mutations";
 import { getArrayPayload } from "@/shared/api/payload";
 import {
 	isSupabaseStorageConfigured,
@@ -294,13 +299,15 @@ const AddRecipe = () => {
 			});
 			setUploadStatus("saving");
 
+			const apiTarget = getApiTarget();
 			const response = await axios.post(
 				apiRoutes.recipes,
-				{
-					...cleanedRecipe,
-					recipeImage: undefined,
+				serializeCreateRecipePayload(apiTarget, {
+					recipe: cleanedRecipe,
+					categories,
+					meals,
 					imageUrl: imageUpload.url,
-				},
+				}),
 				{
 					headers: {
 						"Content-Type": "application/json",
@@ -308,7 +315,7 @@ const AddRecipe = () => {
 				}
 			);
 
-			if (response.status === 200) {
+			if (isRecipeCreateSuccess(apiTarget, response.status)) {
 				await refreshRecipes().catch((refreshError) =>
 					console.error("Unable to refresh recipes after publish:", refreshError)
 				);

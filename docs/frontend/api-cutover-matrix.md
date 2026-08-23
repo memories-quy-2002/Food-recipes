@@ -11,17 +11,22 @@ development, Nest mode defaults the Kong origin to `http://localhost:8000` when
 
 | Current journey / client capability | Nest route status | Current cutover status |
 | --- | --- | --- |
-| Recipe list, detail, create, delete, and own-recipe list | Implemented: `/recipes`, `/recipes/:id`, `/users/me/recipes` | Contract-ready; requires live E2E and response/UX parity evidence |
+| Recipe list, detail, delete, and own-recipe list | Implemented: `/recipes`, `/recipes/:id`, `/users/me/recipes`; delete accepts Nest `204` | Contract-ready at the checked-in consumer boundary; requires live E2E and response/UX parity evidence |
+| Create recipe | Implemented: `POST /recipes`; consumer maps the form to `CreateRecipeDto` and accepts Nest `201` | Route/payload contract-ready, but the browser journey is not Nest-ready because the form's category/meal loaders are explicit legacy-only and Nest has no taxonomy controllers |
 | Recipe reviews and authenticated rating | Implemented: `/recipes/:recipeId/reviews`, `/recipes/:recipeId/rating`, `/users/me/ratings` | Contract-ready; requires live authenticated E2E |
 | Login and signup | Implemented: `/auth/login`, `/auth/signup` | Contract-ready; signup status 201 is accepted; requires live E2E |
-| Save / unsave and open Saved | Implemented: `/users/me/wishlist` | Contract-ready; requires live authenticated E2E |
-| Profile and change password | Implemented: `/users/me/profile`, `/users/me/password` | Contract-ready; requires live authenticated E2E |
+| Save / unsave and open Saved | Implemented: `/users/me/wishlist`; consumer sends `recipeId`, accepts Nest `201`, and reads nested saved recipes | Contract-ready at the checked-in consumer boundary; requires live authenticated E2E |
+| Profile and change password | Implemented: `/users/me/profile`, `/users/me/password`; profile consumer sends direct DTO fields and reads the direct user response | Contract-ready at the checked-in consumer boundary; requires live authenticated E2E |
 | Home category/meal filters, Food filter loaders, and Add Recipe taxonomy loaders | No Nest categories/meals controllers | Legacy-only; the client raises an explicit compatibility error in Nest mode |
 | Express root/database diagnostics | Legacy `/` and `/health/database`; Nest `/health/live` and `/health/ready` | Mapped per target; live health still required |
 
-“Contract-ready” means a route exists in the checked-in Nest controllers and is
-mapped by the client. It does not mean Kong, PostgreSQL, JWT signing, payload
-parity, or the browser journey has passed in a live environment.
+“Contract-ready at the checked-in consumer boundary” means the route exists in
+the checked-in Nest controllers, the client sends the DTO field names/types,
+and the client handles the documented status/response shape. It does not mean
+Kong, PostgreSQL, JWT signing, payload data availability, or the browser
+journey has passed in a live environment. The create-recipe row is deliberately
+not marked as a Nest-ready browser journey because its required taxonomy data
+is still legacy-only.
 
 ## Live E2E gate
 

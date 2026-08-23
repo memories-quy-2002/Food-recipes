@@ -106,7 +106,12 @@ describe("Nest API authentication and expiry", () => {
 	it("publishes auth:expired and preserves the rejected 401", async () => {
 		const dispatchEvent = vi.fn();
 		globalThis.window = { dispatchEvent };
-		const client = createApiClient({ DEV: true, PROD: false });
+		const client = createApiClient({
+			DEV: false,
+			PROD: true,
+			VITE_API_TARGET: "nest",
+			VITE_KONG_BASE_URL: "https://kong.example.test",
+		});
 		const responseErrorHandler =
 			client.interceptors.response.handlers[0].rejected;
 		const error = { response: { status: 401 } };
