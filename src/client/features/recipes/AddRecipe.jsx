@@ -138,20 +138,39 @@ const AddRecipe = () => {
 	const [selectedMealOption, setSelectedMealOption] = useState("");
 	const [restoreCandidate, setRestoreCandidate] = useState(null);
 	const [isDraftHydrated, setIsDraftHydrated] = useState(false);
+	const [hydratedUserId, setHydratedUserId] = useState(null);
 	const [draftStatus, setDraftStatus] = useState("idle");
 	const storageConfigured = isSupabaseStorageConfigured();
+	const currentRestoreCandidate =
+		restoreCandidate?.userId === String(userId) ? restoreCandidate : null;
 
 	useEffect(() => {
+		setRestoreCandidate(null);
+		setIsDraftHydrated(false);
+		setHydratedUserId(null);
+		setFormRecipe(createInitialRecipeState(userId));
+		setPreview(null);
+		setSelectedCategoryOption("");
+		setSelectedMealOption("");
+
 		const savedDraft = loadRecipeDraft(window.localStorage, userId);
 		if (savedDraft) {
 			setRestoreCandidate(savedDraft);
+			setHydratedUserId(userId);
 			return;
 		}
 		setIsDraftHydrated(true);
+		setHydratedUserId(userId);
 	}, [userId]);
 
 	useEffect(() => {
-		if (!isDraftHydrated || restoreCandidate || !hasDraftContent(formRecipe)) return undefined;
+		if (
+			!isDraftHydrated ||
+			hydratedUserId !== userId ||
+			currentRestoreCandidate ||
+			!hasDraftContent(formRecipe)
+		)
+			return undefined;
 
 		setDraftStatus("saving");
 		const timeoutId = window.setTimeout(() => {
@@ -161,7 +180,7 @@ const AddRecipe = () => {
 		}, 500);
 
 		return () => window.clearTimeout(timeoutId);
-	}, [formRecipe, isDraftHydrated, restoreCandidate, userId]);
+	}, [currentRestoreCandidate, formRecipe, hydratedUserId, isDraftHydrated, userId]);
 
 	const calculateTotalTime = (timeField1, timeField2) => {
 		const unitsInSeconds = {
@@ -332,15 +351,15 @@ const AddRecipe = () => {
 	};
 
 	const handleRestoreDraft = () => {
-		if (!restoreCandidate) return;
+		if (!currentRestoreCandidate) return;
 		setFormRecipe({
 			...createInitialRecipeState(userId),
-			...restoreCandidate.form,
+			...currentRestoreCandidate.form,
 			recipeImage: null,
 			userId,
 		});
-		setSelectedCategoryOption(restoreCandidate.form.recipeCategoryName || "");
-		setSelectedMealOption(restoreCandidate.form.recipeMealName || "");
+		setSelectedCategoryOption(currentRestoreCandidate.form.recipeCategoryName || "");
+		setSelectedMealOption(currentRestoreCandidate.form.recipeMealName || "");
 		setDisabled(false);
 		setRestoreCandidate(null);
 		setIsDraftHydrated(true);
@@ -494,7 +513,7 @@ const AddRecipe = () => {
 						</p>
 					</div>
 					<div className="add__container__form">
-						{restoreCandidate && (
+						{currentRestoreCandidate && (
 							<div className="add__container__notice add__container__notice--restore" role="status">
 								<strong>Restore your saved draft?</strong>
 								<p>This draft is stored only in this browser for your account. Your current form will stay unchanged until you choose.</p>
