@@ -59,7 +59,7 @@ const AccountForm = () => {
 				<p>
 					{isSignup
 						? "Create an account to save favorites, rate dishes, and keep your recipe activity in one place."
-						: "Sign in to manage your wishlist, share reviews, and get back to recipes you already love."}
+						: "Sign in to manage your Saved Recipes, share reviews, and get back to recipes you already love."}
 				</p>
 				<ul className="form__aside__list">
 					<li>Save favorite recipes</li>

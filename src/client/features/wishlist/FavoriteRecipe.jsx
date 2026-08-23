@@ -3,8 +3,9 @@ import { BsTrash3 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
+import { formatSavedAt } from "./savedRecipe";
 
-const FavoriteRecipe = ({ recipe, handleShowModal }) => {
+const FavoriteRecipe = ({ recipe, savedAt, handleShowModal }) => {
 	const navigate = useNavigate();
 	return (
 		<li className="wishlist__main__content__list__item">
@@ -28,6 +29,9 @@ const FavoriteRecipe = ({ recipe, handleShowModal }) => {
 						{recipe.num_ratings} ratings)
 					</span>
 				</div>
+				<span className="wishlist__main__content__list__item__saved-at">
+					{formatSavedAt(savedAt)}
+				</span>
 			</div>
 			<div className="wishlist__main__content__list__item__actions">
 				<button

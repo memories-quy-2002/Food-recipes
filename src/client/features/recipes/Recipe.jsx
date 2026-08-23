@@ -233,7 +233,7 @@ const Recipe = () => {
 				);
 				if (response.status === 200) {
 					setFavorite(false);
-					showToast({ title: "Removed from wishlist" });
+					showToast({ title: "Removed from Saved" });
 				}
 			} else {
 				const response = await axios.post(
@@ -246,7 +246,7 @@ const Recipe = () => {
 				);
 				if (isWishlistAddSuccess(getApiTarget(), response.status)) {
 					setFavorite(true);
-					showToast({ title: "Added to wishlist" });
+					showToast({ title: "Saved recipe" });
 				}
 			}
 		} catch (err) {

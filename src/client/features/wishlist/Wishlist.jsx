@@ -9,20 +9,33 @@ import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { RecipeContext } from "@/app/RecipeProvider";
+import { getSavedAtTimestamp } from "./savedRecipe";
 import "./Wishlist.scss";
 
 export const normalizeSavedRecipe = (item) => ({
-	recipe: item?.recipe || item,
-	savedAt: item?.savedAt ?? null,
+	recipe: item?.recipe || item || {},
+	savedAt:
+		item?.savedAt ?? item?.saved_at ?? item?.dateAdded ?? item?.date_added ??
+			item?.recipe?.savedAt ?? item?.recipe?.saved_at ?? null,
 });
 
-const savedAtTimestamp = (savedAt) => {
-	const timestamp = new Date(savedAt).getTime();
-	return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
-};
+const compareRecipeNames = (a, b) =>
+	(a.recipe.recipe_name || "").localeCompare(b.recipe.recipe_name || "") ||
+	Number(a.recipe.recipe_id) - Number(b.recipe.recipe_id);
 
-export const byRecentlySaved = (a, b) =>
-	savedAtTimestamp(b.savedAt) - savedAtTimestamp(a.savedAt);
+const compareUnavailableSavedDates = (a, b) =>
+	Number(Boolean(a.savedAt)) - Number(Boolean(b.savedAt)) ||
+		compareRecipeNames(a, b);
+
+export const byRecentlySaved = (a, b) => {
+	const difference = getSavedAtTimestamp(b.savedAt) - getSavedAtTimestamp(a.savedAt);
+	return Number.isNaN(difference)
+		? compareUnavailableSavedDates(a, b)
+		: difference ||
+				(getSavedAtTimestamp(a.savedAt) === Number.NEGATIVE_INFINITY
+					? compareUnavailableSavedDates(a, b)
+					: compareRecipeNames(a, b));
+};
 
 export const getSavedRecipeEntries = (recipes, wishlist) =>
 	wishlist
@@ -42,32 +55,43 @@ export const getVisibleSavedRecipes = (
 	searchTerm = "",
 	sortBy = "recent"
 ) => {
+	return getVisibleSavedEntries(recipes, wishlist, searchTerm, sortBy).map(
+		({ recipe }) => recipe
+	);
+};
+
+export const getVisibleSavedEntries = (
+	recipes,
+	wishlist,
+	searchTerm = "",
+	sortBy = "recent"
+) => {
 	const normalizedSearch = searchTerm.trim().toLowerCase();
 	let nextRecipes = getSavedRecipeEntries(recipes, wishlist).filter(({ recipe }) =>
-		recipe.recipe_name.toLowerCase().includes(normalizedSearch)
+		(recipe.recipe_name || "").toLowerCase().includes(normalizedSearch)
 	);
 
 	if (sortBy === "recent") nextRecipes = [...nextRecipes].sort(byRecentlySaved);
 	if (sortBy === "name") {
-		nextRecipes = [...nextRecipes].sort((a, b) =>
-			a.recipe.recipe_name.localeCompare(b.recipe.recipe_name)
-		);
+		nextRecipes = [...nextRecipes].sort(compareRecipeNames);
 	}
 	if (sortBy === "rating") {
 		nextRecipes = [...nextRecipes].sort(
 			(a, b) =>
 				Number(b.recipe.overall_score || 0) -
-				Number(a.recipe.overall_score || 0)
+				Number(a.recipe.overall_score || 0) || compareRecipeNames(a, b)
 		);
 	}
 
-	return nextRecipes.map(({ recipe }) => recipe);
+	return nextRecipes;
 };
 
 const Wishlist = () => {
 	const [wishlist, setWishlist] = useState([]);
 	const [showModal, setShowModal] = useState(false);
 	const [recipeId, setRecipeId] = useState(null);
+	const [isRemoving, setIsRemoving] = useState(false);
+	const [removeError, setRemoveError] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [sortBy, setSortBy] = useState("recent");
 	const [isLoadingWishlist, setIsLoadingWishlist] = useState(true);
@@ -98,7 +122,7 @@ const Wishlist = () => {
 				console.error(err);
 				setWishlistError(
 					err.response?.data?.message ||
-					"Unable to load your wishlist."
+						"Unable to load your saved recipes."
 				);
 			} finally {
 				setIsLoadingWishlist(false);
@@ -112,17 +136,21 @@ const Wishlist = () => {
 		[recipes, wishlist]
 	);
 
-	const visibleRecipes = useMemo(
-		() => getVisibleSavedRecipes(recipes, wishlist, searchTerm, sortBy),
+	const visibleEntries = useMemo(
+		() => getVisibleSavedEntries(recipes, wishlist, searchTerm, sortBy),
 		[recipes, wishlist, searchTerm, sortBy]
 	);
 
 	const handleShowModal = (recipe_id) => {
 		setShowModal(true);
 		setRecipeId(recipe_id);
+		setRemoveError(null);
 	};
 
 	const handleDelete = async () => {
+		if (isRemoving) return;
+		setIsRemoving(true);
+		setRemoveError(null);
 		try {
 			const response = await axios.delete(
 				apiRoutes.userWishlistItem(user_id, recipeId)
@@ -140,21 +168,27 @@ const Wishlist = () => {
 			}
 		} catch (err) {
 			console.error(err);
+			setRemoveError(
+				err.response?.data?.message ||
+					"We could not remove this saved recipe. Please try again."
+			);
+		} finally {
+			setIsRemoving(false);
 		}
 	};
 
 	return (
 		<Container fluid className="wishlist">
 			<PageHelmet
-				title="Saved"
-				description="Review and organize your saved Food Recipes favorites."
+				title="Saved Recipes"
+				description="Review and organize the recipes you saved for later."
 				path="/wishlist"
 				noIndex
 			/>
 			<div className="wishlist__hero">
 				<div>
 					<span>Saved recipes</span>
-					<h1>Your favorite recipes</h1>
+					<h1>Saved Recipes</h1>
 					<p>
 						Keep your go-to dishes close, search your saved list, and
 						open recipes when you are ready to cook.
@@ -195,7 +229,7 @@ const Wishlist = () => {
 							onChange={(event) => setSortBy(event.target.value)}
 						>
 							<option value="recent">Recently saved</option>
-							<option value="rating">Highest score</option>
+							<option value="rating">Highest rated</option>
 							<option value="name">Name A-Z</option>
 						</select>
 					</label>
@@ -214,20 +248,20 @@ const Wishlist = () => {
 							actionLabel="Try again"
 							onAction={() => window.location.reload()}
 						/>
-					) : visibleRecipes.length === 0 ? (
+							) : visibleEntries.length === 0 ? (
 						<PageState
 							type="empty"
 							title={
 								searchTerm
 									? "No saved recipes match your search"
-									: "Your saved recipes are empty"
+									: "No saved recipes yet"
 							}
 							message={
 								searchTerm
 									? "Clear the search or browse all recipes to find something to save."
-									: "Browse recipes and tap the heart button to build your saved list."
+									: "Find something to cook, then save it here for later."
 							}
-							actionLabel={searchTerm ? "Clear search" : "Browse recipes"}
+							actionLabel={searchTerm ? "Clear search" : "Find something to cook"}
 							onAction={() =>
 								searchTerm
 									? setSearchTerm("")
@@ -236,10 +270,11 @@ const Wishlist = () => {
 						/>
 					) : (
 						<ul className="wishlist__main__content__list">
-							{visibleRecipes.map((recipe) => (
+							{visibleEntries.map(({ recipe, savedAt }) => (
 								<FavoriteRecipe
 									key={recipe.recipe_id}
 									recipe={recipe}
+									savedAt={savedAt}
 									handleShowModal={() =>
 										handleShowModal(recipe.recipe_id)
 									}
@@ -251,23 +286,32 @@ const Wishlist = () => {
 			</div>
 			{showModal && (
 				<div className="wishlist__modal" role="presentation">
-					<div className="wishlist__modal__content" role="dialog">
-						<h3>Remove saved recipe</h3>
+					<div
+						className="wishlist__modal__content"
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="remove-saved-recipe-title"
+					>
+						<h3 id="remove-saved-recipe-title">Remove saved recipe?</h3>
 						<p>
 							This recipe will be removed from your saved recipes. You
 							can add it again later from the recipe page.
 						</p>
+						{removeError && <p role="alert">{removeError}</p>}
 						<div className="wishlist__modal__buttons">
 							<button
 								className="wishlist__modal__button wishlist__modal__button--danger"
-								type="submit"
+								type="button"
 								onClick={handleDelete}
+								disabled={isRemoving}
+								aria-busy={isRemoving}
 							>
-								Remove
+								{isRemoving ? "Removing…" : "Remove"}
 							</button>
 							<button
 								className="wishlist__modal__button"
 								type="button"
+								disabled={isRemoving}
 								onClick={() => setShowModal(false)}
 							>
 								Cancel

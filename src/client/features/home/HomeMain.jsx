@@ -134,7 +134,7 @@ const HomeMain = () => {
 								Number(recipeId)
 						)
 					);
-					showToast({ title: "Removed from wishlist" });
+					showToast({ title: "Removed from Saved" });
 				}
 				return;
 			}
@@ -148,7 +148,7 @@ const HomeMain = () => {
 					...currentWishlist,
 					{ recipe_id: recipeId },
 				]);
-				showToast({ title: "Added to wishlist" });
+				showToast({ title: "Saved recipe" });
 			}
 		} catch (err) {
 			console.error(err);

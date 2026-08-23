@@ -69,6 +69,14 @@ const AppRoutes = () => (
 			}
 		/>
 		<Route
+			path="/saved"
+			element={
+				<ProtectedRoute>
+					<Wishlist />
+				</ProtectedRoute>
+			}
+		/>
+		<Route
 			path="/food/add"
 			element={
 				<ProtectedRoute>
