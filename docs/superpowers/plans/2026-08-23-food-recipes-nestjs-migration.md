@@ -19,7 +19,7 @@ execution boundary and verification checkpoints.
 
 ```text
 src/
-├── frontend/                  # former src/client
+├── frontend/                  # former src/frontend
 ├── server/                    # legacy Express fallback during migration
 └── backend/
     └── apps/

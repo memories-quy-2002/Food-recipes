@@ -31,7 +31,7 @@ jobs:
 
       - name: Create client env file
         run: |
-          echo "VITE_API_URL=http://localhost:3000" > src/client/.env
+          echo "VITE_API_URL=http://localhost:3000" > src/frontend/.env
 
       - name: Create server env file
         run: |

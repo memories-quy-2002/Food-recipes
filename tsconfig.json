@@ -11,13 +11,13 @@
 		"skipLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
-			"@/*": ["src/client/*"]
+			"@/*": ["src/frontend/*"]
 		},
 		"types": ["vite/client", "node"]
 	},
 	"include": [
-		"src/client/**/*.ts",
-		"src/client/**/*.tsx",
+		"src/frontend/**/*.ts",
+		"src/frontend/**/*.tsx",
 		"src/vite-env.d.ts",
 		"vite.config.ts"
 	],

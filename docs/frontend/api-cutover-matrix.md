@@ -40,5 +40,5 @@ authenticated journey checks against Kong with a real Nest API and PostgreSQL:
 4. Keep Express available until those checks pass; only then can the legacy
    route removal in Task 19 be reviewed.
 
-The requested target-layout migration from `src/client` to `src/frontend` is a
-separate frontend follow-up. This task keeps `src/client` and `src/server`.
+The frontend now lives under `src/frontend`; the legacy Express implementation
+remains under `src/server` until the live cutover gates are approved.

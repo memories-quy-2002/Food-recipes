@@ -7,7 +7,7 @@ export default defineConfig({
 	base: "/",
 	resolve: {
 		alias: {
-			"@": path.resolve(__dirname, "src/client"),
+			"@": path.resolve(__dirname, "src/frontend"),
 		},
 	},
 	build: {

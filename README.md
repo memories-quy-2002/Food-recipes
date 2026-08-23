@@ -32,9 +32,9 @@ Food-recipes/
   index.html            Vite HTML entry
   package.json          Frontend scripts and shared dependencies
   vercel.json           Frontend SPA rewrites for Vercel
-  vite.config.ts        Vite config with @ alias to src/client
+  vite.config.ts        Vite config with @ alias to src/frontend
   src/
-    client/
+    frontend/
       app/              App shell, providers, route definitions, store, global app styles
       features/
         auth/           Account forms, auth hooks, auth state, protected route
@@ -61,7 +61,7 @@ Food-recipes/
       queries.js        PostgreSQL query functions
 ```
 
-Frontend imports can use `@` for `src/client`, for example `@/shared/api/axios` or `@/features/recipes/Recipe`.
+Frontend imports can use `@` for `src/frontend`, for example `@/shared/api/axios` or `@/features/recipes/Recipe`.
 
 ## Getting Started
 

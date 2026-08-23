@@ -2,7 +2,7 @@
 
 ## Project overview
 Website for food recipes and blogs. Monorepo structure:
-- `src/client/` — React + Vite + TypeScript frontend
+- `src/frontend/` — React + Vite + TypeScript frontend
 - `src/server/` — Express.js backend
 
 Database: PostgreSQL, hosted on Supabase. Package manager: pnpm.
@@ -16,7 +16,7 @@ Database: PostgreSQL, hosted on Supabase. Package manager: pnpm.
 ## Coding conventions
 - Use TypeScript strictly on the client — avoid `any`, prefer explicit types/interfaces.
 - Keep API route handlers in `src/server` thin — push business logic into service/helper modules rather than inline in route files.
-- Match existing file/folder naming conventions already used in `src/client` and `src/server` rather than introducing new patterns.
+- Match existing file/folder naming conventions already used in `src/frontend` and `src/server` rather than introducing new patterns.
 
 ## Security-sensitive areas — flag issues here first
 - **Supabase keys**: flag any use of the service-role key in client-facing code — it should only ever be used server-side. The anon/public key is fine in the client.
