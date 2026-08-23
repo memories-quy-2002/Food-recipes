@@ -1,0 +1,144 @@
+name: Quality Gates
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Static validators
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Run DB-free static validators
+        run: |
+          node src/backend/test/ci-workflow.validation.mjs
+          node src/backend/test/prisma-baseline.validation.mjs
+          node src/backend/test/recipe-duration-migration.validation.mjs
+          node src/backend/test/docker-infrastructure.validation.mjs
+          node src/backend/test/backend-product-security.validation.mjs
+
+  backend:
+    name: Backend quality
+    needs: static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
+      - name: Install locked dependencies
+        working-directory: src/backend
+        run: pnpm install --frozen-lockfile
+      - name: Validate Prisma schema
+        working-directory: src/backend
+        run: pnpm prisma:validate
+      - name: Generate Prisma client
+        working-directory: src/backend
+        run: pnpm prisma:generate
+      - name: Typecheck and unit tests
+        working-directory: src/backend
+        run: pnpm check
+      - name: Run API contract E2E tests
+        working-directory: src/backend
+        run: pnpm test:e2e
+      - name: Build API
+        working-directory: src/backend
+        run: pnpm build
+      - name: Audit backend dependencies
+        working-directory: src/backend
+        run: pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx
+
+  frontend:
+    name: Frontend quality
+    needs: backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
+      - name: Install locked dependencies
+        working-directory: src/frontend
+        run: pnpm install --frozen-lockfile
+      - name: Lint, typecheck, and unit tests
+        working-directory: src/frontend
+        run: pnpm check
+      - name: Build frontend
+        working-directory: src/frontend
+        run: pnpm build
+
+  frontend-e2e:
+    name: Frontend Playwright E2E
+    needs: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
+      - name: Install locked dependencies
+        working-directory: src/frontend
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        working-directory: src/frontend
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run frontend Playwright E2E
+        working-directory: src/frontend
+        run: pnpm test:e2e:ci
+
+  docker-runtime-build:
+    name: Docker runtime build
+    needs: frontend-e2e
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API runtime image
+        run: docker build --target runtime --tag food-recipes-api:ci --file src/backend/Dockerfile src/backend
+
+  migration-release-handoff:
+    name: One-shot migration gate / release handoff
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    needs: docker-runtime-build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
+      - name: Install locked dependencies
+        working-directory: src/backend
+        run: pnpm install --frozen-lockfile
+      - name: Deploy Prisma migrations once per release
+        working-directory: src/backend
+        run: pnpm prisma:migrate:deploy

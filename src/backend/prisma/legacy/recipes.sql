@@ -1,0 +1,57 @@
+-- Schema-only legacy evidence for the pre-Prisma Food Recipes database.
+-- Intentionally contains no COPY/INSERT statements or application rows.
+
+CREATE TABLE public.accounts (
+    user_id integer NOT NULL,
+    full_name character varying(124) NOT NULL,
+    password character varying(255) NOT NULL,
+    email character varying(255) NOT NULL,
+    created_on timestamp without time zone NOT NULL,
+    last_login timestamp without time zone,
+    phone character varying(20),
+    address character varying(255)
+);
+
+CREATE TABLE public.categories (
+    category_id integer NOT NULL,
+    category_name character varying(255) NOT NULL
+);
+
+CREATE TABLE public.meals (
+    meal_id integer NOT NULL,
+    meal_name character varying(50) NOT NULL,
+    meal_description text
+);
+
+CREATE TABLE public.rating (
+    rating_id integer NOT NULL,
+    user_id integer NOT NULL,
+    recipe_id integer NOT NULL,
+    score numeric(10,2),
+    review text,
+    date_added timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT rating_score_check CHECK ((((score)::double precision >= (0.0)::double precision) AND ((score)::double precision <= (5.0)::double precision)))
+);
+
+CREATE TABLE public.recipes (
+    recipe_id integer NOT NULL,
+    recipe_name character varying(255) NOT NULL,
+    recipe_description text,
+    meal_id integer NOT NULL,
+    category_id integer NOT NULL,
+    prep_time interval NOT NULL,
+    cook_time interval NOT NULL,
+    date_added timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    user_id integer DEFAULT 0 NOT NULL,
+    ingredients text[],
+    instructions text[],
+    CONSTRAINT cook_time_check CHECK ((cook_time > '00:00:00'::interval)),
+    CONSTRAINT prep_time_check CHECK ((prep_time > '00:00:00'::interval))
+);
+
+CREATE TABLE public.wishlist (
+    wishlist_id integer NOT NULL,
+    user_id integer NOT NULL,
+    recipe_id integer NOT NULL,
+    date_added timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,0 +1,38 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: api
+    url: http://api:3000
+    routes:
+      - name: api
+        paths:
+          - /api
+        # Keep /api/v1/... intact for Nest's global prefix and URI versioning.
+        strip_path: false
+      - name: docs
+        paths:
+          - /docs
+        strip_path: false
+      - name: docs-json
+        paths:
+          - /docs-json
+        strip_path: false
+
+plugins:
+  - name: correlation-id
+    config:
+      header_name: X-Request-ID
+      generator: uuid
+      echo_downstream: true
+  # 60 requests per minute per client IP is the conservative anonymous limit.
+  # Kong returns HTTP 429 with this message after the current minute window is exhausted.
+  # The local policy is intentionally stateless across services; this stack has no Redis.
+  - name: rate-limiting
+    config:
+      minute: 60
+      policy: local
+      limit_by: ip
+      hide_client_headers: false
+      error_code: 429
+      error_message: API rate limit exceeded; retry after the current minute window.

@@ -1,0 +1,33 @@
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import { isNavigationItemActive } from "./navigation";
+
+const HeaderMenu = ({ items }) => {
+	const { pathname } = useLocation();
+
+	return (
+		<nav className="fr-nav" aria-label="Primary navigation">
+			{items.map(({ title, href }, index) => (
+				<Link
+					key={index}
+					className={
+						"fr-nav__link" +
+						(isNavigationItemActive(pathname, href, items)
+							? " fr-nav__link--active"
+							: "")
+					}
+					aria-current={
+						isNavigationItemActive(pathname, href, items)
+							? "page"
+							: undefined
+					}
+					to={href}
+				>
+					{title}
+				</Link>
+			))}
+		</nav>
+	);
+};
+
+export default HeaderMenu;

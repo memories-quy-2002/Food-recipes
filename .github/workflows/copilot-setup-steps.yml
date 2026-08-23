@@ -19,25 +19,34 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11.18.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
+          cache-dependency-path: |
+            src/frontend/pnpm-lock.yaml
+            src/backend/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        working-directory: src/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend dependencies
+        working-directory: src/backend
         run: pnpm install --frozen-lockfile
 
       - name: Create client env file
         run: |
-          echo "VITE_API_URL=http://localhost:3000" > src/client/.env
+          echo "VITE_KONG_BASE_URL=http://localhost:3000" > src/frontend/.env
 
-      - name: Create server env file
+      - name: Create backend env file
         run: |
-          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/server/.env
-          echo "JWT_SECRET=test-secret-for-agent-sandbox" >> src/server/.env
+          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/backend/.env
+          printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 48)" >> src/backend/.env
 
       - name: Typecheck client
-        run: pnpm --filter client exec tsc --noEmit
+        working-directory: src/frontend
+        run: pnpm exec tsc --noEmit
         continue-on-error: true

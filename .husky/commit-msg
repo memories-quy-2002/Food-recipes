@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+corepack pnpm@11.18.0 --dir src/backend exec commitlint --edit "$1"
