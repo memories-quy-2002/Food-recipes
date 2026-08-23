@@ -16,6 +16,23 @@
 			max-width: 760px;
 			margin-bottom: 2rem;
 
+			&__meta {
+				display: flex;
+				align-items: center;
+				gap: 0.75rem;
+				margin-bottom: 1rem;
+				color: #6d6258;
+				font-size: 0.9rem;
+			}
+
+			&__status {
+				padding: 0.35rem 0.7rem;
+				border-radius: 999px;
+				background: #fff1d6;
+				color: #a84f00;
+				font-weight: 900;
+			}
+
 			&__title {
 				margin: 0;
 				font-size: clamp(2.7rem, 6vw, 5.2rem);
@@ -148,6 +165,7 @@
 			}
 
 			&__reset,
+			&__save,
 			&__submit {
 				min-width: 120px;
 				padding: 0.75rem 1.1rem;
@@ -162,6 +180,16 @@
 				color: #211813;
 
 				&:hover {
+					background: #ffd18b;
+				}
+			}
+
+			&__save {
+				margin-right: 0.6rem;
+				background: #fffaf3;
+				color: #211813;
+
+				&:hover:not(:disabled) {
 					background: #ffd18b;
 				}
 			}
@@ -207,6 +235,23 @@
 				background: #fff0ee;
 				color: #9e2e20;
 			}
+
+			&--restore {
+				background: #fffaf3;
+				color: #42372f;
+			}
+
+			&__actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.6rem;
+				margin-top: 0.75rem;
+
+				.btn {
+					border-radius: 999px;
+					font-weight: 900;
+				}
+			}
 		}
 
 		&__steps {
@@ -232,6 +277,10 @@
 	}
 }
 
+.add__container__form__actions {
+	text-align: right;
+}
+
 @media screen and (max-width: 768px) {
 	.add {
 		&__container {
@@ -248,6 +297,18 @@
 	.add {
 		.blur {
 			padding: 0.8rem;
+		}
+
+		&__container__form__actions {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 0.6rem;
+			text-align: stretch;
+
+			button {
+				width: 100%;
+				margin-right: 0;
+			}
 		}
 	}
 }

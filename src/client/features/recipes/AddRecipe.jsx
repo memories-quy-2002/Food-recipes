@@ -20,6 +20,11 @@ import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
 import { useToast } from "@/app/ToastProvider";
 import { useNavigate } from "react-router-dom";
+import {
+	clearRecipeDraft,
+	loadRecipeDraft,
+	saveRecipeDraft,
+} from "./recipeDraftStorage";
 
 const DURATION_UNITS = new Set(["seconds", "minutes", "hours", "days"]);
 
@@ -41,6 +46,33 @@ const hasPositiveDuration = (time) =>
 	Number.isFinite(Number(time?.number)) &&
 	Number(time.number) > 0 &&
 	DURATION_UNITS.has(time?.unit);
+
+const createInitialRecipeState = (userId) => ({
+	recipeImage: null,
+	recipeName: "",
+	recipeCategoryName: "",
+	recipeMealName: "",
+	recipeDescription: "",
+	recipeIngredients: [""],
+	recipeInstructions: [""],
+	recipePrepTime: { number: 15, unit: "minutes" },
+	recipeCookTime: { number: 30, unit: "minutes" },
+	userId,
+});
+
+const hasDraftContent = (recipe) =>
+	[
+		recipe.recipeName,
+		recipe.recipeCategoryName,
+		recipe.recipeMealName,
+		recipe.recipeDescription,
+		...(recipe.recipeIngredients || []),
+		...(recipe.recipeInstructions || []),
+	].some((value) => String(value || "").trim()) ||
+	String(recipe.recipePrepTime?.number) !== "15" ||
+	String(recipe.recipePrepTime?.unit) !== "minutes" ||
+	String(recipe.recipeCookTime?.number) !== "30" ||
+	String(recipe.recipeCookTime?.unit) !== "minutes";
 
 export const validateRecipeForm = (
 	recipe,
@@ -93,25 +125,7 @@ const AddRecipe = () => {
 	const { refreshRecipes } = useContext(RecipeContext);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
-	const initialState = {
-		recipeImage: null,
-		recipeName: "",
-		recipeCategoryName: "",
-		recipeMealName: "",
-		recipeDescription: "",
-		recipeIngredients: [""],
-		recipeInstructions: [""],
-		recipePrepTime: {
-			number: 15,
-			unit: "minutes",
-		},
-		recipeCookTime: {
-			number: 30,
-			unit: "minutes",
-		},
-		userId: userId,
-	};
-	const [formRecipe, setFormRecipe] = useState(initialState);
+	const [formRecipe, setFormRecipe] = useState(() => createInitialRecipeState(userId));
 	const [preview, setPreview] = useState(null);
 	const [disabled, setDisabled] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -122,7 +136,32 @@ const AddRecipe = () => {
 	const [listError, setListError] = useState("");
 	const [selectedCategoryOption, setSelectedCategoryOption] = useState("");
 	const [selectedMealOption, setSelectedMealOption] = useState("");
+	const [restoreCandidate, setRestoreCandidate] = useState(null);
+	const [isDraftHydrated, setIsDraftHydrated] = useState(false);
+	const [draftStatus, setDraftStatus] = useState("idle");
 	const storageConfigured = isSupabaseStorageConfigured();
+
+	useEffect(() => {
+		const savedDraft = loadRecipeDraft(window.localStorage, userId);
+		if (savedDraft) {
+			setRestoreCandidate(savedDraft);
+			return;
+		}
+		setIsDraftHydrated(true);
+	}, [userId]);
+
+	useEffect(() => {
+		if (!isDraftHydrated || restoreCandidate || !hasDraftContent(formRecipe)) return undefined;
+
+		setDraftStatus("saving");
+		const timeoutId = window.setTimeout(() => {
+			setDraftStatus(
+				saveRecipeDraft(window.localStorage, userId, formRecipe) ? "saved" : "error"
+			);
+		}, 500);
+
+		return () => window.clearTimeout(timeoutId);
+	}, [formRecipe, isDraftHydrated, restoreCandidate, userId]);
 
 	const calculateTotalTime = (timeField1, timeField2) => {
 		const unitsInSeconds = {
@@ -279,13 +318,49 @@ const AddRecipe = () => {
 	};
 
 	const handleReset = () => {
-		setFormRecipe(initialState);
+		clearRecipeDraft(window.localStorage, userId);
+		setFormRecipe(createInitialRecipeState(userId));
 		setPreview(null);
 		setDisabled(true);
 		setSubmitError("");
 		setUploadStatus("idle");
 		setSelectedCategoryOption("");
 		setSelectedMealOption("");
+		setRestoreCandidate(null);
+		setIsDraftHydrated(true);
+		setDraftStatus("idle");
+	};
+
+	const handleRestoreDraft = () => {
+		if (!restoreCandidate) return;
+		setFormRecipe({
+			...createInitialRecipeState(userId),
+			...restoreCandidate.form,
+			recipeImage: null,
+			userId,
+		});
+		setSelectedCategoryOption(restoreCandidate.form.recipeCategoryName || "");
+		setSelectedMealOption(restoreCandidate.form.recipeMealName || "");
+		setDisabled(false);
+		setRestoreCandidate(null);
+		setIsDraftHydrated(true);
+		setDraftStatus("saved");
+	};
+
+	const handleStartFresh = () => {
+		clearRecipeDraft(window.localStorage, userId);
+		setRestoreCandidate(null);
+		setFormRecipe(createInitialRecipeState(userId));
+		setSelectedCategoryOption("");
+		setSelectedMealOption("");
+		setIsDraftHydrated(true);
+		setDraftStatus("idle");
+	};
+
+	const handleSaveDraft = () => {
+		setDraftStatus(
+			saveRecipeDraft(window.localStorage, userId, formRecipe) ? "saved" : "error"
+		);
 	};
 
 	useEffect(() => {
@@ -367,6 +442,7 @@ const AddRecipe = () => {
 			);
 
 			if (isRecipeCreateSuccess(apiTarget, response.status)) {
+				clearRecipeDraft(window.localStorage, userId);
 				await refreshRecipes().catch((refreshError) =>
 					console.error("Unable to refresh recipes after publish:", refreshError)
 				);
@@ -396,6 +472,18 @@ const AddRecipe = () => {
 			<div className="blur">
 				<div className="add__container">
 					<div className="add__container__header">
+						<div className="add__container__header__meta" aria-label="Recipe status">
+							<span className="add__container__header__status">Draft</span>
+							<span className="add__container__header__autosave" aria-live="polite">
+								{draftStatus === "saving"
+									? "Saving draft..."
+									: draftStatus === "saved"
+										? "Saved just now"
+										: draftStatus === "error"
+											? "Draft could not be saved locally"
+											: "Local draft only"}
+							</span>
+						</div>
 						<h1 className="add__container__header__title">
 							Create a new recipe
 						</h1>
@@ -406,6 +494,16 @@ const AddRecipe = () => {
 						</p>
 					</div>
 					<div className="add__container__form">
+						{restoreCandidate && (
+							<div className="add__container__notice add__container__notice--restore" role="status">
+								<strong>Restore your saved draft?</strong>
+								<p>This draft is stored only in this browser for your account. Your current form will stay unchanged until you choose.</p>
+								<div className="add__container__notice__actions">
+									<Button type="button" onClick={handleRestoreDraft}>Restore draft</Button>
+									<Button type="button" variant="light" onClick={handleStartFresh}>Start fresh</Button>
+								</div>
+							</div>
+						)}
 						{!storageConfigured && (
 							<div className="add__container__notice add__container__notice--error">
 								<strong>Supabase Storage setup needed</strong>
@@ -448,9 +546,7 @@ const AddRecipe = () => {
 								</p>
 							</div>
 						)}
-						<Form
-							onSubmit={handleSubmit}
-						>
+						<Form onSubmit={handleSubmit}>
 							<Row className="add__container__form__field">
 								<Col md={6}>
 									<Form.Group
@@ -507,12 +603,10 @@ const AddRecipe = () => {
 											accept="image/*"
 											onChange={handleFileChange}
 											style={{ marginTop: "10px" }}
-											required
 										/>
 										<p className="add__container__form__hint">
-											Images upload to Supabase Storage, and
-											the saved public URL is stored with the
-											recipe.
+											Optional for drafts. Publishing uploads the image to
+											Supabase Storage and stores its public URL.
 										</p>
 									</Form.Group>
 								</Col>
@@ -747,20 +841,28 @@ const AddRecipe = () => {
 								</button>
 							</Form.Group>
 
-							<div style={{ textAlign: "right" }}>
+							<div className="add__container__form__actions">
 								<Button
-									type="reset"
+									type="button"
 									className="add__container__form__reset btn btn-light"
 									onClick={handleReset}
 								>
-									Reset
+									Discard draft
+								</Button>
+								<Button
+									type="button"
+									className="add__container__form__save btn btn-light"
+									onClick={handleSaveDraft}
+									disabled={isSubmitting || !isDraftHydrated}
+								>
+									Save draft
 								</Button>
 								<Button
 									type="submit"
 									className="add__container__form__submit"
 									disabled={disabled || isSubmitting}
 								>
-									{isSubmitting ? "Publishing..." : "Publish recipe"}
+									{isSubmitting ? "Publishing..." : "Publish"}
 								</Button>
 							</div>
 						</Form>

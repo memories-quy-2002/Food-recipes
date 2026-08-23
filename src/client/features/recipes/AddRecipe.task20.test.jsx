@@ -182,4 +182,20 @@ describe("recipe creation business rules", () => {
 		).toEqual([]);
 
 	});
+
+	it("allows an incomplete draft while keeping publish validation strict", () => {
+		expect(
+			validateRecipeForm(
+				{ recipeName: "Work in progress", recipeImage: null },
+				{ ...supportedTaxonomy, isPublishing: false }
+			).errors
+		).toEqual([
+			"Choose a supported category.",
+			"Choose a supported meal.",
+			"Add at least one ingredient.",
+			"Add at least one instruction.",
+			"Preparation time must be a positive number.",
+			"Cooking time must be a positive number.",
+		]);
+	});
 });
