@@ -13,11 +13,56 @@ import "./Wishlist.scss";
 
 export const normalizeSavedRecipe = (item) => ({
 	recipe: item?.recipe || item,
-	savedAt: item?.savedAt || null,
+	savedAt: item?.savedAt ?? null,
 });
 
+const savedAtTimestamp = (savedAt) => {
+	const timestamp = new Date(savedAt).getTime();
+	return Number.isFinite(timestamp) ? timestamp : Number.NEGATIVE_INFINITY;
+};
+
 export const byRecentlySaved = (a, b) =>
-	new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
+	savedAtTimestamp(b.savedAt) - savedAtTimestamp(a.savedAt);
+
+export const getSavedRecipeEntries = (recipes, wishlist) =>
+	wishlist
+		.map(normalizeSavedRecipe)
+		.map(({ recipe: savedRecipe, savedAt }) => {
+			const recipe = recipes.find(
+				(candidate) =>
+					Number(candidate.recipe_id) === Number(savedRecipe.recipe_id)
+			);
+			return recipe ? { recipe, savedAt } : null;
+		})
+		.filter(Boolean);
+
+export const getVisibleSavedRecipes = (
+	recipes,
+	wishlist,
+	searchTerm = "",
+	sortBy = "recent"
+) => {
+	const normalizedSearch = searchTerm.trim().toLowerCase();
+	let nextRecipes = getSavedRecipeEntries(recipes, wishlist).filter(({ recipe }) =>
+		recipe.recipe_name.toLowerCase().includes(normalizedSearch)
+	);
+
+	if (sortBy === "recent") nextRecipes = [...nextRecipes].sort(byRecentlySaved);
+	if (sortBy === "name") {
+		nextRecipes = [...nextRecipes].sort((a, b) =>
+			a.recipe.recipe_name.localeCompare(b.recipe.recipe_name)
+		);
+	}
+	if (sortBy === "rating") {
+		nextRecipes = [...nextRecipes].sort(
+			(a, b) =>
+				Number(b.recipe.overall_score || 0) -
+				Number(a.recipe.overall_score || 0)
+		);
+	}
+
+	return nextRecipes.map(({ recipe }) => recipe);
+};
 
 const Wishlist = () => {
 	const [wishlist, setWishlist] = useState([]);
@@ -62,46 +107,15 @@ const Wishlist = () => {
 		fetchFavorites();
 	}, [user_id]);
 
-	const favoriteRecipes = useMemo(() => {
-		const savedRecipes = wishlist.map(normalizeSavedRecipe);
+	const favoriteRecipes = useMemo(
+		() => getSavedRecipeEntries(recipes, wishlist),
+		[recipes, wishlist]
+	);
 
-		return savedRecipes
-			.map(({ recipe: savedRecipe, savedAt }) => {
-				const recipe = recipes.find(
-					(candidate) =>
-						Number(candidate.recipe_id) === Number(savedRecipe.recipe_id)
-				);
-				return recipe ? { recipe, savedAt } : null;
-			})
-			.filter(Boolean);
-	}, [recipes, wishlist]);
-
-	const visibleRecipes = useMemo(() => {
-		const normalizedSearch = searchTerm.trim().toLowerCase();
-		let nextRecipes = favoriteRecipes.filter(({ recipe }) =>
-			recipe.recipe_name.toLowerCase().includes(normalizedSearch)
-		);
-
-		if (sortBy === "recent") {
-			nextRecipes = [...nextRecipes].sort(byRecentlySaved);
-		}
-
-		if (sortBy === "name") {
-			nextRecipes = [...nextRecipes].sort((a, b) =>
-				a.recipe.recipe_name.localeCompare(b.recipe.recipe_name)
-			);
-		}
-
-		if (sortBy === "rating") {
-			nextRecipes = [...nextRecipes].sort(
-				(a, b) =>
-					Number(b.recipe.overall_score || 0) -
-					Number(a.recipe.overall_score || 0)
-			);
-		}
-
-		return nextRecipes.map(({ recipe }) => recipe);
-	}, [favoriteRecipes, searchTerm, sortBy]);
+	const visibleRecipes = useMemo(
+		() => getVisibleSavedRecipes(recipes, wishlist, searchTerm, sortBy),
+		[recipes, wishlist, searchTerm, sortBy]
+	);
 
 	const handleShowModal = (recipe_id) => {
 		setShowModal(true);

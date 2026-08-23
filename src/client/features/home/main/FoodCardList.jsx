@@ -8,6 +8,13 @@ const featuredModes = [
 	{ id: "quick-meals", label: "Quick meals" },
 ];
 
+export const isRecipeFavorite = (recipe, wishlist) =>
+	wishlist.some(
+		(item) =>
+			Number(item.recipe?.recipe_id ?? item.recipe_id) ===
+			Number(recipe.recipe_id)
+	);
+
 const FoodCardList = ({
 	recipes,
 	wishlist,
@@ -72,10 +79,7 @@ const FoodCardList = ({
 									ratings={num_ratings}
 									score={overall_score}
 									imageUrl={image_url}
-									favorite={wishlist.some(
-										(recipe) =>
-											recipe.recipe_id === recipe_id
-									)}
+									favorite={isRecipeFavorite({ recipe_id }, wishlist)}
 									onNavigate={() => handleNavigate(recipe_id)}
 									onClickFavorite={() =>
 										onClickFavorite(recipe_id)

@@ -38,6 +38,9 @@ export const normalizeRecipeSummary = (recipe) => {
 export const byQuickest = (a, b) =>
 	a.totalTimeMinutes - b.totalTimeMinutes;
 
+export const getQuickMeals = (recipes) =>
+	recipes.map(normalizeRecipeSummary).sort(byQuickest).slice(0, 8);
+
 const HomeMain = () => {
 	const [categories, setCategories] = useState([]);
 	const [wishlist, setWishlist] = useState([]);
@@ -62,10 +65,7 @@ const HomeMain = () => {
 		const nextRecipes = [...filteredRecipes];
 
 		if (featuredMode === "quick-meals") {
-			return nextRecipes
-				.map(normalizeRecipeSummary)
-				.sort(byQuickest)
-				.slice(0, 8);
+			return getQuickMeals(nextRecipes);
 		}
 
 		if (featuredMode === "most-reviewed") {
