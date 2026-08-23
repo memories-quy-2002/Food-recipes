@@ -95,6 +95,22 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Generate Prisma Client offline
+        working-directory: src/backend/apps/api
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'rm -f prisma.ci.config.ts' EXIT
+          cat > prisma.ci.config.ts <<'EOF'
+          import { defineConfig } from 'prisma/config';
+
+          export default defineConfig({
+            schema: 'prisma/schema.prisma',
+            migrations: { path: 'prisma/migrations' },
+            datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
+          });
+          EOF
+          pnpm exec prisma generate --config prisma.ci.config.ts
       - name: Typecheck API
         run: pnpm --filter @food-recipes/api exec tsc -p tsconfig.build.json --noEmit
       - name: Run API unit tests
@@ -115,6 +131,22 @@ jobs:
           cache: pnpm
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
+      - name: Generate Prisma Client offline
+        working-directory: src/backend/apps/api
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'rm -f prisma.ci.config.ts' EXIT
+          cat > prisma.ci.config.ts <<'EOF'
+          import { defineConfig } from 'prisma/config';
+
+          export default defineConfig({
+            schema: 'prisma/schema.prisma',
+            migrations: { path: 'prisma/migrations' },
+            datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
+          });
+          EOF
+          pnpm exec prisma generate --config prisma.ci.config.ts
       - name: Run API contract E2E tests
         run: pnpm --filter @food-recipes/api test:e2e
 

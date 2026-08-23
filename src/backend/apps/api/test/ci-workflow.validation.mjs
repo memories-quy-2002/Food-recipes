@@ -8,11 +8,14 @@ const repositoryRoot = path.resolve(testDirectory, '../../../../..');
 const workflowPath = path.join(repositoryRoot, '.github/workflows/quality-gates.yml');
 const workflow = await readFile(workflowPath, 'utf8');
 
-const jobMatches = [...workflow.matchAll(/^  ([A-Za-z0-9_-]+):\r?\n/gm)];
+const jobsSectionMatch = workflow.match(/^jobs:\r?\n([\s\S]*)$/m);
+assert.ok(jobsSectionMatch, 'workflow must define a jobs section');
+const jobsSection = jobsSectionMatch[1];
+const jobMatches = [...jobsSection.matchAll(/^  ([A-Za-z0-9_-]+):\r?$/gm)];
 const jobs = Object.fromEntries(
   jobMatches.map((match, index) => [
     match[1],
-    workflow.slice(match.index, jobMatches[index + 1]?.index ?? workflow.length),
+    jobsSection.slice(match.index, jobMatches[index + 1]?.index ?? jobsSection.length),
   ]),
 );
 
@@ -30,6 +33,11 @@ const expectedJobs = [
 for (const jobName of expectedJobs) {
   assert.ok(jobs[jobName], `workflow must define ${jobName}`);
 }
+assert.deepEqual(
+  Object.keys(jobs),
+  expectedJobs,
+  'workflow jobs must remain the expected quality-gate jobs in order',
+);
 
 assert.match(workflow, /^on:\r?\n/m, 'workflow must define event triggers');
 assert.match(workflow, /^  pull_request:\s*$/m, 'workflow must run for pull requests');
@@ -38,20 +46,54 @@ assert.match(
   /^  push:\r?\n    branches:\r?\n      - main\s*$/m,
   'workflow must run for pushes to main',
 );
-assert.match(workflow, /uses: pnpm\/action-setup@v4/);
-assert.match(workflow, /version: 11\.18\.0/);
-assert.match(workflow, /uses: actions\/setup-node@v4/);
-assert.match(workflow, /node-version: 24/);
+assert.match(
+  workflow,
+  /^permissions:\r?\n  contents: read\r?\n\r?\njobs:\r?\n/m,
+  'workflow must grant only top-level read access to repository contents',
+);
+assert.equal(
+  (workflow.match(/^permissions:/gm) ?? []).length,
+  1,
+  'workflow must define one top-level permissions block',
+);
 
-const installJobs = expectedJobs.filter((jobName) => jobName !== 'docker-runtime-build');
-for (const jobName of installJobs) {
-  assert.match(
-    jobs[jobName],
+const assertJobContains = (jobName, pattern, message) => {
+  assert.match(jobs[jobName], pattern, message ?? `${jobName} must contain ${pattern}`);
+};
+
+const assertJobNeeds = (jobName, dependency) => {
+  const needsMatch = jobs[jobName].match(/^    needs: ([A-Za-z0-9_-]+)\s*$/m);
+  assert.equal(
+    needsMatch?.[1],
+    dependency,
+    `${jobName} must run after ${dependency} and have no alternate dependency`,
+  );
+};
+
+const pinnedJobs = expectedJobs.filter((jobName) => jobName !== 'docker-runtime-build');
+for (const jobName of pinnedJobs) {
+  assertJobContains(jobName, /^      - uses: actions\/checkout@v4\s*$/m);
+  assertJobContains(
+    jobName,
+    /- uses: pnpm\/action-setup@v4\r?\n\s+with:\r?\n\s+version: 11\.18\.0/m,
+    `${jobName} must pin pnpm 11.18.0`,
+  );
+  assertJobContains(
+    jobName,
+    /- uses: actions\/setup-node@v4\r?\n\s+with:\r?\n\s+node-version: 24\r?\n\s+cache: pnpm/m,
+    `${jobName} must pin Node 24 and enable the pnpm cache`,
+  );
+}
+
+for (const jobName of pinnedJobs) {
+  assertJobContains(
+    jobName,
     /pnpm install --frozen-lockfile/,
     `${jobName} must install from the frozen lockfile`,
   );
 }
 
+assert.doesNotMatch(jobs.install, /^    needs:/m, 'install must be the root quality-gate job');
 for (const [jobName, dependency] of [
   ['static', 'install'],
   ['prisma', 'static'],
@@ -61,26 +103,66 @@ for (const [jobName, dependency] of [
   ['docker-runtime-build', 'frontend'],
   ['migration-release-handoff', 'docker-runtime-build'],
 ]) {
-  assert.match(
-    jobs[jobName],
-    new RegExp(`^    needs: ${dependency}\\s*$`, 'm'),
-    `${jobName} must run after ${dependency}`,
-  );
+  assertJobNeeds(jobName, dependency);
 }
 
 assert.match(jobs.static, /ci-workflow\.validation\.mjs/);
 assert.match(jobs.static, /prisma-baseline\.validation\.mjs/);
 assert.match(jobs.static, /recipe-duration-migration\.validation\.mjs/);
 assert.match(jobs.static, /docker-infrastructure\.validation\.mjs/);
-assert.match(jobs.prisma, /prisma validate --config prisma\.ci\.config\.ts/);
-assert.match(jobs.prisma, /prisma generate --config prisma\.ci\.config\.ts/);
-assert.match(jobs['api-quality'], /tsc -p tsconfig\.build\.json --noEmit/);
-assert.match(jobs['api-quality'], /pnpm --filter @food-recipes\/api test\s*$/m);
-assert.match(jobs['contract-e2e'], /pnpm --filter @food-recipes\/api test:e2e/);
-assert.match(jobs.frontend, /pnpm build/);
+assertJobContains('prisma', /prisma validate --config prisma\.ci\.config\.ts/);
+assertJobContains('prisma', /prisma generate --config prisma\.ci\.config\.ts/);
+assertJobContains('prisma', /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/);
+assertJobContains('prisma', /trap 'rm -f prisma\.ci\.config\.ts' EXIT/);
+assertJobContains('api-quality', /tsc -p tsconfig\.build\.json --noEmit/);
+assertJobContains('api-quality', /pnpm --filter @food-recipes\/api test\s*$/m);
+assertJobContains('contract-e2e', /pnpm --filter @food-recipes\/api test:e2e/);
+assertJobContains('frontend', /pnpm build/);
 assert.match(
   jobs['docker-runtime-build'],
   /docker build --target runtime[\s\S]*src\/backend\/apps\/api\/Dockerfile/,
+);
+
+for (const jobName of ['api-quality', 'contract-e2e']) {
+  assertJobContains(
+    jobName,
+    /name: Generate Prisma Client offline/,
+    `${jobName} must generate Prisma Client on its own runner`,
+  );
+  assertJobContains(jobName, /working-directory: src\/backend\/apps\/api/);
+  assertJobContains(jobName, /shell: bash/);
+  assertJobContains(jobName, /cat > prisma\.ci\.config\.ts/);
+  assertJobContains(
+    jobName,
+    /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/,
+    `${jobName} Prisma generation must use a non-routable temporary datasource URL`,
+  );
+  assertJobContains(jobName, /pnpm exec prisma generate --config prisma\.ci\.config\.ts/);
+  assertJobContains(jobName, /trap 'rm -f prisma\.ci\.config\.ts' EXIT/);
+  assert.doesNotMatch(
+    jobs[jobName],
+    /DATABASE_URL|prisma migrate/i,
+    `${jobName} must not connect to or migrate a database`,
+  );
+}
+
+for (const jobName of expectedJobs.filter((name) => name !== 'migration-release-handoff')) {
+  assert.doesNotMatch(
+    jobs[jobName],
+    /DATABASE_URL|prisma migrate/i,
+    `${jobName} must not read a database secret or run a migration`,
+  );
+}
+
+assertJobContains(
+  'docker-runtime-build',
+  /^      - uses: actions\/checkout@v4\s*$/m,
+  'Docker build must retain its checkout step',
+);
+assert.doesNotMatch(
+  jobs['docker-runtime-build'],
+  /pnpm install --frozen-lockfile/,
+  'Docker build must retain its existing image-build behavior',
 );
 
 assert.match(
@@ -93,8 +175,8 @@ assert.match(
   /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/,
   'migration job must be limited to pushes on main',
 );
-assert.match(
-  jobs['migration-release-handoff'],
+assertJobContains(
+  'migration-release-handoff',
   /DATABASE_URL:\s*\$\{\{ secrets\.DATABASE_URL \}\}/,
   'migration job must source DATABASE_URL from CI secrets',
 );
