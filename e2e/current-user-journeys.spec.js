@@ -134,6 +134,34 @@ test("guest searches Home and opens recipe detail", async ({ page }) => {
 	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
 });
 
+test("Home featured recipe card exposes a focusable link with native Enter navigation", async ({ page }) => {
+	await page.goto("/");
+
+	const recipeLink = page.getByRole("link", { name: "Open Chocolate Banana Bread" });
+	await expect(recipeLink).toHaveAttribute("href", "/recipe?id=1");
+	await recipeLink.focus();
+	await expect(recipeLink).toBeFocused();
+	await recipeLink.press("Enter");
+
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
+});
+
+test("authenticated Home favorite is a separate keyboard control and stays on Home", async ({ page }) => {
+	await authenticateAsTestUser(page);
+	await page.goto("/");
+
+	const recipeLink = page.getByRole("link", { name: "Open Chocolate Banana Bread" });
+	const favoriteButton = page.getByRole("button", { name: "Add to favorite" }).first();
+
+	await expect(recipeLink).toHaveAttribute("href", "/recipe?id=1");
+	await favoriteButton.focus();
+	await expect(favoriteButton).toBeFocused();
+	await favoriteButton.press("Enter");
+
+	await expect(page).toHaveURL(/\/$/);
+	await expect(page.getByRole("button", { name: "Remove from favorite" }).first()).toBeVisible();
+});
+
 test("guest navigates Home search results with accessible keyboard behavior", async ({ page }) => {
 	await page.goto("/?q=a");
 
@@ -210,9 +238,21 @@ test("guest filters and sorts Recipes before opening a result", async ({ page })
 	await page.getByRole("button", { name: "Desserts" }).click();
 	await expect(page).toHaveURL(/categories=1/);
 	await page.getByLabel("Sort").selectOption("name");
-	await page.getByRole("button", { name: "Open Chocolate Banana Bread" }).click();
+	await page.getByRole("link", { name: "Open Chocolate Banana Bread" }).click();
 
 	await expect(page).toHaveURL(/\/recipe\?id=1/);
+});
+
+test("food listing recipe card exposes the correct href and navigates on Enter", async ({ page }) => {
+	await page.goto("/food");
+
+	const recipeLink = page.getByRole("link", { name: "Open Chocolate Banana Bread" });
+	await expect(recipeLink).toHaveAttribute("href", "/recipe?id=1");
+	await recipeLink.focus();
+	await expect(recipeLink).toBeFocused();
+	await recipeLink.press("Enter");
+
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
 });
 
 test("guest Save action redirects from recipe detail to login", async ({ page }) => {
