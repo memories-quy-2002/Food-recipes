@@ -13,7 +13,9 @@ was attempted.
   `NOT NULL`.
 - Retained legacy `prep_time` and `cook_time` interval columns. Nest reads the
   native columns and dual-writes both native minutes and legacy intervals on
-  create/update for Express fallback compatibility.
+  create/update. The legacy Express `addRecipe` path also dual-writes both
+  representations, deriving native minutes from the same parameterized
+  interval values while preserving its response/status and legacy behavior.
 - Updated wishlist recipe projections to read native minute columns and expose
   the derived `total_time_minutes` field.
 - Added focused repository/service tests and a DB-free static migration
@@ -25,7 +27,8 @@ was attempted.
 
 The following checks were run without Docker or a database:
 
-- `node test/recipe-duration-migration.validation.mjs`
+- `node test/recipe-duration-migration.validation.mjs` (including the Express
+  dual-write fallback regression)
 - `corepack pnpm exec prisma validate --config prisma.config.ts`
 - `corepack pnpm exec prisma generate --config prisma.config.ts`
 - focused API Jest tests for recipe and wishlist repositories/services
