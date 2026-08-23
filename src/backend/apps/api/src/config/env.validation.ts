@@ -3,7 +3,8 @@ export type Environment = Record<string, unknown>;
 const asString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
-const JWT_PLACEHOLDER_PATTERN = /replace-with|change-me|generate/i;
+const JWT_PLACEHOLDER_PATTERN =
+  /(?:^|[^a-z0-9])(?:replace[-_\s]?with|change[-_\s]?me|generate|dev|development|test|testing|local|localhost|default|example|sample|dummy|fake|placeholder|secret|password)(?:$|[^a-z0-9])/i;
 
 export function validateEnvironment(environment: Environment): Environment {
   const databaseUrl = asString(environment.DATABASE_URL);
