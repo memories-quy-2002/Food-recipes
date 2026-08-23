@@ -72,10 +72,10 @@ for (const source of [repository, wishlistRepository]) {
   assert.doesNotMatch(source, /EXTRACT\(EPOCH FROM r\.(?:prep_time|cook_time)\)/);
 }
 assert.match(repository, /prep_time_minutes, cook_time_minutes, prep_time, cook_time/);
-assert.match(repository, /make_interval\(mins => \$\{dto\.prepTimeMinutes\}\)/);
-assert.match(repository, /make_interval\(mins => \$\{dto\.cookTimeMinutes\}\)/);
-assert.match(repository, /prep_time_minutes = COALESCE/);
-assert.match(repository, /cook_time_minutes = COALESCE/);
+assert.match(repository, /prep_time_minutes = \$\{dto\.prepTimeMinutes\}/);
+assert.match(repository, /prep_time = make_interval\(mins => \$\{dto\.prepTimeMinutes\}\)/);
+assert.match(repository, /cook_time_minutes = \$\{dto\.cookTimeMinutes\}/);
+assert.match(repository, /cook_time = make_interval\(mins => \$\{dto\.cookTimeMinutes\}\)/);
 
 console.log(
   'Recipe duration migration static validation passed without database access: '
