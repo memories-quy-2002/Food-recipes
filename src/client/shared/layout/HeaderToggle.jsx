@@ -21,7 +21,12 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 
 	return (
 		<div className="header__toggle">
-			<Button onClick={handleShow} className="header__toggle__icon">
+			<Button
+				aria-label="Open navigation menu"
+				aria-expanded={show}
+				onClick={handleShow}
+				className="header__toggle__icon"
+			>
 				<FaBars size={30} />
 			</Button>
 
@@ -39,6 +44,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 					</Offcanvas.Title>
 				</Offcanvas.Header>
 				<Offcanvas.Body style={{ padding: 0 }}>
+					<nav aria-label="Mobile primary navigation">
 					<ul className="header__toggle__list">
 						{items.map(({ title, href }, index) => (
 							<li
@@ -51,7 +57,8 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 										isActive(href)
 											? " header__toggle__list__item__link--active"
 											: ""
-									}`}
+										}`}
+									aria-current={isActive(href) ? "page" : undefined}
 									onClick={() => handleNavigate(href)}
 								>
 									{title}
@@ -83,6 +90,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 							</li>
 						)}
 					</ul>
+					</nav>
 				</Offcanvas.Body>
 			</Offcanvas>
 		</div>

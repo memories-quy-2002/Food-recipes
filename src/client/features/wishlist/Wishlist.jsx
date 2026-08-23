@@ -146,7 +146,7 @@ const Wishlist = () => {
 	return (
 		<Container fluid className="wishlist">
 			<PageHelmet
-				title="Wishlist"
+				title="Saved"
 				description="Review and organize your saved Food Recipes favorites."
 				path="/wishlist"
 				noIndex
@@ -203,13 +203,13 @@ const Wishlist = () => {
 				<div className="wishlist__main__content">
 					{isLoadingRecipes || isLoadingWishlist ? (
 						<PageState
-							title="Loading wishlist"
+							title="Loading saved recipes"
 							message="Fetching your saved recipes."
 						/>
 					) : recipesError || wishlistError ? (
 						<PageState
 							type="error"
-							title="Wishlist could not load"
+							title="Saved recipes could not load"
 							message={recipesError || wishlistError}
 							actionLabel="Try again"
 							onAction={() => window.location.reload()}
@@ -220,7 +220,7 @@ const Wishlist = () => {
 							title={
 								searchTerm
 									? "No saved recipes match your search"
-									: "Your wishlist is empty"
+									: "Your saved recipes are empty"
 							}
 							message={
 								searchTerm
@@ -254,7 +254,7 @@ const Wishlist = () => {
 					<div className="wishlist__modal__content" role="dialog">
 						<h3>Remove saved recipe</h3>
 						<p>
-							This recipe will be removed from your wishlist. You
+							This recipe will be removed from your saved recipes. You
 							can add it again later from the recipe page.
 						</p>
 						<div className="wishlist__modal__buttons">

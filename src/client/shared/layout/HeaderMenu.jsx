@@ -8,7 +8,7 @@ const HeaderMenu = ({ items }) => {
 		href === "/" ? pathname === href : pathname.startsWith(href);
 
 	return (
-		<div className="header__menu">
+		<nav className="header__menu" aria-label="Primary navigation">
 			{items.map(({ title, href }, index) => (
 				<button
 					key={index}
@@ -16,12 +16,13 @@ const HeaderMenu = ({ items }) => {
 					className={`header__menu__content${
 						isActive(href) ? " header__menu__content--active" : ""
 					}`}
+					aria-current={isActive(href) ? "page" : undefined}
 					onClick={() => navigate(href)}
 				>
 					{title}
 				</button>
 			))}
-		</div>
+		</nav>
 	);
 };
 

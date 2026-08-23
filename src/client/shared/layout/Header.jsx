@@ -5,39 +5,13 @@ import HeaderAuthButton from "./HeaderAuthButton";
 import HeaderBrand from "./HeaderBrand";
 import HeaderMenu from "./HeaderMenu";
 import HeaderToggle from "./HeaderToggle";
-const items = [
-	{
-		title: "Home",
-		href: "/",
-	},
-	{
-		title: "Food",
-		href: "/food",
-	},
-	{
-		title: "News",
-		href: "/news",
-	},
-	{
-		title: "About",
-		href: "/about",
-	},
-	...(import.meta.env.DEV
-		? [
-				{
-					title: "Health",
-					href: "/health",
-				},
-		  ]
-		: []),
-	{
-		title: "Wishlist",
-		href: "/wishlist",
-	},
-];
+import { getPrimaryNavigation } from "./navigation";
 const Header = () => {
 	const [show, setShow] = useState(false);
 	const auth = useSelector((state) => state.auth);
+	const isAuthenticated =
+		auth.local?.isAuthenticated || auth.session?.isAuthenticated;
+	const items = getPrimaryNavigation(isAuthenticated);
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
 	return (

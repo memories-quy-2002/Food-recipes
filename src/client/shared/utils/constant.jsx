@@ -14,7 +14,15 @@ export const website_content = {
 		phone: "(+84) 123 456 7890",
 		address: "123 ABC Street, Tan Thoi Hiep Ward, Ho Chi Minh City, Vietnam",
 	},
-	overview: ["Home", "Food", "News", "About", "Wishlist"],
+	primaryNavigation: [
+		{ title: "Home", href: "/" },
+		{ title: "Recipes", href: "/food" },
+		{ title: "Saved", href: "/wishlist" },
+	],
+	secondaryNavigation: [
+		{ title: "News", href: "/news" },
+		{ title: "About", href: "/about" },
+	],
 	follow: [
 		{
 			href: "https://www.facebook.com",

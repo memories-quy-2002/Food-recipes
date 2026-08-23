@@ -15,7 +15,7 @@ const newsItems = [
 		category: "Product",
 		date: "May 21, 2026",
 		description:
-			"The wishlist now supports searching, sorting, and faster access to the recipes you keep coming back to.",
+			"Saved recipes now support searching, sorting, and faster access to the dishes you keep coming back to.",
 	},
 	{
 		title: "Seasonal cooking guide",
@@ -28,7 +28,7 @@ const newsItems = [
 
 const quickTips = [
 	"Use recipe ratings to choose dishes faster.",
-	"Save recipes to your wishlist before planning meals.",
+	"Save recipes before planning meals.",
 	"Add prep and cook time so every recipe is easier to compare.",
 ];
 

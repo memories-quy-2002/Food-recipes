@@ -7,7 +7,14 @@ import "./Footer.scss";
 import { website_content } from "@/shared/utils/constant";
 const Footer = () => {
 	const d = new Date();
-	const { about, contact, overview, follow, bottom } = website_content;
+	const {
+		about,
+		contact,
+		primaryNavigation,
+		secondaryNavigation,
+		follow,
+		bottom,
+	} = website_content;
 
 	return (
 		<footer className="footer">
@@ -35,13 +42,21 @@ const Footer = () => {
 						</ul>
 					</Col>
 					<Col lg={3} md={12}>
-						<h5 className="footer__title">Overview</h5>
+						<h5 className="footer__title">Explore</h5>
 						<ul className="footer__list">
-							{overview.map((item, index) => (
-								<li key={index} className="footer__list__link">
-									<Link to={item === "Home" ? "/" : `/${item.toLowerCase()}`}>
-										{item}
+							{primaryNavigation.map((item) => (
+								<li key={item.href} className="footer__list__link">
+									<Link to={item.href}>
+										{item.title}
 									</Link>
+								</li>
+							))}
+						</ul>
+						<h5 className="footer__title">More</h5>
+						<ul className="footer__list">
+							{secondaryNavigation.map((item) => (
+								<li key={item.href} className="footer__list__link">
+									<Link to={item.href}>{item.title}</Link>
 								</li>
 							))}
 						</ul>
