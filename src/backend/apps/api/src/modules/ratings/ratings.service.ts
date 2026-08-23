@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 export type RatingInput = {
   score: number;
@@ -15,9 +15,14 @@ export interface RatingsRepositoryPort {
   listByUserId(userId: number): Promise<unknown[]>;
 }
 
+export const RATINGS_REPOSITORY = Symbol('RATINGS_REPOSITORY');
+
 @Injectable()
 export class RatingsService {
-  constructor(private readonly repository: RatingsRepositoryPort) {}
+  constructor(
+    @Inject(RATINGS_REPOSITORY)
+    private readonly repository: RatingsRepositoryPort,
+  ) {}
 
   async upsert(
     userId: number,
