@@ -13,6 +13,7 @@ const AccountForm = () => {
 	const searchParams = new URLSearchParams(location.search);
 	const redirectPath = location.state?.from;
 	const intentSnapshot = useRef(getAuthIntentSnapshot());
+	const cleanupTimer = useRef(null);
 	const [isSignup, setIsSignup] = useState(
 		searchParams.get("signup") === "true"
 	);
@@ -21,7 +22,19 @@ const AccountForm = () => {
 		setIsSignup(searchParams.get("signup") === "true");
 	}, [location.search]);
 
-	useEffect(() => () => clearAuthIntentIfUnchanged(intentSnapshot.current), []);
+	useEffect(() => {
+		if (cleanupTimer.current !== null) {
+			clearTimeout(cleanupTimer.current);
+			cleanupTimer.current = null;
+		}
+
+		return () => {
+			cleanupTimer.current = setTimeout(() => {
+				cleanupTimer.current = null;
+				clearAuthIntentIfUnchanged(intentSnapshot.current);
+			}, 0);
+		};
+	}, []);
 
 	const onSignup = () => {
 		setIsSignup(true);
