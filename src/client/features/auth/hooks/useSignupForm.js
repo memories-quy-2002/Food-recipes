@@ -99,7 +99,7 @@ const useSignupForm = () => {
 							withCredentials: true,
 						}
 					);
-					if (response.status === 200) {
+					if ([200, 201].includes(response.status)) {
 						dispatch({ type: "SET_VALIDATED", payload: true });
 
 						const { user, token } = response.data;

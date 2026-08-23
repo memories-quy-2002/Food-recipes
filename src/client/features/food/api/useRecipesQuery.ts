@@ -1,8 +1,9 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
+import { apiRoutes } from "@/shared/api/routes";
 
-export const RECIPE_DISCOVERY_ENDPOINT = "/api/v1/recipes";
+export const RECIPE_DISCOVERY_ENDPOINT = apiRoutes.recipes;
 export const DEFAULT_RECIPE_LIMIT = 6;
 const supportedSorts = new Set(["popular", "rating", "name"]);
 

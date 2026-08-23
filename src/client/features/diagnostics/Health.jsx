@@ -7,9 +7,9 @@ import PageState from "@/shared/ui/PageState";
 const checks = [
 	{
 		key: "server",
-		label: "Server",
-		description: "Checks whether the Express app responds.",
-		request: () => axios.get("/"),
+		label: "API gateway",
+		description: "Checks whether the configured API target responds.",
+		request: () => axios.get(apiRoutes.serverHealth),
 	},
 	{
 		key: "database",

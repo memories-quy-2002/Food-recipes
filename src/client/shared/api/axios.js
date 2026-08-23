@@ -1,30 +1,57 @@
 import axios from "axios";
 
-const localApiBaseUrl = "http://localhost:4000";
-const productionApiBaseUrl = "https://food-recipes-server-omega.vercel.app";
-const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-const isLocalConfiguredApi =
-	configuredApiBaseUrl?.includes("localhost") ||
-	configuredApiBaseUrl?.includes("127.0.0.1");
-const apiBaseUrl =
-	import.meta.env.PROD && isLocalConfiguredApi
-		? productionApiBaseUrl
-		: configuredApiBaseUrl ||
-		  (import.meta.env.DEV ? localApiBaseUrl : productionApiBaseUrl);
+import {
+	apiTargets,
+	getApiConfig,
+	getStoredAuthToken,
+} from "./config";
 
-const api = axios.create({
-	baseURL: apiBaseUrl,
-});
+export const dispatchAuthExpired = () => {
+	if (typeof window === "undefined") return;
 
-api.interceptors.response.use(
-	(response) => response,
-	(error) => {
-		if (error.response?.status === 401) {
-			window.dispatchEvent(new CustomEvent("auth:expired"));
+	const event =
+		typeof CustomEvent === "function"
+			? new CustomEvent("auth:expired")
+			: { type: "auth:expired" };
+	window.dispatchEvent(event);
+};
+
+export const createApiClient = (env = import.meta.env) => {
+	const apiConfig = getApiConfig(env);
+	const client = axios.create({
+		baseURL: apiConfig.baseURL,
+	});
+
+	client.interceptors.request.use((config) => {
+		if (apiConfig.target !== apiTargets.NEST) return config;
+
+		const token = getStoredAuthToken();
+		if (!token) return config;
+
+		config.headers = config.headers || {};
+		if (typeof config.headers.set === "function") {
+			config.headers.set("Authorization", `Bearer ${token}`);
+		} else {
+			config.headers.Authorization = `Bearer ${token}`;
 		}
 
-		return Promise.reject(error);
-	}
-);
+		return config;
+	});
+
+	client.interceptors.response.use(
+		(response) => response,
+		(error) => {
+			if (error.response?.status === 401) {
+				dispatchAuthExpired();
+			}
+
+			return Promise.reject(error);
+		}
+	);
+
+	return client;
+};
+
+const api = createApiClient();
 
 export default api;
