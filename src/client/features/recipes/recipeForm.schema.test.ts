@@ -45,6 +45,25 @@ describe("recipe form schema", () => {
 		}
 	});
 
+	it("does not use the other taxonomy field as a catalog fallback", () => {
+		const categoryUsesMealField = createRecipeFormSchema({
+			categories: [{ id: 1, meal_name: "Main course" }],
+			meals: [{ id: 2, category_name: "Dinner" }],
+		}).safeParse({
+			...validValues,
+			recipeCategoryName: "Main course",
+			recipeMealName: "Dinner",
+		});
+
+		expect(categoryUsesMealField.success).toBe(false);
+		if (!categoryUsesMealField.success) {
+			expect(categoryUsesMealField.error.issues.map(({ path }) => path.join("."))).toEqual([
+				"recipeCategoryName",
+				"recipeMealName",
+			]);
+		}
+	});
+
 	it("requires finite positive durations with supported units", () => {
 		const result = createRecipeFormSchema(taxonomy).safeParse({
 			...validValues,
@@ -63,6 +82,12 @@ describe("recipe form schema", () => {
 			createRecipeFormSchema({ ...taxonomy, isPublishing: true }).safeParse({
 				...validValues,
 				recipeImage: { type: "text/plain" },
+			}).success
+		).toBe(false);
+		expect(
+			createRecipeFormSchema({ ...taxonomy, isPublishing: true }).safeParse({
+				...validValues,
+				recipeImage: { type: "image/" },
 			}).success
 		).toBe(false);
 		expect(

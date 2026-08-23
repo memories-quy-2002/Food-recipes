@@ -10,7 +10,7 @@ type RecipeFormSchemaOptions = {
 
 const normalizeCatalogName = (value: unknown) => String(value ?? "").trim().toLowerCase();
 
-const catalogNameSchema = (items: unknown[], message: string) =>
+const catalogNameSchema = (items: unknown[], fields: string[], message: string) =>
 	z.string().trim().refine(
 		(value) => {
 			const normalizedValue = normalizeCatalogName(value);
@@ -19,10 +19,8 @@ const catalogNameSchema = (items: unknown[], message: string) =>
 				items.some((item) => {
 					if (!item || typeof item !== "object") return false;
 					const catalogItem = item as Record<string, unknown>;
-					return (
-						normalizeCatalogName(
-							catalogItem.name ?? catalogItem.category_name ?? catalogItem.meal_name
-						) === normalizedValue
+					return fields.some(
+						(field) => normalizeCatalogName(catalogItem[field]) === normalizedValue
 					);
 				})
 			);
@@ -48,8 +46,16 @@ const durationSchema = (message: string) =>
 const baseRecipeFormSchema = ({ categories = [], meals = [] }: RecipeFormSchemaOptions = {}) =>
 	z.object({
 		recipeName: z.string().trim().min(1, "Recipe name is required."),
-		recipeCategoryName: catalogNameSchema(categories, "Choose a supported category."),
-		recipeMealName: catalogNameSchema(meals, "Choose a supported meal."),
+		recipeCategoryName: catalogNameSchema(
+			categories,
+			["name", "category_name"],
+			"Choose a supported category."
+		),
+		recipeMealName: catalogNameSchema(
+			meals,
+			["name", "meal_name"],
+			"Choose a supported meal."
+		),
 		recipeDescription: z.string(),
 		recipeIngredients: meaningfulListSchema("Add at least one ingredient."),
 		recipeInstructions: meaningfulListSchema("Add at least one instruction."),
@@ -69,7 +75,9 @@ export const createRecipeFormSchema = ({ categories = [], meals = [], isPublishi
 						path: ["recipeImage"],
 						message: "Choose a recipe image before publishing.",
 					});
-				} else if (!String(value.recipeImage.type || "").startsWith("image/")) {
+				} else {
+					const mimeType = String(value.recipeImage.type || "").trim().toLowerCase();
+					if (mimeType.startsWith("image/") && mimeType.length > "image/".length) return;
 					context.addIssue({
 						code: z.ZodIssueCode.custom,
 						path: ["recipeImage"],

@@ -30,3 +30,11 @@ DONE_WITH_CONCERNS
 
 - The worktree contains unrelated concurrent dirty files, including backend source/config changes, previous reports, generated artifacts, and plan files. They were preserved and will not be staged or modified by this task.
 - The Vite build retains its pre-existing large-chunk warning; it is non-fatal and outside this scoped form migration.
+
+## Review fix evidence
+
+- Taxonomy validation now uses only `name`/`category_name` for categories and only `name`/`meal_name` for meals. A focused regression case with `categories: [{ meal_name: "Main course" }]`, `meals: [{ category_name: "Dinner" }]`, and the cross-field selected values fails both taxonomy checks.
+- RHF duration handlers now pass the registered names directly to `setValue`, preserving `recipePrepTime.number`, `recipePrepTime.unit`, `recipeCookTime.number`, and `recipeCookTime.unit` without appending duplicate path segments. The AddRecipe interaction test edits preparation time to `45`, saves the draft, and asserts the persisted value.
+- Publish image validation rejects the bare `image/` MIME value while continuing to allow valid image MIME types and draft omission.
+- Red evidence: the focused suite failed 3 tests before the fixes (cross-field taxonomy accepted, bare `image/` accepted, and edited duration persisted as an empty value).
+- Green evidence: the focused suite passed after the fixes (3 files, 14 tests).

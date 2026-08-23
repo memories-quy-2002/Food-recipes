@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
@@ -35,6 +35,7 @@ const renderForUser = (userId, rerender) =>
 
 describe("recipe draft account isolation", () => {
 	beforeEach(() => {
+		cleanup();
 		localStorage.clear();
 		vi.clearAllMocks();
 	});
@@ -100,5 +101,21 @@ describe("recipe draft account isolation", () => {
 		expect(screen.getByDisplayValue("water")).toBeInTheDocument();
 		expect(screen.getByDisplayValue("Boil")).toBeInTheDocument();
 		expect(screen.queryByText("Restore your saved draft?")).not.toBeInTheDocument();
+	});
+
+	it("persists an edited duration through the RHF field path", async () => {
+		const user = userEvent.setup();
+		const view = render(<div />);
+		renderForUser("duration-user", view.rerender);
+
+		const preparationTime = await screen.findByLabelText("Preparation Time");
+		await user.clear(preparationTime);
+		await user.type(preparationTime, "45");
+		await user.click(screen.getByRole("button", { name: "Save draft" }));
+
+		const storedDraft = JSON.parse(
+			localStorage.getItem("food-recipes:recipe-draft:user:duration-user")
+		);
+		expect(storedDraft.form.recipePrepTime).toEqual({ number: "45", unit: "minutes" });
 	});
 });

@@ -245,14 +245,14 @@ const AddRecipe = () => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setValue(`${name}.number`, value, { shouldDirty: true });
+		setValue(name, value, { shouldDirty: true });
 	};
 
 	const handleSelectChange = (event) => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setValue(`${name}.unit`, value, { shouldDirty: true });
+		setValue(name, value, { shouldDirty: true });
 	};
 
 	const handleCategoryOptionChange = (event) => {
