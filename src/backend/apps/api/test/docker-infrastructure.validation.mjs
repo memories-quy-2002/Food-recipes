@@ -51,7 +51,7 @@ assert.match(contents.apiDockerignore, /\.env/, 'API .dockerignore must exclude 
 assert.doesNotMatch(contents.apiDockerignore, /(?:^|\n)prisma(?:\/|\s|$)/, 'API .dockerignore must keep Prisma files available');
 
 assert.match(contents.compose, /postgres:/, 'production-like Compose must define PostgreSQL');
-assert.match(contents.compose, /context:\s*\.\s*\r?\n\s+dockerfile:\s+apps\/api\/Dockerfile/, 'production-like Compose must build from the backend root context');
+assert.match(contents.compose, /context:\s*\.\.\/\.\.\s*\r?\n\s+dockerfile:\s+apps\/api\/Dockerfile/, 'production-like Compose must build from the backend root context');
 assert.match(contents.compose, /healthcheck:/, 'PostgreSQL must have a healthcheck');
 assert.match(contents.compose, /pg_isready/, 'PostgreSQL healthcheck must use pg_isready');
 assert.match(contents.compose, /migrate:/, 'production-like Compose must define a migration service');
@@ -76,7 +76,7 @@ assert.doesNotMatch(composeApi, /^\s+ports:/m, 'production-like Compose should k
 assert.match(contents.compose, /^  kong:\r?\n/m, 'production-like Compose must define Kong');
 assert.match(composeKong, /KONG_DATABASE:\s*["']?off["']?/i, 'Kong must run in DB-less mode');
 assert.match(composeKong, /KONG_DECLARATIVE_CONFIG:\s*\/etc\/kong\/kong\.yml/, 'Kong must load the declarative config');
-assert.match(composeKong, /(?:\.\/)?infrastructure\/kong\/kong\.yml:\/etc\/kong\/kong\.yml:ro/, 'Kong config must be mounted read-only');
+assert.match(composeKong, /\.\.\/kong\/kong\.yml:\/etc\/kong\/kong\.yml:ro/, 'Kong config must be mounted read-only');
 assert.match(composeKong, /ports:\s*\n\s+-\s+"8000:8000"/, 'Kong must publish gateway port 8000');
 assert.match(composeKong, /depends_on:\s*\n\s+api:\s*\n\s+condition:\s*service_healthy/, 'Kong must wait for a healthy API');
 assert.match(composeApi, /healthcheck:\s*[\s\S]*?health\/live/, 'API must expose a healthcheck for Kong readiness');
@@ -96,7 +96,7 @@ const pluginNames = [...pluginSection.matchAll(/^\s+- name:\s+([a-z0-9-]+)\s*$/g
 assert.deepEqual(pluginNames, ['correlation-id', 'rate-limiting'], 'Kong must not install an auth plugin');
 
 assert.match(contents.composeDev, /ports:/, 'development Compose must publish useful local ports');
-assert.match(contents.composeDev, /context:\s*\.\s*\r?\n\s+dockerfile:\s+apps\/api\/Dockerfile/, 'development Compose must build from the backend root context');
+assert.match(contents.composeDev, /context:\s*\.\.\/\.\.\s*\r?\n\s+dockerfile:\s+apps\/api\/Dockerfile/, 'development Compose must build from the backend root context');
 assert.match(contents.composeDev, /127\.0\.0\.1:/, 'development ports must bind to localhost');
 assert.match(contents.composeDev, /^\s+PORT:\s*3000\s*$/m, 'development API must listen on the internal container port 3000');
 assert.match(contents.composeDev, /127\.0\.0\.1:\$\{API_PORT:-3000\}:3000/, 'development API_PORT must control only the host-side published port');

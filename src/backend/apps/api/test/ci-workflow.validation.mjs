@@ -123,7 +123,7 @@ assertJobContains('contract-e2e', /pnpm test:e2e\s*$/m);
 assertJobContains('frontend', /pnpm build/);
 assert.match(
   jobs['docker-runtime-build'],
-  /docker build --target runtime[\s\S]*--file apps\/api\/Dockerfile src\/backend/,
+  /docker build --target runtime[\s\S]*--file src\/backend\/apps\/api\/Dockerfile src\/backend/,
 );
 
 for (const jobName of ['prisma', 'api-quality', 'contract-e2e', 'migration-release-handoff']) {

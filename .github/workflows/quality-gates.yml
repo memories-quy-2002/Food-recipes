@@ -201,7 +201,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build API runtime image
-        run: docker build --target runtime --tag food-recipes-api:ci --file apps/api/Dockerfile src/backend
+        run: docker build --target runtime --tag food-recipes-api:ci --file src/backend/apps/api/Dockerfile src/backend
 
   migration-release-handoff:
     name: One-shot migration gate / release handoff

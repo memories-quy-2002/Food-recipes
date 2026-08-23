@@ -10,8 +10,10 @@ const recipes = [
 		meal_name: "Breakfast",
 		num_ratings: 12,
 		overall_score: 4.8,
-		prep_time: "15 mins",
-		cook_time: "45 mins",
+		prep_time_minutes: 15,
+		cook_time_minutes: 45,
+		total_time_minutes: 60,
+		user_id: 11,
 		recipe_description: "A soft banana bread with chocolate.",
 		date_added: null,
 		image_url: null,
@@ -27,8 +29,10 @@ const recipes = [
 		meal_name: "Dinner",
 		num_ratings: 8,
 		overall_score: 4.5,
-		prep_time: "20 mins",
-		cook_time: "35 mins",
+		prep_time_minutes: 20,
+		cook_time_minutes: 35,
+		total_time_minutes: 55,
+		user_id: 12,
 		recipe_description: "A warmly spiced chicken dinner.",
 		date_added: null,
 		image_url: null,
@@ -42,7 +46,16 @@ async function stubRecipeApi(page) {
 		route.fulfill({
 			status: 200,
 			contentType: "application/json",
-			body: JSON.stringify({ recipes }),
+			body: JSON.stringify({
+				recipes,
+				pagination: {
+					page: 1,
+					limit: 100,
+					total: recipes.length,
+					totalPages: 1,
+					hasNext: false,
+				},
+			}),
 		})
 	);
 	await page.route("**/recipes/*", (route) => {
@@ -102,7 +115,7 @@ async function authenticateAsTestUser(page) {
 			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" } }),
 		})
 	);
-	await page.route("**/users/7/wishlist", (route) => {
+	await page.route("**/users/me/wishlist", (route) => {
 		if (route.request().method() === "GET") {
 			return route.fulfill({
 				status: 200,
@@ -112,11 +125,15 @@ async function authenticateAsTestUser(page) {
 		}
 		if (route.request().method() === "POST") {
 			saved = true;
-			return route.fulfill({ status: 200, body: "{}" });
+			return route.fulfill({
+				status: 201,
+				contentType: "application/json",
+				body: JSON.stringify({ recipe: recipes[0], savedAt: new Date().toISOString() }),
+			});
 		}
 		return route.fallback();
 	});
-	await page.route("**/users/7/wishlist/1", (route) => {
+	await page.route("**/users/me/wishlist/1", (route) => {
 		if (route.request().method() === "DELETE") {
 			saved = false;
 			return route.fulfill({ status: 200, body: "{}" });
@@ -323,12 +340,12 @@ test("guest Home Save preserves the query path through login and saves once", as
 			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
 		})
 	);
-	await page.route("**/users/7/wishlist", (route) => {
+	await page.route("**/users/me/wishlist", (route) => {
 		if (route.request().method() === "GET") {
 			return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: saved ? [{ recipe_id: 1 }] : [] }) });
 		}
 		if (route.request().method() === "POST") saved = true;
-		return route.fulfill({ status: 200, body: "{}" });
+		return route.fulfill({ status: 201, body: "{}" });
 	});
 
 	await page.goto("/?q=Chocolate");
@@ -354,7 +371,7 @@ test("guest Save returns to the same recipe and completes only that save intent"
 			}),
 		})
 	);
-	await page.route("**/users/7/wishlist", (route) => {
+	await page.route("**/users/me/wishlist", (route) => {
 		if (route.request().method() === "GET") {
 			return route.fulfill({
 				status: 200,
@@ -364,7 +381,7 @@ test("guest Save returns to the same recipe and completes only that save intent"
 		}
 		if (route.request().method() === "POST") {
 			saved = true;
-			return route.fulfill({ status: 200, body: "{}" });
+			return route.fulfill({ status: 201, body: "{}" });
 		}
 		return route.fallback();
 	});
@@ -391,12 +408,12 @@ test("guest Save does not duplicate an already-saved recipe while wishlist loads
 			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
 		})
 	);
-	await page.route("**/users/7/wishlist", (route) => {
+	await page.route("**/users/me/wishlist", (route) => {
 		if (route.request().method() === "GET") {
 			return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: [{ recipe_id: 1 }] }) });
 		}
 		if (route.request().method() === "POST") postCount += 1;
-		return route.fulfill({ status: 200, body: "{}" });
+		return route.fulfill({ status: 201, body: "{}" });
 	});
 
 	await page.goto("/recipe?id=1");
@@ -421,7 +438,7 @@ test("guest Save waits for the recipe wishlist request before consuming the save
 			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
 		})
 	);
-	await page.route("**/users/7/wishlist", async (route) => {
+	await page.route("**/users/me/wishlist", async (route) => {
 		if (route.request().method() === "GET") {
 			await wishlistReady;
 			return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: [] }) });
@@ -453,7 +470,7 @@ test("guest access to Saved and Add Recipe returns to the protected path after l
 			}),
 		})
 	);
-	await page.route("**/users/7/wishlist", (route) =>
+	await page.route("**/users/me/wishlist", (route) =>
 		route.fulfill({
 			status: 200,
 			contentType: "application/json",

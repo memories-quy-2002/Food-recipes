@@ -20,7 +20,7 @@ services:
 
   migrate:
     build:
-      context: .
+      context: ../..
       dockerfile: apps/api/Dockerfile
       target: migration
     environment:
@@ -35,7 +35,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ../..
       dockerfile: apps/api/Dockerfile
       target: dev
     environment:
@@ -47,9 +47,9 @@ services:
     ports:
       - "127.0.0.1:${API_PORT:-3000}:3000"
     volumes:
-      - ./apps/api/src:/workspace/apps/api/src:ro
-      - ./apps/api/prisma:/workspace/apps/api/prisma:ro
-      - ./apps/api/prisma.config.ts:/workspace/apps/api/prisma.config.ts:ro
+      - ../../apps/api/src:/workspace/apps/api/src:ro
+      - ../../apps/api/prisma:/workspace/apps/api/prisma:ro
+      - ../../apps/api/prisma.config.ts:/workspace/apps/api/prisma.config.ts:ro
     networks:
       - internal
     depends_on:
