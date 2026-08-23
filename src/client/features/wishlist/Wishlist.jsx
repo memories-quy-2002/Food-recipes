@@ -10,6 +10,7 @@ import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { RecipeContext } from "@/app/RecipeProvider";
+import SavedCollectionsNotice from "@/features/saved/collections/SavedCollectionsNotice";
 import { getSavedAtTimestamp } from "./savedRecipe";
 import "./Wishlist.scss";
 
@@ -251,6 +252,7 @@ const Wishlist = () => {
 				</section>
 			</div>
 			<div className="wishlist__main">
+				<SavedCollectionsNotice />
 				<div className="wishlist__toolbar">
 					<label>
 						Search
