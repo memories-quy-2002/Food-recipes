@@ -12,7 +12,6 @@ const RecipeProvider = ({ children }) => {
 	const isLoadingRecipes = isLoading;
 	const recipesError =
 		error?.response?.data?.message ||
-		error?.message ||
 		(error ? "Unable to load recipes from the server." : null);
 
 	const refreshRecipes = useCallback(

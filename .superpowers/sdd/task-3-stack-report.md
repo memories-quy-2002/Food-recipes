@@ -76,3 +76,23 @@ The detail hook is intentionally covered as a tested migration boundary, but the
 
 - Vite reports the existing large JavaScript chunk warning during build; the build still completes successfully.
 - No live API/browser flow was required by the brief; runtime API availability remains dependent on the configured legacy/Nest-compatible route target.
+
+## Review follow-up: RecipeProvider error compatibility
+
+The review finding was valid: the provider had introduced `error?.message` as an intermediate fallback, which could expose raw Axios error text and changed the prior compatibility contract.
+
+Fixed `src/client/app/RecipeProvider.jsx` so `recipesError` now resolves only from:
+
+1. `error?.response?.data?.message`, or
+2. `"Unable to load recipes from the server."` when a query error exists, or
+3. `null` when there is no query error.
+
+Added a focused provider regression test in `src/client/app/RecipeProvider.test.jsx` using an Axios-shaped error with `{ response: { data: {} }, message: "Raw Axios error details" }`. The test first failed with the raw message, then passed after the production fix and asserts that the generic fallback is rendered instead.
+
+Follow-up verification:
+
+- `corepack pnpm vitest run src/client/features/recipes/api/useRecipeQueries.test.ts src/client/app/RecipeProvider.test.jsx` — 2 files passed, 5 tests passed.
+- Existing Task 3 Home/Wishlist/Recipe/AddRecipe compatibility tests — 9 files passed, 35 tests passed.
+- `corepack pnpm typecheck` — passed.
+- `corepack pnpm build` — passed; the existing large-chunk warning remains non-fatal.
+- `git diff --check` — passed.

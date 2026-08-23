@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useQueryClient } from "@tanstack/react-query";
 import RecipeProvider, { RecipeContext } from "./RecipeProvider";
 import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
@@ -43,6 +43,7 @@ describe("RecipeProvider compatibility context", () => {
 			error: null,
 		});
 	});
+	afterEach(() => cleanup());
 
 	it("exposes query data and preserves refresh invalidation compatibility", async () => {
 		render(
@@ -59,5 +60,29 @@ describe("RecipeProvider compatibility context", () => {
 		expect(invalidateQueries).toHaveBeenCalledWith({
 			queryKey: ["recipes", "list"],
 		});
+	});
+
+	it("uses the generic fallback when the API error has no message", () => {
+		vi.mocked(useAllRecipesQuery).mockReturnValue({
+			data: undefined,
+			isLoading: false,
+			error: {
+				message: "Raw Axios error details",
+				response: { data: {} },
+			},
+		});
+
+		render(
+			<RecipeProvider>
+				<Consumer />
+			</RecipeProvider>
+		);
+
+		expect(screen.getByTestId("error")).toHaveTextContent(
+			"Unable to load recipes from the server."
+		);
+		expect(screen.getByTestId("error")).not.toHaveTextContent(
+			"Raw Axios error details"
+		);
 	});
 });
