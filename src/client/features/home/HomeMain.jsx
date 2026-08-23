@@ -10,6 +10,34 @@ import CategorySection from "./main/CategorySection";
 import FoodCardList from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
 import PageState from "@/shared/ui/PageState";
+
+const normalizeMinutes = (value) => {
+	const minutes = Number(value);
+	return Number.isFinite(minutes) ? minutes : null;
+};
+
+export const normalizeRecipeSummary = (recipe) => {
+	const prepTimeMinutes = normalizeMinutes(
+		recipe.prepTimeMinutes ?? recipe.prep_time_minutes
+	);
+	const cookTimeMinutes = normalizeMinutes(
+		recipe.cookTimeMinutes ?? recipe.cook_time_minutes
+	);
+
+	return {
+		...recipe,
+		prepTimeMinutes,
+		cookTimeMinutes,
+		totalTimeMinutes:
+			prepTimeMinutes === null || cookTimeMinutes === null
+				? Number.MAX_SAFE_INTEGER
+				: prepTimeMinutes + cookTimeMinutes,
+	};
+};
+
+export const byQuickest = (a, b) =>
+	a.totalTimeMinutes - b.totalTimeMinutes;
+
 const HomeMain = () => {
 	const [categories, setCategories] = useState([]);
 	const [wishlist, setWishlist] = useState([]);
@@ -30,23 +58,13 @@ const HomeMain = () => {
 		);
 	}, [recipes, selectedCategoryId]);
 
-	const getTimeValue = (value) => {
-		if (!value) return Number.MAX_SAFE_INTEGER;
-		const [amount] = String(value).split(" ");
-		const parsed = Number(amount);
-		return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
-	};
-
 	const featuredRecipes = useMemo(() => {
 		const nextRecipes = [...filteredRecipes];
 
 		if (featuredMode === "quick-meals") {
 			return nextRecipes
-				.sort(
-					(a, b) =>
-						getTimeValue(a.prep_time) + getTimeValue(a.cook_time) -
-						(getTimeValue(b.prep_time) + getTimeValue(b.cook_time))
-				)
+				.map(normalizeRecipeSummary)
+				.sort(byQuickest)
 				.slice(0, 8);
 		}
 
@@ -70,7 +88,9 @@ const HomeMain = () => {
 		if (pendingFavoriteIds.includes(recipeId)) return;
 
 		const isFavorite = wishlist.some(
-			(recipe) => Number(recipe.recipe_id) === Number(recipeId)
+			(recipe) =>
+				Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) ===
+				Number(recipeId)
 		);
 
 		setPendingFavoriteIds((currentIds) => [...currentIds, recipeId]);
@@ -83,7 +103,9 @@ const HomeMain = () => {
 				if (response.status === 200) {
 					setWishlist((currentWishlist) =>
 						currentWishlist.filter(
-							(recipe) => Number(recipe.recipe_id) !== Number(recipeId)
+							(recipe) =>
+								Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) !==
+								Number(recipeId)
 						)
 					);
 					showToast({ title: "Removed from wishlist" });

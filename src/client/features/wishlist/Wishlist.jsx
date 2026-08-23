@@ -11,6 +11,14 @@ import PageState from "@/shared/ui/PageState";
 import { RecipeContext } from "@/app/RecipeProvider";
 import "./Wishlist.scss";
 
+export const normalizeSavedRecipe = (item) => ({
+	recipe: item?.recipe || item,
+	savedAt: item?.savedAt || null,
+});
+
+export const byRecentlySaved = (a, b) =>
+	new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
+
 const Wishlist = () => {
 	const [wishlist, setWishlist] = useState([]);
 	const [showModal, setShowModal] = useState(false);
@@ -54,38 +62,45 @@ const Wishlist = () => {
 		fetchFavorites();
 	}, [user_id]);
 
-	const favoriteRecipes = useMemo(
-		() =>
-			recipes.filter((recipe) =>
-				wishlist.some(
-					(wishlistRecipe) =>
-						wishlistRecipe.recipe_id === recipe.recipe_id
-				)
-			),
-		[recipes, wishlist]
-	);
+	const favoriteRecipes = useMemo(() => {
+		const savedRecipes = wishlist.map(normalizeSavedRecipe);
+
+		return savedRecipes
+			.map(({ recipe: savedRecipe, savedAt }) => {
+				const recipe = recipes.find(
+					(candidate) =>
+						Number(candidate.recipe_id) === Number(savedRecipe.recipe_id)
+				);
+				return recipe ? { recipe, savedAt } : null;
+			})
+			.filter(Boolean);
+	}, [recipes, wishlist]);
 
 	const visibleRecipes = useMemo(() => {
 		const normalizedSearch = searchTerm.trim().toLowerCase();
-		let nextRecipes = favoriteRecipes.filter((recipe) =>
+		let nextRecipes = favoriteRecipes.filter(({ recipe }) =>
 			recipe.recipe_name.toLowerCase().includes(normalizedSearch)
 		);
 
+		if (sortBy === "recent") {
+			nextRecipes = [...nextRecipes].sort(byRecentlySaved);
+		}
+
 		if (sortBy === "name") {
 			nextRecipes = [...nextRecipes].sort((a, b) =>
-				a.recipe_name.localeCompare(b.recipe_name)
+				a.recipe.recipe_name.localeCompare(b.recipe.recipe_name)
 			);
 		}
 
 		if (sortBy === "rating") {
 			nextRecipes = [...nextRecipes].sort(
 				(a, b) =>
-					Number(b.overall_score || 0) -
-					Number(a.overall_score || 0)
+					Number(b.recipe.overall_score || 0) -
+					Number(a.recipe.overall_score || 0)
 			);
 		}
 
-		return nextRecipes;
+		return nextRecipes.map(({ recipe }) => recipe);
 	}, [favoriteRecipes, searchTerm, sortBy]);
 
 	const handleShowModal = (recipe_id) => {
@@ -101,7 +116,9 @@ const Wishlist = () => {
 			if (response.status === 200) {
 				setWishlist((currentWishlist) =>
 					currentWishlist.filter(
-						(recipe) => recipe.recipe_id !== recipeId
+						(item) =>
+							Number(item.recipe?.recipe_id ?? item.recipe_id) !==
+							Number(recipeId)
 					)
 				);
 				setShowModal(false);
