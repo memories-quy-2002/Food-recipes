@@ -12,7 +12,9 @@ const recipes = [
 		overall_score: 4.8,
 		prep_time: "15 mins",
 		cook_time: "45 mins",
-		description: "A soft banana bread with chocolate.",
+		recipe_description: "A soft banana bread with chocolate.",
+		date_added: null,
+		image_url: null,
 		ingredients: ["Bananas", "Flour"],
 		instructions: ["Mix ingredients", "Bake until done"],
 	},
@@ -27,14 +29,16 @@ const recipes = [
 		overall_score: 4.5,
 		prep_time: "20 mins",
 		cook_time: "35 mins",
-		description: "A warmly spiced chicken dinner.",
+		recipe_description: "A warmly spiced chicken dinner.",
+		date_added: null,
+		image_url: null,
 		ingredients: ["Chicken", "Tomato"],
 		instructions: ["Season chicken", "Cook until tender"],
 	},
 ];
 
 async function stubRecipeApi(page) {
-	await page.route("**/recipes", (route) =>
+	await page.route("**/recipes**", (route) =>
 		route.fulfill({
 			status: 200,
 			contentType: "application/json",
@@ -262,7 +266,7 @@ test("guest selects a Home category and opens a matching recipe", async ({ page 
 test("guest filters and sorts Recipes before opening a result", async ({ page }) => {
 	await page.goto("/food");
 	await page.getByRole("button", { name: "Desserts" }).click();
-	await expect(page).toHaveURL(/categories=1/);
+	await expect(page).toHaveURL(/categoryId=1/);
 	await page.getByLabel("Sort").selectOption("name");
 	await page.getByRole("link", { name: "Open Chocolate Banana Bread" }).click();
 

@@ -39,3 +39,23 @@ The E2E spec and product implementation were intentionally left unchanged.
 ## Worktree preservation
 
 Unrelated dirty reports, backend/frontend implementation changes, plans, generated build/test artifacts, and other untracked files were preserved and excluded from the task commit.
+
+## Task 4 review-fix evidence
+
+Applied the review findings without changing product behavior:
+
+- `package.json` now runs `test:ci` as `vitest run src/client`, so backend Jest specs, Playwright specs, and the stale root `src/App.test.js` are not discovered by the frontend CI gate.
+- Updated the existing Playwright fixtures to use the current recipe contract: `recipe_description`, nullable `date_added`, and nullable `image_url` on both recipes. The existing list fixture now matches query-bearing `/recipes` requests, and the existing Food URL assertion expects `categoryId=1`.
+- README deployment notes now document the legacy default pairing (`VITE_API_TARGET=legacy` or omitted plus `VITE_API_BASE_URL`) and the public Nest/Kong opt-in pair (`VITE_API_TARGET=nest` plus `VITE_KONG_BASE_URL`).
+
+### Final verification
+
+| Command | Result |
+| --- | --- |
+| `corepack pnpm typecheck` | PASS |
+| `corepack pnpm test:ci` | PASS: 36 files, 127 tests |
+| `corepack pnpm build` | PASS: Vite 8.1.3 build completed |
+| `corepack pnpm test:e2e:ci` | PASS: 17 Playwright tests passed in 5.4s |
+| `git diff --check` | PASS; Git emitted existing CRLF normalization warnings only |
+
+The Vite build still reports its existing chunk-size warning for bundles over 500 kB; this is non-blocking and outside Task 4 scope.

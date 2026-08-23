@@ -161,7 +161,8 @@ Seed files live in `src/server/seeds/`. They include additional recipes and rati
 ## Deployment Notes
 
 - The production frontend API defaults to `https://food-recipes-server-omega.vercel.app`.
-- Set public `VITE_API_BASE_URL` if the API deployment URL changes.
+- Legacy Express mode is the default pairing: omit `VITE_API_TARGET` (or set `VITE_API_TARGET=legacy`) and set public `VITE_API_BASE_URL=https://food-recipes-server-omega.vercel.app` or the deployed legacy API URL.
+- Nest/Kong mode is opt-in: set public `VITE_API_TARGET=nest` and `VITE_KONG_BASE_URL=https://your-kong-gateway.example.com`; the frontend then uses the Kong `/api/v1` gateway.
 - Set public `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
 - Vercel runs `pnpm build`, serves the `dist` output, and rewrites client-side routes to `index.html` while keeping asset paths safe.
 - The server exports the Express app for Vercel and only calls `app.listen()` outside Vercel.
