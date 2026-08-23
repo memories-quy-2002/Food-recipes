@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 
 const QUICK_FILTER_LIMIT = 4;
+const SEARCH_RESULTS_ID = "recipe-search-results";
 
 const normalizeLabel = (value) =>
 	typeof value === "string" ? value.trim() : "";
@@ -36,6 +37,8 @@ const HomeSearchBar = ({ recipes = [] }) => {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const searchTerm = searchParams.get("q") || "";
 	const quickFilters = getQuickFilters(recipes);
+	const [activeIndex, setActiveIndex] = useState(-1);
+	const [isResultListOpen, setIsResultListOpen] = useState(Boolean(searchTerm));
 	const updateSearchTerm = (value) => {
 		setSearchParams(
 			(currentParams) => {
@@ -51,9 +54,13 @@ const HomeSearchBar = ({ recipes = [] }) => {
 		);
 	};
 	const handleChange = (e) => {
+		setActiveIndex(-1);
+		setIsResultListOpen(Boolean(e.target.value.trim()));
 		updateSearchTerm(e.target.value);
 	};
 	const handleQuickFilter = (label) => {
+		setActiveIndex(-1);
+		setIsResultListOpen(true);
 		updateSearchTerm(label);
 	};
 	const filteredRecipes = recipes.filter((recipe) =>
@@ -67,6 +74,49 @@ const HomeSearchBar = ({ recipes = [] }) => {
 				.includes(searchTerm.trim().toLocaleLowerCase())
 		)
 	);
+	useEffect(() => {
+		setActiveIndex(-1);
+		setIsResultListOpen(Boolean(searchTerm.trim()));
+	}, [searchTerm]);
+	const handleKeyDown = (event) => {
+		if (event.key === "Escape") {
+			event.preventDefault();
+			setActiveIndex(-1);
+			setIsResultListOpen(false);
+			return;
+		}
+
+		if (event.key === "ArrowDown" && filteredRecipes.length > 0) {
+			event.preventDefault();
+			setIsResultListOpen(true);
+			setActiveIndex((currentIndex) =>
+				currentIndex < filteredRecipes.length - 1 ? currentIndex + 1 : 0
+			);
+			return;
+		}
+
+		if (event.key === "ArrowUp" && filteredRecipes.length > 0) {
+			event.preventDefault();
+			setIsResultListOpen(true);
+			setActiveIndex((currentIndex) =>
+				currentIndex > 0 ? currentIndex - 1 : filteredRecipes.length - 1
+			);
+			return;
+		}
+
+		if (
+			event.key === "Enter" &&
+			isResultListOpen &&
+			filteredRecipes[activeIndex]
+		) {
+			event.preventDefault();
+			navigate(`/recipe?id=${filteredRecipes[activeIndex].recipe_id}`);
+		}
+	};
+	const activeDescendant =
+		isResultListOpen && activeIndex >= 0
+			? `recipe-search-option-${activeIndex}`
+			: undefined;
 	return (
 		<div className="home__main__title">
 			<span className="home__main__title__eyebrow">Start with a craving</span>
@@ -78,9 +128,16 @@ const HomeSearchBar = ({ recipes = [] }) => {
 				<input
 					type="text"
 					placeholder="Search recipes..."
+					aria-label="Search recipes"
+					role="combobox"
+					aria-autocomplete="list"
+					aria-controls={SEARCH_RESULTS_ID}
+					aria-expanded={Boolean(searchTerm) && isResultListOpen}
+					aria-activedescendant={activeDescendant}
 					className="home__main__search__input"
 					value={searchTerm}
 					onChange={handleChange}
+					onKeyDown={handleKeyDown}
 				></input>
 				{quickFilters.length > 0 && (
 					<div
@@ -99,12 +156,24 @@ const HomeSearchBar = ({ recipes = [] }) => {
 						))}
 					</div>
 				)}
-				{searchTerm && (
-					<ul className="home__main__search__result">
+				{searchTerm && isResultListOpen && (
+					<ul
+						id={SEARCH_RESULTS_ID}
+						role="listbox"
+						aria-label="Recipe search results"
+						aria-live="polite"
+						className="home__main__search__result"
+					>
 						{filteredRecipes.length > 0 ? (
 							filteredRecipes.map((recipe) => (
 								<li
 									key={recipe.recipe_id}
+									id={`recipe-search-option-${filteredRecipes.indexOf(recipe)}`}
+									role="option"
+									tabIndex={-1}
+									aria-selected={
+										filteredRecipes.indexOf(recipe) === activeIndex
+									}
 									onClick={() =>
 										navigate(
 											`/recipe?id=${recipe.recipe_id}`
@@ -120,7 +189,9 @@ const HomeSearchBar = ({ recipes = [] }) => {
 								</li>
 							))
 						) : (
-							<li>No recipe found</li>
+							<li role="option" aria-disabled="true">
+								No recipe found
+							</li>
 						)}
 					</ul>
 				)}
