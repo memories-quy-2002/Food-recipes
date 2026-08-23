@@ -43,8 +43,8 @@ jobs:
 
       - name: Create backend env file
         run: |
-          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/backend/apps/api/.env
-          printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 48)" >> src/backend/apps/api/.env
+          echo "DATABASE_URL=postgresql://test:test@localhost:5432/food_recipes_test" > src/backend/.env
+          printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 48)" >> src/backend/.env
 
       - name: Typecheck client
         working-directory: src/frontend

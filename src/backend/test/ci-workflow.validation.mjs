@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
-const repositoryRoot = path.resolve(testDirectory, '../../../../..');
+const repositoryRoot = path.resolve(testDirectory, '../../..');
 const workflowPath = path.join(repositoryRoot, '.github/workflows/quality-gates.yml');
 const workflow = await readFile(workflowPath, 'utf8');
 
@@ -117,7 +117,7 @@ assert.match(jobs.static, /backend-product-security\.validation\.mjs/);
 assertJobContains('prisma', /prisma validate --config prisma\.ci\.config\.ts/);
 assertJobContains('prisma', /prisma generate --config prisma\.ci\.config\.ts/);
 assertJobContains('prisma', /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/);
-assertJobContains('prisma', /trap 'rm -f apps\/api\/prisma\.ci\.config\.ts' EXIT/);
+assertJobContains('prisma', /trap 'rm -f prisma\.ci\.config\.ts' EXIT/);
 assertJobContains('api-quality', /pnpm typecheck\s*$/m);
 assertJobContains('api-quality', /pnpm test\s*$/m);
 assertJobContains('api-quality', /pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx/);
@@ -125,7 +125,7 @@ assertJobContains('contract-e2e', /pnpm test:e2e\s*$/m);
 assertJobContains('frontend', /pnpm build/);
 assert.match(
   jobs['docker-runtime-build'],
-  /docker build --target runtime[\s\S]*--file src\/backend\/apps\/api\/Dockerfile src\/backend/,
+  /docker build --target runtime[\s\S]*--file src\/backend\/Dockerfile src\/backend/,
 );
 
 for (const jobName of ['prisma', 'api-quality', 'contract-e2e', 'migration-release-handoff']) {
@@ -151,14 +151,14 @@ for (const jobName of ['api-quality', 'contract-e2e']) {
   );
   assertJobContains(jobName, /working-directory: src\/backend/);
   assertJobContains(jobName, /shell: bash/);
-  assertJobContains(jobName, /cat > apps\/api\/prisma\.ci\.config\.ts/);
+  assertJobContains(jobName, /cat > prisma\.ci\.config\.ts/);
   assertJobContains(
     jobName,
     /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/,
     `${jobName} Prisma generation must use a non-routable temporary datasource URL`,
   );
-  assertJobContains(jobName, /pnpm --filter @food-recipes\/api exec prisma generate --config prisma\.ci\.config\.ts/);
-  assertJobContains(jobName, /trap 'rm -f apps\/api\/prisma\.ci\.config\.ts' EXIT/);
+  assertJobContains(jobName, /pnpm exec prisma generate --config prisma\.ci\.config\.ts/);
+  assertJobContains(jobName, /trap 'rm -f prisma\.ci\.config\.ts' EXIT/);
   assert.doesNotMatch(
     jobs[jobName],
     /DATABASE_URL|prisma migrate/i,

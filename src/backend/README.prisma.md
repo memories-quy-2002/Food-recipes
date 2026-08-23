@@ -123,16 +123,34 @@ From `src/backend`, run the following checks without Docker or a database
 connection:
 
 ```bash
-node apps/api/test/prisma-baseline.validation.mjs
-corepack pnpm@11.18.0 --filter @food-recipes/api exec prisma validate --config prisma.config.ts
-corepack pnpm@11.18.0 --filter @food-recipes/api exec prisma generate --config prisma.config.ts
+node test/prisma-baseline.validation.mjs
+corepack pnpm@11.18.0 prisma:validate
+corepack pnpm@11.18.0 prisma:generate
 corepack pnpm@11.18.0 build
-corepack pnpm@11.18.0 --filter @food-recipes/api exec tsc -p tsconfig.build.json --noEmit
+corepack pnpm@11.18.0 typecheck
 ```
 
 These checks verify the checked-in artifacts only. They do not prove that a
 live database matches the baseline or that `migrate resolve`/`migrate status`
 has succeeded.
+
+## Local demo seed
+
+From `src/backend`, apply the checked-in migrations and run the repeatable demo
+seed with:
+
+```powershell
+corepack pnpm@11.18.0 prisma:migrate:deploy
+corepack pnpm@11.18.0 prisma:seed
+```
+
+The seed creates three demo users, three categories, three meals, three recipes,
+four wishlist rows, and four ratings. Recipe rows reference the seeded author,
+category, and meal IDs; wishlist and rating rows reference the corresponding
+user and recipe IDs. It also writes both the normalized minute durations and
+the legacy PostgreSQL interval durations. Re-running the seed refreshes only the
+demo recipes and their dependent wishlist/rating rows; it does not reset the
+database.
 
 ## Task 18 duration normalization deployment gate
 

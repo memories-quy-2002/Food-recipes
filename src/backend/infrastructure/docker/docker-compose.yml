@@ -18,8 +18,8 @@ services:
 
   migrate:
     build:
-      context: ../..
-      dockerfile: apps/api/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       target: migration
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/food_recipes}
@@ -33,8 +33,8 @@ services:
 
   api:
     build:
-      context: ../..
-      dockerfile: apps/api/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       target: runtime
     environment:
       NODE_ENV: ${NODE_ENV:-production}

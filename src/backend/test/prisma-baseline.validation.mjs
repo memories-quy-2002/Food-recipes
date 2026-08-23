@@ -5,12 +5,12 @@ import { fileURLToPath } from 'node:url';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const apiDirectory = path.resolve(testDirectory, '..');
-const repositoryRoot = path.resolve(apiDirectory, '../../../..');
+const repositoryRoot = path.resolve(apiDirectory, '../..');
 
 const files = {
   migration: path.join(apiDirectory, 'prisma/migrations/0_init/migration.sql'),
   schema: path.join(apiDirectory, 'prisma/schema.prisma'),
-  readme: path.join(apiDirectory, 'README.md'),
+  readme: path.join(apiDirectory, 'README.prisma.md'),
   report: path.join(repositoryRoot, '.superpowers/sdd/task-5-report.md'),
   legacyDump: path.join(apiDirectory, 'prisma/legacy/recipes.sql'),
   compose: path.join(repositoryRoot, 'src/backend/infrastructure/docker/docker-compose.yml'),

@@ -1,20 +1,25 @@
 # Food Recipes backend
 
-This directory is the backend pnpm workspace. The repository root intentionally
-does not own a Node package or application scripts.
+This directory is the backend package. It owns the only backend
+`node_modules`, lockfile, Prisma project, NestJS application, tests, and Docker
+image definition. The repository root intentionally does not own a Node package
+or application scripts.
 
 ## Structure
 
-- `apps/api/` contains the NestJS API package, Prisma schema, migrations, tests,
-  and its Dockerfile.
+- `src/` contains the NestJS API source.
+- `prisma/` contains the Prisma schema, migrations, legacy evidence, and demo
+  seed.
+- `test/` contains backend static and E2E tests.
 - `infrastructure/` contains backend-only Compose and Kong configuration.
-- `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` belong to this
-  workspace and are the only backend package-manager entry points.
+- `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` are the backend
+  package-manager entry points. The workspace file only defines the dependency
+  build allowlist; it does not define nested packages.
 
 ## Local commands
 
 ```powershell
-corepack pnpm install
+corepack pnpm@11.18.0 install
 corepack pnpm dev
 corepack pnpm check
 corepack pnpm build
@@ -27,6 +32,6 @@ Run the API Compose stack from this directory:
 docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build
 ```
 
-The API image uses this directory as its build context and
-`apps/api/Dockerfile`. Keep `JWT_SECRET` in the local environment only; never
+The API image uses this directory as its build context and `Dockerfile`. Keep
+`JWT_SECRET` in the local environment only; never
 commit `.env` or database credentials.

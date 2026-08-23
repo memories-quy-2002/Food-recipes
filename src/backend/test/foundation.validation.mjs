@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const apiDirectory = path.resolve(testDirectory, '..');
-const repositoryRoot = path.resolve(apiDirectory, '../../../..');
+const repositoryRoot = path.resolve(apiDirectory, '../..');
 
 const files = {
   buildConfig: path.join(apiDirectory, 'tsconfig.build.json'),

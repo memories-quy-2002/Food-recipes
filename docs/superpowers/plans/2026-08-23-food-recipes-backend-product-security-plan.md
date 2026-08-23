@@ -1,5 +1,10 @@
 # Food Recipes Backend Product and Security Implementation Plan
 
+> **Execution note (2026-08-23):** The implementation paths in this plan were
+> originally written for `src/backend/apps/api`. The completed backend now uses
+> the package-root layout under `src/backend/`; the feature and security
+> behavior is unchanged by that path move.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement the backend-only P1 core APIs, P2 planning APIs, and security hardening while leaving `src/frontend/` unchanged.

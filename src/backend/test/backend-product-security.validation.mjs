@@ -4,17 +4,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
-const repositoryRoot = path.resolve(testDirectory, '../../../../..');
+const repositoryRoot = path.resolve(testDirectory, '../../..');
 const read = (relativePath) => readFile(path.join(repositoryRoot, relativePath), 'utf8');
 
 const [schema, collections, planning, auth, media, delivery, main] = await Promise.all([
-  read('src/backend/apps/api/prisma/schema.prisma'),
-  read('src/backend/apps/api/src/modules/collections/collections.controller.ts'),
-  read('src/backend/apps/api/src/modules/planning/planning.controller.ts'),
-  read('src/backend/apps/api/src/modules/auth/auth-session.repository.ts'),
-  read('src/backend/apps/api/src/modules/media/media.service.ts'),
-  read('src/backend/apps/api/src/modules/auth/recovery-delivery.service.ts'),
-  read('src/backend/apps/api/src/main.ts'),
+  read('src/backend/prisma/schema.prisma'),
+  read('src/backend/src/modules/collections/collections.controller.ts'),
+  read('src/backend/src/modules/planning/planning.controller.ts'),
+  read('src/backend/src/modules/auth/auth-session.repository.ts'),
+  read('src/backend/src/modules/media/media.service.ts'),
+  read('src/backend/src/modules/auth/recovery-delivery.service.ts'),
+  read('src/backend/src/main.ts'),
 ]);
 
 for (const migrationName of [
@@ -22,7 +22,7 @@ for (const migrationName of [
   '20260823133000_add_planning_tables',
   '20260823140000_add_auth_sessions_roles_and_recovery',
 ]) {
-  const migration = await read(`src/backend/apps/api/prisma/migrations/${migrationName}/migration.sql`);
+  const migration = await read(`src/backend/prisma/migrations/${migrationName}/migration.sql`);
   assert.match(migration, /CREATE TABLE/);
   assert.doesNotMatch(migration, /migrate reset/i);
 }

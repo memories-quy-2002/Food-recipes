@@ -3,10 +3,9 @@
 ## Project overview
 Website for food recipes and blogs. Monorepo structure:
 - `src/frontend/` — React + Vite + TypeScript frontend
-- `src/backend/` — backend pnpm workspace and infrastructure
-  - `apps/api/` — NestJS + Prisma backend API
+- `src/backend/` — single NestJS + Prisma backend package and infrastructure
 
-Database: PostgreSQL, hosted on Supabase. Package manager: pnpm, isolated between frontend and backend workspaces.
+Database: PostgreSQL, hosted on Supabase. Package manager: pnpm, isolated between the frontend and backend packages.
 
 ## Setup & commands
 - Install frontend dependencies: `cd src/frontend && pnpm install`
@@ -19,7 +18,7 @@ Database: PostgreSQL, hosted on Supabase. Package manager: pnpm, isolated betwee
 
 ## Coding conventions
 - Use TypeScript strictly on the client — avoid `any`, prefer explicit types/interfaces.
-- Keep Nest controllers in `src/backend/apps/api/src/modules` thin — push business logic into services and repositories rather than inline in controllers.
+- Keep Nest controllers in `src/backend/src/modules` thin — push business logic into services and repositories rather than inline in controllers.
 - Match existing file/folder naming conventions already used in `src/frontend` and `src/backend` rather than introducing new patterns.
 
 ## Security-sensitive areas — flag issues here first
