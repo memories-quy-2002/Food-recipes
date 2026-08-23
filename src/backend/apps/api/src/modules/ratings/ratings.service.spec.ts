@@ -59,6 +59,15 @@ describe('RatingsService', () => {
     expect(repository.findRecipeAuthorId).not.toHaveBeenCalled();
   });
 
+  it('rejects a null review at the service boundary', async () => {
+    const service = new RatingsService(repository);
+
+    await expect(service.upsert(7, 15, { score: 5, review: null })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(repository.findRecipeAuthorId).not.toHaveBeenCalled();
+  });
+
   it('returns ratings owned by the authenticated user', async () => {
     repository.listByUserId.mockResolvedValue([{ rating_id: 1 }]);
     const service = new RatingsService(repository);

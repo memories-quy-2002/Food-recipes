@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsString, Max, MaxLength, Min, ValidateIf } from 'class-validator';
 
 export const MAX_REVIEW_LENGTH = 2000;
 
@@ -8,7 +8,7 @@ export class UpsertRatingDto {
   @Max(5)
   score!: number;
 
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsString()
   @MaxLength(MAX_REVIEW_LENGTH)
   review?: string;

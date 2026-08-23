@@ -98,6 +98,16 @@ describe('Ratings module wiring', () => {
       });
 
     await request(app.getHttpServer())
+      .put('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ score: 4, review: 'Updated' })
+      .expect(200)
+      .expect({
+        message: 'Rating saved successfully',
+        aggregate: { overall_score: 5, num_ratings: 1 },
+      });
+
+    await request(app.getHttpServer())
       .delete('/api/v1/recipes/15/rating')
       .set('Authorization', `Bearer ${token}`)
       .expect(200)
@@ -113,8 +123,11 @@ describe('Ratings module wiring', () => {
       .expect({ ratings: [] });
 
     const queries = database.$queryRaw.mock.calls.map(([query]) => query as SqlQuery);
-    expect(queries.some((query) => query.values.includes(7))).toBe(true);
-    expect(queries.some((query) => query.values.includes(15))).toBe(true);
+    const upserts = queries.filter((query) =>
+      query.strings.join(' ').includes('INSERT INTO rating'),
+    );
+    expect(upserts).toHaveLength(2);
+    expect(upserts[1].values).toEqual([7, 4, 'Updated', 15, 15]);
   });
 
   it('rejects an invalid score at the HTTP boundary', async () => {
@@ -124,6 +137,36 @@ describe('Ratings module wiring', () => {
       .put('/api/v1/recipes/15/rating')
       .set('Authorization', `Bearer ${token}`)
       .send({ score: 6 })
+      .expect(400);
+  });
+
+  it('rejects a recipe author self-review with 403', async () => {
+    const token = await jwtService.signAsync({ sub: 42, email: 'author@example.com' });
+
+    await request(app.getHttpServer())
+      .put('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ score: 5, review: 'My own recipe' })
+      .expect(403);
+  });
+
+  it('rejects a review over the configured maximum length', async () => {
+    const token = await jwtService.signAsync({ sub: 7, email: 'ada@example.com' });
+
+    await request(app.getHttpServer())
+      .put('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ score: 5, review: 'x'.repeat(2001) })
+      .expect(400);
+  });
+
+  it('rejects null reviews at the HTTP boundary', async () => {
+    const token = await jwtService.signAsync({ sub: 7, email: 'ada@example.com' });
+
+    await request(app.getHttpServer())
+      .put('/api/v1/recipes/15/rating')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ score: 5, review: null })
       .expect(400);
   });
 

@@ -15,7 +15,7 @@ import {
 
 export type RatingInput = {
   score: number;
-  review?: string;
+  review?: string | null;
 };
 
 @Injectable()
@@ -84,6 +84,12 @@ export class RatingsService {
       throw new BadRequestException({
         code: 'INVALID_RATING_SCORE',
         message: 'Score must be an integer from 1 to 5',
+      });
+    }
+    if (input.review === null) {
+      throw new BadRequestException({
+        code: 'INVALID_REVIEW',
+        message: 'Review must be a string when provided',
       });
     }
     if (input.review !== undefined && input.review.length > MAX_REVIEW_LENGTH) {
