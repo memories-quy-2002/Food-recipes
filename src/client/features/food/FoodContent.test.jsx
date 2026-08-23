@@ -64,6 +64,17 @@ describe("FoodContent", () => {
 				<FoodContent
 					recipes={recipes}
 					queryState={{ page: 1, limit: 6, sort: "popular" }}
+				/>
+			);
+		});
+
+		expect(renderer.root.findByProps({ "aria-label": "Open Pasta" })).toBeTruthy();
+
+		act(() => {
+			renderer.update(
+				<FoodContent
+					recipes={recipes}
+					queryState={{ page: 1, limit: 6, sort: "popular", q: "soup" }}
 					isFetching
 				/>
 			);
@@ -73,6 +84,20 @@ describe("FoodContent", () => {
 		expect(content.props["aria-busy"]).toBe(true);
 		expect(renderer.root.findByProps({ className: "food__content__updating" })).toBeTruthy();
 		expect(renderer.root.findByProps({ className: "food__content__section__list food__content__section__list--grid" })).toBeTruthy();
+		expect(renderer.root.findByProps({ "aria-label": "Open Pasta" })).toBeTruthy();
+
+		act(() => {
+			renderer.update(
+				<FoodContent
+					recipes={[recipes[1]]}
+					queryState={{ page: 1, limit: 6, sort: "popular", q: "soup" }}
+				/>
+			);
+		});
+
+		expect(renderer.root.findByProps({ "aria-label": "Open Soup" })).toBeTruthy();
+		expect(renderer.root.findAllByProps({ className: "food__content__updating" })).toHaveLength(0);
+		expect(renderer.root.findByProps({ className: "food__content" }).props["aria-busy"]).toBe(false);
 	});
 
 	it("identifies pagination when the compatibility response has more local rows", () => {
