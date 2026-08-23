@@ -35,6 +35,7 @@ const Recipe = () => {
 	const [isLoadingRecipe, setIsLoadingRecipe] = useState(true);
 	const [recipeError, setRecipeError] = useState(null);
 	const [favorite, setFavorite] = useState(false);
+	const [favoriteLoadedKey, setFavoriteLoadedKey] = useState(null);
 	const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
 	const [ratingScore, setRatingScore] = useState(0);
 	const [hasExistingRating, setHasExistingRating] = useState(false);
@@ -62,6 +63,13 @@ const Recipe = () => {
 	const isCookingMode = location.pathname === "/recipe/cooking";
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef(null);
+	const favoriteLoadKey =
+		isAuthenticated
+			? userId && recipe
+				? `user:${userId}:recipe:${recipe.recipe_id}`
+				: "authenticated-pending"
+			: "guest";
+	const isFavoriteLoaded = favoriteLoadedKey === favoriteLoadKey;
 
 	const fetchRecipe = useCallback(async ({ showLoading = true } = {}) => {
 		if (!id) return;
@@ -252,6 +260,7 @@ const Recipe = () => {
 		if (
 			!isAuthenticated ||
 			!recipe ||
+			!isFavoriteLoaded ||
 			!isMatchingSaveRecipeIntent(intent, currentPath, recipe.recipe_id) ||
 			processedAuthIntent.current === intent
 		) {
@@ -261,15 +270,17 @@ const Recipe = () => {
 		processedAuthIntent.current = intent;
 		navigate(currentPath, { replace: true, state: null });
 		if (!favorite) handleClickFavorite();
-	}, [currentPath, favorite, handleClickFavorite, isAuthenticated, location.state, navigate, recipe]);
+	}, [currentPath, favorite, handleClickFavorite, isAuthenticated, isFavoriteLoaded, location.state, navigate, recipe]);
 	useEffect(() => {
 		fetchRecipe();
 	}, [fetchRecipe]);
 
 	useEffect(() => {
 		const fetchFavorites = async () => {
-			if (!isAuthenticated || !recipe) {
+			setFavoriteLoadedKey(null);
+			if (!isAuthenticated || !userId || !recipe) {
 				setFavorite(false);
+				setFavoriteLoadedKey(isAuthenticated ? "authenticated-pending" : "guest");
 				return;
 			}
 
@@ -289,6 +300,8 @@ const Recipe = () => {
 				}
 			} catch (err) {
 				console.error(err);
+			} finally {
+				setFavoriteLoadedKey(`user:${userId}:recipe:${recipe.recipe_id}`);
 			}
 		};
 		fetchFavorites();

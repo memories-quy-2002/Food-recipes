@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import { useLocation, useNavigate } from "react-router-dom";
+import {
+	clearAuthIntentIfUnchanged,
+	getAuthIntentSnapshot,
+} from "@/features/auth/returnIntent";
 
 const AccountForm = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const searchParams = new URLSearchParams(location.search);
 	const redirectPath = location.state?.from;
+	const intentSnapshot = useRef(getAuthIntentSnapshot());
 	const [isSignup, setIsSignup] = useState(
 		searchParams.get("signup") === "true"
 	);
@@ -15,6 +20,8 @@ const AccountForm = () => {
 	useEffect(() => {
 		setIsSignup(searchParams.get("signup") === "true");
 	}, [location.search]);
+
+	useEffect(() => () => clearAuthIntentIfUnchanged(intentSnapshot.current), []);
 
 	const onSignup = () => {
 		setIsSignup(true);

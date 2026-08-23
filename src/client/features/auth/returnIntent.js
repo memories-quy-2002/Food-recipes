@@ -1,5 +1,6 @@
 const STORAGE_KEY = "food-recipes:auth-intent";
 const ALLOWED_ACTIONS = new Set(["saveRecipe"]);
+const INTENT_TTL_MS = 10 * 60 * 1000;
 
 const getStorage = () =>
 	typeof window === "undefined" ? null : window.sessionStorage;
@@ -21,6 +22,15 @@ export const clearAuthIntent = () => {
 	getStorage()?.removeItem(STORAGE_KEY);
 };
 
+export const getAuthIntentSnapshot = () => getStorage()?.getItem(STORAGE_KEY) ?? null;
+
+export const clearAuthIntentIfUnchanged = (snapshot) => {
+	const storage = getStorage();
+	if (storage && snapshot !== null && storage.getItem(STORAGE_KEY) === snapshot) {
+		storage.removeItem(STORAGE_KEY);
+	}
+};
+
 export const beginAuthIntent = ({ returnTo, action, recipeId } = {}) => {
 	if (!isSafeInternalPath(returnTo)) {
 		clearAuthIntent();
@@ -29,6 +39,7 @@ export const beginAuthIntent = ({ returnTo, action, recipeId } = {}) => {
 
 	const intent = {
 		returnTo,
+		createdAt: Date.now(),
 		...(ALLOWED_ACTIONS.has(action) ? { action } : {}),
 		...(recipeId !== undefined && recipeId !== null
 			? { recipeId: String(recipeId) }
@@ -48,6 +59,12 @@ export const consumeAuthIntent = () => {
 
 	try {
 		const intent = JSON.parse(rawIntent);
+		if (
+			typeof intent?.createdAt !== "number" ||
+			!Number.isFinite(intent.createdAt) ||
+			Date.now() - intent.createdAt > INTENT_TTL_MS ||
+			Date.now() - intent.createdAt < 0
+		) return null;
 		if (!isSafeInternalPath(intent?.returnTo)) return null;
 		if (intent.action && !ALLOWED_ACTIONS.has(intent.action)) return null;
 		if (intent.action === "saveRecipe" && !intent.recipeId) return null;

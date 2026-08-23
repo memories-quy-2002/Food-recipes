@@ -53,6 +53,7 @@ export const getQuickMeals = (recipes) =>
 const HomeMain = () => {
 	const [categories, setCategories] = useState([]);
 	const [wishlist, setWishlist] = useState([]);
+	const [wishlistLoadedKey, setWishlistLoadedKey] = useState(null);
 	const [pendingFavoriteIds, setPendingFavoriteIds] = useState([]);
 	const [selectedCategoryId, setSelectedCategoryId] = useState("all");
 	const [featuredMode, setFeaturedMode] = useState("top-rated");
@@ -65,6 +66,12 @@ const HomeMain = () => {
 	const location = useLocation();
 	const processedAuthIntent = useRef(null);
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
+	const wishlistLoadKey = isAuthenticated
+		? userId
+			? `user:${userId}`
+			: "authenticated-pending"
+		: "guest";
+	const isWishlistLoaded = wishlistLoadedKey === wishlistLoadKey;
 
 	const filteredRecipes = useMemo(() => {
 		if (selectedCategoryId === "all") return recipes;
@@ -155,6 +162,7 @@ const HomeMain = () => {
 		const intent = location.state?.pendingAuthIntent;
 		if (
 			!isAuthenticated ||
+			!isWishlistLoaded ||
 			!isMatchingSaveRecipeIntent(intent, currentPath, intent?.recipeId) ||
 			!recipes.some((recipe) => Number(recipe.recipe_id) === Number(intent.recipeId)) ||
 			processedAuthIntent.current === intent
@@ -170,7 +178,7 @@ const HomeMain = () => {
 				Number(intent.recipeId)
 		);
 		if (!isFavorite) handleClickFavorite(Number(intent.recipeId));
-	}, [currentPath, handleClickFavorite, isAuthenticated, location.state, navigate, wishlist]);
+	}, [currentPath, handleClickFavorite, isAuthenticated, isWishlistLoaded, location.state, navigate, wishlist]);
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {
@@ -189,8 +197,10 @@ const HomeMain = () => {
 	}, [userId]);
 	useEffect(() => {
 		const fetchWishlists = async () => {
+			setWishlistLoadedKey(null);
 			if (!isAuthenticated || !userId) {
 				setWishlist([]);
+				setWishlistLoadedKey(isAuthenticated ? "authenticated-pending" : "guest");
 				return;
 			}
 
@@ -201,6 +211,8 @@ const HomeMain = () => {
 				}
 			} catch (err) {
 				console.error(err);
+			} finally {
+				setWishlistLoadedKey(`user:${userId}`);
 			}
 		};
 		fetchWishlists();

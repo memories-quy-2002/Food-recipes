@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
 	beginAuthIntent,
 	clearAuthIntent,
+	clearAuthIntentIfUnchanged,
 	consumeAuthIntent,
 	isSafeInternalPath,
 	isMatchingSaveRecipeIntent,
@@ -42,6 +43,25 @@ describe("authentication return intent", () => {
 			recipeId: "7",
 		});
 		expect(consumeAuthIntent()).toBeNull();
+	});
+
+	it("expires intents after the bounded auth-flow lifetime", () => {
+		window.sessionStorage.setItem(
+			"food-recipes:auth-intent",
+			JSON.stringify({ returnTo: "/recipe?id=7", createdAt: Date.now() - 11 * 60 * 1000 })
+		);
+
+		expect(consumeAuthIntent()).toBeNull();
+	});
+
+	it("only clears the auth intent snapshot that the account flow entered with", () => {
+		beginAuthIntent({ returnTo: "/recipe?id=7", action: "saveRecipe", recipeId: 7 });
+		const original = window.sessionStorage.getItem("food-recipes:auth-intent");
+
+		beginAuthIntent({ returnTo: "/food/add" });
+		clearAuthIntentIfUnchanged(original);
+
+		expect(consumeAuthIntent()).toEqual({ returnTo: "/food/add" });
 	});
 
 	it("clears malformed or explicitly cleared intents", () => {

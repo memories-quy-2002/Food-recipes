@@ -289,6 +289,55 @@ test("guest Save action redirects from recipe detail to login", async ({ page })
 	await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
 });
 
+test("leaving Account clears an abandoned save intent before a later login", async ({ page }) => {
+	await page.goto("/recipe?id=1");
+	await page.getByRole("button", { name: "Add to favorite" }).click();
+	await expect(page).toHaveURL(/\/account\?signup=false$/);
+
+	await page.goto("/");
+	await page.route("**/auth/login", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
+		})
+	);
+	await page.goto("/account?signup=false");
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+
+	await expect(page).toHaveURL(/\/$/);
+});
+
+test("guest Home Save preserves the query path through login and saves once", async ({ page }) => {
+	let saved = false;
+	await page.route("**/auth/login", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
+		})
+	);
+	await page.route("**/users/7/wishlist", (route) => {
+		if (route.request().method() === "GET") {
+			return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: saved ? [{ recipe_id: 1 }] : [] }) });
+		}
+		if (route.request().method() === "POST") saved = true;
+		return route.fulfill({ status: 200, body: "{}" });
+	});
+
+	await page.goto("/?q=Chocolate");
+	await page.getByRole("button", { name: "Add to favorite" }).first().click();
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+
+	await expect(page).toHaveURL(/\/\?q=Chocolate$/);
+	await expect(page.getByRole("button", { name: "Remove from favorite" }).first()).toBeVisible();
+	await expect.poll(() => saved).toBe(true);
+});
+
 test("guest Save returns to the same recipe and completes only that save intent", async ({ page }) => {
 	let saved = false;
 	await page.route("**/auth/login", (route) =>
@@ -327,6 +376,66 @@ test("guest Save returns to the same recipe and completes only that save intent"
 	await expect(page).toHaveURL(/\/recipe\?id=1$/);
 	await expect(page.getByRole("button", { name: "Remove from favorite" })).toBeVisible();
 	await expect.poll(() => saved).toBe(true);
+});
+
+test("guest Save does not duplicate an already-saved recipe while wishlist loads", async ({ page }) => {
+	let postCount = 0;
+	await page.route("**/auth/login", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
+		})
+	);
+	await page.route("**/users/7/wishlist", (route) => {
+		if (route.request().method() === "GET") {
+			return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: [{ recipe_id: 1 }] }) });
+		}
+		if (route.request().method() === "POST") postCount += 1;
+		return route.fulfill({ status: 200, body: "{}" });
+	});
+
+	await page.goto("/recipe?id=1");
+	await page.getByRole("button", { name: "Add to favorite" }).click();
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
+	await expect(page.getByRole("button", { name: "Remove from favorite" })).toBeVisible();
+	await expect.poll(() => postCount).toBe(0);
+});
+
+test("guest Save waits for the recipe wishlist request before consuming the save intent", async ({ page }) => {
+	let postCount = 0;
+	let releaseWishlist;
+	const wishlistReady = new Promise((resolve) => { releaseWishlist = resolve; });
+	await page.route("**/auth/login", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" }, token: "test-scoped-login-token" }),
+		})
+	);
+	await page.route("**/users/7/wishlist", async (route) => {
+		if (route.request().method() === "GET") {
+			await wishlistReady;
+			return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: [] }) });
+		}
+		if (route.request().method() === "POST") postCount += 1;
+		return route.fulfill({ status: 200, body: "{}" });
+	});
+
+	await page.goto("/recipe?id=1");
+	await page.getByRole("button", { name: "Add to favorite" }).click();
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
+	await expect.poll(() => postCount).toBe(0);
+
+	releaseWishlist();
+	await expect.poll(() => postCount).toBe(1);
 });
 
 test("guest access to Saved and Add Recipe returns to the protected path after login", async ({ page }) => {
@@ -375,6 +484,10 @@ test("guest access to Saved and Add Recipe returns to the protected path after l
 	});
 	await page.goto("/food/add");
 	await expect(page).toHaveURL(/\/account\?signup=false$/);
+	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
+	await page.getByPlaceholder("Password").fill("password123");
+	await page.getByRole("button", { name: "Log in" }).click();
+	await expect(page).toHaveURL(/\/food\/add$/);
 });
 
 test("guest enters, navigates, and exits guided cooking mode", async ({ page }) => {
