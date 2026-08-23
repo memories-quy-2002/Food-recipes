@@ -11,6 +11,23 @@ type SqlQuery = {
 
 describe('Ratings module wiring', () => {
   const database = {
+    user: {
+      findUnique: jest.fn(async ({ where }: { where: { id?: number; email?: string } }) => {
+        const id = where.id ?? 7;
+        return {
+          id,
+          fullName: id === 42 ? 'Recipe Author' : 'Ada Cook',
+          password: 'unused-in-ratings-e2e',
+          email: where.email ?? (id === 42 ? 'author@example.com' : 'ada@example.com'),
+          createdOn: new Date('2026-01-01T00:00:00.000Z'),
+          lastLogin: null,
+          phone: null,
+          address: null,
+          role: 'user',
+          emailVerifiedAt: null,
+        };
+      }),
+    },
     $queryRaw: jest.fn(async (query: SqlQuery) => {
       const sql = query.strings.join(' ').replace(/\s+/g, ' ');
       if (sql.includes('SELECT user_id') && sql.includes('FROM recipes')) {
