@@ -8,6 +8,7 @@ import FoodContent, {
 
 vi.mock("react-router-dom", () => ({
 	useNavigate: () => vi.fn(),
+	Link: ({ children, ...props }) => <a {...props}>{children}</a>,
 }));
 
 const recipes = [
@@ -54,6 +55,24 @@ describe("FoodContent", () => {
 			);
 		});
 		expect(renderer.root.findByProps({ className: "food__content__empty" })).toBeTruthy();
+	});
+
+	it("keeps previous recipes visible and exposes an accessible updating state during a query transition", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<FoodContent
+					recipes={recipes}
+					queryState={{ page: 1, limit: 6, sort: "popular" }}
+					isFetching
+				/>
+			);
+		});
+
+		const content = renderer.root.findByProps({ className: "food__content" });
+		expect(content.props["aria-busy"]).toBe(true);
+		expect(renderer.root.findByProps({ className: "food__content__updating" })).toBeTruthy();
+		expect(renderer.root.findByProps({ className: "food__content__section__list food__content__section__list--grid" })).toBeTruthy();
 	});
 
 	it("identifies pagination when the compatibility response has more local rows", () => {

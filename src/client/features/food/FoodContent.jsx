@@ -25,7 +25,7 @@ const LoadingSkeleton = () => (
 	</div>
 );
 
-const FoodContent = ({ recipes = [], queryState, onQueryStateChange, isLoading = false, error = null }) => {
+const FoodContent = ({ recipes = [], queryState, onQueryStateChange, isLoading = false, isFetching = false, error = null }) => {
 	const navigate = useNavigate();
 	const [viewMode, setViewMode] = useState("grid");
 	const sortedRecipes = useMemo(() => sortRecipes(recipes, queryState.sort), [recipes, queryState.sort]);
@@ -35,7 +35,7 @@ const FoodContent = ({ recipes = [], queryState, onQueryStateChange, isLoading =
 	const listClassName = `food__content__section__list food__content__section__list--${viewMode}`;
 
 	return (
-		<div className="food__content" aria-live="polite">
+		<div className="food__content" aria-live="polite" aria-busy={isFetching}>
 			<div className="food__content__toolbar">
 				<div>
 					<span className="food__content__toolbar__eyebrow">Results</span>
@@ -52,6 +52,7 @@ const FoodContent = ({ recipes = [], queryState, onQueryStateChange, isLoading =
 					<button type="button" className="food__content__add" onClick={() => navigate("/food/add")}><BsPlusLg />Add recipe</button>
 				</div>
 			</div>
+			{isFetching && !isLoading && <div className="food__content__updating" role="status" aria-live="polite">Updating recipes…</div>}
 
 			{isLoading ? <LoadingSkeleton /> : error ? (
 				<div className="food__content__error"><h3>Recipe library could not load</h3><p>{error}</p></div>

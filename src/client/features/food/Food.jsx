@@ -63,7 +63,7 @@ const Food = () => {
 			{!filtersReady ? <PageState type={filtersError ? "error" : undefined} title={filtersError ? "Recipe filters could not load" : "Loading recipe filters"} message={filtersError || "Fetching categories and meal filters."} /> : (
 				<Row className="food__layout">
 					<Col lg={3} md={4} className="food__layout__aside"><FoodMenuBar categoryId={queryState.categoryId} mealId={queryState.mealId} searchTerm={queryState.q} categories={categories} meals={meals} onCategoryClick={(categoryId) => updateQueryState({ categoryId, page: 1 })} onMealClick={(mealId) => updateQueryState({ mealId, page: 1 })} onMenuAllClick={(name) => updateQueryState({ [name]: "", page: 1 })} onChangeSearchTerm={(event) => updateQueryState({ q: event.target.value, page: 1 })} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} /></Col>
-					<Col lg={9} md={8} className="food__layout__content"><Suspense fallback={<PageState title="Loading recipes" message="Preparing the recipe list." />}><FoodContent recipes={recipesQuery.data || []} queryState={queryState} onQueryStateChange={updateQueryState} isLoading={recipesQuery.isPending} error={recipesQuery.error?.response?.data?.message || recipesQuery.error?.message} /></Suspense></Col>
+					<Col lg={9} md={8} className="food__layout__content"><Suspense fallback={<PageState title="Loading recipes" message="Preparing the recipe list." />}><FoodContent recipes={recipesQuery.data || []} queryState={queryState} onQueryStateChange={updateQueryState} isLoading={recipesQuery.isPending} isFetching={recipesQuery.isFetching} error={recipesQuery.error?.response?.data?.message || recipesQuery.error?.message} /></Suspense></Col>
 				</Row>
 			)}
 		</Container>
