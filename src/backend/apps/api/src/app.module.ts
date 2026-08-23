@@ -11,6 +11,10 @@ import { RatingsModule } from './modules/ratings/ratings.module';
 import { RecipesModule } from './modules/recipes/recipes.module';
 import { TaxonomyModule } from './modules/taxonomy/taxonomy.module';
 import { WishlistModule } from './modules/wishlist/wishlist.module';
+import { CollectionsModule } from './modules/collections/collections.module';
+import { ReportsModule } from './modules/reports/reports.module';
+import { PlanningModule } from './modules/planning/planning.module';
+import { MediaModule } from './modules/media/media.module';
 
 @Module({
   imports: [
@@ -27,6 +31,10 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     TaxonomyModule,
     RatingsModule,
     WishlistModule,
+    CollectionsModule,
+    ReportsModule,
+    PlanningModule,
+    MediaModule,
   ],
 })
 export class AppModule {}

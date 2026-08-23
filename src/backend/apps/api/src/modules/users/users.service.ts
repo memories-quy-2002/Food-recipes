@@ -19,6 +19,8 @@ export type PublicUser = {
   last_login: Date | null;
   phone: string | null;
   address: string | null;
+  role?: 'user' | 'admin';
+  email_verified?: boolean;
 };
 
 @Injectable()
@@ -103,6 +105,15 @@ export class UsersService {
     );
   }
 
+  markEmailVerified(userId: number): Promise<void> {
+    if (!this.repository.markEmailVerified) return Promise.resolve();
+    return this.repository.markEmailVerified(userId);
+  }
+
+  updatePassword(userId: number, password: string): Promise<void> {
+    return this.repository.updatePassword(userId, password);
+  }
+
   toPublicUser(user: User): PublicUser {
     return {
       user_id: user.id,
@@ -112,6 +123,8 @@ export class UsersService {
       last_login: user.lastLogin,
       phone: user.phone,
       address: user.address,
+      role: user.role === 'admin' ? 'admin' : 'user',
+      email_verified: Boolean(user.emailVerifiedAt),
     };
   }
 }

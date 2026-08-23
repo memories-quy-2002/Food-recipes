@@ -8,6 +8,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { AuthSessionRepository, AUTH_SESSION_REPOSITORY } from './auth-session.repository';
+import { AuthThrottleGuard } from '../../common/security/auth-throttle.guard';
+import { AuthThrottleService } from '../../common/security/auth-throttle.service';
+import { RolesGuard } from './guards/roles.guard';
+import { RECOVERY_DELIVERY, RecoveryDeliveryService } from './recovery-delivery.service';
 
 @Module({
   imports: [
@@ -21,13 +26,24 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         secret: config.getOrThrow<string>('auth.jwtSecret'),
         signOptions: {
           expiresIn: (config.get<string>('auth.jwtExpiresIn') ??
-            '1d') as NonNullable<JwtModuleOptions['signOptions']>['expiresIn'],
+            '15m') as NonNullable<JwtModuleOptions['signOptions']>['expiresIn'],
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, JwtStrategy],
-  exports: [AuthService, JwtAuthGuard],
+  providers: [
+    AuthService,
+    JwtAuthGuard,
+    JwtStrategy,
+    AuthSessionRepository,
+    { provide: AUTH_SESSION_REPOSITORY, useExisting: AuthSessionRepository },
+    AuthThrottleService,
+    AuthThrottleGuard,
+    RolesGuard,
+    RecoveryDeliveryService,
+    { provide: RECOVERY_DELIVERY, useExisting: RecoveryDeliveryService },
+  ],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, AuthThrottleService, AuthThrottleGuard],
 })
 export class AuthModule {}

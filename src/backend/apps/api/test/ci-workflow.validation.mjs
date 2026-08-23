@@ -113,12 +113,14 @@ assert.match(jobs.static, /ci-workflow\.validation\.mjs/);
 assert.match(jobs.static, /prisma-baseline\.validation\.mjs/);
 assert.match(jobs.static, /recipe-duration-migration\.validation\.mjs/);
 assert.match(jobs.static, /docker-infrastructure\.validation\.mjs/);
+assert.match(jobs.static, /backend-product-security\.validation\.mjs/);
 assertJobContains('prisma', /prisma validate --config prisma\.ci\.config\.ts/);
 assertJobContains('prisma', /prisma generate --config prisma\.ci\.config\.ts/);
 assertJobContains('prisma', /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/);
 assertJobContains('prisma', /trap 'rm -f apps\/api\/prisma\.ci\.config\.ts' EXIT/);
 assertJobContains('api-quality', /pnpm typecheck\s*$/m);
 assertJobContains('api-quality', /pnpm test\s*$/m);
+assertJobContains('api-quality', /pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx/);
 assertJobContains('contract-e2e', /pnpm test:e2e\s*$/m);
 assertJobContains('frontend', /pnpm build/);
 assert.match(

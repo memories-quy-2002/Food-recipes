@@ -40,6 +40,12 @@ export class PublicUserResponseDto {
 
   @ApiProperty({ type: String, example: 'London', nullable: true })
   address!: string | null;
+
+  @ApiProperty({ enum: ['user', 'admin'], example: 'user' })
+  role!: 'user' | 'admin';
+
+  @ApiProperty({ example: false })
+  email_verified!: boolean;
 }
 
 export class AuthResponseDto {
@@ -277,4 +283,128 @@ export class WishlistItemResponseDto {
 export class WishlistResponseDto {
   @ApiProperty({ type: [WishlistItemResponseDto] })
   wishlist!: WishlistItemResponseDto[];
+}
+
+export class CollectionResponseDto {
+  @ApiProperty({ example: 4 })
+  collection_id!: number;
+
+  @ApiProperty({ example: 'Weeknight dinners' })
+  name!: string;
+
+  @ApiProperty({ example: 12 })
+  recipe_count!: number;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updated_at!: string;
+}
+
+export class CollectionsResponseDto {
+  @ApiProperty({ type: [CollectionResponseDto] })
+  collections!: CollectionResponseDto[];
+}
+
+export class ReviewReportResponseDto {
+  @ApiProperty({ example: 9 })
+  report_id!: number;
+
+  @ApiProperty({ example: 21 })
+  rating_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'spam' })
+  reason!: string;
+
+  @ApiProperty({ example: 'open' })
+  status!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  created_at!: string;
+}
+
+export class MealPlanItemResponseDto {
+  @ApiProperty({ example: 12 })
+  item_id!: number;
+
+  @ApiProperty({ example: 4 })
+  plan_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Pasta Carbonara' })
+  recipe_name!: string;
+
+  @ApiProperty({ example: '2026-08-25', format: 'date' })
+  planned_date!: string;
+
+  @ApiProperty({ example: 'dinner' })
+  slot!: string;
+
+  @ApiProperty({ example: 4 })
+  servings!: number;
+}
+
+export class MealPlanResponseDto {
+  @ApiProperty({ example: 4 })
+  plan_id!: number;
+
+  @ApiProperty({ example: 'Weekly family meals' })
+  name!: string;
+
+  @ApiProperty({ example: '2026-08-24', format: 'date' })
+  start_date!: string;
+
+  @ApiProperty({ example: '2026-08-30', format: 'date' })
+  end_date!: string;
+
+  @ApiProperty({ type: [MealPlanItemResponseDto] })
+  items?: MealPlanItemResponseDto[];
+}
+
+export class ShoppingListItemResponseDto {
+  @ApiProperty({ example: 4 })
+  item_id!: number;
+
+  @ApiProperty({ example: 'Tomatoes' })
+  label!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: '500 g' })
+  quantity!: string | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 15 })
+  source_recipe_id!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Pasta Carbonara' })
+  source_recipe_name!: string | null;
+
+  @ApiProperty({ example: false })
+  checked!: boolean;
+}
+
+export class ShoppingListResponseDto {
+  @ApiProperty({ type: [ShoppingListItemResponseDto] })
+  items!: ShoppingListItemResponseDto[];
+}
+
+export class UploadGrantResponseDto {
+  @ApiProperty({ example: 'https://storage.example/upload/sign/recipes%2F7%2Fimage.webp' })
+  uploadUrl!: string;
+
+  @ApiProperty({ example: 'recipes/7/1f8a8c2d.webp' })
+  objectPath!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  expiresAt!: string;
+
+  @ApiProperty({ example: 'image/webp' })
+  contentType!: string;
+
+  @ApiProperty({ example: 5242880 })
+  maxBytes!: number;
 }

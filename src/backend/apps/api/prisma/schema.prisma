@@ -15,6 +15,8 @@ model User {
   lastLogin DateTime? @map("last_login") @db.Timestamp(6)
   phone     String?   @db.VarChar(20)
   address   String?   @db.VarChar(255)
+  role      String    @default("user") @db.VarChar(16)
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamp(6)
 
   @@map("accounts")
 }
@@ -73,4 +75,116 @@ model Rating {
 
   @@unique([userId, recipeId], map: "unique_user_recipe_pair")
   @@map("rating")
+}
+
+model SavedCollection {
+  id        Int      @id @default(autoincrement()) @map("collection_id")
+  userId    Int      @map("user_id")
+  name      String   @db.VarChar(80)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("saved_collections")
+}
+
+model SavedCollectionItem {
+  id           Int      @id @default(autoincrement()) @map("collection_item_id")
+  collectionId Int      @map("collection_id")
+  recipeId     Int      @map("recipe_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([collectionId, recipeId], map: "saved_collection_recipe_key")
+  @@map("saved_collection_items")
+}
+
+model ReviewReport {
+  id             Int       @id @default(autoincrement()) @map("report_id")
+  ratingId       Int       @map("rating_id")
+  recipeId       Int       @map("recipe_id")
+  reporterUserId Int       @map("reporter_user_id")
+  reason         String    @db.VarChar(32)
+  details        String?   @db.VarChar(1000)
+  status         String    @default("open") @db.VarChar(16)
+  resolutionNote String?   @map("resolution_note") @db.VarChar(1000)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  resolvedAt     DateTime? @map("resolved_at") @db.Timestamp(6)
+  resolvedBy     Int?      @map("resolved_by")
+
+  @@map("review_reports")
+}
+
+model MealPlan {
+  id        Int      @id @default(autoincrement()) @map("plan_id")
+  userId    Int      @map("user_id")
+  name      String   @db.VarChar(80)
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("meal_plans")
+}
+
+model MealPlanItem {
+  id           Int      @id @default(autoincrement()) @map("item_id")
+  planId       Int      @map("plan_id")
+  recipeId     Int      @map("recipe_id")
+  plannedDate  DateTime @map("planned_date") @db.Date
+  slot         String   @db.VarChar(16)
+  servings     Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@map("meal_plan_items")
+}
+
+model ShoppingListItem {
+  id             Int      @id @default(autoincrement()) @map("item_id")
+  userId         Int      @map("user_id")
+  label          String   @db.VarChar(255)
+  quantity       String?  @db.VarChar(80)
+  sourceRecipeId Int?     @map("source_recipe_id")
+  checked        Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("shopping_list_items")
+}
+
+model AuthSession {
+  id         Int       @id @default(autoincrement()) @map("session_id")
+  userId     Int       @map("user_id")
+  familyId   String    @map("family_id") @db.VarChar(64)
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamp(6)
+  replacedBy Int?      @map("replaced_by")
+
+  @@index([userId, revokedAt])
+  @@index([familyId])
+  @@map("auth_sessions")
+}
+
+model PasswordResetToken {
+  id         Int       @id @default(autoincrement()) @map("token_id")
+  userId     Int       @map("user_id")
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamp(6)
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model EmailVerificationToken {
+  id         Int       @id @default(autoincrement()) @map("token_id")
+  userId     Int       @map("user_id")
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamp(6)
+
+  @@index([userId, expiresAt])
+  @@map("email_verification_tokens")
 }

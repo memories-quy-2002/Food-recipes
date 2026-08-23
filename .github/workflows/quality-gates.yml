@@ -30,6 +30,7 @@ jobs:
           node src/backend/apps/api/test/prisma-baseline.validation.mjs
           node src/backend/apps/api/test/recipe-duration-migration.validation.mjs
           node src/backend/apps/api/test/docker-infrastructure.validation.mjs
+          node src/backend/apps/api/test/backend-product-security.validation.mjs
 
   prisma:
     name: Prisma validate and generate
@@ -105,6 +106,11 @@ jobs:
       - name: Run API unit tests
         working-directory: src/backend
         run: pnpm test
+      - name: Audit backend dependencies
+        working-directory: src/backend
+        # Prisma 7.9.1 currently pins deepmerge-ts 7.x; keep this upstream
+        # tooling advisory explicit until Prisma publishes a patched pin.
+        run: pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx
 
   contract-e2e:
     name: API contract E2E

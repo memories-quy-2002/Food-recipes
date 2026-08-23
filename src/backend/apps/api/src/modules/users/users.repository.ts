@@ -17,6 +17,7 @@ export interface UserRepository {
     data: { name: string; phoneNumber?: string; address?: string },
   ): Promise<User>;
   updatePassword(userId: number, password: string): Promise<void>;
+  markEmailVerified?(userId: number): Promise<void>;
 }
 
 @Injectable()
@@ -59,5 +60,9 @@ export class UsersRepository implements UserRepository {
 
   async updatePassword(userId: number, password: string): Promise<void> {
     await this.prisma.user.update({ where: { id: userId }, data: { password } });
+  }
+
+  async markEmailVerified(userId: number): Promise<void> {
+    await this.prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: new Date() } });
   }
 }

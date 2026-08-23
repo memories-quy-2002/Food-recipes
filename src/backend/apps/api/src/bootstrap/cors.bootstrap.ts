@@ -6,6 +6,10 @@ export const configureCors = (app: INestApplication): void => {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+  if (origins.includes('*')) {
+    throw new Error('CORS_ORIGINS cannot contain * when credentials are enabled');
+  }
+
   app.enableCors({
     origin: origins,
     credentials: true,
