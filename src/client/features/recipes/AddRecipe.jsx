@@ -21,7 +21,71 @@ import { RecipeContext } from "@/app/RecipeProvider";
 import { useToast } from "@/app/ToastProvider";
 import { useNavigate } from "react-router-dom";
 
-const OTHER_OPTION = "__other__";
+const DURATION_UNITS = new Set(["seconds", "minutes", "hours", "days"]);
+
+const normalizeCatalogName = (value) => String(value || "").trim().toLowerCase();
+
+const hasSupportedCatalogValue = (value, items) => {
+	const normalizedValue = normalizeCatalogName(value);
+
+	return Boolean(
+		normalizedValue &&
+		items.some((item) =>
+			normalizeCatalogName(item.name ?? item.category_name ?? item.meal_name) ===
+				normalizedValue
+		)
+	);
+};
+
+const hasPositiveDuration = (time) =>
+	Number.isFinite(Number(time?.number)) &&
+	Number(time.number) > 0 &&
+	DURATION_UNITS.has(time?.unit);
+
+export const validateRecipeForm = (
+	recipe,
+	{ categories = [], meals = [], isPublishing = true } = {}
+) => {
+	const errors = [];
+	const ingredients = (recipe.recipeIngredients || [])
+		.map((ingredient) => String(ingredient || "").trim())
+		.filter(Boolean);
+	const instructions = (recipe.recipeInstructions || [])
+		.map((instruction) => String(instruction || "").trim())
+		.filter(Boolean);
+
+	if (!String(recipe.recipeName || "").trim()) {
+		errors.push("Recipe name is required.");
+	}
+	if (!hasSupportedCatalogValue(recipe.recipeCategoryName, categories)) {
+		errors.push("Choose a supported category.");
+	}
+	if (!hasSupportedCatalogValue(recipe.recipeMealName, meals)) {
+		errors.push("Choose a supported meal.");
+	}
+	if (!ingredients.length) {
+		errors.push("Add at least one ingredient.");
+	}
+	if (!instructions.length) {
+		errors.push("Add at least one instruction.");
+	}
+	if (!hasPositiveDuration(recipe.recipePrepTime)) {
+		errors.push("Preparation time must be a positive number.");
+	}
+	if (!hasPositiveDuration(recipe.recipeCookTime)) {
+		errors.push("Cooking time must be a positive number.");
+	}
+	if (isPublishing && !recipe.recipeImage) {
+		errors.push("Choose a recipe image before publishing.");
+	} else if (
+		isPublishing &&
+		!String(recipe.recipeImage?.type || "").startsWith("image/")
+	) {
+		errors.push("Choose a valid recipe image before publishing.");
+	}
+
+	return { errors };
+};
 
 const AddRecipe = () => {
 	const { auth } = useContext(AuthContext);
@@ -35,8 +99,8 @@ const AddRecipe = () => {
 		recipeCategoryName: "",
 		recipeMealName: "",
 		recipeDescription: "",
-		recipeIngredients: ["", "", ""],
-		recipeInstructions: ["", "", ""],
+		recipeIngredients: [""],
+		recipeInstructions: [""],
 		recipePrepTime: {
 			number: 15,
 			unit: "minutes",
@@ -199,7 +263,7 @@ const AddRecipe = () => {
 		setSelectedCategoryOption(value);
 		setFormRecipe((currentRecipe) => ({
 			...currentRecipe,
-			recipeCategoryName: value === OTHER_OPTION ? "" : value,
+			recipeCategoryName: value,
 		}));
 	};
 
@@ -210,7 +274,7 @@ const AddRecipe = () => {
 		setSelectedMealOption(value);
 		setFormRecipe((currentRecipe) => ({
 			...currentRecipe,
-			recipeMealName: value === OTHER_OPTION ? "" : value,
+			recipeMealName: value,
 		}));
 	};
 
@@ -250,11 +314,6 @@ const AddRecipe = () => {
 	const handleSubmit = async (event) => {
 		event.preventDefault();
 
-		if (!formRecipe.recipeImage) {
-			setSubmitError("Please choose a recipe image before publishing.");
-			return;
-		}
-
 		const cleanedRecipe = {
 			...formRecipe,
 			recipeName: formRecipe.recipeName.trim(),
@@ -270,21 +329,13 @@ const AddRecipe = () => {
 			userId,
 		};
 
-		if (
-			!cleanedRecipe.recipeName ||
-			!cleanedRecipe.recipeCategoryName ||
-			!cleanedRecipe.recipeMealName ||
-			!cleanedRecipe.recipeDescription
-		) {
-			setSubmitError("Please fill in the recipe name, description, category, and meal.");
-			return;
-		}
-
-		if (
-			cleanedRecipe.recipeIngredients.length < 3 ||
-			cleanedRecipe.recipeInstructions.length < 3
-		) {
-			setSubmitError("Please add at least 3 ingredients and 3 instructions.");
+		const validation = validateRecipeForm(cleanedRecipe, {
+			categories,
+			meals,
+			isPublishing: true,
+		});
+		if (validation.errors.length) {
+			setSubmitError(validation.errors.join(" "));
 			return;
 		}
 
@@ -366,7 +417,10 @@ const AddRecipe = () => {
 							</div>
 						)}
 						{submitError && (
-							<div className="add__container__notice add__container__notice--error">
+							<div
+								className="add__container__notice add__container__notice--error"
+								role="alert"
+							>
 								<strong>Recipe was not published</strong>
 								<p>{submitError}</p>
 							</div>
@@ -375,8 +429,8 @@ const AddRecipe = () => {
 							<div className="add__container__notice add__container__notice--warning">
 								<strong>Lists could not load</strong>
 								<p>
-									{listError} You can still choose <strong>Other</strong>
-									&nbsp;and type a new category or meal manually.
+									{listError} Publishing requires a category and meal from
+									the supported lists.
 								</p>
 							</div>
 						)}
@@ -484,24 +538,7 @@ const AddRecipe = () => {
 													{name}
 												</option>
 											))}
-											<option value={OTHER_OPTION}>Other</option>
-										</Form.Select>
-										{selectedCategoryOption === OTHER_OPTION && (
-											<>
-												<Form.Control
-													type="text"
-													name="recipeCategoryName"
-													value={formRecipe.recipeCategoryName}
-													onChange={handleInputChange}
-													placeholder="Type a new category"
-													className="mt-2"
-													required
-												/>
-												<p className="add__container__form__hint">
-													New categories are saved and reused for later recipes.
-												</p>
-											</>
-										)}
+											</Form.Select>
 									</Form.Group>
 								</Col>
 								<Col md={6}>
@@ -524,24 +561,7 @@ const AddRecipe = () => {
 													{name}
 												</option>
 											))}
-											<option value={OTHER_OPTION}>Other</option>
-										</Form.Select>
-										{selectedMealOption === OTHER_OPTION && (
-											<>
-												<Form.Control
-													type="text"
-													name="recipeMealName"
-													value={formRecipe.recipeMealName}
-													onChange={handleInputChange}
-													placeholder="Type a new meal"
-													className="mt-2"
-													required
-												/>
-												<p className="add__container__form__hint">
-													New meals are added to the database when you publish.
-												</p>
-											</>
-										)}
+											</Form.Select>
 									</Form.Group>
 								</Col>
 							</Row>
@@ -558,6 +578,7 @@ const AddRecipe = () => {
 									onChange={handleTimeNumberChange}
 									className="add__container__form__time__input"
 									min="1"
+									step="any"
 								/>
 								<Form.Select
 									value={formRecipe.recipePrepTime.unit}
@@ -583,6 +604,7 @@ const AddRecipe = () => {
 									onChange={handleTimeNumberChange}
 									className="add__container__form__time__input"
 									min="1"
+									step="any"
 								/>
 								<Form.Select
 									value={formRecipe.recipeCookTime.unit}
@@ -638,14 +660,13 @@ const AddRecipe = () => {
 												}
 											/>
 
-											<button
-												name="recipeIngredients"
-												className="btn btn-danger"
-												type="button"
-												disabled={
-													formRecipe.recipeIngredients
-														.length <= 3
-												}
+													<button
+														name="recipeIngredients"
+														className="btn btn-danger"
+														type="button"
+														disabled={
+															formRecipe.recipeIngredients.length <= 1
+														}
 												onClick={(event) =>
 													handleDeleteField(
 														event,
@@ -697,15 +718,13 @@ const AddRecipe = () => {
 												}
 											/>
 
-											<button
-												name="recipeInstructions"
-												className="btn btn-danger"
-												type="button"
-												disabled={
-													formRecipe
-														.recipeInstructions
-														.length <= 3
-												}
+													<button
+														name="recipeInstructions"
+														className="btn btn-danger"
+														type="button"
+														disabled={
+															formRecipe.recipeInstructions.length <= 1
+														}
 												onClick={(event) =>
 													handleDeleteField(
 														event,
