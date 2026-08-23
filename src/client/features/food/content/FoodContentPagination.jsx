@@ -4,14 +4,15 @@ import Pagination from "react-bootstrap/Pagination";
 const FoodContentPagination = ({
 	recipesPerPage,
 	totalRecipes,
+	totalPages: providedTotalPages,
 	onPagination,
 	currentPage,
 }) => {
 	const pageNumbers = [];
-	for (let i = 1; i <= Math.ceil(totalRecipes / recipesPerPage); i++) {
+	const totalPages = providedTotalPages ?? Math.ceil(totalRecipes / recipesPerPage);
+	for (let i = 1; i <= totalPages; i++) {
 		pageNumbers.push(i);
 	}
-	const totalPages = Math.ceil(totalRecipes / recipesPerPage);
 	const firstPage = Math.max(currentPage - 2, 1);
 	const lastPage = Math.min(firstPage + 4, totalPages);
 

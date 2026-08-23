@@ -33,7 +33,7 @@ import { RecipesService } from './recipes.service';
 import {
   ApiErrorResponseDto,
   RecipeDetailResponseDto,
-  RecipeListResponseDto,
+  PaginatedRecipeListResponseDto,
 } from '../../common/swagger/response.schemas';
 import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
 
@@ -46,7 +46,7 @@ export class RecipesController {
   @Get()
   @ApiOperation({ summary: 'List recipes' })
   @ApiBadRequestResponse({ description: 'Recipe query is invalid', type: ApiErrorResponseDto })
-  @ApiOkResponse({ description: 'Recipes matching the filters', type: RecipeListResponseDto })
+  @ApiOkResponse({ description: 'Recipes matching the filters', type: PaginatedRecipeListResponseDto })
   list(@Query() query: RecipeQueryDto) {
     return this.recipesService.list(query);
   }

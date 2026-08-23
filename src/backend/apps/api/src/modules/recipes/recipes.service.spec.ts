@@ -13,6 +13,18 @@ describe('RecipesService', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
+  it('returns recipes with server-side pagination metadata', async () => {
+    const result = {
+      recipes: [{ recipe_id: 15 }],
+      pagination: { page: 2, limit: 6, total: 13, totalPages: 3, hasNext: true },
+    };
+    repository.list.mockResolvedValue(result);
+    const service = new RecipesService(repository);
+
+    await expect(service.list({ page: 2, limit: 6 })).resolves.toEqual(result);
+    expect(repository.list).toHaveBeenCalledWith({ page: 2, limit: 6 });
+  });
+
   it('returns the native minute duration contract including total time', async () => {
     const recipe = {
       prep_time_minutes: 15,

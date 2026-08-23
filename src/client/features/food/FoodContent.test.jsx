@@ -106,4 +106,24 @@ describe("FoodContent", () => {
 			totalPages: 2,
 		});
 	});
+
+	it("renders a server-paginated page directly without sorting or slicing it again", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<FoodContent
+					recipes={[recipes[2], recipes[1]]}
+					pagination={{ page: 2, limit: 2, total: 4, totalPages: 2, hasNext: false }}
+					queryState={{ page: 2, limit: 2, sort: "name" }}
+				/>
+			);
+		});
+
+		expect(renderer.root.findByProps({ "aria-label": "Open Toast" })).toBeTruthy();
+		expect(renderer.root.findByProps({ "aria-label": "Open Soup" })).toBeTruthy();
+		expect(renderer.root.findAllByType("a")
+			.map(({ props }) => props["aria-label"])
+			.filter(Boolean)).toEqual(["Open Toast", "Open Soup"]);
+		expect(renderer.root.findAllByType("h2")[0].props.children).toBe("4 recipes found");
+	});
 });

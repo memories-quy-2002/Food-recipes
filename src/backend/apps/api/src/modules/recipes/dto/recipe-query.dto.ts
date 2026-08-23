@@ -6,6 +6,7 @@ export const RECIPE_SORTS = ['popular', 'rating', 'name'] as const;
 export type RecipeSort = (typeof RECIPE_SORTS)[number];
 export const DEFAULT_RECIPE_PAGE = 1;
 export const DEFAULT_RECIPE_LIMIT = 20;
+export const MAX_RECIPE_PAGE = 1_000_000;
 export const MAX_RECIPE_LIMIT = 100;
 
 export class RecipeQueryDto {
@@ -41,11 +42,12 @@ export class RecipeQueryDto {
   @IsIn(RECIPE_SORTS)
   sort?: RecipeSort;
 
-  @ApiPropertyOptional({ default: DEFAULT_RECIPE_PAGE, minimum: 1 })
+  @ApiPropertyOptional({ default: DEFAULT_RECIPE_PAGE, minimum: 1, maximum: MAX_RECIPE_PAGE })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(MAX_RECIPE_PAGE)
   page?: number;
 
   @ApiPropertyOptional({

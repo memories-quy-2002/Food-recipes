@@ -5,6 +5,7 @@ import { CreateRecipeDto } from './dto/create-recipe.dto';
 import {
   DEFAULT_RECIPE_LIMIT,
   DEFAULT_RECIPE_PAGE,
+  MAX_RECIPE_PAGE,
   MAX_RECIPE_LIMIT,
   RecipeQueryDto,
   RecipeSort,
@@ -33,8 +34,21 @@ export type RecipeRecord = {
   num_ratings?: number;
 };
 
+export type RecipePagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
+export type RecipeListResult = {
+  recipes: RecipeRecord[];
+  pagination: RecipePagination;
+};
+
 export interface RecipesRepositoryPort {
-  list(query: RecipeQueryDto): Promise<RecipeRecord[]>;
+  list(query: RecipeQueryDto): Promise<RecipeListResult>;
   findById(id: number): Promise<RecipeRecord | null>;
   findByUserId(userId: number): Promise<RecipeRecord[]>;
   create(userId: number, dto: CreateRecipeDto): Promise<RecipeRecord>;
@@ -77,7 +91,9 @@ const toJsonSafeRecipe = (recipe: RecipeRecord): RecipeRecord => {
 };
 
 const normalizePage = (page: number | undefined): number =>
-  Number.isSafeInteger(page) && (page as number) >= 1 ? (page as number) : DEFAULT_RECIPE_PAGE;
+  Number.isSafeInteger(page) && (page as number) >= 1
+    ? Math.min(page as number, MAX_RECIPE_PAGE)
+    : DEFAULT_RECIPE_PAGE;
 
 const normalizeLimit = (limit: number | undefined): number =>
   Number.isInteger(limit) && (limit as number) >= 1
@@ -88,7 +104,7 @@ const normalizeLimit = (limit: number | undefined): number =>
 export class RecipesRepository implements RecipesRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async list(query: RecipeQueryDto): Promise<RecipeRecord[]> {
+  async list(query: RecipeQueryDto): Promise<RecipeListResult> {
     const conditions: Prisma.Sql[] = [Prisma.sql`1 = 1`];
     const searchTerm = query.q?.trim() || query.search?.trim();
     if (searchTerm) {
@@ -103,6 +119,15 @@ export class RecipesRepository implements RecipesRepositoryPort {
     const page = normalizePage(query.page);
     const limit = normalizeLimit(query.limit);
     const offset = (page - 1) * limit;
+
+    const countRows = await this.prisma.$queryRaw<{ total: number | bigint }[]>(Prisma.sql`
+      SELECT COUNT(*)::int AS total
+      FROM recipes r
+      JOIN meals m ON m.meal_id = r.meal_id
+      JOIN categories c ON c.category_id = r.category_id
+      WHERE ${Prisma.join(conditions, ' AND ')}
+    `);
+    const total = toSafeInteger(countRows[0]?.total ?? 0);
 
     const rows = await this.prisma.$queryRaw<RecipeRecord[]>(Prisma.sql`
       SELECT
@@ -133,7 +158,17 @@ export class RecipesRepository implements RecipesRepositoryPort {
       OFFSET ${offset}
     `);
 
-    return rows.map(toJsonSafeRecipe);
+    const totalPages = Math.ceil(total / limit);
+    return {
+      recipes: rows.map(toJsonSafeRecipe),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+      },
+    };
   }
 
   async findById(id: number): Promise<RecipeRecord | null> {

@@ -45,8 +45,17 @@ export type RecipeDetail = RecipeSummary & {
 	instructions: string[] | null;
 };
 
+export type RecipePagination = {
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
+	hasNext: boolean;
+};
+
 export type RecipeListResponse = {
 	recipes: RecipeSummary[];
+	pagination?: RecipePagination;
 };
 
 export type ApiErrorResponse = {

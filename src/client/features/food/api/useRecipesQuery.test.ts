@@ -1,9 +1,10 @@
 import { describe, expect, expectTypeOf, it } from "vitest";
-import type { RecipeSummary } from "@/shared/api/contracts";
+import type { RecipeListResponse } from "@/shared/api/contracts";
 import {
 	createRecipeQueryKey,
 	createRecipeRequestParams,
 	MAX_RECIPE_LIMIT,
+	MAX_RECIPE_PAGE,
 	parseRecipeListPayload,
 	parseRecipeDiscoveryState,
 	useRecipesQuery,
@@ -52,6 +53,13 @@ describe("recipe discovery query state", () => {
 		});
 	});
 
+	it("bounds URL page values so the server offset remains safe", () => {
+		const state = parseRecipeDiscoveryState("?page=999999999999");
+
+		expect(state.page).toBe(MAX_RECIPE_PAGE);
+		expect(createRecipeRequestParams(state)).toMatchObject({ page: MAX_RECIPE_PAGE });
+	});
+
 	it("includes every URL-derived value in the query key", () => {
 		const state = parseRecipeDiscoveryState("?q=soup&page=3");
 
@@ -60,7 +68,7 @@ describe("recipe discovery query state", () => {
 
 	it("exposes typed recipe summaries from the query", () => {
 		expectTypeOf<ReturnType<typeof useRecipesQuery>["data"]>().toEqualTypeOf<
-			RecipeSummary[] | undefined
+			RecipeListResponse | undefined
 		>();
 	});
 
@@ -90,6 +98,33 @@ describe("recipe discovery query state", () => {
 					},
 				],
 			})
-		).toHaveLength(2);
+		).toEqual({
+			recipes: [
+				expect.objectContaining({ recipe_id: 1 }),
+				expect.objectContaining({ recipe_id: 2 }),
+			],
+		});
+	});
+
+	it("parses pagination metadata without changing the recipe page", () => {
+		expect(
+			parseRecipeListPayload({
+				recipes: [{
+					recipe_id: 2,
+					recipe_name: "Page two soup",
+					recipe_description: null,
+					prep_time_minutes: 10,
+					cook_time_minutes: 20,
+					total_time_minutes: 30,
+					date_added: null,
+					image_url: null,
+					user_id: 7,
+				}],
+				pagination: { page: 2, limit: 1, total: 3, totalPages: 3, hasNext: true },
+			})
+		).toEqual({
+			recipes: [expect.objectContaining({ recipe_id: 2 })],
+			pagination: { page: 2, limit: 1, total: 3, totalPages: 3, hasNext: true },
+		});
 	});
 });

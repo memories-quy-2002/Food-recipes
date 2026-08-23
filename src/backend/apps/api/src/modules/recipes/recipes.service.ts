@@ -7,7 +7,12 @@ import {
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { RecipeQueryDto } from './dto/recipe-query.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
-import { RecipeRecord, RecipesRepository, RecipesRepositoryPort } from './recipes.repository';
+import {
+  RecipeListResult,
+  RecipeRecord,
+  RecipesRepository,
+  RecipesRepositoryPort,
+} from './recipes.repository';
 
 @Injectable()
 export class RecipesService {
@@ -16,8 +21,8 @@ export class RecipesService {
     private readonly repository: RecipesRepositoryPort,
   ) {}
 
-  async list(query: RecipeQueryDto): Promise<{ recipes: RecipeRecord[] }> {
-    return { recipes: await this.repository.list(query) };
+  async list(query: RecipeQueryDto): Promise<RecipeListResult> {
+    return this.repository.list(query);
   }
 
   async findById(id: number): Promise<{ recipe: RecipeRecord }> {

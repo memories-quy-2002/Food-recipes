@@ -25,11 +25,17 @@ const LoadingSkeleton = () => (
 	</div>
 );
 
-const FoodContent = ({ recipes = [], queryState, onQueryStateChange, isLoading = false, isFetching = false, error = null }) => {
+const FoodContent = ({ recipes = [], pagination, queryState, onQueryStateChange, isLoading = false, isFetching = false, error = null }) => {
 	const navigate = useNavigate();
 	const [viewMode, setViewMode] = useState("grid");
-	const sortedRecipes = useMemo(() => sortRecipes(recipes, queryState.sort), [recipes, queryState.sort]);
-	const visibleRecipes = getVisibleRecipes(sortedRecipes, queryState);
+	const isServerPaginated = Boolean(pagination);
+	const sortedRecipes = useMemo(
+		() => (isServerPaginated ? recipes : sortRecipes(recipes, queryState.sort)),
+		[isServerPaginated, recipes, queryState.sort]
+	);
+	const visibleRecipes = isServerPaginated ? sortedRecipes : getVisibleRecipes(sortedRecipes, queryState);
+	const totalRecipes = pagination?.total ?? sortedRecipes.length;
+	const totalPages = pagination?.totalPages ?? getRecipeContentState(sortedRecipes, queryState).totalPages;
 	const categories = useMemo(() => Array.from(new Map(visibleRecipes.map(({ category_id: id, category_name: name }) => [id, { id, name }])).values()).sort((a, b) => a.id - b.id), [visibleRecipes]);
 	const shouldGroupByCategory = Boolean(queryState.categoryId || queryState.mealId);
 	const listClassName = `food__content__section__list food__content__section__list--${viewMode}`;
@@ -64,7 +70,7 @@ const FoodContent = ({ recipes = [], queryState, onQueryStateChange, isLoading =
 				<div className={listClassName}>{visibleRecipes.map((recipe) => <FoodContentSectionItem key={recipe.recipe_id} recipe={recipe} />)}</div>
 			)}
 
-			{!isLoading && !error && sortedRecipes.length > queryState.limit && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={sortedRecipes.length} onPagination={(page) => onQueryStateChange({ page })} currentPage={queryState.page} />}
+			{!isLoading && !error && totalPages > 1 && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={totalRecipes} totalPages={totalPages} onPagination={(page) => onQueryStateChange({ page })} currentPage={queryState.page} />}
 		</div>
 	);
 };

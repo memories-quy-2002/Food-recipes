@@ -122,9 +122,31 @@ export class RecipeResponseDto {
   num_ratings?: number;
 }
 
+export class RecipePaginationResponseDto {
+  @ApiProperty({ example: 2, minimum: 1 })
+  page!: number;
+
+  @ApiProperty({ example: 6, minimum: 1, maximum: 100 })
+  limit!: number;
+
+  @ApiProperty({ example: 42, minimum: 0 })
+  total!: number;
+
+  @ApiProperty({ example: 7, minimum: 0 })
+  totalPages!: number;
+
+  @ApiProperty({ example: true })
+  hasNext!: boolean;
+}
+
 export class RecipeListResponseDto {
   @ApiProperty({ type: [RecipeResponseDto] })
   recipes!: RecipeResponseDto[];
+}
+
+export class PaginatedRecipeListResponseDto extends RecipeListResponseDto {
+  @ApiProperty({ type: RecipePaginationResponseDto })
+  pagination!: RecipePaginationResponseDto;
 }
 
 export class RecipeDetailResponseDto {

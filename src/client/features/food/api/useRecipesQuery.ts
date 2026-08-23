@@ -1,11 +1,12 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import type { RecipeSummary } from "@/shared/api/contracts";
+import type { RecipeListResponse, RecipePagination, RecipeSummary } from "@/shared/api/contracts";
 import type { QueryFunctionContext } from "@tanstack/react-query";
 
 export const RECIPE_DISCOVERY_ENDPOINT = (apiRoutes as { recipes: string }).recipes;
 export const DEFAULT_RECIPE_LIMIT = 6;
+export const MAX_RECIPE_PAGE = 1_000_000;
 export const MAX_RECIPE_LIMIT = 100;
 const supportedSorts = new Set(["popular", "rating", "name"]);
 
@@ -40,7 +41,7 @@ export const parseRecipeDiscoveryState = (
 		categoryId: params.get("categoryId") || params.get("categories") || "",
 		mealId: params.get("mealId") || params.get("meals") || "",
 		sort: supportedSorts.has(sort || "") ? (sort as RecipeDiscoveryState["sort"]) : "popular",
-		page: positiveInteger(params.get("page"), 1),
+		page: positiveInteger(params.get("page"), 1, MAX_RECIPE_PAGE),
 		limit: positiveInteger(params.get("limit"), DEFAULT_RECIPE_LIMIT, MAX_RECIPE_LIMIT),
 	};
 };
@@ -50,7 +51,9 @@ export const createRecipeQueryKey = (state: RecipeDiscoveryState) => ["recipes",
 export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
 	const params: Record<string, number | string> = {
 		sort: state.sort,
-		page: Number.isSafeInteger(state.page) && state.page > 0 ? state.page : 1,
+		page: Number.isSafeInteger(state.page) && state.page > 0
+			? Math.min(state.page, MAX_RECIPE_PAGE)
+			: 1,
 		limit: Math.min(Math.max(state.limit, 1), MAX_RECIPE_LIMIT),
 	};
 	if (state.q.trim()) {
@@ -87,20 +90,42 @@ const isRecipeSummary = (value: unknown): value is RecipeSummary => {
 	return hasCommonFields && (isLegacyDuration || isNestDuration);
 };
 
-export const parseRecipeListPayload = (payload: unknown): RecipeSummary[] => {
+const parseRecipePagination = (value: unknown): RecipePagination | undefined => {
+	if (!isRecord(value)) return undefined;
+	const page = value.page;
+	const limit = value.limit;
+	const total = value.total;
+	const totalPages = value.totalPages;
+	if (
+		typeof page !== "number" || !Number.isSafeInteger(page) || page < 1 || page > MAX_RECIPE_PAGE ||
+		typeof limit !== "number" || !Number.isSafeInteger(limit) || limit < 1 || limit > MAX_RECIPE_LIMIT ||
+		typeof total !== "number" || !Number.isSafeInteger(total) || total < 0 ||
+		typeof totalPages !== "number" || !Number.isSafeInteger(totalPages) || totalPages < 0 ||
+		typeof value.hasNext !== "boolean"
+	) {
+		return undefined;
+	}
+	return { page, limit, total, totalPages, hasNext: value.hasNext };
+};
+
+export const parseRecipeListPayload = (payload: unknown): RecipeListResponse => {
 	const recipes = Array.isArray(payload)
 		? payload
 		: isRecord(payload) && Array.isArray(payload.recipes)
 			? payload.recipes
 			: [];
 
-	return recipes.filter(isRecipeSummary);
+	const pagination = isRecord(payload) ? parseRecipePagination(payload.pagination) : undefined;
+	return {
+		recipes: recipes.filter(isRecipeSummary),
+		...(pagination ? { pagination } : {}),
+	};
 };
 
 const fetchRecipes = async ({
 	queryKey,
 	signal,
-}: QueryFunctionContext<ReturnType<typeof createRecipeQueryKey>>): Promise<RecipeSummary[]> => {
+}: QueryFunctionContext<ReturnType<typeof createRecipeQueryKey>>): Promise<RecipeListResponse> => {
 	const [, state] = queryKey;
 	const response = await axios.get(RECIPE_DISCOVERY_ENDPOINT, {
 		params: createRecipeRequestParams(state),
