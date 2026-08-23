@@ -148,7 +148,7 @@ test.beforeEach(async ({ page }) => {
 
 test("guest searches Home and opens recipe detail", async ({ page }) => {
 	await page.goto("/");
-	await page.getByPlaceholder("Search recipes...").first().fill("Chocolate");
+	await page.getByRole("combobox", { name: "Search recipes" }).fill("Chocolate");
 	await page.getByText("Chocolate Banana Bread", { exact: true }).first().click();
 
 	await expect(page).toHaveURL(/\/recipe\?id=1/);
