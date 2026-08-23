@@ -146,6 +146,32 @@ test("Home featured recipe card exposes a focusable link with native Enter navig
 	await expect(page).toHaveURL(/\/recipe\?id=1$/);
 });
 
+test("Home featured mode tabs update copy and selected semantics", async ({ page }) => {
+	await page.goto("/");
+
+	const tablist = page.getByRole("tablist");
+	const tabs = tablist.getByRole("tab");
+	const section = page.locator(".home__sectionHeader");
+
+	await expect(section.getByText("Community favorites", { exact: true })).toBeVisible();
+	await expect(section.getByRole("heading", { name: "Top rated recipes" })).toBeVisible();
+	await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
+	await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "false");
+	await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "false");
+
+	await tabs.nth(1).click();
+	await expect(section.getByText("Popular with cooks", { exact: true })).toBeVisible();
+	await expect(section.getByRole("heading", { name: "Most reviewed recipes" })).toBeVisible();
+	await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "false");
+	await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "true");
+
+	await tabs.nth(2).click();
+	await expect(section.getByText("Short on time", { exact: true })).toBeVisible();
+	await expect(section.getByRole("heading", { name: "Quick meals" })).toBeVisible();
+	await expect(tabs.nth(1)).toHaveAttribute("aria-selected", "false");
+	await expect(tabs.nth(2)).toHaveAttribute("aria-selected", "true");
+});
+
 test("authenticated Home favorite is a separate keyboard control and stays on Home", async ({ page }) => {
 	await authenticateAsTestUser(page);
 	await page.goto("/");
