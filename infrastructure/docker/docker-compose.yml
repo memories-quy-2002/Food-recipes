@@ -38,7 +38,7 @@ services:
       target: runtime
     environment:
       NODE_ENV: ${NODE_ENV:-production}
-      PORT: ${API_PORT:-3000}
+      PORT: 3000
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/food_recipes}
       JWT_SECRET: ${JWT_SECRET:-replace-with-a-local-secret-at-least-32-characters}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}

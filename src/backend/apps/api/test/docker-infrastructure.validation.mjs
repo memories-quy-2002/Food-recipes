@@ -29,6 +29,7 @@ assert.match(contents.dockerfile, /COPY .*pnpm-lock\.yaml/, 'the root pnpm lockf
 assert.match(contents.dockerfile, /prisma generate/, 'the image build must generate Prisma Client');
 assert.match(contents.dockerfile, /pnpm --filter @food-recipes\/api run build/, 'the API must be built in the image');
 assert.match(contents.dockerfile, /USER node/, 'the runtime image must run as a non-root user');
+assert.match(contents.dockerfile, /^EXPOSE 3000$/m, 'the Nest container contract must expose port 3000');
 assert.match(contents.dockerfile, /CMD \["node",\s*"dist\/main\.js"\]/, 'the runtime must execute dist/main.js');
 
 for (const [name, dockerignore] of [
@@ -52,10 +53,16 @@ assert.match(contents.compose, /condition:\s*service_completed_successfully/, 'A
 assert.match(contents.compose, /internal:\s*true/, 'production-like Compose must use an internal network');
 assert.match(contents.compose, /DATABASE_URL:\s*\$\{[^}]+\}/, 'API database URL must be configurable through an environment placeholder');
 assert.match(contents.compose, /JWT_SECRET:\s*\$\{[^}]+\}/, 'API JWT secret must be configurable through an environment placeholder');
+assert.match(contents.compose, /^\s+PORT:\s*3000\s*$/m, 'production-like API must listen on the internal container port 3000');
+assert.match(contents.compose, /expose:\s*\n\s+-\s+"3000"/, 'production-like API must expose internal port 3000');
+assert.doesNotMatch(contents.compose, /\bAPI_PORT\b/, 'production-like Compose must not use API_PORT for the internal API port');
 assert.doesNotMatch(contents.compose, /^\s+ports:/m, 'production-like Compose should keep API ports internal');
 
 assert.match(contents.composeDev, /ports:/, 'development Compose must publish useful local ports');
 assert.match(contents.composeDev, /127\.0\.0\.1:/, 'development ports must bind to localhost');
+assert.match(contents.composeDev, /^\s+PORT:\s*3000\s*$/m, 'development API must listen on the internal container port 3000');
+assert.match(contents.composeDev, /127\.0\.0\.1:\$\{API_PORT:-3000\}:3000/, 'development API_PORT must control only the host-side published port');
+assert.doesNotMatch(contents.composeDev, /API_HOST_PORT/, 'development Compose must use API_PORT as the host-side port contract');
 assert.match(contents.composeDev, /src\/backend\/apps\/api\/src:/, 'development Compose must mount API source');
 assert.match(contents.composeDev, /condition:\s*service_healthy/, 'development migration must wait for healthy PostgreSQL');
 assert.match(contents.composeDev, /condition:\s*service_completed_successfully/, 'development API must wait for successful migrations');
