@@ -1,5 +1,21 @@
 # API database baseline
 
+## Run the Compose API locally
+
+Both Compose contracts require `JWT_SECRET` explicitly. Do not commit a secret
+or put one in a Compose file. Generate a random local value before starting the
+stack:
+
+```powershell
+$env:JWT_SECRET = (node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))")
+docker compose -f infrastructure/docker/docker-compose.dev.yml up --build
+```
+
+The same variable is required for the production-like Compose file. The API
+validation also rejects predictable development markers, so use a fresh
+random-looking value of at least 32 characters. The command above changes only
+the current PowerShell session.
+
 `prisma/migrations/0_init/migration.sql` is the baseline for the legacy
 Food Recipes PostgreSQL schema. It is a create-schema artifact based on the
 checked-in Prisma datamodel and evidenced legacy constraints, including the

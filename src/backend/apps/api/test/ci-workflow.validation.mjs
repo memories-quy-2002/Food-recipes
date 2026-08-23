@@ -26,6 +26,7 @@ const expectedJobs = [
   'api-quality',
   'contract-e2e',
   'frontend',
+  'frontend-e2e',
   'docker-runtime-build',
   'migration-release-handoff',
 ];
@@ -100,7 +101,7 @@ for (const [jobName, dependency] of [
   ['api-quality', 'prisma'],
   ['contract-e2e', 'api-quality'],
   ['frontend', 'contract-e2e'],
-  ['docker-runtime-build', 'frontend'],
+  ['docker-runtime-build', 'frontend-e2e'],
   ['migration-release-handoff', 'docker-runtime-build'],
 ]) {
   assertJobNeeds(jobName, dependency);
