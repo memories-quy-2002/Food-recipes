@@ -6,7 +6,6 @@ import type {
 	RecipePagination,
 	RecipeSummary,
 } from "@/shared/api/contracts";
-import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
 
 const RECIPE_CATALOG_PAGE_LIMIT = 100;
@@ -66,47 +65,109 @@ const parseRecipePagination = (value: unknown): RecipePagination | undefined => 
 	return { page, limit, total, totalPages, hasNext };
 };
 
-const parseRecipeListResponse = (payload: unknown): RecipeListResponse => {
-	const recipes = getArrayPayload(payload, "recipes") as RecipeSummary[];
-	const pagination = isRecord(payload)
-		? parseRecipePagination(payload.pagination)
-		: undefined;
+const hasOwnProperty = (value: Record<string, unknown>, key: string) =>
+	Object.prototype.hasOwnProperty.call(value, key);
 
-	return pagination ? { recipes, pagination } : { recipes };
+const parseRecipeListResponse = (
+	payload: unknown,
+	allowLegacyResponse: boolean
+): RecipeListResponse => {
+	if (allowLegacyResponse && Array.isArray(payload)) {
+		return { recipes: payload as RecipeSummary[] };
+	}
+
+	if (!isRecord(payload) || !Array.isArray(payload.recipes)) {
+		throw new Error(
+			"Recipe catalog response is malformed: expected a recipes array."
+		);
+	}
+
+	if (!hasOwnProperty(payload, "pagination")) {
+		if (allowLegacyResponse) return { recipes: payload.recipes as RecipeSummary[] };
+
+		throw new Error(
+			"Recipe catalog response is missing pagination metadata for a requested page."
+		);
+	}
+
+	const pagination = parseRecipePagination(payload.pagination);
+	if (!pagination) {
+		throw new Error("Recipe catalog response has malformed pagination metadata.");
+	}
+
+	return { recipes: payload.recipes as RecipeSummary[], pagination };
+};
+
+const assertPageMetadata = (
+	previous: RecipePagination,
+	current: RecipePagination,
+	requestedPage: number
+) => {
+	if (current.page !== requestedPage) {
+		throw new Error(
+			`Recipe catalog pagination did not advance to requested page ${requestedPage}.`
+		);
+	}
+
+	if (
+		current.limit !== previous.limit ||
+		current.total !== previous.total ||
+		current.totalPages !== previous.totalPages
+	) {
+		throw new Error(
+			`Recipe catalog pagination metadata is inconsistent on page ${requestedPage}.`
+		);
+	}
 };
 
 export const fetchAllRecipes = async ({
 	signal,
 }: Pick<RecipeListQueryContext, "signal">): Promise<RecipeSummary[]> => {
 	const endpoint = (apiRoutes as { recipes: string }).recipes;
-	const fetchPage = async (page: number) => {
+	const fetchPage = async (page: number, allowLegacyResponse: boolean) => {
 		const response = await axios.get(endpoint, {
 			params: { page, limit: RECIPE_CATALOG_PAGE_LIMIT },
 			signal,
 		});
-		return parseRecipeListResponse(response.data);
+		return parseRecipeListResponse(response.data, allowLegacyResponse);
 	};
 
 	let currentPage = 1;
-	let currentResponse = await fetchPage(currentPage);
+	const currentResponse = await fetchPage(currentPage, true);
 	const recipes = [...currentResponse.recipes];
 	let pagesFetched = 1;
 
-	while (
-		pagesFetched < MAX_RECIPE_CATALOG_PAGES &&
-		currentResponse.pagination?.hasNext &&
-		currentResponse.pagination.page === currentPage &&
-		currentResponse.pagination.page < currentResponse.pagination.totalPages
-	) {
-		const nextPage = currentPage + 1;
-		if (!Number.isSafeInteger(nextPage) || nextPage <= currentPage) break;
+	if (!currentResponse.pagination) return recipes;
+	if (currentResponse.pagination.page !== currentPage) {
+		throw new Error(
+			`Recipe catalog pagination did not start at requested page ${currentPage}.`
+		);
+	}
 
-		const nextResponse = await fetchPage(nextPage);
-		if (nextResponse.pagination?.page !== nextPage) break;
+	let currentPagination = currentResponse.pagination;
+	while (currentPagination.hasNext) {
+		if (pagesFetched >= MAX_RECIPE_CATALOG_PAGES) {
+			throw new Error(
+				`Recipe catalog pagination exceeded the maximum of ${MAX_RECIPE_CATALOG_PAGES} pages before completion.`
+			);
+		}
+
+		const nextPage = currentPage + 1;
+		if (!Number.isSafeInteger(nextPage) || nextPage <= currentPage) {
+			throw new Error("Recipe catalog pagination could not advance safely.");
+		}
+
+		const nextResponse = await fetchPage(nextPage, false);
+		if (!nextResponse.pagination) {
+			throw new Error(
+				`Recipe catalog response is missing pagination metadata on page ${nextPage}.`
+			);
+		}
+		assertPageMetadata(currentPagination, nextResponse.pagination, nextPage);
 
 		recipes.push(...nextResponse.recipes);
 		currentPage = nextPage;
-		currentResponse = nextResponse;
+		currentPagination = nextResponse.pagination;
 		pagesFetched += 1;
 	}
 

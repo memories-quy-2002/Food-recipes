@@ -105,7 +105,7 @@ describe("recipe query contracts", () => {
 		});
 	});
 
-	it("stops when pagination does not advance to a later page", async () => {
+	it("rejects when pagination does not advance to a later page", async () => {
 		vi.mocked(axios.get).mockResolvedValueOnce({
 			data: {
 				recipes: [recipe],
@@ -131,7 +131,58 @@ describe("recipe query contracts", () => {
 			},
 		});
 
-		await expect(fetchAllRecipes({ signal })).resolves.toEqual([recipe]);
+		await expect(fetchAllRecipes({ signal })).rejects.toThrow(/pagination/i);
+		expect(axios.get).toHaveBeenCalledTimes(2);
+	});
+
+	it.each([
+		{
+			name: "missing pagination",
+			nextPage: { recipes: [nestRecipe] },
+		},
+		{
+			name: "malformed pagination",
+			nextPage: {
+				recipes: [nestRecipe],
+				pagination: {
+					page: 2,
+					limit: 100,
+					total: 101,
+					totalPages: 2,
+					hasNext: "no",
+				},
+			},
+		},
+		{
+			name: "inconsistent pagination",
+			nextPage: {
+				recipes: [nestRecipe],
+				pagination: {
+					page: 2,
+					limit: 100,
+					total: 201,
+					totalPages: 3,
+					hasNext: false,
+				},
+			},
+		},
+	])("rejects a requested page with $name metadata", async ({ nextPage }) => {
+		vi.mocked(axios.get)
+			.mockResolvedValueOnce({
+				data: {
+					recipes: [recipe],
+					pagination: {
+						page: 1,
+						limit: 100,
+						total: 101,
+						totalPages: 2,
+						hasNext: true,
+					},
+				},
+			})
+			.mockResolvedValueOnce({ data: nextPage });
+
+		await expect(fetchAllRecipes({ signal })).rejects.toThrow(/pagination/i);
 		expect(axios.get).toHaveBeenCalledTimes(2);
 	});
 
@@ -156,16 +207,16 @@ describe("recipe query contracts", () => {
 				hasNext: true,
 			},
 		},
-	])("stops safely for $name metadata", async ({ pagination }) => {
+	])("rejects malformed initial $name metadata", async ({ pagination }) => {
 		vi.mocked(axios.get).mockResolvedValueOnce({
 			data: { recipes: [recipe], pagination },
 		});
 
-		await expect(fetchAllRecipes({ signal })).resolves.toEqual([recipe]);
+		await expect(fetchAllRecipes({ signal })).rejects.toThrow(/pagination/i);
 		expect(axios.get).toHaveBeenCalledTimes(1);
 	});
 
-	it("hard caps aggregation for a valid but impractically large catalog", async () => {
+	it("rejects when a valid catalog exceeds the aggregation page cap", async () => {
 		let page = 0;
 		vi.mocked(axios.get).mockImplementation(async () => {
 			page += 1;
@@ -183,7 +234,7 @@ describe("recipe query contracts", () => {
 			};
 		});
 
-		await expect(fetchAllRecipes({ signal })).resolves.toHaveLength(1_000);
+		await expect(fetchAllRecipes({ signal })).rejects.toThrow(/maximum.*1,?000.*pages/i);
 		expect(axios.get).toHaveBeenCalledTimes(1_000);
 	});
 
