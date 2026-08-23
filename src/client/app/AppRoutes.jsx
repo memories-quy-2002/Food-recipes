@@ -47,6 +47,20 @@ const AppRoutes = () => (
 			}
 		/>
 		<Route
+			path="/recipe/cooking"
+			element={
+				<Suspense
+					fallback={
+						<div className="loaderContainer">
+							<div className="dot-elastic"></div>
+						</div>
+					}
+				>
+					<Recipe />
+				</Suspense>
+			}
+		/>
+		<Route
 			path="/wishlist"
 			element={
 				<ProtectedRoute>

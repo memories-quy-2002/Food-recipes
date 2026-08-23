@@ -1,6 +1,7 @@
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import RecipeContainerSummary from "./RecipeContainerSummary";
 import RecipeDescription, { getRecipeTimeSummary, normalizeRecipeTime } from "./recipeContent/RecipeDescription";
 
@@ -48,9 +49,9 @@ describe("recipe detail Task 10", () => {
 	it("keeps rating, tags, Start cooking, and Save available near the title", () => {
 		const onClickFavorite = vi.fn();
 		let renderer;
-		act(() => { renderer = TestRenderer.create(<RecipeContainerSummary recipe={recipe} favorite={false} onClickFavorite={onClickFavorite} />); });
+		act(() => { renderer = TestRenderer.create(<MemoryRouter><RecipeContainerSummary recipe={{ ...recipe, recipe_id: 42 }} favorite={false} onClickFavorite={onClickFavorite} /></MemoryRouter>); });
 		expect(renderer.root.findByType("h1").children).toEqual(["Coconut Curry"]);
-		expect(renderer.root.findByProps({ href: "#ingredients" }).children).toEqual(["Start cooking"]);
+		expect(renderer.root.findByProps({ to: "/recipe/cooking?id=42" }).children[0].children).toEqual(["Start cooking"]);
 		expect(renderer.root.findByType("button").props["aria-label"]).toBe("Add to favorite");
 		expect(renderer.root.findByProps({ "aria-label": "Recipe details" })).toBeTruthy();
 	});

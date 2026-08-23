@@ -1,5 +1,6 @@
 import React from "react";
 import { Col, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { BsHeart, BsHeartFill } from "react-icons/bs";
 import convertImage from "@/shared/utils/convertImage";
 import formatTimestamp from "@/shared/utils/formatTimestamp";
@@ -22,7 +23,7 @@ const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
 					{tags.length > 0 && <div className="recipe__container__summary__tags" aria-label="Recipe details">{tags.map((tag) => <span key={tag}>{tag}</span>)}</div>}
 					<div className="recipe__container__summary__date"><p>{formatTimestamp(recipe.date_added)}</p></div>
 					<div className="recipe__container__summary__fav">
-						<a className="recipe__container__summary__start" href="#ingredients">Start cooking</a>
+						<Link className="recipe__container__summary__start" to={`/recipe/cooking?id=${recipe.recipe_id}`}>Start cooking</Link>
 						<button type="button" onClick={onClickFavorite} aria-label={favorite ? "Remove from favorite" : "Add to favorite"}>
 							{favorite ? <BsHeartFill size={24} color="white" /> : <BsHeart size={24} color="white" />}
 							<strong>{favorite ? "Remove from favorite" : "Add to favorite"}</strong>

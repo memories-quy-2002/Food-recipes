@@ -289,6 +289,33 @@ test("guest Save action redirects from recipe detail to login", async ({ page })
 	await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
 });
 
+test("guest enters, navigates, and exits guided cooking mode", async ({ page }) => {
+	await page.goto("/recipe?id=1");
+	await expect(page.getByRole("link", { name: "Start cooking" })).toHaveAttribute(
+		"href",
+		"/recipe/cooking?id=1"
+	);
+
+	await page.getByRole("link", { name: "Start cooking" }).click();
+	await expect(page).toHaveURL(/\/recipe\/cooking\?id=1$/);
+	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
+	await expect(page.getByText("Step 1 of 2")).toBeVisible();
+	await expect(page.getByText("Mix ingredients", { exact: true })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Previous step" })).toBeDisabled();
+
+	await page.getByRole("button", { name: "Next step" }).click();
+	await expect(page.getByText("Step 2 of 2")).toBeVisible();
+	await expect(page.getByText("Bake until done", { exact: true })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Next step" })).toBeDisabled();
+
+	await page.getByRole("button", { name: "Previous step" }).focus();
+	await page.keyboard.press("ArrowRight");
+	await expect(page.getByText("Step 2 of 2")).toBeVisible();
+	await page.getByRole("button", { name: "Finish cooking" }).click();
+	await expect(page).toHaveURL(/\/recipe\?id=1$/);
+	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
+});
+
 test("authenticated user saves and unsaves a recipe", async ({ page }) => {
 	await authenticateAsTestUser(page);
 	await page.goto("/recipe?id=1");

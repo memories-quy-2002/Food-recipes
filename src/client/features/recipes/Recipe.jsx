@@ -6,6 +6,7 @@ import { apiRoutes } from "@/shared/api/routes";
 import RecipeContainerSummary from "@/features/recipes/RecipeContainerSummary";
 import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
+import CookingMode from "@/features/recipes/cooking/CookingMode";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { AuthContext } from "@/app/AuthProvider";
@@ -37,6 +38,7 @@ const Recipe = () => {
 	const location = useLocation();
 	const searchParams = new URLSearchParams(location.search);
 	const id = searchParams.get("id");
+	const isCookingMode = location.pathname === "/recipe/cooking";
 
 	const fetchRecipe = useCallback(async ({ showLoading = true } = {}) => {
 		if (!id) return;
@@ -260,6 +262,11 @@ const Recipe = () => {
 					message={recipeError}
 					actionLabel="Back to recipes"
 					onAction={() => navigate("/food")}
+				/>
+			) : recipe && isCookingMode ? (
+				<CookingMode
+					recipe={recipe}
+					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (
 				<Container fluid style={{ padding: 0 }}>
