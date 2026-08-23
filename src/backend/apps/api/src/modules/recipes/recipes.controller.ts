@@ -20,7 +20,6 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -44,7 +43,7 @@ export class RecipesController {
 
   @Get()
   @ApiOperation({ summary: 'List recipes' })
-  @ApiQuery({ type: RecipeQueryDto })
+  @ApiBadRequestResponse({ description: 'Recipe query is invalid', type: ApiErrorResponseDto })
   @ApiOkResponse({ description: 'Recipes matching the filters', type: RecipeListResponseDto })
   list(@Query() query: RecipeQueryDto) {
     return this.recipesService.list(query);
@@ -53,6 +52,7 @@ export class RecipesController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a recipe' })
   @ApiParam({ name: 'id', type: Number, description: 'Recipe identifier' })
+  @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiOkResponse({ description: 'Recipe details', type: RecipeDetailResponseDto })
   @ApiResponse({ status: 404, description: 'Recipe was not found', type: ApiErrorResponseDto })
   findById(@Param('id', ParseIntPipe) id: number) {
@@ -94,6 +94,7 @@ export class RecipesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete an owned recipe' })
   @ApiParam({ name: 'id', type: Number, description: 'Recipe identifier' })
+  @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiNoContentResponse({ description: 'Recipe deleted' })
   @ApiResponse({ status: 401, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: 403, description: 'Recipe belongs to another user', type: ApiErrorResponseDto })

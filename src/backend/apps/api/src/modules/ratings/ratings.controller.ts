@@ -27,6 +27,7 @@ import { RatingsService, RatingsServicePort } from './ratings.service';
 import {
   ApiErrorResponseDto,
   RatingMutationResponseDto,
+  RatingRemovalResponseDto,
   ReviewsResponseDto,
 } from '../../common/swagger/response.schemas';
 
@@ -44,7 +45,7 @@ export class RatingsController {
   @ApiOperation({ summary: 'Create or update the authenticated user rating' })
   @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
   @ApiOkResponse({ description: 'Rating saved', type: RatingMutationResponseDto })
-  @ApiBadRequestResponse({ description: 'Rating input is invalid', type: ApiErrorResponseDto })
+  @ApiBadRequestResponse({ description: 'Rating input or recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   upsert(
     @Param('recipeId', ParseIntPipe) recipeId: number,
@@ -59,7 +60,8 @@ export class RatingsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete the authenticated user rating' })
   @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
-  @ApiOkResponse({ description: 'Rating removed', type: RatingMutationResponseDto })
+  @ApiOkResponse({ description: 'Rating removed', type: RatingRemovalResponseDto })
+  @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   remove(
     @Param('recipeId', ParseIntPipe) recipeId: number,
@@ -71,6 +73,7 @@ export class RatingsController {
   @Get(':recipeId/reviews')
   @ApiOperation({ summary: 'List recipe reviews and aggregate rating' })
   @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
+  @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiOkResponse({ description: 'Reviews and aggregate rating', type: ReviewsResponseDto })
   listReviews(@Param('recipeId', ParseIntPipe) recipeId: number) {
     return this.ratingsService.listReviews(recipeId);

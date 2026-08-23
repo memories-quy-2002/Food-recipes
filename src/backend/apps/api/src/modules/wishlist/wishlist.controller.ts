@@ -62,6 +62,7 @@ export class WishlistController {
   @Delete(':recipeId')
   @ApiOperation({ summary: 'Remove a saved recipe for the authenticated user' })
   @ApiParam({ name: 'recipeId', type: Number, description: 'Recipe identifier' })
+  @ApiBadRequestResponse({ description: 'Recipe identifier is invalid', type: ApiErrorResponseDto })
   @ApiOkResponse({ description: 'Recipe removed from the wishlist', type: MessageResponseDto })
   @ApiResponse({ status: 401, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
   @ApiResponse({ status: 404, description: 'Wishlist item was not found', type: ApiErrorResponseDto })

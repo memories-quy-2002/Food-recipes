@@ -120,4 +120,102 @@ describe('Swagger document', () => {
     expect(document.components.schemas.UpsertRatingDto.properties).toHaveProperty('score');
     expect(document.components.schemas.UpdateProfileDto.properties).toHaveProperty('name');
   });
+
+  it('documents unique query parameters, runtime response shapes, and error metadata', async () => {
+    const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
+    const document = response.body as {
+      paths: Record<string, Record<string, {
+        parameters?: Array<{ name: string; in?: string }>;
+        responses?: Record<string, unknown>;
+        security?: Array<Record<string, string[]>>;
+      }> >;
+      components: {
+        schemas: Record<string, {
+          properties?: Record<string, { type?: string; nullable?: boolean }>;
+          required?: string[];
+        }>;
+      };
+    };
+
+    const recipeList = document.paths['/api/v1/recipes'].get;
+    const queryParameterNames = (recipeList.parameters ?? [])
+      .filter((parameter) => parameter.in === 'query')
+      .map((parameter) => parameter.name);
+    expect(queryParameterNames).toEqual(['search', 'categoryId', 'mealId']);
+    expect(new Set(queryParameterNames).size).toBe(queryParameterNames.length);
+
+    const recipeSchema = document.components.schemas.RecipeResponseDto;
+    expect(recipeSchema.required).not.toEqual(expect.arrayContaining(['ingredients', 'instructions']));
+    expect(recipeSchema.properties?.meal_description).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'Dinner ideas',
+    });
+
+    expect(document.components.schemas.ApiErrorResponseDto.properties?.requestId).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'request-id',
+    });
+    expect(document.components.schemas.PublicUserResponseDto.properties?.phone).toEqual({
+      type: 'string',
+      nullable: true,
+      example: '+1 555 0100',
+    });
+    expect(document.components.schemas.PublicUserResponseDto.properties?.address).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'London',
+    });
+    expect(document.components.schemas.RecipeResponseDto.properties?.recipe_description).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'A quick weeknight pasta.',
+    });
+    expect(document.components.schemas.RecipeResponseDto.properties?.image_url).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'https://example.com/pasta.jpg',
+    });
+    expect(document.components.schemas.PublicUserResponseDto.properties?.last_login).toEqual({
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    });
+    expect(document.components.schemas.RecipeResponseDto.properties?.date_added).toEqual({
+      type: 'string',
+      format: 'date-time',
+      nullable: true,
+    });
+    expect(document.components.schemas.RecipeResponseDto.properties?.full_name).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'Ada Lovelace',
+    });
+    expect(document.components.schemas.RatingResponseDto.properties?.review).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'Delicious!',
+    });
+    expect(document.components.schemas.ReviewResponseDto.properties?.review).toEqual({
+      type: 'string',
+      nullable: true,
+      example: 'Delicious!',
+    });
+    expect(document.components.schemas.RatingRemovalResponseDto.properties?.message).toEqual({
+      type: 'string',
+      example: 'Rating removed successfully',
+    });
+
+    expect(document.paths['/api/v1/recipes/{id}'].get.responses).toHaveProperty('400');
+    expect(document.paths['/api/v1/recipes'].post.responses).toHaveProperty('401');
+    expect(document.paths['/api/v1/users/me/recipes'].get.responses).toHaveProperty('401');
+    expect(document.paths['/api/v1/recipes/{recipeId}/reviews'].get.responses).toHaveProperty('400');
+    expect(document.paths['/api/v1/users/me/wishlist/{recipeId}'].delete.responses).toEqual(
+      expect.objectContaining({ '400': expect.anything(), '401': expect.anything() }),
+    );
+    expect(document.paths['/api/v1/recipes'].get.security).toBeUndefined();
+    expect(document.paths['/api/v1/recipes/{recipeId}/reviews'].get.security).toBeUndefined();
+    expect(document.paths['/api/v1/users/me/recipes'].get.security).toEqual([{ bearer: [] }]);
+  });
 });

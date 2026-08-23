@@ -10,7 +10,7 @@ export class ApiErrorResponseDto {
   @ApiProperty({ example: 'Request validation failed' })
   message!: string;
 
-  @ApiProperty({ example: 'request-id', nullable: true })
+  @ApiProperty({ type: String, example: 'request-id', nullable: true })
   requestId!: string | null;
 }
 
@@ -35,10 +35,10 @@ export class PublicUserResponseDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   last_login!: string | null;
 
-  @ApiProperty({ example: '+1 555 0100', nullable: true })
+  @ApiProperty({ type: String, example: '+1 555 0100', nullable: true })
   phone!: string | null;
 
-  @ApiProperty({ example: 'London', nullable: true })
+  @ApiProperty({ type: String, example: 'London', nullable: true })
   address!: string | null;
 }
 
@@ -65,7 +65,7 @@ export class RecipeResponseDto {
   @ApiProperty({ example: 'Pasta Carbonara' })
   recipe_name!: string;
 
-  @ApiProperty({ example: 'A quick weeknight pasta.', nullable: true })
+  @ApiProperty({ type: String, example: 'A quick weeknight pasta.', nullable: true })
   recipe_description!: string | null;
 
   @ApiProperty({ example: 10 })
@@ -77,19 +77,19 @@ export class RecipeResponseDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   date_added!: string | null;
 
-  @ApiProperty({ example: 'https://example.com/pasta.jpg', nullable: true })
+  @ApiProperty({ type: String, example: 'https://example.com/pasta.jpg', nullable: true })
   image_url!: string | null;
 
-  @ApiProperty({ type: [String], nullable: true })
-  ingredients!: string[] | null;
+  @ApiPropertyOptional({ type: [String], nullable: true })
+  ingredients?: string[] | null;
 
-  @ApiProperty({ type: [String], nullable: true })
-  instructions!: string[] | null;
+  @ApiPropertyOptional({ type: [String], nullable: true })
+  instructions?: string[] | null;
 
   @ApiProperty({ example: 7 })
   user_id!: number;
 
-  @ApiPropertyOptional({ example: 'Ada Lovelace' })
+  @ApiPropertyOptional({ type: String, example: 'Ada Lovelace', nullable: true })
   full_name?: string | null;
 
   @ApiPropertyOptional({ example: 1 })
@@ -97,6 +97,9 @@ export class RecipeResponseDto {
 
   @ApiPropertyOptional({ example: 'Dinner' })
   meal_name?: string;
+
+  @ApiPropertyOptional({ type: String, example: 'Dinner ideas', nullable: true })
+  meal_description?: string | null;
 
   @ApiPropertyOptional({ example: 8 })
   category_id?: number;
@@ -137,6 +140,14 @@ export class RatingMutationResponseDto {
   aggregate!: RatingAggregateResponseDto;
 }
 
+export class RatingRemovalResponseDto {
+  @ApiProperty({ example: 'Rating removed successfully' })
+  message!: string;
+
+  @ApiProperty({ type: RatingAggregateResponseDto })
+  aggregate!: RatingAggregateResponseDto;
+}
+
 export class RatingResponseDto {
   @ApiProperty({ example: 21 })
   rating_id!: number;
@@ -147,13 +158,13 @@ export class RatingResponseDto {
   @ApiProperty({ example: 'Pasta Carbonara' })
   recipe_name!: string;
 
-  @ApiProperty({ example: 'https://example.com/pasta.jpg', nullable: true })
+  @ApiProperty({ type: String, example: 'https://example.com/pasta.jpg', nullable: true })
   image_url!: string | null;
 
   @ApiProperty({ example: 5 })
   score!: number;
 
-  @ApiProperty({ example: 'Delicious!', nullable: true })
+  @ApiProperty({ type: String, example: 'Delicious!', nullable: true })
   review!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
@@ -172,7 +183,7 @@ export class ReviewResponseDto {
   @ApiProperty({ example: 5 })
   score!: number;
 
-  @ApiProperty({ example: 'Delicious!', nullable: true })
+  @ApiProperty({ type: String, example: 'Delicious!', nullable: true })
   review!: string | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
