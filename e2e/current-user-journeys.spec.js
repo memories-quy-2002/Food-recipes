@@ -91,6 +91,13 @@ async function authenticateAsTestUser(page) {
 		);
 		localStorage.setItem("jwt", "test-scoped-smoke-token");
 	});
+	await page.route("**/auth/token", (route) =>
+		route.fulfill({
+			status: 200,
+			contentType: "application/json",
+			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" } }),
+		})
+	);
 	await page.route("**/users/7/wishlist", (route) => {
 		if (route.request().method() === "GET") {
 			return route.fulfill({
@@ -156,6 +163,10 @@ test("guest Save action redirects from recipe detail to login", async ({ page })
 test("authenticated user saves and unsaves a recipe", async ({ page }) => {
 	await authenticateAsTestUser(page);
 	await page.goto("/recipe?id=1");
+	await expect(page).toHaveURL(/\/recipe\?id=1/);
+	await expect(
+		page.getByRole("heading", { name: "Chocolate Banana Bread" })
+	).toBeVisible();
 
 	const favoriteButton = page.getByRole("button", { name: "Add to favorite" });
 	await favoriteButton.click();
