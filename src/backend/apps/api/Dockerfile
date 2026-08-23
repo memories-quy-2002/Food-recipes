@@ -13,40 +13,43 @@ RUN corepack enable \
 FROM base AS dependencies
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-COPY src/backend/apps/api/package.json src/backend/apps/api/package.json
+COPY apps/api/package.json apps/api/package.json
 
 RUN pnpm install --frozen-lockfile --filter @food-recipes/api...
 
 FROM dependencies AS build
 
 ENV DATABASE_URL=postgresql://postgres:postgres@postgres:5432/food_recipes
-COPY src/backend/apps/api src/backend/apps/api
+COPY apps/api apps/api
+WORKDIR /workspace/apps/api
 
-RUN pnpm --filter @food-recipes/api exec prisma generate --config prisma.config.ts
-RUN pnpm --filter @food-recipes/api run build
+RUN pnpm exec prisma generate --config prisma.config.ts
+RUN pnpm run build
 
 FROM build AS migration
 
-WORKDIR /workspace/src/backend/apps/api
+WORKDIR /workspace/apps/api
 CMD ["pnpm", "exec", "prisma", "migrate", "deploy", "--config", "prisma.config.ts"]
 
 FROM build AS dev
 
 ENV NODE_ENV=development
-WORKDIR /workspace/src/backend/apps/api
+WORKDIR /workspace/apps/api
 CMD ["pnpm", "run", "start:dev"]
 
 FROM node:24-bookworm-slim AS runtime
 
 ENV NODE_ENV=production
-WORKDIR /workspace/src/backend/apps/api
+WORKDIR /workspace
 
-COPY --from=build /workspace/node_modules /workspace/node_modules
-COPY --from=build /workspace/src/backend/apps/api/node_modules ./node_modules
-COPY --from=build /workspace/src/backend/apps/api/dist ./dist
-COPY --from=build /workspace/src/backend/apps/api/package.json ./package.json
-COPY --from=build /workspace/src/backend/apps/api/prisma.config.ts ./prisma.config.ts
-COPY --from=build /workspace/src/backend/apps/api/prisma ./prisma
+COPY --from=build /workspace/node_modules ./node_modules
+COPY --from=build /workspace/apps/api/node_modules ./apps/api/node_modules
+COPY --from=build /workspace/apps/api/dist ./apps/api/dist
+COPY --from=build /workspace/apps/api/package.json ./apps/api/package.json
+COPY --from=build /workspace/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
+COPY --from=build /workspace/apps/api/prisma ./apps/api/prisma
+
+WORKDIR /workspace/apps/api
 
 USER node
 EXPOSE 3000

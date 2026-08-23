@@ -13,7 +13,7 @@ const files = {
   readme: path.join(apiDirectory, 'README.md'),
   report: path.join(repositoryRoot, '.superpowers/sdd/task-5-report.md'),
   legacyDump: path.join(apiDirectory, 'prisma/legacy/recipes.sql'),
-  compose: path.join(repositoryRoot, 'infrastructure/docker/docker-compose.yml'),
+  compose: path.join(repositoryRoot, 'src/backend/infrastructure/docker/docker-compose.yml'),
 };
 
 const contents = Object.fromEntries(

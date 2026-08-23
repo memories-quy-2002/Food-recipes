@@ -5,14 +5,15 @@ import { fileURLToPath } from 'node:url';
 
 const apiTestDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(apiTestDirectory, '../../../../..');
+const apiDirectory = path.resolve(apiTestDirectory, '..');
+const backendRoot = path.resolve(apiDirectory, '../..');
 
 const files = {
-  dockerfile: path.join(repositoryRoot, 'src/backend/apps/api/Dockerfile'),
-  apiDockerignore: path.join(repositoryRoot, 'src/backend/apps/api/.dockerignore'),
-  rootDockerignore: path.join(repositoryRoot, '.dockerignore'),
-  compose: path.join(repositoryRoot, 'infrastructure/docker/docker-compose.yml'),
-  composeDev: path.join(repositoryRoot, 'infrastructure/docker/docker-compose.dev.yml'),
-  kong: path.join(repositoryRoot, 'infrastructure/kong/kong.yml'),
+  dockerfile: path.join(apiDirectory, 'Dockerfile'),
+  apiDockerignore: path.join(backendRoot, '.dockerignore'),
+  compose: path.join(backendRoot, 'infrastructure/docker/docker-compose.yml'),
+  composeDev: path.join(backendRoot, 'infrastructure/docker/docker-compose.dev.yml'),
+  kong: path.join(backendRoot, 'infrastructure/kong/kong.yml'),
 };
 
 const contents = Object.fromEntries(
@@ -35,25 +36,22 @@ const composeKong = serviceSection(contents.compose, 'kong');
 
 assert.match(contents.dockerfile, /^FROM node:24(?:[-@].*)? AS /m, 'Dockerfile must use a Node 24 multi-stage base');
 assert.ok(countMatches(contents.dockerfile, /^FROM /gm) >= 3, 'Dockerfile must contain multiple build stages');
-assert.match(contents.dockerfile, /pnpm install --frozen-lockfile/, 'dependencies must install from the frozen workspace lockfile');
-assert.match(contents.dockerfile, /COPY .*pnpm-lock\.yaml/, 'the root pnpm lockfile must be in the build context');
+assert.match(contents.dockerfile, /pnpm install --frozen-lockfile/, 'dependencies must install from the frozen API lockfile');
+assert.match(contents.dockerfile, /COPY package\.json pnpm-lock\.yaml pnpm-workspace\.yaml/, 'the backend workspace lockfile must be in the build context');
+assert.match(contents.dockerfile, /COPY apps\/api\/package\.json apps\/api\/package\.json/, 'the API package must be in the backend build context');
 assert.match(contents.dockerfile, /prisma generate/, 'the image build must generate Prisma Client');
-assert.match(contents.dockerfile, /pnpm --filter @food-recipes\/api run build/, 'the API must be built in the image');
+assert.match(contents.dockerfile, /pnpm run build/, 'the API must be built in the image');
 assert.match(contents.dockerfile, /USER node/, 'the runtime image must run as a non-root user');
 assert.match(contents.dockerfile, /^EXPOSE 3000$/m, 'the Nest container contract must expose port 3000');
 assert.match(contents.dockerfile, /CMD \["node",\s*"dist\/main\.js"\]/, 'the runtime must execute dist/main.js');
 
-for (const [name, dockerignore] of [
-  ['API .dockerignore', contents.apiDockerignore],
-  ['root .dockerignore', contents.rootDockerignore],
-]) {
-  assert.match(dockerignore, /node_modules/, `${name} must exclude node_modules`);
-  assert.match(dockerignore, /dist/, `${name} must exclude build output`);
-  assert.match(dockerignore, /\.env/, `${name} must exclude environment files`);
-}
+assert.match(contents.apiDockerignore, /node_modules/, 'API .dockerignore must exclude node_modules');
+assert.match(contents.apiDockerignore, /dist/, 'API .dockerignore must exclude build output');
+assert.match(contents.apiDockerignore, /\.env/, 'API .dockerignore must exclude environment files');
 assert.doesNotMatch(contents.apiDockerignore, /(?:^|\n)prisma(?:\/|\s|$)/, 'API .dockerignore must keep Prisma files available');
 
 assert.match(contents.compose, /postgres:/, 'production-like Compose must define PostgreSQL');
+assert.match(contents.compose, /context:\s*\.\s*\r?\n\s+dockerfile:\s+apps\/api\/Dockerfile/, 'production-like Compose must build from the backend root context');
 assert.match(contents.compose, /healthcheck:/, 'PostgreSQL must have a healthcheck');
 assert.match(contents.compose, /pg_isready/, 'PostgreSQL healthcheck must use pg_isready');
 assert.match(contents.compose, /migrate:/, 'production-like Compose must define a migration service');
@@ -78,7 +76,7 @@ assert.doesNotMatch(composeApi, /^\s+ports:/m, 'production-like Compose should k
 assert.match(contents.compose, /^  kong:\r?\n/m, 'production-like Compose must define Kong');
 assert.match(composeKong, /KONG_DATABASE:\s*["']?off["']?/i, 'Kong must run in DB-less mode');
 assert.match(composeKong, /KONG_DECLARATIVE_CONFIG:\s*\/etc\/kong\/kong\.yml/, 'Kong must load the declarative config');
-assert.match(composeKong, /\.\.\/kong\/kong\.yml:\/etc\/kong\/kong\.yml:ro/, 'Kong config must be mounted read-only');
+assert.match(composeKong, /(?:\.\/)?infrastructure\/kong\/kong\.yml:\/etc\/kong\/kong\.yml:ro/, 'Kong config must be mounted read-only');
 assert.match(composeKong, /ports:\s*\n\s+-\s+"8000:8000"/, 'Kong must publish gateway port 8000');
 assert.match(composeKong, /depends_on:\s*\n\s+api:\s*\n\s+condition:\s*service_healthy/, 'Kong must wait for a healthy API');
 assert.match(composeApi, /healthcheck:\s*[\s\S]*?health\/live/, 'API must expose a healthcheck for Kong readiness');
@@ -98,6 +96,7 @@ const pluginNames = [...pluginSection.matchAll(/^\s+- name:\s+([a-z0-9-]+)\s*$/g
 assert.deepEqual(pluginNames, ['correlation-id', 'rate-limiting'], 'Kong must not install an auth plugin');
 
 assert.match(contents.composeDev, /ports:/, 'development Compose must publish useful local ports');
+assert.match(contents.composeDev, /context:\s*\.\s*\r?\n\s+dockerfile:\s+apps\/api\/Dockerfile/, 'development Compose must build from the backend root context');
 assert.match(contents.composeDev, /127\.0\.0\.1:/, 'development ports must bind to localhost');
 assert.match(contents.composeDev, /^\s+PORT:\s*3000\s*$/m, 'development API must listen on the internal container port 3000');
 assert.match(contents.composeDev, /127\.0\.0\.1:\$\{API_PORT:-3000\}:3000/, 'development API_PORT must control only the host-side published port');
@@ -109,7 +108,7 @@ assert.match(
 );
 assert.doesNotMatch(composeDevApi, /replace-with|change-me|generate-a-random-secret/i);
 assert.doesNotMatch(contents.composeDev, /API_HOST_PORT/, 'development Compose must use API_PORT as the host-side port contract');
-assert.match(contents.composeDev, /src\/backend\/apps\/api\/src:/, 'development Compose must mount API source');
+assert.match(contents.composeDev, /(?:\.\/)?apps\/api\/src:/, 'development Compose must mount API source');
 assert.match(contents.composeDev, /condition:\s*service_healthy/, 'development migration must wait for healthy PostgreSQL');
 assert.match(contents.composeDev, /condition:\s*service_completed_successfully/, 'development API must wait for successful migrations');
 assert.doesNotMatch(contents.composeDev, /^\s+kong:/m, 'development Compose must remain independent from Kong');

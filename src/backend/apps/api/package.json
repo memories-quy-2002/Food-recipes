@@ -5,14 +5,22 @@
   "description": "NestJS API for Food Recipes",
   "scripts": {
     "start": "node dist/main.js",
+    "dev": "corepack pnpm@11.18.0 run start:dev",
     "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check": "corepack pnpm@11.18.0 run typecheck && corepack pnpm@11.18.0 run test:ci",
     "test": "jest --runInBand",
+    "test:ci": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:e2e": "jest --config test/jest-e2e.json --runInBand",
-    "prisma:generate": "prisma generate",
-    "prisma:pull": "prisma db pull",
-    "prisma:validate": "prisma validate"
+    "prisma:format": "prisma format --config prisma.config.ts",
+    "prisma:generate": "prisma generate --config prisma.config.ts",
+    "prisma:pull": "prisma db pull --config prisma.config.ts",
+    "prisma:validate": "prisma validate --config prisma.config.ts",
+    "prisma:migrate": "prisma migrate dev --config prisma.config.ts",
+    "prisma:migrate:deploy": "prisma migrate deploy --config prisma.config.ts",
+    "prisma:studio": "prisma studio --config prisma.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",

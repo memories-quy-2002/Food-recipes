@@ -1,0 +1,25 @@
+{
+  "name": "food-recipes-backend",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.18.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.18.0"
+  },
+  "scripts": {
+    "dev": "corepack pnpm@11.18.0 --filter @food-recipes/api start:dev",
+    "build": "corepack pnpm@11.18.0 --filter @food-recipes/api build",
+    "typecheck": "corepack pnpm@11.18.0 --filter @food-recipes/api typecheck",
+    "test": "corepack pnpm@11.18.0 --filter @food-recipes/api test",
+    "test:ci": "corepack pnpm@11.18.0 --filter @food-recipes/api test:ci",
+    "test:e2e": "corepack pnpm@11.18.0 --filter @food-recipes/api test:e2e",
+    "check": "corepack pnpm@11.18.0 --filter @food-recipes/api check",
+    "prisma:generate": "corepack pnpm@11.18.0 --filter @food-recipes/api prisma:generate",
+    "prisma:validate": "corepack pnpm@11.18.0 --filter @food-recipes/api prisma:validate",
+    "prisma:migrate": "corepack pnpm@11.18.0 --filter @food-recipes/api prisma:migrate",
+    "prisma:migrate:deploy": "corepack pnpm@11.18.0 --filter @food-recipes/api prisma:migrate:deploy",
+    "infra:up": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build",
+    "infra:down": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml down"
+  }
+}

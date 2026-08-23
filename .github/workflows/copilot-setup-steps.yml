@@ -19,14 +19,22 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11.18.0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
+          cache-dependency-path: |
+            src/frontend/pnpm-lock.yaml
+            src/backend/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install frontend dependencies
+        working-directory: src/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend dependencies
+        working-directory: src/backend
         run: pnpm install --frozen-lockfile
 
       - name: Create client env file
@@ -39,5 +47,6 @@ jobs:
           printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 48)" >> src/backend/apps/api/.env
 
       - name: Typecheck client
+        working-directory: src/frontend
         run: pnpm exec tsc --noEmit
         continue-on-error: true

@@ -5,10 +5,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-food_recipes}
-    ports:
-      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
-      - postgres-dev-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     networks:
       - internal
     healthcheck:
@@ -20,8 +18,8 @@ services:
 
   migrate:
     build:
-      context: ../..
-      dockerfile: src/backend/apps/api/Dockerfile
+      context: .
+      dockerfile: apps/api/Dockerfile
       target: migration
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/food_recipes}
@@ -35,21 +33,29 @@ services:
 
   api:
     build:
-      context: ../..
-      dockerfile: src/backend/apps/api/Dockerfile
-      target: dev
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
     environment:
-      NODE_ENV: development
+      NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/food_recipes}
       JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET to a random value of at least 32 characters}"
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
-    ports:
-      - "127.0.0.1:${API_PORT:-3000}:3000"
-    volumes:
-      - ../../src/backend/apps/api/src:/workspace/src/backend/apps/api/src:ro
-      - ../../src/backend/apps/api/prisma:/workspace/src/backend/apps/api/prisma:ro
-      - ../../src/backend/apps/api/prisma.config.ts:/workspace/src/backend/apps/api/prisma.config.ts:ro
+    expose:
+      - "3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/v1/health/live').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
     networks:
       - internal
     depends_on:
@@ -58,8 +64,25 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  kong:
+    image: kong:3.9
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_LISTEN: "off"
+    volumes:
+      - ./infrastructure/kong/kong.yml:/etc/kong/kong.yml:ro
+    ports:
+      - "8000:8000"
+    networks:
+      - internal
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
-  postgres-dev-data:
+  postgres-data:
 
 networks:
   internal:

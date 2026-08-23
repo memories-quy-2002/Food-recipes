@@ -3,17 +3,19 @@
 ## Project overview
 Website for food recipes and blogs. Monorepo structure:
 - `src/frontend/` — React + Vite + TypeScript frontend
-- `src/backend/apps/api/` — NestJS + Prisma backend API
+- `src/backend/` — backend pnpm workspace and infrastructure
+  - `apps/api/` — NestJS + Prisma backend API
 
-Database: PostgreSQL, hosted on Supabase. Package manager: pnpm.
+Database: PostgreSQL, hosted on Supabase. Package manager: pnpm, isolated between frontend and backend workspaces.
 
 ## Setup & commands
-- Install dependencies: `pnpm install`
-- Run the full dev stack: `pnpm start`
-- Run frontend dev server: `pnpm start:client`
-- Run backend dev server: `pnpm start:backend`
-- Typecheck frontend: `pnpm typecheck`
-- Test backend: `pnpm --filter @food-recipes/api test`
+- Install frontend dependencies: `cd src/frontend && pnpm install`
+- Install backend dependencies: `cd src/backend && pnpm install`
+- Run frontend dev server: `cd src/frontend && pnpm dev`
+- Run backend dev server: `cd src/backend && pnpm dev`
+- Typecheck frontend: `cd src/frontend && pnpm typecheck`
+- Test backend: `cd src/backend && pnpm test`
+- Run backend containers: `cd src/backend && docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build`
 
 ## Coding conventions
 - Use TypeScript strictly on the client — avoid `any`, prefer explicit types/interfaces.

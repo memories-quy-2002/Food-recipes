@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
 
 export default defineConfig({
 	testDir: __dirname,
@@ -17,7 +18,8 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: "pnpm run build && pnpm exec vite preview --host 127.0.0.1 --port 4173",
+		cwd: path.resolve(__dirname, ".."),
+		command: "corepack pnpm run build && corepack pnpm exec vite preview --host 127.0.0.1 --port 4173",
 		url: "http://127.0.0.1:4173",
 		reuseExistingServer: !process.env.CI,
 		timeout: 120000,

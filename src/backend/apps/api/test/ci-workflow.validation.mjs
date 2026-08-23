@@ -71,7 +71,9 @@ const assertJobNeeds = (jobName, dependency) => {
   );
 };
 
-const pinnedJobs = expectedJobs.filter((jobName) => jobName !== 'docker-runtime-build');
+const pinnedJobs = expectedJobs.filter(
+  (jobName) => !['install', 'static', 'docker-runtime-build'].includes(jobName),
+);
 for (const jobName of pinnedJobs) {
   assertJobContains(jobName, /^      - uses: actions\/checkout@v4\s*$/m);
   assertJobContains(
@@ -114,15 +116,30 @@ assert.match(jobs.static, /docker-infrastructure\.validation\.mjs/);
 assertJobContains('prisma', /prisma validate --config prisma\.ci\.config\.ts/);
 assertJobContains('prisma', /prisma generate --config prisma\.ci\.config\.ts/);
 assertJobContains('prisma', /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/);
-assertJobContains('prisma', /trap 'rm -f prisma\.ci\.config\.ts' EXIT/);
-assertJobContains('api-quality', /tsc -p tsconfig\.build\.json --noEmit/);
-assertJobContains('api-quality', /pnpm --filter @food-recipes\/api test\s*$/m);
-assertJobContains('contract-e2e', /pnpm --filter @food-recipes\/api test:e2e/);
+assertJobContains('prisma', /trap 'rm -f apps\/api\/prisma\.ci\.config\.ts' EXIT/);
+assertJobContains('api-quality', /pnpm typecheck\s*$/m);
+assertJobContains('api-quality', /pnpm test\s*$/m);
+assertJobContains('contract-e2e', /pnpm test:e2e\s*$/m);
 assertJobContains('frontend', /pnpm build/);
 assert.match(
   jobs['docker-runtime-build'],
-  /docker build --target runtime[\s\S]*src\/backend\/apps\/api\/Dockerfile/,
+  /docker build --target runtime[\s\S]*--file apps\/api\/Dockerfile src\/backend/,
 );
+
+for (const jobName of ['prisma', 'api-quality', 'contract-e2e', 'migration-release-handoff']) {
+  assertJobContains(
+    jobName,
+    /working-directory: src\/backend[\s\S]*run: pnpm install --frozen-lockfile/,
+    `${jobName} must install dependencies inside the backend package`,
+  );
+}
+for (const jobName of ['frontend', 'frontend-e2e']) {
+  assertJobContains(
+    jobName,
+    /working-directory: src\/frontend[\s\S]*run: pnpm install --frozen-lockfile/,
+    `${jobName} must install dependencies inside the frontend package`,
+  );
+}
 
 for (const jobName of ['api-quality', 'contract-e2e']) {
   assertJobContains(
@@ -130,16 +147,16 @@ for (const jobName of ['api-quality', 'contract-e2e']) {
     /name: Generate Prisma Client offline/,
     `${jobName} must generate Prisma Client on its own runner`,
   );
-  assertJobContains(jobName, /working-directory: src\/backend\/apps\/api/);
+  assertJobContains(jobName, /working-directory: src\/backend/);
   assertJobContains(jobName, /shell: bash/);
-  assertJobContains(jobName, /cat > prisma\.ci\.config\.ts/);
+  assertJobContains(jobName, /cat > apps\/api\/prisma\.ci\.config\.ts/);
   assertJobContains(
     jobName,
     /url: 'postgresql:\/\/127\.0\.0\.1:1\/ci_validation'/,
     `${jobName} Prisma generation must use a non-routable temporary datasource URL`,
   );
-  assertJobContains(jobName, /pnpm exec prisma generate --config prisma\.ci\.config\.ts/);
-  assertJobContains(jobName, /trap 'rm -f prisma\.ci\.config\.ts' EXIT/);
+  assertJobContains(jobName, /pnpm --filter @food-recipes\/api exec prisma generate --config prisma\.ci\.config\.ts/);
+  assertJobContains(jobName, /trap 'rm -f apps\/api\/prisma\.ci\.config\.ts' EXIT/);
   assert.doesNotMatch(
     jobs[jobName],
     /DATABASE_URL|prisma migrate/i,

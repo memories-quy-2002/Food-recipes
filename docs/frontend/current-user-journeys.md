@@ -45,13 +45,13 @@ Logout
 
 ## Smoke E2E convention
 
-- Tests live in `e2e/` and use Playwright Test.
-- `e2e/playwright.config.js` builds the Vite app, serves `dist`, and runs Chromium against `http://127.0.0.1:4173`.
+- Tests live in `src/frontend/e2e/` and use Playwright Test.
+- `src/frontend/e2e/playwright.config.js` builds the Vite app, serves its local `dist`, and runs Chromium against `http://127.0.0.1:4173`.
 - The smoke tests stub only the recipe/category/meal/review read APIs. This keeps discovery assertions deterministic while still exercising the real React routes, providers, navigation, filtering, sorting, and protected routing.
 - Authenticated mutation journeys are intentionally not mocked into a false success state. They require a documented test account or a backend fixture before they can be promoted to passing E2E coverage.
 
 ## Known baseline limitations
 
-- `package.json` defines `pnpm test` as `vitest`, but Vitest is not installed in the current checkout, so the repository test command cannot start.
+- `src/frontend/package.json` defines `pnpm test` as `vitest` for the frontend package.
 - Playwright is not installed in the current checkout either. The E2E convention and tests are committed, but execution requires installing `@playwright/test` and the Chromium browser in the project environment.
 - The existing `src/App.test.js` imports `./App`, which is not present in the current Vite source layout; it is not changed by Task 1 because that is unrelated product/test cleanup.

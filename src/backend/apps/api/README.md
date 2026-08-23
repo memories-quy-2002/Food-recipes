@@ -8,7 +8,8 @@ stack:
 
 ```powershell
 $env:JWT_SECRET = (node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))")
-docker compose -f infrastructure/docker/docker-compose.dev.yml up --build
+Set-Location src/backend
+docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build
 ```
 
 The same variable is required for the production-like Compose file. The API
@@ -112,21 +113,21 @@ the reset command as a shortcut for resolving a baseline mismatch. Stop and
 restore the backup or rehearse against a disposable copy if the schema does
 not match exactly.
 
-The migration service in `infrastructure/docker/docker-compose.yml` runs
+The migration service in `src/backend/infrastructure/docker/docker-compose.yml` runs
 `prisma migrate deploy`; it is not a substitute for the backup, inspection,
 and baseline-resolution procedure for an existing database.
 
 ## Static verification
 
-From `src/backend/apps/api`, run the following checks without Docker or a
-database connection:
+From `src/backend`, run the following checks without Docker or a database
+connection:
 
 ```bash
-node test/prisma-baseline.validation.mjs
-pnpm exec prisma validate --config prisma.config.ts
-pnpm exec prisma generate --config prisma.config.ts
-pnpm run build
-pnpm exec tsc -p tsconfig.build.json --noEmit
+node apps/api/test/prisma-baseline.validation.mjs
+corepack pnpm@11.18.0 --filter @food-recipes/api exec prisma validate --config prisma.config.ts
+corepack pnpm@11.18.0 --filter @food-recipes/api exec prisma generate --config prisma.config.ts
+corepack pnpm@11.18.0 build
+corepack pnpm@11.18.0 --filter @food-recipes/api exec tsc -p tsconfig.build.json --noEmit
 ```
 
 These checks verify the checked-in artifacts only. They do not prove that a

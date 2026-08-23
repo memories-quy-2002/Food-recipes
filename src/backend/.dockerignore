@@ -1,6 +1,10 @@
 node_modules
+apps/*/node_modules
 dist
+apps/*/dist
 coverage
+apps/*/coverage
+*.tsbuildinfo
 *.log
 .env
 .env.*

@@ -11,19 +11,12 @@ permissions:
 
 jobs:
   install:
-    name: Install dependencies
+    name: Validate repository layout
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install locked dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Check Node runtime
+        run: node --version
 
   static:
     name: Static validators
@@ -31,15 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install locked dependencies
-        run: pnpm install --frozen-lockfile
       - name: Run DB-free static validators
         run: |
           node src/backend/apps/api/test/ci-workflow.validation.mjs
@@ -60,15 +44,17 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
       - name: Install locked dependencies
+        working-directory: src/backend
         run: pnpm install --frozen-lockfile
       - name: Validate and generate Prisma Client offline
-        working-directory: src/backend/apps/api
+        working-directory: src/backend
         shell: bash
         run: |
           set -euo pipefail
-          trap 'rm -f prisma.ci.config.ts' EXIT
-          cat > prisma.ci.config.ts <<'EOF'
+          trap 'rm -f apps/api/prisma.ci.config.ts' EXIT
+          cat > apps/api/prisma.ci.config.ts <<'EOF'
           import { defineConfig } from 'prisma/config';
 
           export default defineConfig({
@@ -77,8 +63,8 @@ jobs:
             datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
           });
           EOF
-          pnpm exec prisma validate --config prisma.ci.config.ts
-          pnpm exec prisma generate --config prisma.ci.config.ts
+          pnpm --filter @food-recipes/api exec prisma validate --config prisma.ci.config.ts
+          pnpm --filter @food-recipes/api exec prisma generate --config prisma.ci.config.ts
 
   api-quality:
     name: API typecheck and unit tests
@@ -93,15 +79,17 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
       - name: Install locked dependencies
+        working-directory: src/backend
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma Client offline
-        working-directory: src/backend/apps/api
+        working-directory: src/backend
         shell: bash
         run: |
           set -euo pipefail
-          trap 'rm -f prisma.ci.config.ts' EXIT
-          cat > prisma.ci.config.ts <<'EOF'
+          trap 'rm -f apps/api/prisma.ci.config.ts' EXIT
+          cat > apps/api/prisma.ci.config.ts <<'EOF'
           import { defineConfig } from 'prisma/config';
 
           export default defineConfig({
@@ -110,11 +98,13 @@ jobs:
             datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
           });
           EOF
-          pnpm exec prisma generate --config prisma.ci.config.ts
+          pnpm --filter @food-recipes/api exec prisma generate --config prisma.ci.config.ts
       - name: Typecheck API
-        run: pnpm --filter @food-recipes/api exec tsc -p tsconfig.build.json --noEmit
+        working-directory: src/backend
+        run: pnpm typecheck
       - name: Run API unit tests
-        run: pnpm --filter @food-recipes/api test
+        working-directory: src/backend
+        run: pnpm test
 
   contract-e2e:
     name: API contract E2E
@@ -129,15 +119,17 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
       - name: Install locked dependencies
+        working-directory: src/backend
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma Client offline
-        working-directory: src/backend/apps/api
+        working-directory: src/backend
         shell: bash
         run: |
           set -euo pipefail
-          trap 'rm -f prisma.ci.config.ts' EXIT
-          cat > prisma.ci.config.ts <<'EOF'
+          trap 'rm -f apps/api/prisma.ci.config.ts' EXIT
+          cat > apps/api/prisma.ci.config.ts <<'EOF'
           import { defineConfig } from 'prisma/config';
 
           export default defineConfig({
@@ -146,9 +138,10 @@ jobs:
             datasource: { url: 'postgresql://127.0.0.1:1/ci_validation' },
           });
           EOF
-          pnpm exec prisma generate --config prisma.ci.config.ts
+          pnpm --filter @food-recipes/api exec prisma generate --config prisma.ci.config.ts
       - name: Run API contract E2E tests
-        run: pnpm --filter @food-recipes/api test:e2e
+        working-directory: src/backend
+        run: pnpm test:e2e
 
   frontend:
     name: Frontend build
@@ -163,13 +156,18 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
       - name: Install locked dependencies
+        working-directory: src/frontend
         run: pnpm install --frozen-lockfile
       - name: Typecheck frontend
+        working-directory: src/frontend
         run: pnpm typecheck
       - name: Run frontend unit tests
+        working-directory: src/frontend
         run: pnpm test:ci
       - name: Build frontend
+        working-directory: src/frontend
         run: pnpm build
 
   frontend-e2e:
@@ -185,11 +183,15 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
       - name: Install locked dependencies
+        working-directory: src/frontend
         run: pnpm install --frozen-lockfile
       - name: Install Chromium
+        working-directory: src/frontend
         run: pnpm exec playwright install --with-deps chromium
       - name: Run frontend Playwright E2E
+        working-directory: src/frontend
         run: pnpm test:e2e:ci
 
   docker-runtime-build:
@@ -199,7 +201,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build API runtime image
-        run: docker build --target runtime --tag food-recipes-api:ci --file src/backend/apps/api/Dockerfile .
+        run: docker build --target runtime --tag food-recipes-api:ci --file apps/api/Dockerfile src/backend
 
   migration-release-handoff:
     name: One-shot migration gate / release handoff
@@ -217,8 +219,10 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
       - name: Install locked dependencies
+        working-directory: src/backend
         run: pnpm install --frozen-lockfile
       - name: Run one-shot Prisma migration gate
-        working-directory: src/backend/apps/api
-        run: pnpm exec prisma migrate deploy --config prisma.config.ts
+        working-directory: src/backend
+        run: pnpm --filter @food-recipes/api exec prisma migrate deploy --config prisma.config.ts
