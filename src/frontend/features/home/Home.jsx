@@ -45,15 +45,14 @@ const Home = () => {
 		};
 		fetchMeals();
 	}, []);
+
 	return (
-		<div className="fr-page home">
+		<main className="fr-page home">
 			<PageHelmet
 				title="Home"
 				description="Explore featured meals, browse recipe categories, and find your next favorite dish."
 				path="/"
 			/>
-			<HomeMain />
-			<SuggestionPanel allowPersonalized isAuthenticated={isAuthenticated} />
 			{isLoadingMeals ? (
 				<PageState
 					title="Loading featured meals"
@@ -68,7 +67,9 @@ const Home = () => {
 			) : (
 				<Carousel items={meals} />
 			)}
-		</div>
+			<HomeMain />
+			<SuggestionPanel allowPersonalized isAuthenticated={isAuthenticated} />
+		</main>
 	);
 };
 

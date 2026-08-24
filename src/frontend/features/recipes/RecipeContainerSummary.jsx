@@ -5,6 +5,7 @@ import { BsHeart, BsHeartFill } from "react-icons/bs";
 import convertImage from "@/shared/utils/convertImage";
 import formatTimestamp from "@/shared/utils/formatTimestamp";
 import ratingStar from "@/shared/utils/ratingStar";
+import "./RecipeRefinement.scss";
 
 const RecipeContainerSummary = ({
 	recipe,
