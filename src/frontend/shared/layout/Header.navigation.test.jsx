@@ -100,10 +100,14 @@ describe("primary navigation", () => {
 			 title: "Add Recipe",
 			href: "/food/add",
 		});
-		expect(getPrimaryNavigation(true)).toContainEqual({
-			title: "Planning",
-			href: "/planning",
-		});
+			expect(getPrimaryNavigation(true)).toContainEqual({
+				title: "Planning",
+				href: "/planning",
+			});
+			expect(getPrimaryNavigation(true)).toContainEqual({
+				title: "Shopping",
+				href: "/shopping-list",
+			});
 		expect(getPrimaryNavigation(false)).not.toContainEqual({
 			title: "Add Recipe",
 			href: "/food/add",
@@ -111,6 +115,10 @@ describe("primary navigation", () => {
 		expect(getPrimaryNavigation(false)).not.toContainEqual({
 			title: "Planning",
 			href: "/planning",
+		});
+		expect(getPrimaryNavigation(false)).not.toContainEqual({
+			title: "Shopping",
+			href: "/shopping-list",
 		});
 	});
 

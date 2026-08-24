@@ -124,6 +124,15 @@
 						background: rgba(255, 248, 239, 0.12);
 					}
 				}
+
+				.recipe__container__summary__shopping {
+					background: #fff8ef;
+					color: #211813;
+
+					&:hover {
+						background: #ffd18b;
+					}
+				}
 			}
 
 			&__review {

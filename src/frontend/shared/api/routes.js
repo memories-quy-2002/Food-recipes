@@ -20,6 +20,11 @@ const apiRoutes = {
 	mealPlan: (planId) => `/users/me/meal-plans/${planId}`,
 	mealPlanItems: (planId) => `/users/me/meal-plans/${planId}/items`,
 	mealPlanItem: (planId, itemId) => `/users/me/meal-plans/${planId}/items/${itemId}`,
+	shoppingList: "/users/me/shopping-list",
+	shoppingListItems: "/users/me/shopping-list/items",
+	shoppingListItem: (itemId) => `/users/me/shopping-list/items/${itemId}`,
+	shoppingListFromRecipe: "/users/me/shopping-list/from-recipe",
+	shoppingListCompleted: "/users/me/shopping-list/completed",
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
 };

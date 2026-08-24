@@ -3,6 +3,7 @@ export const getPrimaryNavigation = (isAuthenticated, isDevelopment = import.met
 	{ title: "Recipes", href: "/food" },
 	{ title: "Saved", href: "/wishlist" },
 	...(isAuthenticated ? [{ title: "Planning", href: "/planning" }] : []),
+	...(isAuthenticated ? [{ title: "Shopping", href: "/shopping-list" }] : []),
 	...(isAuthenticated ? [{ title: "Add Recipe", href: "/food/add" }] : []),
 	...(isDevelopment ? [{ title: "Health", href: "/health" }] : []),
 ];

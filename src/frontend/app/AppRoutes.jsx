@@ -11,6 +11,7 @@ import AddRecipe from "@/features/recipes/AddRecipe";
 import Profile from "@/features/profile/Profile";
 import Wishlist from "@/features/wishlist/Wishlist";
 import PlanningPage from "@/features/planning/PlanningPage";
+import ShoppingListPage from "@/features/shopping/ShoppingListPage";
 
 const Recipe = lazy(() => import("@/features/recipes/Recipe"));
 const isLocalHealthEnabled = import.meta.env.DEV;
@@ -74,6 +75,14 @@ const AppRoutes = () => (
 			element={
 				<ProtectedRoute>
 					<PlanningPage />
+				</ProtectedRoute>
+			}
+		/>
+		<Route
+			path="/shopping-list"
+			element={
+				<ProtectedRoute>
+					<ShoppingListPage />
 				</ProtectedRoute>
 			}
 		/>
