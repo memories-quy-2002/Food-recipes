@@ -13,7 +13,9 @@ import { useToast } from "@/app/ToastProvider";
 import CategorySection from "./main/CategorySection";
 import FoodCardList from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
+import { useHomeSearchQuery } from "./main/api/useHomeSearchQuery";
 import PageState from "@/shared/ui/PageState";
+import RecentlyViewedRecipes from "@/features/recipes/RecentlyViewedRecipes";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
@@ -63,6 +65,8 @@ const HomeMain = () => {
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const location = useLocation();
+	const searchTerm = new URLSearchParams(location.search).get("q") || "";
+	const searchQuery = useHomeSearchQuery(searchTerm);
 	const processedAuthIntent = useRef(null);
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const wishlistLoadKey = isAuthenticated
@@ -236,7 +240,12 @@ const HomeMain = () => {
 				/>
 			) : (
 				<>
-					<HomeSearchBar recipes={recipes} />
+					<HomeSearchBar
+						recipes={recipes}
+						searchResults={searchQuery.data?.recipes ?? []}
+						isSearchLoading={searchQuery.isFetching}
+						searchError={searchQuery.error}
+					/>
 					{categoryError ? (
 						<PageState
 							type="error"
@@ -257,6 +266,7 @@ const HomeMain = () => {
 						featuredMode={featuredMode}
 						onFeaturedModeChange={setFeaturedMode}
 					/>
+					<RecentlyViewedRecipes recipes={recipes} />
 				</>
 			)}
 		</div>

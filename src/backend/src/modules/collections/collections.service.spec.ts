@@ -20,6 +20,7 @@ describe('CollectionsService', () => {
     recipeInCollection: jest.fn(),
     addRecipe: jest.fn(),
     removeRecipe: jest.fn(),
+    listRecipes: jest.fn(),
   };
 
   beforeEach(() => jest.clearAllMocks());
@@ -55,5 +56,33 @@ describe('CollectionsService', () => {
     const service = new CollectionsService(repository);
 
     await expect(service.addRecipe(7, 4, { recipeId: 15 })).rejects.toMatchObject({ response: { code: 'COLLECTION_RECIPE_EXISTS' } });
+  });
+
+  it('lists recipes only after confirming the collection belongs to the user', async () => {
+    const recipes = [{
+      recipe_id: 15,
+      recipe_name: 'Chicken Curry',
+      recipe_description: null,
+      prep_time_minutes: 10,
+      cook_time_minutes: 20,
+      total_time_minutes: 30,
+      date_added: null,
+      image_url: null,
+      user_id: 7,
+    }];
+    repository.findOwned.mockResolvedValue(collection);
+    repository.listRecipes.mockResolvedValue(recipes);
+    const service = new CollectionsService(repository);
+
+    await expect(service.listRecipes(7, 4)).resolves.toEqual({ recipes });
+    expect(repository.listRecipes).toHaveBeenCalledWith(7, 4);
+  });
+
+  it('rejects recipe listing for a collection owned by another user', async () => {
+    repository.findOwned.mockResolvedValue(null);
+    const service = new CollectionsService(repository);
+
+    await expect(service.listRecipes(8, 4)).rejects.toBeInstanceOf(NotFoundException);
+    expect(repository.listRecipes).not.toHaveBeenCalled();
   });
 });

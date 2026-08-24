@@ -5,22 +5,19 @@
 	--foreground: #211813;
 	--card: #ffffff;
 	--card-foreground: #211813;
-	--primary: #9a3412;
+	--primary: #a94e00;
 	--primary-foreground: #ffffff;
 	--secondary: #f6eadc;
 	--secondary-foreground: #211813;
 	--muted: #f6f1e8;
-	--muted-foreground: #6d6258;
+	--muted-foreground: #746b63;
 	--accent: #f6eadc;
-	--accent-foreground: #8a2f0f;
+	--accent-foreground: #a94e00;
 	--destructive: #c83220;
 	--destructive-foreground: #ffffff;
-	--success: #2f7d4b;
-	--info: #2f5f91;
-	--warning: #b45309;
 	--border: #e7e1d9;
 	--input: #e7e1d9;
-	--ring: rgba(154, 52, 18, 0.35);
+	--ring: rgba(213, 107, 0, 0.35);
 	--radius: 1.25rem;
 }
 
@@ -49,14 +46,10 @@
 	--radius-xl: calc(var(--radius) + 4px);
 }
 
-@layer base {
-	*,
-	*::before,
-	*::after {
-		margin: 0;
-		padding: 0;
-		box-sizing: border-box;
-	}
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
 
 body {
@@ -67,25 +60,6 @@ body {
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-}
-
-button,
-a,
-input,
-select,
-textarea {
-	touch-action: manipulation;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	*,
-	*::before,
-	*::after {
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		scroll-behavior: auto !important;
-		transition-duration: 0.01ms !important;
-	}
 }
 
 #root {

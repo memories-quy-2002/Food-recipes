@@ -16,7 +16,7 @@
 		span {
 			display: block;
 			margin-bottom: 0.55rem;
-			color: #9a3412;
+			color: #a94e00;
 			font-size: 0.82rem;
 			font-weight: 900;
 			text-transform: uppercase;
@@ -73,7 +73,7 @@
 				padding: 0.25rem 0.55rem;
 				border-radius: 999px;
 				background: rgba(255, 159, 28, 0.15);
-				color: var(--accent-foreground);
+				color: #a84f00;
 				font-size: 0.76rem;
 				font-weight: 900;
 			}
@@ -98,12 +98,12 @@
 		}
 
 		a {
-			color: var(--accent-foreground);
+			color: #a84f00;
 			font-weight: 900;
 			text-decoration: none;
 
 			&:hover {
-				color: #9a3412;
+				color: #a94e00;
 			}
 		}
 	}

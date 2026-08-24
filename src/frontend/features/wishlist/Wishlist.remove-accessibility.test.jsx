@@ -24,6 +24,15 @@ vi.mock("react-redux", () => ({
 		}),
 }));
 
+vi.mock("@/features/saved/api/collectionsQueries", () => ({
+	useCollectionsQuery: () => ({ data: { collections: [] }, isLoading: false, isError: false }),
+	useCollectionRecipesQuery: () => ({ data: { recipes: [] }, isLoading: false, isError: false }),
+	useCreateCollectionMutation: () => ({ mutate: vi.fn(), isPending: false }),
+	useRenameCollectionMutation: () => ({ mutate: vi.fn(), isPending: false }),
+	useDeleteCollectionMutation: () => ({ mutate: vi.fn(), isPending: false }),
+	useRemoveRecipeFromCollectionMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
+
 const recipes = [
 	{ recipe_id: 1, recipe_name: "First recipe", overall_score: 4, num_ratings: 1 },
 	{ recipe_id: 2, recipe_name: "Second recipe", overall_score: 5, num_ratings: 2 },

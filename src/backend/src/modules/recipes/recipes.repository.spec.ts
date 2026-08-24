@@ -183,7 +183,7 @@ describe('RecipesRepository duration normalization', () => {
     expect(sqlSource(query)).toContain('recipe_ingredients');
     expect(sqlSource(query)).toContain('recipe_nutrition');
     expect(sqlSource(query)).toContain('recipe_dietary_tags');
-    expect(sqlSource(query)).toContain('recipe_allergen_tags');
+    expect(sqlSource(query)).toContain('recipe_allergens');
   });
 
   it('dual-writes native minutes and legacy intervals on create', async () => {

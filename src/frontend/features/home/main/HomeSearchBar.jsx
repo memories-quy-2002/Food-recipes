@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 
 const QUICK_FILTER_LIMIT = 4;
@@ -32,7 +32,7 @@ export const getQuickFilters = (recipes = []) => {
 		.map(({ label }) => label);
 };
 
-const HomeSearchBar = ({ recipes = [] }) => {
+const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, searchError = null }) => {
 	const navigate = useNavigate();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const searchTerm = searchParams.get("q") || "";
@@ -63,17 +63,19 @@ const HomeSearchBar = ({ recipes = [] }) => {
 		setIsResultListOpen(true);
 		updateSearchTerm(label);
 	};
-	const filteredRecipes = recipes.filter((recipe) =>
-		[
-			recipe.recipe_name,
-			recipe.category_name,
-			recipe.meal_name,
-		].some((value) =>
-			normalizeLabel(value)
-				.toLocaleLowerCase()
-				.includes(searchTerm.trim().toLocaleLowerCase())
-		)
-	);
+	const filteredRecipes = Array.isArray(searchResults)
+		? searchResults
+		: recipes.filter((recipe) =>
+				[
+					recipe.recipe_name,
+					recipe.category_name,
+					recipe.meal_name,
+				].some((value) =>
+					normalizeLabel(value)
+						.toLocaleLowerCase()
+						.includes(searchTerm.trim().toLocaleLowerCase())
+				)
+			);
 	useEffect(() => {
 		setActiveIndex(-1);
 		setIsResultListOpen(Boolean(searchTerm.trim()));
@@ -164,7 +166,11 @@ const HomeSearchBar = ({ recipes = [] }) => {
 						aria-live="polite"
 						className="home__main__search__result"
 					>
-						{filteredRecipes.length > 0 ? (
+						{isSearchLoading ? (
+							<li role="option" aria-disabled="true">Searching recipes...</li>
+						) : searchError ? (
+							<li role="option" aria-disabled="true">Search suggestions are unavailable.</li>
+						) : filteredRecipes.length > 0 ? (
 							filteredRecipes.map((recipe) => (
 								<li
 									key={recipe.recipe_id}
@@ -193,6 +199,12 @@ const HomeSearchBar = ({ recipes = [] }) => {
 								No recipe found
 							</li>
 						)}
+						{filteredRecipes.length === 0 && !isSearchLoading && !searchError && (
+							<li className="home__main__search__result__hint">Try a different search.</li>
+						)}
+						<li className="home__main__search__result__all">
+							<Link to={`/food?q=${encodeURIComponent(searchTerm.trim())}`}>View all results for “{searchTerm.trim()}”</Link>
+						</li>
 					</ul>
 				)}
 			</div>

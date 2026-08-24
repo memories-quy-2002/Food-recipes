@@ -71,6 +71,18 @@ const nutritionSchema = z.object({
 
 const tagsSchema = z.array(z.string().trim().min(1, "Tags cannot be empty.")).max(30).default([]);
 
+const recipeNutritionSchema = z.object({
+	caloriesPerServing: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isInteger(Number(value)) && Number(value) >= 0), { message: "This nutrition value must be a whole number." }),
+	proteinGrams: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0), { message: "Nutrition values must be zero or greater." }),
+	carbohydratesGrams: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0), { message: "Nutrition values must be zero or greater." }),
+	fatGrams: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0), { message: "Nutrition values must be zero or greater." }),
+	fiberGrams: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0), { message: "Nutrition values must be zero or greater." }),
+	sugarGrams: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0), { message: "Nutrition values must be zero or greater." }),
+	sodiumMilligrams: z.union([z.string(), z.number()]).refine((value) => value === "" || (Number.isInteger(Number(value)) && Number(value) >= 0), { message: "This nutrition value must be a whole number." }),
+	source: z.enum(["provided_by_author", "estimated", "verified_external"]),
+	sourceReference: z.string(),
+}).optional();
+
 const baseRecipeFormSchema = ({ categories = [], meals = [] }: RecipeFormSchemaOptions = {}) =>
 	z.object({
 		recipeName: z.string().trim().min(1, "Recipe name is required."),
@@ -95,6 +107,8 @@ const baseRecipeFormSchema = ({ categories = [], meals = [] }: RecipeFormSchemaO
 		dietaryTags: tagsSchema,
 		allergenTags: tagsSchema,
 		serverRecipeId: z.union([z.number().int().positive(), z.string()]).nullable().optional(),
+		recipeNutrition: recipeNutritionSchema,
+		recipeAllergens: z.array(z.string()).optional(),
 	}).superRefine((value, context) => {
 		const hasLegacyIngredient = value.recipeIngredients.some((ingredient) => ingredient.trim().length > 0);
 		const hasStructuredIngredient = value.structuredIngredients.some((ingredient) => ingredient.name.trim().length > 0);

@@ -66,9 +66,11 @@ model RecipeIngredient {
   quantity     Decimal? @db.Decimal(12, 3)
   quantityText String?  @map("quantity_text") @db.VarChar(64)
   unit         String?  @db.VarChar(64)
+  unitText     String?  @map("unit_text") @db.VarChar(64)
   name         String   @db.VarChar(255)
   preparation  String?  @db.VarChar(255)
   originalText String?  @map("original_text")
+  note         String?  @db.VarChar(255)
 
   @@unique([recipeId, position], map: "recipe_ingredients_recipe_position_key")
   @@index([recipeId, position], map: "recipe_ingredients_recipe_position_idx")
@@ -76,16 +78,18 @@ model RecipeIngredient {
 }
 
 model RecipeNutrition {
-  id           Int      @id @default(autoincrement()) @map("recipe_nutrition_id")
-  recipeId     Int      @unique @map("recipe_id")
-  servings     Int
-  calories     Decimal? @db.Decimal(10, 2)
-  protein      Decimal? @db.Decimal(10, 2)
-  carbohydrates Decimal? @db.Decimal(10, 2)
-  fat          Decimal? @db.Decimal(10, 2)
-  fiber        Decimal? @db.Decimal(10, 2)
-  sugar        Decimal? @db.Decimal(10, 2)
-  sodium       Decimal? @db.Decimal(10, 2)
+  recipeId           Int      @id @map("recipe_id")
+  servings           Int?
+  caloriesPerServing Int?     @map("calories_per_serving")
+  proteinGrams       Float?   @map("protein_grams")
+  carbohydratesGrams Float?   @map("carbohydrates_grams")
+  fatGrams           Float?   @map("fat_grams")
+  fiberGrams         Float?   @map("fiber_grams")
+  sugarGrams         Float?   @map("sugar_grams")
+  sodiumMilligrams   Int?     @map("sodium_milligrams")
+  source             String   @db.VarChar(32)
+  sourceReference    String?  @map("source_reference") @db.VarChar(255)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
 
   @@map("recipe_nutrition")
 }
@@ -98,16 +102,6 @@ model RecipeDietaryTag {
   @@unique([recipeId, tag], map: "recipe_dietary_tags_recipe_tag_key")
   @@index([recipeId], map: "recipe_dietary_tags_recipe_idx")
   @@map("recipe_dietary_tags")
-}
-
-model RecipeAllergenTag {
-  id       Int    @id @default(autoincrement()) @map("recipe_allergen_tag_id")
-  recipeId Int    @map("recipe_id")
-  tag      String @db.VarChar(64)
-
-  @@unique([recipeId, tag], map: "recipe_allergen_tags_recipe_tag_key")
-  @@index([recipeId], map: "recipe_allergen_tags_recipe_idx")
-  @@map("recipe_allergen_tags")
 }
 
 model Wishlist {
@@ -166,6 +160,42 @@ model ReviewReport {
   resolvedBy     Int?      @map("resolved_by")
 
   @@map("review_reports")
+}
+
+model RecipeAllergen {
+  id              Int      @id @default(autoincrement()) @map("allergen_id")
+  recipeId        Int      @map("recipe_id")
+  name            String   @db.VarChar(32)
+  source          String   @db.VarChar(32)
+  sourceReference String?  @map("source_reference") @db.VarChar(255)
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@unique([recipeId, name], map: "recipe_allergens_recipe_name_key")
+  @@index([recipeId, name], map: "recipe_allergens_recipe_idx")
+  @@map("recipe_allergens")
+}
+
+model RecipeNote {
+  id        Int      @id @default(autoincrement()) @map("note_id")
+  userId    Int      @map("user_id")
+  recipeId  Int      @map("recipe_id")
+  note      String   @db.VarChar(2000)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@unique([userId, recipeId], map: "recipe_notes_user_recipe_key")
+  @@index([recipeId], map: "recipe_notes_recipe_idx")
+  @@map("recipe_notes")
+}
+
+model PantryItem {
+  id        Int      @id @default(autoincrement()) @map("pantry_id")
+  userId    Int      @map("user_id")
+  name      String   @db.VarChar(255)
+  have      Boolean  @default(true)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@index([userId, have], map: "pantry_items_user_have_idx")
+  @@map("pantry_items")
 }
 
 model MealPlan {

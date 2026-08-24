@@ -20,7 +20,7 @@
 		> div > span {
 			display: block;
 			margin-bottom: 0.55rem;
-			color: #9a3412;
+			color: #a94e00;
 			font-size: 0.82rem;
 			font-weight: 900;
 			text-transform: uppercase;
@@ -124,7 +124,7 @@
 		&__eyebrow {
 			display: block;
 			margin-bottom: 0.35rem;
-			color: var(--accent-foreground);
+			color: #a84f00;
 			font-size: 0.75rem;
 			font-weight: 900;
 			letter-spacing: 0.08em;
@@ -142,6 +142,269 @@
 			margin: 0.45rem 0 0;
 			color: #6d6258;
 			line-height: 1.55;
+		}
+	}
+
+	&__collections {
+		margin-bottom: 1.25rem;
+		padding: 1.1rem 1.25rem;
+		border: 1px solid rgba(98, 58, 18, 0.1);
+		border-radius: 8px;
+		background: #ffffff;
+		box-shadow: 0 16px 44px rgba(45, 32, 20, 0.08);
+
+		&__header,
+		&__actions {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+		}
+
+		&__header {
+			span {
+				color: #a84f00;
+				font-size: 0.75rem;
+				font-weight: 900;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+
+			h2 {
+				margin: 0.2rem 0 0;
+				font-size: 1.35rem;
+				font-weight: 900;
+			}
+
+			> button {
+				min-height: 2.75rem;
+				padding: 0.6rem 1rem;
+				border: none;
+				border-radius: 999px;
+				background: #211813;
+				color: #ffffff;
+				font-weight: 900;
+			}
+		}
+
+		&__tabs {
+			display: flex;
+			gap: 0.55rem;
+			margin-top: 1rem;
+			overflow-x: auto;
+			padding: 0.1rem 0 0.35rem;
+
+			button {
+				min-height: 2.75rem;
+				flex: 0 0 auto;
+				padding: 0.55rem 0.9rem;
+				border: 1px solid rgba(98, 58, 18, 0.16);
+				border-radius: 999px;
+				background: #fffaf3;
+				color: #42372f;
+				font-weight: 800;
+
+				&[aria-selected="true"] {
+					border-color: #211813;
+					background: #211813;
+					color: #ffffff;
+				}
+
+				small {
+					margin-left: 0.35rem;
+					font-size: 0.72rem;
+					opacity: 0.72;
+				}
+			}
+		}
+
+		&__empty,
+		&__error {
+			margin: 0.85rem 0 0;
+			color: #6d6258;
+			line-height: 1.5;
+		}
+
+		&__error {
+			color: #a12c1c;
+		}
+
+		&__actions {
+			margin-top: 0.9rem;
+			padding-top: 0.85rem;
+			border-top: 1px solid rgba(98, 58, 18, 0.1);
+			color: #6d6258;
+			font-size: 0.9rem;
+
+			div {
+				display: flex;
+				gap: 0.5rem;
+			}
+
+			button {
+				min-height: 2.75rem;
+				padding: 0.55rem 0.85rem;
+				border: 1px solid rgba(98, 58, 18, 0.16);
+				border-radius: 999px;
+				background: #ffffff;
+				color: #211813;
+				font-weight: 800;
+
+				&:last-child {
+					border-color: rgba(200, 50, 32, 0.2);
+					color: #a12c1c;
+				}
+			}
+		}
+	}
+
+	&__collection-dialog-backdrop {
+		position: fixed;
+		z-index: 50;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem;
+		background: rgba(22, 18, 15, 0.52);
+	}
+
+	&__collection-dialog {
+		width: min(100%, 500px);
+		max-height: min(90vh, 640px);
+		overflow: auto;
+		padding: 1.35rem;
+		border: 1px solid rgba(98, 58, 18, 0.1);
+		border-radius: 8px;
+		background: #ffffff;
+		box-shadow: 0 24px 70px rgba(22, 18, 15, 0.24);
+
+		&__header {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 1rem;
+
+			span {
+				color: #a84f00;
+				font-size: 0.75rem;
+				font-weight: 900;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+
+			h2 {
+				margin: 0.2rem 0 0;
+				font-size: 1.5rem;
+				font-weight: 900;
+			}
+
+			p {
+				margin: 0.45rem 0 0;
+				color: #6d6258;
+			}
+
+			> button {
+				min-width: 2.75rem;
+				height: 2.75rem;
+				border: none;
+				border-radius: 999px;
+				background: #fff1d6;
+				color: #211813;
+				font-size: 1.5rem;
+				line-height: 1;
+			}
+		}
+
+		> p[role="alert"] {
+			margin: 1rem 0 0;
+			color: #a12c1c;
+			line-height: 1.5;
+		}
+
+		form {
+			display: grid;
+			gap: 0.6rem;
+			margin-top: 1.2rem;
+		}
+
+		label {
+			color: #42372f;
+			font-size: 0.9rem;
+			font-weight: 900;
+		}
+
+		input {
+			min-height: 2.9rem;
+			padding: 0 0.85rem;
+			border: 1px solid rgba(213, 107, 0, 0.3);
+			border-radius: 8px;
+			background: #fffaf3;
+			color: #211813;
+
+			&:focus-visible {
+				border-color: #ff9f1c;
+				box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
+			}
+		}
+
+		form > p[role="alert"] {
+			margin: 0;
+			color: #a12c1c;
+			line-height: 1.5;
+		}
+
+		&__list {
+			display: grid;
+			gap: 0.65rem;
+			margin-top: 1.2rem;
+		}
+
+		&__row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+			min-height: 3.2rem;
+			padding: 0.55rem 0.7rem 0.55rem 0.9rem;
+			border: 1px solid rgba(98, 58, 18, 0.1);
+			border-radius: 8px;
+			background: #fffaf3;
+			font-weight: 800;
+
+			button {
+				min-width: 4rem;
+				min-height: 2.75rem;
+				padding: 0.55rem 0.8rem;
+				border: none;
+				border-radius: 999px;
+				background: #211813;
+				color: #ffffff;
+				font-weight: 900;
+			}
+		}
+
+		&__empty {
+			margin-top: 1rem;
+			color: #6d6258;
+			line-height: 1.55;
+		}
+
+		&__actions {
+			display: flex;
+			justify-content: flex-end;
+			margin-top: 1.2rem;
+
+			button {
+				min-width: 5rem;
+				min-height: 2.75rem;
+				padding: 0.6rem 1rem;
+				border: none;
+				border-radius: 999px;
+				background: #211813;
+				color: #ffffff;
+				font-weight: 900;
+			}
 		}
 	}
 
@@ -237,7 +500,7 @@
 							padding: 0.25rem 0.55rem;
 							border-radius: 999px;
 							background: rgba(255, 159, 28, 0.15);
-							color: var(--accent-foreground);
+							color: #a84f00;
 							font-size: 0.76rem;
 							font-weight: 900;
 						}
@@ -289,13 +552,13 @@
 							transform 0.2s ease;
 
 						&:hover {
-							background: #9a3412;
+							background: #a94e00;
 							transform: translateY(-1px);
 						}
 
 						&--danger {
 							background: #fff1d6;
-							color: var(--accent-foreground);
+							color: #a84f00;
 
 							&:hover {
 								background: #c83220;
@@ -398,6 +661,24 @@
 			grid-template-columns: 1fr;
 		}
 
+		&__collections {
+			&__header,
+			&__actions {
+				align-items: flex-start;
+				flex-direction: column;
+			}
+
+			&__header > button,
+			&__actions > div {
+				width: 100%;
+			}
+
+			&__header > button,
+			&__actions button {
+				flex: 1;
+			}
+		}
+
 		&__summary {
 			display: grid;
 		}
@@ -426,5 +707,21 @@
 				}
 			}
 		}
+	}
+}
+
+.wishlist button:focus-visible,
+.wishlist input:focus-visible,
+.wishlist select:focus-visible {
+	outline: 3px solid #ff9f1c;
+	outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.wishlist * {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
 	}
 }

@@ -1,5 +1,5 @@
 const STORAGE_KEY = "food-recipes:auth-intent";
-const ALLOWED_ACTIONS = new Set(["saveRecipe"]);
+const ALLOWED_ACTIONS = new Set(["saveRecipe", "saveToCollection"]);
 const INTENT_TTL_MS = 10 * 60 * 1000;
 
 const getStorage = () =>
@@ -67,7 +67,7 @@ export const consumeAuthIntent = () => {
 		) return null;
 		if (!isSafeInternalPath(intent?.returnTo)) return null;
 		if (intent.action && !ALLOWED_ACTIONS.has(intent.action)) return null;
-		if (intent.action === "saveRecipe" && !intent.recipeId) return null;
+		if (["saveRecipe", "saveToCollection"].includes(intent.action) && !intent.recipeId) return null;
 		return {
 			returnTo: intent.returnTo,
 			...(intent.action ? { action: intent.action } : {}),
@@ -80,6 +80,12 @@ export const consumeAuthIntent = () => {
 
 export const isMatchingSaveRecipeIntent = (intent, currentPath, recipeId) =>
 	intent?.action === "saveRecipe" &&
+	isSafeInternalPath(currentPath) &&
+	intent.returnTo === currentPath &&
+	String(intent.recipeId) === String(recipeId);
+
+export const isMatchingSaveToCollectionIntent = (intent, currentPath, recipeId) =>
+	intent?.action === "saveToCollection" &&
 	isSafeInternalPath(currentPath) &&
 	intent.returnTo === currentPath &&
 	String(intent.recipeId) === String(recipeId);

@@ -6,7 +6,16 @@ import convertImage from "@/shared/utils/convertImage";
 import formatTimestamp from "@/shared/utils/formatTimestamp";
 import ratingStar from "@/shared/utils/ratingStar";
 
-const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
+const RecipeContainerSummary = ({
+	recipe,
+	favorite,
+	onClickFavorite,
+	onAddToPlan,
+	isAddingToPlan = false,
+	onSaveToCollection,
+	onAddIngredients,
+	isAddingIngredients = false,
+}) => {
 	const tags = [recipe.category_name, recipe.meal_name, recipe.difficulty ?? recipe.difficulty_level].filter(Boolean);
 
 	return (
@@ -28,6 +37,37 @@ const RecipeContainerSummary = ({ recipe, favorite, onClickFavorite }) => {
 							{favorite ? <BsHeartFill size={24} color="white" /> : <BsHeart size={24} color="white" />}
 							<strong>{favorite ? "Remove from favorite" : "Add to favorite"}</strong>
 						</button>
+						{onAddToPlan && (
+							<button
+								type="button"
+								className="recipe__container__summary__plan"
+								onClick={onAddToPlan}
+								disabled={isAddingToPlan}
+								aria-busy={isAddingToPlan}
+							>
+								<strong>{isAddingToPlan ? "Adding to plan..." : "Add to plan"}</strong>
+							</button>
+						)}
+						{onSaveToCollection && (
+							<button
+								type="button"
+								className="recipe__container__summary__collection"
+								onClick={onSaveToCollection}
+							>
+								<strong>Save to...</strong>
+							</button>
+						)}
+						{onAddIngredients && (
+							<button
+								type="button"
+								className="recipe__container__summary__shopping"
+								onClick={onAddIngredients}
+								disabled={isAddingIngredients}
+								aria-busy={isAddingIngredients}
+							>
+								<strong>{isAddingIngredients ? "Adding ingredients..." : "Add ingredients to shopping list"}</strong>
+							</button>
+						)}
 					</div>
 				</div>
 			</Col>

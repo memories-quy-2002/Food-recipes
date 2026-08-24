@@ -22,14 +22,11 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.875rem;
-	flex: 0 0 auto;
 	color: var(--foreground);
 	text-decoration: none;
 	font-size: 1.25rem;
 	font-weight: 800;
-	line-height: 1;
 	letter-spacing: -0.04em;
-	white-space: nowrap;
 }
 
 .fr-brand:hover {
@@ -39,7 +36,6 @@
 .fr-brand__mark {
 	position: relative;
 	display: inline-block;
-	flex: 0 0 1.75rem;
 	width: 1.75rem;
 	height: 1.75rem;
 	overflow: hidden;
@@ -91,7 +87,7 @@
 }
 
 .fr-button--primary:hover {
-	background: var(--accent-foreground);
+	background: #a94e00;
 }
 
 .fr-auth__user-button {
@@ -467,11 +463,7 @@
 
 /* Home */
 .fr-page.home {
-	padding-top: clamp(1rem, 2vw, 1.5rem);
-}
-
-.fr-page.home .home__main {
-	padding-top: clamp(2rem, 4vw, 4rem);
+	padding-top: clamp(1.5rem, 4vw, 3rem);
 }
 
 .fr-page.home .home__main {
@@ -516,17 +508,11 @@
 	gap: 1rem;
 }
 
-.fr-page.home .home__main__cardList__feature__item {
-	border-color: var(--border);
-	border-radius: 1.375rem;
-	background: var(--card);
-	box-shadow: 0 14px 32px rgba(33, 24, 19, 0.06);
-}
-
+.fr-page.home .home__main__cardList__feature__item,
 .fr-page.home .home__main__category__list__item {
 	border-color: var(--border);
 	border-radius: 1.375rem;
-	background: #211813;
+	background: var(--card);
 	box-shadow: 0 14px 32px rgba(33, 24, 19, 0.06);
 }
 
@@ -547,25 +533,25 @@
 	color: var(--accent-foreground);
 }
 
+.fr-page.home .home__main__category__list__item--all
+	.home__main__category__list__item__content {
+	color: var(--accent-foreground);
+}
+
+.fr-page.home .home__main__category__list__item--all
+	.home__main__category__list__item__content p {
+	color: var(--accent-foreground);
+}
+
 .fr-page.home .home__main__cardList__feature__item__fav,
 .fr-page.home .home__main__category__list__item--all {
-	background:
-		linear-gradient(145deg, rgba(24, 17, 12, 0.96), rgba(67, 35, 20, 0.92)),
-		#211813;
-	color: #fff8ef;
-}
-
-.fr-page.home .home__main__category__list__item--all p {
-	color: rgba(255, 248, 239, 0.82);
-}
-
-.fr-page.home .home__main__category__list__item__content span {
-	color: rgba(255, 255, 255, 0.86);
+	background: var(--accent);
+	color: var(--accent-foreground);
 }
 
 .fr-page.home .home__carousel {
 	width: min(1200px, 100%);
-	margin: 0 auto;
+	margin: clamp(3rem, 6vw, 5rem) auto 0;
 	border-radius: 1.75rem;
 	background: var(--secondary);
 	box-shadow: 0 18px 40px rgba(33, 24, 19, 0.07);
@@ -573,16 +559,12 @@
 }
 
 .fr-page.home .home__carousel__item {
-	color: #fff8ef;
+	color: var(--foreground);
 }
 
 .fr-page.home .home__carousel__item__content__title,
 .fr-page.home .home__carousel__item__content__desc {
 	color: #fff8ef;
-}
-
-.fr-page.home .home__carousel__item__content__desc {
-	color: rgba(255, 248, 239, 0.82);
 }
 
 .fr-page.home .home__carousel__item__content__button--ghost,
@@ -755,11 +737,9 @@
 .fr-recipe .recipe__container__summary {
 	border: 1px solid var(--border);
 	border-radius: 1.75rem;
-	background:
-		linear-gradient(135deg, rgba(24, 17, 12, 0.96), rgba(67, 35, 20, 0.92)),
-		#211813;
+	background: var(--card);
 	box-shadow: 0 18px 40px rgba(33, 24, 19, 0.07);
-	color: #fff8ef;
+	color: var(--foreground);
 	overflow: hidden;
 }
 
@@ -771,6 +751,37 @@
 .fr-recipe .recipe__container__summary__content p,
 .fr-recipe .recipe__container__summary__content__meta {
 	color: var(--muted-foreground);
+}
+
+.fr-recipe .recipe__container__summary__author {
+	color: var(--accent-foreground);
+}
+
+.fr-recipe .recipe__container__summary__date,
+.fr-recipe .recipe__container__summary__review__count {
+	color: var(--muted-foreground);
+}
+
+.fr-recipe .recipe__container__summary__tags span {
+	border-color: var(--border);
+	background: var(--accent);
+	color: var(--accent-foreground);
+}
+
+.fr-recipe .recipe__container__summary__start {
+	border-color: var(--foreground);
+	background: var(--foreground);
+	color: var(--card);
+}
+
+.fr-recipe .recipe__container__summary__start:hover {
+	background: var(--primary);
+	color: var(--primary-foreground);
+}
+
+.fr-recipe .recipe__container__summary__fav > button:first-of-type {
+	background: var(--primary);
+	color: var(--primary-foreground);
 }
 
 .fr-recipe .recipe__container__img {
@@ -854,7 +865,7 @@
 	color: var(--foreground);
 }
 
-.fr-account .form button:not(.form__btnBox__button):not(.form__field__action):not(.form__login__container__bottom__button):not(.form__signup__container__bottom__button),
+.fr-account .form button,
 .fr-add .add__container__form__actions button:last-child,
 .fr-profile__container button.btn-primary {
 	border: 0;
@@ -862,54 +873,6 @@
 	background: var(--primary);
 	color: var(--primary-foreground);
 	font-weight: 800;
-}
-
-.fr-account .form__btnBox__button {
-	border: 1px solid transparent;
-	border-radius: 999px;
-	background: transparent;
-	color: var(--muted-foreground);
-	font-weight: 900;
-}
-
-.fr-account .form__btnBox__button[aria-selected="true"] {
-	background: var(--primary);
-	color: var(--primary-foreground);
-	box-shadow: 0 4px 12px rgba(154, 52, 18, 0.2);
-}
-
-.fr-account .form__btnBox__button:hover:not([aria-selected="true"]) {
-	background: var(--accent);
-	color: var(--foreground);
-}
-
-.fr-account .form__field__action {
-	border: 0;
-	border-radius: 50%;
-	background: var(--primary);
-	color: var(--primary-foreground);
-}
-
-.fr-account .form__login__container__bottom__button,
-.fr-account .form__signup__container__bottom__button {
-	display: inline;
-	padding: 0;
-	border: 0;
-	border-radius: 0.25rem;
-	background: transparent;
-	box-shadow: none;
-	color: var(--accent-foreground);
-	font: inherit;
-	font-weight: 900;
-	text-decoration: underline;
-	text-decoration-thickness: 0.1em;
-	text-underline-offset: 0.2em;
-}
-
-.fr-account .form__login__container__bottom__button:hover,
-.fr-account .form__signup__container__bottom__button:hover {
-	background: transparent;
-	color: var(--primary);
 }
 
 .fr-add {

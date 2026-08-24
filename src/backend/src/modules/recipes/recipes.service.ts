@@ -18,6 +18,8 @@ import {
   ReplaceRecipeTagsDto,
 } from './dto/recipe-structure.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { RECIPE_ALLERGENS } from '../recipe-metadata/dto/recipe-metadata.dto';
+import { RecipeMetadataService, RecipeMetadataServicePort, validateRecipeMetadata } from '../recipe-metadata/recipe-metadata.service';
 import {
   RecipeListResult,
   RecipeRecord,
@@ -30,6 +32,8 @@ export class RecipesService {
   constructor(
     @Inject(RecipesRepository)
     private readonly repository: RecipesRepositoryPort,
+    @Inject(RecipeMetadataService)
+    private readonly metadataService: RecipeMetadataServicePort,
   ) {}
 
   async list(query: RecipeQueryDto): Promise<RecipeListResult> {
@@ -41,7 +45,7 @@ export class RecipesService {
     if (!recipe) {
       throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
     }
-    return { recipe };
+    return { recipe: { ...recipe, metadata: await this.metadataService.get(id) } };
   }
 
   async listMine(
@@ -52,7 +56,13 @@ export class RecipesService {
   }
 
   async create(userId: number, dto: CreateRecipeDto): Promise<{ recipe: RecipeRecord }> {
-    return { recipe: await this.repository.create(userId, dto) };
+    if (dto.metadata) validateRecipeMetadata(dto.metadata);
+    const recipe = await this.repository.create(userId, dto);
+    if (dto.metadata) {
+      const metadata = await this.metadataService.replace(recipe.recipe_id, userId, dto.metadata);
+      return { recipe: { ...recipe, metadata } };
+    }
+    return { recipe: { ...recipe, metadata: { nutrition: null, allergens: [] } } };
   }
 
   async createDraft(
@@ -71,7 +81,13 @@ export class RecipesService {
     const existing = ownerLookup ?? (ownerLookup === undefined ? await this.repository.findById(id) : null);
     if (!existing) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
     if (existing.user_id !== userId) throw new ForbiddenException({ code: 'RECIPE_FORBIDDEN', message: 'You do not own this recipe' });
-    return { recipe: await this.repository.update(id, dto) };
+    if (dto.metadata) validateRecipeMetadata(dto.metadata);
+    const recipe = await this.repository.update(id, dto);
+    if (dto.metadata) {
+      const metadata = await this.metadataService.replace(id, userId, dto.metadata);
+      return { recipe: { ...recipe, metadata } };
+    }
+    return { recipe: { ...recipe, metadata: await this.metadataService.get(id) } };
   }
 
   async delete(id: number, userId: number): Promise<void> {
@@ -154,7 +170,14 @@ export class RecipesService {
   ): Promise<{ recipe: RecipeRecord }> {
     await this.requireOwner(id, userId);
     const dietaryTags = this.normalizeTags(dto.dietaryTags, 'dietary');
-    const allergenTags = this.normalizeTags(dto.allergenTags, 'allergen');
+    const allergenTags = this.normalizeTags(dto.allergenTags, 'allergen').map((tag) => tag === 'tree nuts' ? 'tree_nuts' : tag);
+    const unsupportedAllergen = allergenTags.find((tag) => !(RECIPE_ALLERGENS as readonly string[]).includes(tag));
+    if (unsupportedAllergen) {
+      throw new BadRequestException({
+        code: 'RECIPE_ALLERGEN_INVALID',
+        message: `Unsupported allergen tag: ${unsupportedAllergen}`,
+      });
+    }
     return {
       recipe: await this.repository.replaceTags(id, { dietaryTags, allergenTags }),
     };

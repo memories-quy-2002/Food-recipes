@@ -33,6 +33,27 @@ const findText = (renderer, text) =>
 	renderer.root.findAll((node) => node.children.join("") === text)[0];
 
 describe("cooking mode guided flow", () => {
+	it("shows planned meal context and offers a return to plan after completion", () => {
+		const onBackToPlan = vi.fn();
+		const renderer = renderCookingMode({
+			planningContext: {
+				date: "2026-08-24",
+				slot: "dinner",
+				servings: 4,
+				returnTo: "/planning",
+			},
+			onBackToPlan,
+		});
+
+		expect(findText(renderer, "Monday · Dinner · 4 servings")).toBeTruthy();
+		act(() => findButton(renderer, "Next step").props.onClick());
+		act(() => findButton(renderer, "Finish cooking").props.onClick());
+		expect(findText(renderer, "Recipe complete")).toBeTruthy();
+		expect(findButton(renderer, "Back to plan")).toBeTruthy();
+		act(() => findButton(renderer, "Back to plan").props.onClick());
+		expect(onBackToPlan).toHaveBeenCalledOnce();
+	});
+
 	it("preserves instruction order and exact text while exposing the current step", () => {
 		expect(getCookingInstructions(recipe)).toEqual(recipe.instructions);
 		const renderer = renderCookingMode();

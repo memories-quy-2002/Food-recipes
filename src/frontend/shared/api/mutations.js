@@ -50,12 +50,47 @@ const toOptionalMinutes = (time) => {
 
 export const serializeWishlistPayload = (recipeId) => ({ recipeId });
 
+const toOptionalNumber = (value) => {
+	const number = Number(value);
+	return Number.isFinite(number) && number >= 0 ? number : undefined;
+};
+
+export const serializeRecipeMetadata = (recipe) => {
+	const nutrition = recipe.recipeNutrition;
+	const caloriesPerServing = toOptionalNumber(nutrition?.caloriesPerServing);
+	const allergens = [...new Set(recipe.recipeAllergens || [])].filter(Boolean).map((name) => ({
+		name,
+		source: "provided_by_author",
+	}));
+
+	if (caloriesPerServing === undefined && allergens.length === 0) return undefined;
+
+	return {
+		nutrition: caloriesPerServing === undefined
+			? null
+			: {
+				caloriesPerServing,
+				proteinGrams: toOptionalNumber(nutrition?.proteinGrams),
+				carbohydratesGrams: toOptionalNumber(nutrition?.carbohydratesGrams),
+				fatGrams: toOptionalNumber(nutrition?.fatGrams),
+				fiberGrams: toOptionalNumber(nutrition?.fiberGrams),
+				sugarGrams: toOptionalNumber(nutrition?.sugarGrams),
+				sodiumMilligrams: toOptionalNumber(nutrition?.sodiumMilligrams),
+				source: nutrition?.source || "provided_by_author",
+				sourceReference: nutrition?.sourceReference?.trim() || undefined,
+			},
+		allergens,
+	};
+};
+
 export const serializeCreateRecipePayload = ({
 	recipe,
 	categories,
 	meals,
 	imageUrl,
-}) => ({
+	}) => {
+	const metadata = serializeRecipeMetadata(recipe);
+	return {
 	name: recipe.recipeName.trim(),
 	description: recipe.recipeDescription,
 	mealId: findCatalogId(meals, recipe.recipeMealName, "meal"),
@@ -65,7 +100,9 @@ export const serializeCreateRecipePayload = ({
 	ingredients: recipe.recipeIngredients,
 	instructions: recipe.recipeInstructions,
 	imageUrl,
-});
+		...(metadata ? { metadata } : {}),
+	};
+};
 
 export const serializeCreateRecipeDraftPayload = ({
 	recipe,

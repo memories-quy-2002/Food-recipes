@@ -29,7 +29,7 @@
 				padding: 0.35rem 0.7rem;
 				border-radius: 999px;
 				background: #fff1d6;
-				color: var(--accent-foreground);
+				color: #a84f00;
 				font-weight: 900;
 			}
 
@@ -87,7 +87,7 @@
 
 					span {
 						min-width: 1.6rem;
-						color: var(--accent-foreground);
+						color: #a84f00;
 						font-weight: 900;
 					}
 
@@ -97,7 +97,7 @@
 						border: none;
 						border-radius: 50%;
 						background: #fff1d6;
-						color: var(--accent-foreground);
+						color: #a84f00;
 						font-weight: 900;
 
 						&:hover:not(:disabled) {
@@ -110,7 +110,7 @@
 				&__button {
 					border: none;
 					border-radius: 999px;
-					color: var(--accent-foreground);
+					color: #a84f00;
 					background-color: #fff1d6;
 					padding: 0.65rem 1rem;
 					font-weight: 900;
@@ -120,7 +120,7 @@
 					}
 
 					&:focus-visible {
-						outline: 3px solid #9a3412;
+						outline: 3px solid #a94e00;
 						outline-offset: 3px;
 					}
 				}
@@ -204,7 +204,7 @@
 				color: #ffffff;
 
 				&:hover:not(:disabled) {
-					background: #9a3412;
+					background: #a94e00;
 				}
 			}
 		}
@@ -283,6 +283,75 @@
 
 .add__container__form__actions {
 	text-align: right;
+}
+
+.add__metadata {
+	margin: 1.5rem 0;
+	padding: 1.25rem;
+	border: 1px solid rgba(98, 58, 18, 0.1);
+	border-radius: 8px;
+	background: #fffaf3;
+
+	h2 {
+	margin: 0;
+	font-size: 1.35rem;
+	font-weight: 900;
+	}
+
+	> p,
+	&__allergens p {
+	margin: 0.45rem 0 1rem;
+	color: #6d6258;
+	line-height: 1.55;
+	}
+
+	&__grid {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.75rem;
+	}
+
+	&__allergens {
+		margin: 1rem 0 0;
+		padding: 0.9rem;
+		border: 1px solid rgba(98, 58, 18, 0.12);
+		border-radius: 8px;
+
+		legend {
+			float: none;
+			width: auto;
+			margin: 0;
+			padding: 0;
+			font-weight: 900;
+		}
+
+		> div {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 0.5rem;
+		}
+	}
+}
+
+@media screen and (max-width: 768px) {
+	.add__metadata {
+		&__grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		&__allergens > div {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+}
+
+@media screen and (max-width: 576px) {
+	.add__metadata {
+		&__grid,
+		&__allergens > div {
+			grid-template-columns: 1fr;
+		}
+	}
 }
 
 @media screen and (max-width: 768px) {

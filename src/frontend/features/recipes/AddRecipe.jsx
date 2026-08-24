@@ -128,6 +128,8 @@ const normalizeNutritionPayload = (nutrition = {}) => Object.fromEntries(
 		.filter(([, value]) => value !== null && Number.isFinite(value) || value === null)
 );
 
+const normalizeAllergenTag = (tag) => String(tag || "").trim().toLowerCase() === "tree nuts" ? "tree_nuts" : String(tag || "").trim().toLowerCase();
+
 const AddRecipe = () => {
 	const { auth } = useContext(AuthContext);
 	const { userId } = auth.current;
@@ -399,7 +401,7 @@ const AddRecipe = () => {
 		if (!recipeId) throw new Error("The server did not return a draft recipe ID.");
 		await axios.put(apiRoutes.recipeIngredients(recipeId), { ingredients: normalizeStructuredIngredients(recipe.structuredIngredients, recipe.recipeIngredients) });
 		await axios.put(apiRoutes.recipeNutrition(recipeId), normalizeNutritionPayload(recipe.nutrition));
-		await axios.put(apiRoutes.recipeDietaryTags(recipeId), { dietaryTags: recipe.dietaryTags || [], allergenTags: recipe.allergenTags || [] });
+		await axios.put(apiRoutes.recipeDietaryTags(recipeId), { dietaryTags: recipe.dietaryTags || [], allergenTags: (recipe.allergenTags || []).map(normalizeAllergenTag) });
 		return recipeId;
 	};
 

@@ -54,6 +54,26 @@ export type RecipeNutrition = {
 	sodium?: number | null;
 };
 
+export type RecipeMetadata = {
+	nutrition: {
+		calories_per_serving: number | null;
+		protein_grams: number | null;
+		carbohydrates_grams: number | null;
+		fat_grams: number | null;
+		fiber_grams: number | null;
+		sugar_grams: number | null;
+		sodium_milligrams: number | null;
+		source: "provided_by_author" | "estimated" | "verified_external";
+		source_reference: string | null;
+	} | null;
+	allergens: Array<{
+		allergen_id?: number;
+		name: string;
+		source: "provided_by_author" | "estimated" | "verified_external";
+		source_reference?: string | null;
+	}>;
+};
+
 export type RecipeLifecycleMetadata = {
 	status?: RecipeStatus;
 	publishedAt?: string | null;
@@ -68,6 +88,12 @@ export type RecipeLifecycleMetadata = {
 export type RecipeDetail = RecipeSummary & RecipeLifecycleMetadata & {
 	ingredients: string[] | null;
 	instructions: string[] | null;
+	structured_ingredients?: Array<StructuredIngredient & {
+		ingredient_id?: number;
+		recipe_id?: number;
+		note?: string | null;
+	}> | null;
+	metadata?: RecipeMetadata;
 };
 
 export type RecipeDraftPayload = {

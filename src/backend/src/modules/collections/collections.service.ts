@@ -10,6 +10,7 @@ import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import {
   CollectionRecord,
+  CollectionRecipeRecord,
   COLLECTIONS_REPOSITORY,
   CollectionsRepositoryPort,
 } from './collections.repository';
@@ -74,6 +75,11 @@ export class CollectionsService {
     return { message: 'Recipe removed from collection' };
   }
 
+  async listRecipes(userId: number, collectionId: number): Promise<{ recipes: CollectionRecipeRecord[] }> {
+    await this.requireCollection(userId, collectionId);
+    return { recipes: await this.repository.listRecipes(userId, collectionId) };
+  }
+
   private async requireCollection(userId: number, collectionId: number): Promise<CollectionRecord> {
     const collection = await this.repository.findOwned(userId, collectionId);
     if (!collection) throw this.notFound();
@@ -98,4 +104,4 @@ export class CollectionsService {
   }
 }
 
-export type CollectionsServicePort = Pick<CollectionsService, 'list' | 'create' | 'update' | 'remove' | 'addRecipe' | 'removeRecipe'>;
+export type CollectionsServicePort = Pick<CollectionsService, 'list' | 'create' | 'update' | 'remove' | 'addRecipe' | 'removeRecipe' | 'listRecipes'>;

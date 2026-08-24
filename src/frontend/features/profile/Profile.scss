@@ -36,7 +36,7 @@
 
 				svg {
 					flex: 0 0 auto;
-					color: #9a3412;
+					color: #a94e00;
 				}
 
 				&__img {
@@ -67,19 +67,14 @@
 					li {
 						width: 100%;
 
-						a,
-						button {
+						a {
 							display: block;
-							width: 100%;
 							padding: 0.85rem 0.9rem;
-							border: 0;
-							background: transparent;
 							border-radius: 8px;
 							text-align: left;
 							text-decoration: none;
 							color: #42372f;
 							cursor: pointer;
-							font: inherit;
 							font-weight: 800;
 							transition:
 								background-color 0.2s ease,
@@ -88,7 +83,7 @@
 							&:hover,
 							&.profile__container__aside__content__nav__link--active {
 								background-color: #fff1d6;
-								color: var(--accent-foreground);
+								color: #a84f00;
 							}
 						}
 					}
@@ -157,7 +152,7 @@
 							transform 0.2s ease;
 
 						&:hover:not(:disabled) {
-							background-color: #9a3412;
+							background-color: #a94e00;
 							transform: translateY(-1px);
 						}
 					}
@@ -225,7 +220,7 @@
 							font-weight: 900;
 
 							&:hover {
-								background-color: #9a3412;
+								background-color: #a94e00;
 							}
 						}
 					}
@@ -335,7 +330,7 @@
 						font-weight: 900;
 
 						&:hover {
-							background-color: #9a3412;
+							background-color: #a94e00;
 						}
 					}
 				}

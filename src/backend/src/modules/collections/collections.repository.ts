@@ -10,6 +10,25 @@ export type CollectionRecord = {
   updated_at: Date;
 };
 
+export type CollectionRecipeRecord = {
+  recipe_id: number;
+  recipe_name: string;
+  recipe_description: string | null;
+  prep_time_minutes: number;
+  cook_time_minutes: number;
+  total_time_minutes: number;
+  date_added: Date | null;
+  image_url: string | null;
+  user_id: number;
+  full_name?: string | null;
+  meal_id?: number;
+  meal_name?: string;
+  category_id?: number;
+  category_name?: string;
+  overall_score?: number;
+  num_ratings?: number;
+};
+
 export interface CollectionsRepositoryPort {
   listByUserId(userId: number): Promise<CollectionRecord[]>;
   findOwned(userId: number, collectionId: number): Promise<CollectionRecord | null>;
@@ -20,6 +39,7 @@ export interface CollectionsRepositoryPort {
   recipeInCollection(collectionId: number, recipeId: number): Promise<boolean>;
   addRecipe(collectionId: number, recipeId: number): Promise<boolean>;
   removeRecipe(userId: number, collectionId: number, recipeId: number): Promise<boolean>;
+  listRecipes(userId: number, collectionId: number): Promise<CollectionRecipeRecord[]>;
 }
 
 export const COLLECTIONS_REPOSITORY = Symbol('COLLECTIONS_REPOSITORY');
@@ -128,7 +148,55 @@ export class CollectionsRepository implements CollectionsRepositoryPort {
     return result > 0;
   }
 
+  async listRecipes(userId: number, collectionId: number): Promise<CollectionRecipeRecord[]> {
+    const rows = await this.prisma.$queryRaw<CollectionRecipeRecord[]>(Prisma.sql`
+      SELECT
+        r.recipe_id,
+        r.recipe_name,
+        r.recipe_description,
+        r.date_added,
+        r.image_url,
+        r.prep_time_minutes,
+        r.cook_time_minutes,
+        r.prep_time_minutes + r.cook_time_minutes AS total_time_minutes,
+        r.user_id,
+        a.full_name,
+        m.meal_id,
+        m.meal_name,
+        c.category_id,
+        c.category_name,
+        COALESCE(ROUND(AVG(rt.score), 1), 0)::float8 AS overall_score,
+        COALESCE(COUNT(rt.rating_id), 0)::int AS num_ratings
+      FROM saved_collection_items i
+      JOIN saved_collections sc ON sc.collection_id = i.collection_id
+      JOIN recipes r ON r.recipe_id = i.recipe_id
+      JOIN meals m ON m.meal_id = r.meal_id
+      JOIN categories c ON c.category_id = r.category_id
+      LEFT JOIN accounts a ON a.user_id = r.user_id
+      LEFT JOIN rating rt ON rt.recipe_id = r.recipe_id
+      WHERE sc.user_id = ${userId} AND sc.collection_id = ${collectionId}
+      GROUP BY i.collection_item_id, r.recipe_id, a.full_name, m.meal_id, c.category_id
+      ORDER BY i.created_at DESC, i.collection_item_id DESC
+    `);
+    return rows.map((row) => this.normalizeRecipe(row));
+  }
+
   private normalize(row: CollectionRecord): CollectionRecord {
     return { ...row, recipe_count: Number(row.recipe_count) };
+  }
+
+  private normalizeRecipe(row: CollectionRecipeRecord): CollectionRecipeRecord {
+    return {
+      ...row,
+      recipe_id: Number(row.recipe_id),
+      prep_time_minutes: Number(row.prep_time_minutes),
+      cook_time_minutes: Number(row.cook_time_minutes),
+      total_time_minutes: Number(row.total_time_minutes),
+      user_id: Number(row.user_id),
+      meal_id: row.meal_id === undefined ? undefined : Number(row.meal_id),
+      category_id: row.category_id === undefined ? undefined : Number(row.category_id),
+      overall_score: row.overall_score === undefined ? undefined : Number(row.overall_score),
+      num_ratings: row.num_ratings === undefined ? undefined : Number(row.num_ratings),
+    };
   }
 }

@@ -29,7 +29,7 @@ const About = () => {
 			/>
 			<section className="mx-auto max-w-6xl rounded-[28px] border border-[#eee8df] bg-[#fffdf9] px-6 py-10 shadow-[0_18px_40px_rgba(33,24,19,0.07)] sm:px-10 sm:py-12 lg:px-14 lg:py-14">
 				<div className="max-w-3xl">
-					<span className="mb-5 block text-xs font-extrabold uppercase tracking-[0.08em] text-[#9a3412]">
+					<span className="mb-5 block text-xs font-extrabold uppercase tracking-[0.08em] text-[#a94e00]">
 						About Food Recipes
 					</span>
 					<h1 className="max-w-3xl text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.98] tracking-[-0.055em]">

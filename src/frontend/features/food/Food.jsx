@@ -5,6 +5,8 @@ import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
 import FoodMenuBar from "@/features/food/FoodMenuBar";
+import FilterSheet from "@/features/food/FilterSheet";
+import ActiveFilterChips from "@/features/food/ActiveFilterChips";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { parseRecipeDiscoveryState, useRecipesQuery } from "@/features/food/api/useRecipesQuery";
@@ -21,6 +23,8 @@ const Food = () => {
 	const location = useLocation();
 	const queryState = parseRecipeDiscoveryState(location.search);
 	const recipesQuery = useRecipesQuery(queryState);
+	const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+	const activeFilterCount = [queryState.q, queryState.categoryId, queryState.mealId].filter(Boolean).length;
 
 	const updateQueryState = (changes) => {
 		const nextState = { ...queryState, ...changes };
@@ -63,9 +67,18 @@ const Food = () => {
 			{!filtersReady ? <PageState type={filtersError ? "error" : undefined} title={filtersError ? "Recipe filters could not load" : "Loading recipe filters"} message={filtersError || "Fetching categories and meal filters."} /> : (
 				<Row className="food__layout">
 					<Col lg={3} md={4} className="food__layout__aside"><FoodMenuBar categoryId={queryState.categoryId} mealId={queryState.mealId} searchTerm={queryState.q} categories={categories} meals={meals} onCategoryClick={(categoryId) => updateQueryState({ categoryId, page: 1 })} onMealClick={(mealId) => updateQueryState({ mealId, page: 1 })} onMenuAllClick={(name) => updateQueryState({ [name]: "", page: 1 })} onChangeSearchTerm={(event) => updateQueryState({ q: event.target.value, page: 1 })} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} /></Col>
-					<Col lg={9} md={8} className="food__layout__content"><Suspense fallback={<PageState title="Loading recipes" message="Preparing the recipe list." />}><FoodContent recipes={recipesQuery.data?.recipes || []} pagination={recipesQuery.data?.pagination} queryState={queryState} onQueryStateChange={updateQueryState} isLoading={recipesQuery.isPending} isFetching={recipesQuery.isFetching} error={recipesQuery.error?.response?.data?.message || recipesQuery.error?.message} /></Suspense></Col>
+					<Col lg={9} md={8} className="food__layout__content">
+						<div className="food__mobile-toolbar" aria-label="Mobile recipe controls">
+							<button type="button" className="food__mobile-toolbar__filter" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-controls="food-filter-sheet">
+								Filters ({activeFilterCount})
+							</button>
+						</div>
+						<ActiveFilterChips queryState={queryState} categories={categories} meals={meals} onQueryStateChange={updateQueryState} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} />
+						<Suspense fallback={<PageState title="Loading recipes" message="Preparing the recipe list." />}><FoodContent recipes={recipesQuery.data?.recipes || []} pagination={recipesQuery.data?.pagination} queryState={queryState} onQueryStateChange={updateQueryState} isLoading={recipesQuery.isPending} isFetching={recipesQuery.isFetching} error={recipesQuery.error?.response?.data?.message || recipesQuery.error?.message} /></Suspense>
+					</Col>
 				</Row>
 			)}
+			<FilterSheet open={isFilterSheetOpen} queryState={queryState} categories={categories} meals={meals} onQueryStateChange={updateQueryState} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} onClose={() => setIsFilterSheetOpen(false)} />
 		</Container>
 	);
 };

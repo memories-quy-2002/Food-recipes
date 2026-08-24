@@ -106,4 +106,19 @@ describe("recipe servings", () => {
 		expect(renderer.root.findAllByType("span").some((node) => node.children.join("") === "vegetarian")).toBe(true);
 		expect(renderer.root.findAllByType("p").some((node) => node.children.join("") === "Contains: wheat")).toBe(true);
 	});
+
+	it("scales structured ingredient quantities from the recipe serving baseline", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(<RecipeDescription recipe={{
+				...recipe,
+				structured_ingredients: [{ name: "chicken breast", quantity: 500, unit: "GRAM", note: "diced" }],
+			}} />);
+		});
+
+		act(() => renderer.root.findByProps({ "aria-label": "Increase servings" }).props.onClick());
+		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node) => node.children);
+		expect(ingredientText).toEqual(["625 g chicken breast, diced"]);
+		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("scaled");
+	});
 });

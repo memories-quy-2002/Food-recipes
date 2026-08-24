@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Container } from "react-bootstrap";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
@@ -10,8 +10,16 @@ import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { RecipeContext } from "@/app/RecipeProvider";
-import { useToast } from "@/app/ToastProvider";
-import SavedCollectionsNotice from "@/features/saved/collections/SavedCollectionsNotice";
+import SavedCollections from "@/features/saved/collections/SavedCollections";
+import CollectionDialog from "@/features/saved/collections/CollectionDialog";
+import {
+	useCollectionRecipesQuery,
+	useCollectionsQuery,
+	useCreateCollectionMutation,
+	useDeleteCollectionMutation,
+	useRemoveRecipeFromCollectionMutation,
+	useRenameCollectionMutation,
+} from "@/features/saved/api/collectionsQueries";
 import { getSavedAtTimestamp } from "./savedRecipe";
 import "./Wishlist.scss";
 
@@ -98,12 +106,14 @@ const Wishlist = () => {
 	const [sortBy, setSortBy] = useState("recent");
 	const [isLoadingWishlist, setIsLoadingWishlist] = useState(true);
 	const [wishlistError, setWishlistError] = useState(null);
+	const [collectionDialog, setCollectionDialog] = useState(null);
+	const [collectionDialogError, setCollectionDialogError] = useState(null);
 	const confirmButtonRef = useRef(null);
 	const triggeringButtonRef = useRef(null);
 	const pendingRecipeIdRef = useRef(null);
 	const isRemovingRef = useRef(false);
 	const navigate = useNavigate();
-	const { showToast } = useToast();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { local, session } = useSelector(({ auth }) => auth);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
@@ -112,6 +122,33 @@ const Wishlist = () => {
 			? local.user.user_id
 			: session.user.user_id
 		: 0;
+	const rawCollectionId = searchParams.get("collectionId");
+	const parsedCollectionId = Number(rawCollectionId);
+	const selectedCollectionId =
+		Number.isInteger(parsedCollectionId) && parsedCollectionId > 0
+			? parsedCollectionId
+			: null;
+	const collectionsQuery = useCollectionsQuery(isAuthenticated);
+	const collectionRecipesQuery = useCollectionRecipesQuery(
+		selectedCollectionId,
+		isAuthenticated,
+	);
+	const createCollectionMutation = useCreateCollectionMutation();
+	const renameCollectionMutation = useRenameCollectionMutation();
+	const deleteCollectionMutation = useDeleteCollectionMutation();
+	const removeRecipeFromCollectionMutation =
+		useRemoveRecipeFromCollectionMutation();
+	const selectedCollectionRecipesLoading =
+		selectedCollectionId !== null && collectionRecipesQuery.isLoading;
+	const selectedCollectionRecipesError =
+		selectedCollectionId !== null && collectionRecipesQuery.isError;
+
+	const selectCollection = (collectionId) => {
+		const nextParams = new URLSearchParams(searchParams);
+		if (collectionId === null) nextParams.delete("collectionId");
+		else nextParams.set("collectionId", String(collectionId));
+		setSearchParams(nextParams);
+	};
 
 	useEffect(() => {
 		const fetchFavorites = async () => {
@@ -144,9 +181,41 @@ const Wishlist = () => {
 	);
 
 	const visibleEntries = useMemo(
-		() => getVisibleSavedEntries(recipes, wishlist, searchTerm, sortBy),
-		[recipes, wishlist, searchTerm, sortBy]
+		() => {
+			if (selectedCollectionId !== null) {
+				const collectionRecipes = collectionRecipesQuery.data?.recipes ?? [];
+				return getVisibleSavedEntries(
+					collectionRecipes,
+					collectionRecipes.map((recipe) => ({ recipe })),
+					searchTerm,
+					sortBy,
+				);
+			}
+			return getVisibleSavedEntries(recipes, wishlist, searchTerm, sortBy);
+		},
+		[
+			recipes,
+			wishlist,
+			searchTerm,
+			sortBy,
+			selectedCollectionId,
+			collectionRecipesQuery.data?.recipes,
+		]
 	);
+
+	useEffect(() => {
+		if (
+			selectedCollectionId !== null &&
+			!collectionsQuery.isLoading &&
+			collectionsQuery.data?.collections &&
+			!collectionsQuery.data.collections.some(
+				(collection) =>
+					Number(collection.collection_id) === selectedCollectionId,
+			)
+		) {
+			selectCollection(null);
+		}
+	}, [collectionsQuery.data?.collections, collectionsQuery.isLoading, selectedCollectionId]);
 
 	const handleShowModal = (recipe_id, triggeringButton) => {
 		pendingRecipeIdRef.current = recipe_id;
@@ -195,10 +264,18 @@ const Wishlist = () => {
 		setIsRemoving(true);
 		setRemoveError(null);
 		try {
-			const response = await axios.delete(
-				apiRoutes.userWishlistItem(capturedRecipeId)
-			);
-			if (response.status === 200) {
+			if (selectedCollectionId !== null) {
+				await removeRecipeFromCollectionMutation.mutateAsync({
+					collectionId: selectedCollectionId,
+					recipeId: Number(capturedRecipeId),
+				});
+				setShowModal(false);
+				pendingRecipeIdRef.current = null;
+			} else {
+				const response = await axios.delete(
+					apiRoutes.userWishlistItem(capturedRecipeId)
+				);
+				if (response.status === 200) {
 				setWishlist((currentWishlist) =>
 					currentWishlist.filter(
 						(item) =>
@@ -208,18 +285,13 @@ const Wishlist = () => {
 				);
 				setShowModal(false);
 				pendingRecipeIdRef.current = null;
-				showToast({ title: "Removed from Saved" });
+				}
 			}
 		} catch (err) {
 			console.error(err);
-			showToast({
-				title: "Couldn’t remove saved recipe",
-				message: "Please try again in a moment.",
-				type: "error",
-			});
 			setRemoveError(
-				err.response?.data?.message ||
-					"We could not remove this saved recipe. Please try again."
+					err.response?.data?.message ||
+					"We could not remove this recipe from the collection. Please try again."
 			);
 		} finally {
 			isRemovingRef.current = false;
@@ -228,7 +300,7 @@ const Wishlist = () => {
 	};
 
 	return (
-		<Container as="main" fluid className="fr-page wishlist">
+		<Container fluid className="fr-page wishlist">
 			<PageHelmet
 				title="Saved Recipes"
 				description="Review and organize the recipes you saved for later."
@@ -260,7 +332,34 @@ const Wishlist = () => {
 				</section>
 			</div>
 			<div className="wishlist__main">
-				<SavedCollectionsNotice />
+				<SavedCollections
+					collections={collectionsQuery.data?.collections ?? []}
+					selectedCollectionId={selectedCollectionId}
+					onSelect={selectCollection}
+					onCreate={() => {
+						if (!isAuthenticated) {
+							navigate("/account?signup=false", { state: { from: "/wishlist" } });
+							return;
+						}
+						setCollectionDialogError(null);
+						setCollectionDialog({ mode: "create", collection: null });
+					}}
+					onRename={(collection) => {
+						setCollectionDialogError(null);
+						setCollectionDialog({ mode: "rename", collection });
+					}}
+					onDelete={(collection) => {
+						if (!window.confirm(`Delete the ${collection.name} collection?`)) return;
+						deleteCollectionMutation.mutate(Number(collection.collection_id), {
+							onSuccess: () => selectCollection(null),
+						});
+					}}
+				/>
+				{collectionsQuery.isError && isAuthenticated && (
+					<p className="wishlist__collections__error" role="alert">
+						Unable to load your collections. Your All saved list is still available.
+					</p>
+				)}
 				<div className="wishlist__toolbar">
 					<label>
 						Search
@@ -286,16 +385,21 @@ const Wishlist = () => {
 					</label>
 				</div>
 				<div className="wishlist__main__content">
-					{isLoadingRecipes || isLoadingWishlist ? (
+					{(selectedCollectionId === null && (isLoadingRecipes || isLoadingWishlist)) ||
+					selectedCollectionRecipesLoading ? (
 						<PageState
 							title="Loading saved recipes"
 							message="Fetching your saved recipes."
 						/>
-					) : recipesError || wishlistError ? (
+					) : recipesError || wishlistError || selectedCollectionRecipesError ? (
 						<PageState
 							type="error"
 							title="Saved recipes could not load"
-							message={recipesError || wishlistError}
+							message={
+								selectedCollectionRecipesError
+									? "Unable to load this collection. Try selecting it again."
+									: recipesError || wishlistError
+							}
 							actionLabel="Try again"
 							onAction={() => window.location.reload()}
 						/>
@@ -305,36 +409,79 @@ const Wishlist = () => {
 							title={
 								searchTerm
 									? "No saved recipes match your search"
-									: "No saved recipes yet"
+									: selectedCollectionId !== null
+										? "This collection is empty"
+										: "No saved recipes yet"
 							}
 							message={
-								searchTerm
+									searchTerm
 									? "Clear the search or browse all recipes to find something to save."
-									: "Find something to cook, then save it here for later."
+									: selectedCollectionId !== null
+										? "Save a recipe to this collection from its recipe page."
+										: "Find something to cook, then save it here for later."
 							}
 							actionLabel={searchTerm ? "Clear search" : "Find something to cook"}
-							onAction={() =>
-								searchTerm
-									? setSearchTerm("")
-									: navigate("/food")
+								onAction={() =>
+									searchTerm
+										? setSearchTerm("")
+										: navigate("/food")
 							}
 						/>
 					) : (
 						<ul className="wishlist__main__content__list">
 							{visibleEntries.map(({ recipe, savedAt }) => (
-								<FavoriteRecipe
+											<FavoriteRecipe
 									key={recipe.recipe_id}
 									recipe={recipe}
 									savedAt={savedAt}
-									handleShowModal={(triggeringButton) =>
-										handleShowModal(recipe.recipe_id, triggeringButton)
-								}
+												handleShowModal={(triggeringButton) =>
+													handleShowModal(recipe.recipe_id, triggeringButton)
+												}
 								/>
 							))}
 						</ul>
 					)}
 				</div>
 			</div>
+			<CollectionDialog
+				open={Boolean(collectionDialog)}
+				mode={collectionDialog?.mode}
+				initialName={collectionDialog?.collection?.name ?? ""}
+				isSubmitting={
+					createCollectionMutation.isPending || renameCollectionMutation.isPending
+				}
+				errorMessage={collectionDialogError}
+				onClose={() => {
+					if (createCollectionMutation.isPending || renameCollectionMutation.isPending) return;
+					setCollectionDialog(null);
+					setCollectionDialogError(null);
+				}}
+				onSubmit={(name) => {
+					setCollectionDialogError(null);
+					if (collectionDialog?.mode === "rename") {
+						renameCollectionMutation.mutate(
+								{
+									collectionId: Number(collectionDialog.collection.collection_id),
+									name,
+								},
+								{
+									onSuccess: () => setCollectionDialog(null),
+									onError: () => setCollectionDialogError("We could not rename this collection. Try again."),
+								},
+							);
+						return;
+					}
+					createCollectionMutation.mutate(name, {
+						onSuccess: (response) => {
+							setCollectionDialog(null);
+							selectCollection(Number(response.collection.collection_id));
+						},
+						onError: (error) => setCollectionDialogError(
+							error.response?.data?.message || "We could not create this collection. Try again.",
+						),
+					});
+				}}
+			/>
 			{showModal &&
 				createPortal(
 					<div className="wishlist__modal" role="presentation">
@@ -346,8 +493,7 @@ const Wishlist = () => {
 					>
 						<h3 id="remove-saved-recipe-title">Remove saved recipe?</h3>
 						<p>
-							This recipe will be removed from your saved recipes. You
-							can add it again later from the recipe page.
+							This recipe will be removed from {selectedCollectionId !== null ? "this collection" : "your saved recipes"}. You can add it again later from the recipe page.
 						</p>
 						{removeError && <p role="alert">{removeError}</p>}
 						<div className="wishlist__modal__buttons">
