@@ -61,10 +61,10 @@ assert.match(sql, /\bprep_time\b/i, 'legacy prep_time must remain referenced by 
 assert.match(sql, /\bcook_time\b/i, 'legacy cook_time must remain referenced by the migration');
 assert.doesNotMatch(sql, /DROP\s+COLUMN\s+"?(?:prep_time|cook_time)"?/i);
 
-assert.match(schema, /prepTimeMinutes\s+Int\s+@map\("prep_time_minutes"\)/);
-assert.match(schema, /cookTimeMinutes\s+Int\s+@map\("cook_time_minutes"\)/);
-assert.match(schema, /prepTime\s+Unsupported\("interval"\)\s+@map\("prep_time"\)/);
-assert.match(schema, /cookTime\s+Unsupported\("interval"\)\s+@map\("cook_time"\)/);
+assert.match(schema, /prepTimeMinutes\s+Int\?\s+@map\("prep_time_minutes"\)/);
+assert.match(schema, /cookTimeMinutes\s+Int\?\s+@map\("cook_time_minutes"\)/);
+assert.match(schema, /prepTime\s+Unsupported\("interval"\)\?\s+@map\("prep_time"\)/);
+assert.match(schema, /cookTime\s+Unsupported\("interval"\)\?\s+@map\("cook_time"\)/);
 
 for (const source of [repository, wishlistRepository]) {
   assert.match(source, /r\.prep_time_minutes/);
