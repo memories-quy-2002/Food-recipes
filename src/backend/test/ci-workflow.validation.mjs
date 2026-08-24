@@ -87,7 +87,11 @@ assert.match(
   /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/master'/,
   'migration handoff must only run after pushes to master',
 );
-assertJobContains('migration-release-handoff', /DATABASE_URL:\s*\$\{\{ secrets\.DATABASE_URL \}\}/);
+assertJobContains(
+  'migration-release-handoff',
+  /DATABASE_URL:\s*\$\{\{ secrets\.PRODUCTION_DATABASE_URL \}\}/,
+  'migration handoff must map PRODUCTION_DATABASE_URL into Prisma DATABASE_URL',
+);
 assertJobContains('migration-release-handoff', /pnpm prisma:migrate:deploy/);
 assert.equal(
   workflow.split(/\r?\n/).filter((line) => line.includes('DATABASE_URL')).length,
