@@ -1,10 +1,19 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import ToastViewport from "@/shared/ui/ToastViewport";
 
-const TOAST_DURATION_MS = 2600;
+const TOAST_DURATION_MS = 5000;
+const TOAST_TYPES = new Set(["success", "error", "info", "warning"]);
 
 const ToastContext = createContext({
 	showToast: () => {},
+	dismissToast: () => {},
 });
 
 export const useToast = () => useContext(ToastContext);
@@ -13,7 +22,7 @@ const ToastProvider = ({ children }) => {
 	const [toasts, setToasts] = useState([]);
 	const timeoutRefs = useRef(new Map());
 
-	const dismissToast = (toastId) => {
+	const dismissToast = useCallback((toastId) => {
 		setToasts((currentToasts) =>
 			currentToasts.filter((toast) => toast.id !== toastId)
 		);
@@ -23,19 +32,36 @@ const ToastProvider = ({ children }) => {
 			clearTimeout(timeoutId);
 			timeoutRefs.current.delete(toastId);
 		}
-	};
+	}, []);
 
-	const showToast = ({ title, type = "success" }) => {
-		if (!title) return;
+	const showToast = useCallback((options = {}) => {
+		const normalizedOptions =
+			typeof options === "string" ? { title: options } : options;
+		const title = normalizedOptions.title?.trim?.();
+
+		if (!title) return undefined;
 
 		const toastId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-		setToasts((currentToasts) => [...currentToasts, { id: toastId, title, type }]);
+		const type = TOAST_TYPES.has(normalizedOptions.type)
+			? normalizedOptions.type
+			: "success";
+		const message = normalizedOptions.message?.trim?.() || "";
+		const duration = Number.isFinite(normalizedOptions.duration)
+			? Math.max(1000, normalizedOptions.duration)
+			: TOAST_DURATION_MS;
+
+		setToasts((currentToasts) => [
+			...currentToasts,
+			{ id: toastId, title, message, type },
+		]);
 
 		const timeoutId = window.setTimeout(() => {
 			dismissToast(toastId);
-		}, TOAST_DURATION_MS);
+		}, duration);
 		timeoutRefs.current.set(toastId, timeoutId);
-	};
+
+		return toastId;
+	}, [dismissToast]);
 
 	useEffect(() => {
 		return () => {
@@ -45,7 +71,7 @@ const ToastProvider = ({ children }) => {
 	}, []);
 
 	return (
-		<ToastContext.Provider value={{ showToast }}>
+		<ToastContext.Provider value={{ showToast, dismissToast }}>
 			{children}
 			<ToastViewport toasts={toasts} onDismiss={dismissToast} />
 		</ToastContext.Provider>

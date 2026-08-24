@@ -30,6 +30,24 @@ const toMinutes = (time) => {
 	return Math.max(1, Math.ceil(value * multiplier));
 };
 
+const findOptionalCatalogId = (items, name) => {
+	const normalizedName = String(name || "").trim().toLowerCase();
+	const match = items.find((item) => {
+		const itemName = item.name ?? item.category_name ?? item.meal_name;
+		return String(itemName || "").trim().toLowerCase() === normalizedName;
+	});
+	const id = Number(match?.id ?? match?.category_id ?? match?.meal_id);
+	return Number.isInteger(id) && id > 0 ? id : undefined;
+};
+
+const toOptionalMinutes = (time) => {
+	try {
+		return toMinutes(time);
+	} catch {
+		return undefined;
+	}
+};
+
 export const serializeWishlistPayload = (recipeId) => ({ recipeId });
 
 const toOptionalNumber = (value) => {
@@ -84,6 +102,26 @@ export const serializeCreateRecipePayload = ({
 	imageUrl,
 		...(metadata ? { metadata } : {}),
 	};
+};
+
+export const serializeCreateRecipeDraftPayload = ({
+	recipe,
+	categories,
+	meals,
+	imageUrl,
+}) => {
+	const payload = {
+		name: recipe.recipeName?.trim() || undefined,
+		description: recipe.recipeDescription?.trim() || undefined,
+		mealId: findOptionalCatalogId(meals, recipe.recipeMealName),
+		categoryId: findOptionalCatalogId(categories, recipe.recipeCategoryName),
+		prepTimeMinutes: toOptionalMinutes(recipe.recipePrepTime),
+		cookTimeMinutes: toOptionalMinutes(recipe.recipeCookTime),
+		ingredients: (recipe.recipeIngredients || []).map((value) => value.trim()).filter(Boolean),
+		instructions: (recipe.recipeInstructions || []).map((value) => value.trim()).filter(Boolean),
+	};
+	if (imageUrl) payload.imageUrl = imageUrl;
+	return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined));
 };
 
 export const serializeProfilePayload = (profile) => profile;

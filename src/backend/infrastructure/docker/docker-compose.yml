@@ -22,7 +22,7 @@ services:
       dockerfile: Dockerfile
       target: migration
     environment:
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/food_recipes}
+      DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/food_recipes}
     command: ["pnpm", "exec", "prisma", "migrate", "deploy", "--config", "prisma.config.ts"]
     networks:
       - internal
@@ -39,7 +39,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
-      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/food_recipes}
+      DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/food_recipes}
       JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET to a random value of at least 32 characters}"
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
     expose:

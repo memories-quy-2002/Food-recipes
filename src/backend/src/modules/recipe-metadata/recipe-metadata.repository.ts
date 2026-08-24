@@ -8,7 +8,7 @@ import type {
 
 export type RecipeNutritionRecord = {
   recipe_id: number;
-  calories_per_serving: number;
+  calories_per_serving: number | null;
   protein_grams: number | null;
   carbohydrates_grams: number | null;
   fat_grams: number | null;
@@ -49,7 +49,7 @@ export const RECIPE_METADATA_REPOSITORY = Symbol('RECIPE_METADATA_REPOSITORY');
 const normalizeNutrition = (row: RecipeNutritionRecord): RecipeNutritionRecord => ({
   ...row,
   recipe_id: Number(row.recipe_id),
-  calories_per_serving: Number(row.calories_per_serving),
+  calories_per_serving: row.calories_per_serving === null ? null : Number(row.calories_per_serving),
   protein_grams: row.protein_grams === null ? null : Number(row.protein_grams),
   carbohydrates_grams: row.carbohydrates_grams === null ? null : Number(row.carbohydrates_grams),
   fat_grams: row.fat_grams === null ? null : Number(row.fat_grams),

@@ -1,14 +1,26 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { RecipesService } from './recipes.service';
 
 describe('RecipesService', () => {
   const repository = {
     list: jest.fn(),
     findById: jest.fn(),
+    findByIdForOwner: jest.fn(),
     findByUserId: jest.fn(),
     create: jest.fn(),
+    createDraft: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    replaceIngredients: jest.fn(),
+    replaceNutrition: jest.fn(),
+    replaceTags: jest.fn(),
+    publish: jest.fn(),
+    archive: jest.fn(),
+    restore: jest.fn(),
   };
   const metadataService = {
     get: jest.fn().mockResolvedValue({ nutrition: null, allergens: [] }),
@@ -71,5 +83,89 @@ describe('RecipesService', () => {
     await expect(service.delete(404, 12)).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('passes the owner status filter to the repository', async () => {
+    const result = { recipes: [{ recipe_id: 4, status: 'draft' }] };
+    repository.findByUserId.mockResolvedValue(result.recipes);
+    const service = new RecipesService(repository, metadataService);
+
+    const listMine = service as unknown as {
+      listMine: (userId: number, status: string) => Promise<unknown>;
+    };
+    await expect(listMine.listMine(12, 'draft')).resolves.toEqual(result);
+    expect(repository.findByUserId).toHaveBeenCalledWith(12, 'draft');
+  });
+
+  it('creates an owned draft through the draft repository operation', async () => {
+    const draft = { recipe_id: 4, status: 'draft', user_id: 12 };
+    repository.createDraft.mockResolvedValue(draft);
+    const service = new RecipesService(repository, metadataService);
+
+    const createDraft = service as unknown as {
+      createDraft: (userId: number, dto: unknown) => Promise<unknown>;
+    };
+    await expect(createDraft.createDraft(12, { name: 'Draft' })).resolves.toEqual({
+      recipe: draft,
+    });
+    expect(repository.createDraft).toHaveBeenCalledWith(12, { name: 'Draft' });
+  });
+
+  it('rejects publishing when the aggregate misses a required publish field', async () => {
+    repository.findByIdForOwner.mockResolvedValue({
+      recipe_id: 4,
+      user_id: 12,
+      status: 'draft',
+      recipe_name: 'Draft',
+      meal_id: 1,
+      category_id: 2,
+      prep_time_minutes: 10,
+      cook_time_minutes: 10,
+      ingredients: ['Tomato'],
+      instructions: ['Mix'],
+      image_url: null,
+      structured_ingredients: [],
+    });
+    const service = new RecipesService(repository, metadataService);
+    const lifecycle = service as unknown as {
+      publish: (id: number, userId: number) => Promise<unknown>;
+    };
+
+    await expect(lifecycle.publish(4, 12)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(repository.publish).not.toHaveBeenCalled();
+  });
+
+  it('rejects structured ingredient replacement when a row has no name', async () => {
+    repository.findByIdForOwner.mockResolvedValue({ recipe_id: 4, user_id: 12 });
+    const service = new RecipesService(repository, metadataService);
+    const replace = service as unknown as {
+      replaceIngredients: (id: number, userId: number, dto: unknown) => Promise<unknown>;
+    };
+
+    await expect(
+      replace.replaceIngredients(4, 12, {
+        ingredients: [{ name: '   ' }],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.replaceIngredients).not.toHaveBeenCalled();
+  });
+
+  it('forbids lifecycle changes to another users recipe', async () => {
+    repository.findByIdForOwner.mockResolvedValue({
+      recipe_id: 4,
+      user_id: 12,
+      status: 'published',
+    });
+    const service = new RecipesService(repository, metadataService);
+    const lifecycle = service as unknown as {
+      archive: (id: number, userId: number) => Promise<unknown>;
+    };
+
+    await expect(lifecycle.archive(4, 99)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(repository.archive).not.toHaveBeenCalled();
   });
 });

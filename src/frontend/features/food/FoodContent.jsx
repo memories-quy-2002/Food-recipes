@@ -42,11 +42,11 @@ const FoodContent = ({ recipes = [], pagination, queryState, onQueryStateChange,
 	const listClassName = `food__content__section__list food__content__section__list--${viewMode}`;
 
 	return (
-		<div className="food__content" aria-live="polite" aria-busy={isFetching}>
+		<div className="food__content" aria-busy={isFetching}>
 			<div className="food__content__toolbar">
 				<div>
 					<span className="food__content__toolbar__eyebrow">Results</span>
-					<h2>{isLoading ? "Loading recipes" : `${totalRecipes} recipes found`}</h2>
+					<h2 aria-live="polite">{isLoading ? "Loading recipes…" : `${totalRecipes} recipes found`}</h2>
 				</div>
 				<div className="food__content__toolbar__actions">
 					<label>Sort<select value={queryState.sort} onChange={(event) => onQueryStateChange({ sort: event.target.value, page: 1 })}>

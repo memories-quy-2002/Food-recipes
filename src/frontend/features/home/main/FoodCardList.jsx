@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import FoodCard from "./FoodCard";
 
 const featuredModes = [
@@ -44,9 +45,9 @@ const FoodCardList = ({
 			<div className="home__sectionHeader">
 				<div>
 					<span>{activeModeMeta.eyebrow}</span>
-					<h3 className="home__main__cardList__title">
+					<h2 className="home__main__cardList__title">
 						{activeModeMeta.title}
-					</h3>
+					</h2>
 				</div>
 				<div className="home__main__cardList__controls">
 					<div className="home__main__cardList__tabs" role="tablist">
@@ -67,9 +68,9 @@ const FoodCardList = ({
 							</button>
 						))}
 					</div>
-					<a href="/food" className="home__main__cardList__link">
+					<Link to="/food" className="home__main__cardList__link">
 						Explore all recipes
-					</a>
+					</Link>
 				</div>
 			</div>
 			<div className="home__main__cardList__feature">

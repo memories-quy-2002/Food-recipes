@@ -47,7 +47,7 @@ export const getRecipeTimeSummary = (recipe) => {
 	return { prep, cook, total: prep !== null && cook !== null ? prep + cook : null };
 };
 
-const getServings = (recipe) => firstDefined(recipe, ["servings", "serving_count", "yield", "recipe_yield", "recipeYield"]);
+const getServings = (recipe) => firstDefined(recipe, ["servings", "serving_count", "yield", "recipe_yield", "recipeYield"]) ?? recipe?.nutrition?.servings;
 
 const getRecipeIdentity = (recipe) => firstDefined(recipe, ["recipe_id", "id", "publicId"]);
 
@@ -98,6 +98,14 @@ const RecipeDescription = ({ recipe }) => {
 			</Row>
 			<Row className="recipe__content__desc"><div className="recipe__content__prose"><h2>About</h2><p>{recipe.recipe_description ?? "There is no description for this recipe"}</p></div></Row>
 			<Row className="recipe__content__ingredient"><div id="ingredients" className="recipe__content__prose"><h2>Ingredients</h2><p role="note">{structuredIngredients.length > 0 ? "Structured ingredient quantities are scaled with servings. Free-text notes remain as written." : "Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data."}</p><RecipeIngredientChecklist key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(displayedIngredients)}`} recipeIdentity={recipeIdentity} ingredients={displayedIngredients} /></div></Row>
+			{recipe.nutrition && !recipe.metadata && (
+				<Row className="recipe__content__nutrition"><div><h2>Nutrition per serving</h2><p className="recipe__content__nutrition__disclosure">Manual values provided by the recipe author.</p><ul aria-label="Nutrition facts">
+					{[["Calories", "calories", "calories"], ["Protein", "protein", "g protein"], ["Carbohydrates", "carbohydrates", "g carbs"], ["Fat", "fat", "g fat"], ["Fiber", "fiber", "g fiber"], ["Sugar", "sugar", "g sugar"], ["Sodium", "sodium", "mg sodium"]].filter(([, key]) => recipe.nutrition[key] !== null && recipe.nutrition[key] !== undefined).map(([label, key, suffix]) => <li key={key}>{label}: {recipe.nutrition[key]} {key === "calories" ? "calories" : suffix}</li>)}
+				</ul></div></Row>
+			)}
+			{(recipe.dietaryTags?.length || recipe.dietary_tags?.length || recipe.allergenTags?.length || recipe.allergen_tags?.length) ? (
+				<Row className="recipe__content__dietary"><div><h2>Dietary preferences</h2><div className="recipe__content__dietary__tags">{(recipe.dietaryTags || recipe.dietary_tags || []).map((tag) => <span key={`dietary-${tag}`}>{tag}</span>)}</div>{(recipe.allergenTags || recipe.allergen_tags || []).length > 0 && <p>Contains: {(recipe.allergenTags || recipe.allergen_tags).join(", ")}</p>}</div></Row>
+			) : null}
 			<Row className="recipe__content__instruction"><div className="recipe__content__prose"><h2>Instructions</h2>{instructions.length > 0 ? (
 				<ol className="recipe__instruction-steps">
 					{instructions.map((instruction, index) => (

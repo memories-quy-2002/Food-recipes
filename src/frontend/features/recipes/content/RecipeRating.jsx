@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Form, Row } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import { BsStar, BsStarFill } from "react-icons/bs";
 import RecipeReviewList from "./RecipeReviewList";
 
@@ -47,7 +48,7 @@ const RecipeRating = ({
 					<div className="recipe__content__rating__signin">
 						<strong>
 							<span>
-								<a href="/account/?signup=false">Sign in</a>
+							<Link to="/account/?signup=false">Sign in</Link>
 							</span>{" "}
 							to leave a Rating and Review
 						</strong>

@@ -71,7 +71,11 @@ const RecipeContainerSummary = ({
 					</div>
 				</div>
 			</Col>
-			<Col md={6}>{convertImage(recipe.recipe_name, "recipe__container__img", recipe.image_url)}</Col>
+			<Col md={6}>
+				<div className="recipe__container__media">
+					{convertImage(recipe.recipe_name, "recipe__container__img", recipe.image_url)}
+				</div>
+			</Col>
 		</Row>
 	);
 };

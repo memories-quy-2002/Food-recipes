@@ -276,6 +276,11 @@ const Recipe = () => {
 			}
 		} catch (err) {
 			console.error(err);
+			showToast({
+				title: "Couldn’t update Saved",
+				message: "Please try again in a moment.",
+				type: "error",
+			});
 		} finally {
 			setIsUpdatingFavorite(false);
 		}
@@ -483,7 +488,7 @@ const Recipe = () => {
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (
-				<Container fluid className="fr-recipe" style={{ padding: 0 }}>
+				<Container as="main" fluid className="fr-recipe" style={{ padding: 0 }}>
 					<RecipeContainerSummary
 						recipe={recipe}
 						favorite={favorite}

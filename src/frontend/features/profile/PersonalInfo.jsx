@@ -59,6 +59,7 @@ const PersonalInfo = ({ user }) => {
 							type="text"
 							placeholder="Enter your full name"
 							name="name"
+							autoComplete="name"
 							value={formData.name}
 							onChange={handleInputChange}
 						/>
@@ -73,6 +74,7 @@ const PersonalInfo = ({ user }) => {
 							type="tel"
 							placeholder="Enter your phone number"
 							name="phoneNumber"
+							autoComplete="tel"
 							value={formData.phoneNumber}
 							onChange={handleInputChange}
 						/>
@@ -87,6 +89,7 @@ const PersonalInfo = ({ user }) => {
 							type="text"
 							placeholder="Enter your address"
 							name="address"
+						autoComplete="street-address"
 							value={formData.address}
 							onChange={handleInputChange}
 						/>

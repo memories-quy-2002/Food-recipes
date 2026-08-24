@@ -1,5 +1,6 @@
 import React from "react";
 import { IoPersonCircleSharp } from "react-icons/io5";
+import { Link } from "react-router-dom";
 const ProfileAside = ({
 	name,
 	page,
@@ -19,8 +20,8 @@ const ProfileAside = ({
 				<ul className="profile__container__aside__content__nav">
 					{profilePageList.map(({ link, name }, index) => (
 						<li key={index}>
-							<a
-								href={`/profile#/${link}`}
+							<Link
+								to={`/profile#/${link}`}
 								className={
 									page === link
 										? "profile__container__aside__content__nav__link--active"
@@ -31,7 +32,7 @@ const ProfileAside = ({
 								<div>
 									<span>{name}</span>
 								</div>
-							</a>
+							</Link>
 						</li>
 					))}
 				</ul>
@@ -41,9 +42,9 @@ const ProfileAside = ({
 					style={{ borderBottom: "none" }}
 				>
 					<li>
-						<a href="/" onClick={handleLogOut}>
+						<button type="button" onClick={handleLogOut}>
 							<div>Log out</div>
-						</a>
+						</button>
 					</li>
 				</ul>
 			</div>

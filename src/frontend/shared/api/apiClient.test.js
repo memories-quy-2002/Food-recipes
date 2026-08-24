@@ -23,8 +23,8 @@ afterEach(() => {
 });
 
 describe("API target configuration", () => {
-	it("defaults to Kong on port 8000 in development", () => {
-		expect(getApiConfig({ DEV: true, PROD: false }).baseURL).toBe("http://localhost:8000/api/v1");
+	it("defaults to the direct Nest API on port 3000 in development", () => {
+		expect(getApiConfig({ DEV: true, PROD: false }).baseURL).toBe("http://localhost:3000/api/v1");
 	});
 
 	it("uses the configured Kong host and Nest version prefix", () => {
@@ -87,6 +87,13 @@ describe("API route compatibility", () => {
 		expect(apiRoutes.recipes).toBe("/recipes");
 		expect(apiRoutes.recipe(7)).toBe("/recipes/7");
 		expect(apiRoutes.userRecipes).toBe("/users/me/recipes");
+		expect(apiRoutes.userRecipeDrafts).toBe("/users/me/recipes/drafts");
+		expect(apiRoutes.recipeIngredients(7)).toBe("/recipes/7/ingredients");
+		expect(apiRoutes.recipeNutrition(7)).toBe("/recipes/7/nutrition");
+		expect(apiRoutes.recipeDietaryTags(7)).toBe("/recipes/7/dietary-tags");
+		expect(apiRoutes.recipePublish(7)).toBe("/recipes/7/publish");
+		expect(apiRoutes.recipeArchive(7)).toBe("/recipes/7/archive");
+		expect(apiRoutes.recipeRestore(7)).toBe("/recipes/7/restore");
 		expect(apiRoutes.categories).toBe("/categories");
 		expect(apiRoutes.meals).toBe("/meals");
 		expect(apiRoutes.userWishlist).toBe("/users/me/wishlist");

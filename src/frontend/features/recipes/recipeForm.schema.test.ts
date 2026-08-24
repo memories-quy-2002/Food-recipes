@@ -94,4 +94,34 @@ describe("recipe form schema", () => {
 			createRecipeFormSchema({ ...taxonomy, isPublishing: false }).safeParse(validValues).success
 		).toBe(true);
 	});
+
+	it("accepts structured ingredients as the ingredient source and validates manual nutrition", () => {
+		const result = createRecipeFormSchema({ ...taxonomy, isPublishing: true }).safeParse({
+			...validValues,
+			recipeIngredients: [""],
+			recipeImage: { type: "image/jpeg" },
+			structuredIngredients: [{ quantityText: "1", unit: "cup", name: "flour", preparation: "sifted" }],
+			nutrition: { servings: "2", calories: "100", protein: "3", carbohydrates: "10", fat: "2", fiber: "1", sugar: "2", sodium: "20" },
+			dietaryTags: ["vegetarian"],
+			allergenTags: ["wheat"],
+		});
+
+		expect(result.success).toBe(true);
+	});
+
+	it("rejects structured rows without names and negative nutrition values", () => {
+		const result = createRecipeFormSchema(taxonomy).safeParse({
+			...validValues,
+			recipeIngredients: [""],
+			structuredIngredients: [{ quantityText: "1", unit: "cup", name: "", preparation: "" }],
+			nutrition: { servings: "2", calories: "-1" },
+		});
+
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			expect(result.error.issues.map(({ message }) => message)).toEqual(
+				expect.arrayContaining(["Add at least one ingredient.", "Ingredient name is required.", "Nutrition values must be zero or greater."])
+			);
+		}
+	});
 });

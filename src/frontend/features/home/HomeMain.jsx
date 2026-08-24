@@ -155,6 +155,11 @@ const HomeMain = () => {
 			}
 		} catch (err) {
 			console.error(err);
+			showToast({
+				title: "Couldn’t update Saved",
+				message: "Please try again in a moment.",
+				type: "error",
+			});
 		} finally {
 			setPendingFavoriteIds((currentIds) =>
 				currentIds.filter((currentId) => currentId !== recipeId)

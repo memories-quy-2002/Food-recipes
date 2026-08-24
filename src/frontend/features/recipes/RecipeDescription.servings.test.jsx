@@ -89,19 +89,31 @@ describe("recipe servings", () => {
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("unsupported");
 	});
 
+	it("renders nutrition and dietary metadata when supplied by the API", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(<RecipeDescription recipe={{
+				...recipe,
+				structuredIngredients: [{ quantityText: "1", unit: "cup", name: "flour", preparation: null }],
+				nutrition: { servings: 2, calories: 100, protein: 3, carbohydrates: 10, fat: 2, fiber: 1, sugar: 2, sodium: 20 },
+				dietaryTags: ["vegetarian"],
+				allergenTags: ["wheat"],
+			}} />);
+		});
+
+		expect(renderer.root.findAllByType("h2").some((node) => node.children.join("") === "Nutrition per serving")).toBe(true);
+		expect(renderer.root.findAllByType("li").some((node) => node.children.join("").includes("100 calories"))).toBe(true);
+		expect(renderer.root.findAllByType("span").some((node) => node.children.join("") === "vegetarian")).toBe(true);
+		expect(renderer.root.findAllByType("p").some((node) => node.children.join("") === "Contains: wheat")).toBe(true);
+	});
+
 	it("scales structured ingredient quantities from the recipe serving baseline", () => {
 		let renderer;
 		act(() => {
-			renderer = TestRenderer.create(
-				<RecipeDescription
-					recipe={{
-					...recipe,
-					structured_ingredients: [
-						{ name: "chicken breast", quantity: 500, unit: "GRAM", note: "diced" },
-					],
-				}}
-				/>,
-			);
+			renderer = TestRenderer.create(<RecipeDescription recipe={{
+				...recipe,
+				structured_ingredients: [{ name: "chicken breast", quantity: 500, unit: "GRAM", note: "diced" }],
+			}} />);
 		});
 
 		act(() => renderer.root.findByProps({ "aria-label": "Increase servings" }).props.onClick());

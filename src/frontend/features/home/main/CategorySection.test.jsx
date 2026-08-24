@@ -1,5 +1,6 @@
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import CategorySection, { rankCategories } from "./CategorySection";
 
@@ -33,9 +34,10 @@ describe("Home category ranking", () => {
 	it("renders All categories first and only the five highest-ranked categories", () => {
 		let renderer;
 		act(() => {
-			renderer = TestRenderer.create(
-				<CategorySection
-					categories={categories([
+				renderer = TestRenderer.create(
+					<MemoryRouter>
+						<CategorySection
+						categories={categories([
 						[1, "Salads", 2],
 						[2, "Chicken", 12],
 						[3, "Pizza", 7],
@@ -44,9 +46,10 @@ describe("Home category ranking", () => {
 						[6, "Pasta dishes", 4],
 					])}
 					selectedCategoryId="all"
-					onCategorySelect={vi.fn()}
-				/>
-			);
+						onCategorySelect={vi.fn()}
+						/>
+					</MemoryRouter>
+				);
 		});
 
 		expect(renderer.root.findAllByType("h4").map(({ children }) => children.join(""))).toEqual([
