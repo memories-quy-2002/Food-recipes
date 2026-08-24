@@ -14,16 +14,17 @@ const CarouselNavBar = ({
 	onNextSlide,
 	isPaused,
 	onTogglePause,
+	showPauseControl = true,
 }) => {
 	return (
-		<div className="home__carousel__nav">
+		<div className="home__carousel__nav" aria-label="Featured meal controls">
 			<button
 				type="button"
 				className="home__carousel__nav__arrow"
 				onClick={onPrevSlide}
 				aria-label="Previous featured slide"
 			>
-				<BsChevronLeft size={16} />
+				<BsChevronLeft size={16} aria-hidden="true" />
 			</button>
 			<div className="home__carousel__nav__button">
 				{items.map(({ id, name }, index) => {
@@ -37,7 +38,7 @@ const CarouselNavBar = ({
 							}`}
 							key={id || index}
 							aria-label={`Show slide ${index + 1}: ${name}`}
-							aria-current={currIndex === index}
+							aria-current={currIndex === index ? "true" : undefined}
 							onClick={() => {
 								onSpecSlide(index);
 							}}
@@ -51,16 +52,25 @@ const CarouselNavBar = ({
 				onClick={onNextSlide}
 				aria-label="Next featured slide"
 			>
-				<BsChevronRight size={16} />
+				<BsChevronRight size={16} aria-hidden="true" />
 			</button>
-			<button
-				type="button"
-				className="home__carousel__nav__pause"
-				onClick={onTogglePause}
-				aria-label={isPaused ? "Resume featured carousel" : "Pause featured carousel"}
-			>
-				{isPaused ? <BsPlayFill size={15} /> : <BsPauseFill size={15} />}
-			</button>
+			{showPauseControl && (
+				<button
+					type="button"
+					className="home__carousel__nav__pause"
+					onClick={onTogglePause}
+					aria-label={
+						isPaused ? "Resume featured carousel" : "Pause featured carousel"
+					}
+					aria-pressed={isPaused}
+				>
+					{isPaused ? (
+						<BsPlayFill size={15} aria-hidden="true" />
+					) : (
+						<BsPauseFill size={15} aria-hidden="true" />
+					)}
+				</button>
+			)}
 		</div>
 	);
 };
