@@ -1,0 +1,41 @@
+name: Production Prisma Baseline
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type BASELINE to confirm the one-time production baseline
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  baseline-production:
+    name: Baseline production database and deploy migrations
+    if: ${{ inputs.confirm == 'BASELINE' }}
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
+      - name: Verify production database secret
+        run: test -n "$DATABASE_URL"
+      - name: Install locked dependencies
+        working-directory: src/backend
+        run: pnpm install --frozen-lockfile
+      - name: Mark existing production schema as baseline
+        working-directory: src/backend
+        run: pnpm exec prisma migrate resolve --applied 0_init --config prisma.config.ts
+      - name: Deploy remaining production migrations
+        working-directory: src/backend
+        run: pnpm prisma:migrate:deploy
