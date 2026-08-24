@@ -5,10 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import {
-	isRecipeCreateSuccess,
-	serializeCreateRecipePayload,
-} from "@/shared/api/mutations";
+import { serializeCreateRecipeDraftPayload } from "@/shared/api/mutations";
 import { getArrayPayload } from "@/shared/api/payload";
 import {
 	isSupabaseStorageConfigured,
@@ -28,6 +25,10 @@ import {
 } from "./recipeDraftStorage";
 import { createRecipeFormSchema } from "./recipeForm.schema";
 
+const DIETARY_OPTIONS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "low-carb"];
+const ALLERGEN_OPTIONS = ["wheat", "peanuts", "tree nuts", "milk", "eggs", "soy", "fish", "shellfish"];
+const NUTRITION_FIELDS = ["servings", "calories", "protein", "carbohydrates", "fat", "fiber", "sugar", "sodium"];
+
 const createInitialRecipeState = (userId) => ({
 	recipeImage: null,
 	recipeName: "",
@@ -38,6 +39,20 @@ const createInitialRecipeState = (userId) => ({
 	recipeInstructions: [""],
 	recipePrepTime: { number: 15, unit: "minutes" },
 	recipeCookTime: { number: 30, unit: "minutes" },
+	structuredIngredients: [{ quantityText: "", unit: "", name: "", preparation: "" }],
+	nutrition: {
+		servings: "",
+		calories: "",
+		protein: "",
+		carbohydrates: "",
+		fat: "",
+		fiber: "",
+		sugar: "",
+		sodium: "",
+	},
+	dietaryTags: [],
+	allergenTags: [],
+	serverRecipeId: null,
 });
 
 const hasDraftContent = (recipe) =>
@@ -48,6 +63,10 @@ const hasDraftContent = (recipe) =>
 		recipe.recipeDescription,
 		...(recipe.recipeIngredients || []),
 		...(recipe.recipeInstructions || []),
+		...(recipe.structuredIngredients || []).flatMap((ingredient) => [ingredient.quantityText, ingredient.unit, ingredient.name, ingredient.preparation]),
+		...(recipe.dietaryTags || []),
+		...(recipe.allergenTags || []),
+		...(NUTRITION_FIELDS || []).map((field) => recipe.nutrition?.[field]),
 	].some((value) => String(value || "").trim()) ||
 	String(recipe.recipePrepTime?.number) !== "15" ||
 	String(recipe.recipePrepTime?.unit) !== "minutes" ||
@@ -68,13 +87,46 @@ export const validateRecipeForm = (
 		recipePrepTime: { number: "", unit: "minutes" },
 		recipeCookTime: { number: "", unit: "minutes" },
 		recipeImage: null,
+		structuredIngredients: [],
+		nutrition: {},
+		dietaryTags: [],
+		allergenTags: [],
+		serverRecipeId: null,
 		...recipe,
 	};
 	const result = createRecipeFormSchema({ categories, meals, isPublishing }).safeParse(normalizedRecipe);
+	const errors = result.success ? [] : result.error.issues.map(({ message }) => message);
+	const errorOrder = ["Recipe name is required.", "Choose a supported category.", "Choose a supported meal.", "Add at least one ingredient.", "Add at least one instruction.", "Preparation time must be a positive number.", "Cooking time must be a positive number."];
 	return {
-		errors: result.success ? [] : result.error.issues.map(({ message }) => message),
+		errors: errors.sort((left, right) => errorOrder.indexOf(left) - errorOrder.indexOf(right)),
 	};
 };
+
+const getServerRecipeId = (response) => response?.data?.recipe?.recipe_id ?? response?.data?.recipe?.id ?? response?.data?.recipe_id ?? response?.data?.id;
+
+const normalizeStructuredIngredients = (ingredients, legacyIngredients = []) => {
+	const structured = (Array.isArray(ingredients) ? ingredients : [])
+		.map((ingredient, index) => ({
+			position: index,
+			quantity: ingredient.quantity === "" || ingredient.quantity === undefined ? null : Number(ingredient.quantity),
+			quantityText: String(ingredient.quantityText || "").trim() || null,
+			unit: String(ingredient.unit || "").trim() || null,
+			name: String(ingredient.name || "").trim(),
+			preparation: String(ingredient.preparation || "").trim() || null,
+			originalText: String(ingredient.originalText || "").trim() || null,
+		}))
+		.filter((ingredient) => ingredient.name);
+	if (structured.length) return structured;
+	return (Array.isArray(legacyIngredients) ? legacyIngredients : [])
+		.map((name, index) => ({ position: index, quantity: null, quantityText: null, unit: null, name: String(name).trim(), preparation: null, originalText: String(name).trim() }))
+		.filter((ingredient) => ingredient.name);
+};
+
+const normalizeNutritionPayload = (nutrition = {}) => Object.fromEntries(
+	NUTRITION_FIELDS
+		.map((field) => [field, nutrition[field] === "" || nutrition[field] === undefined ? null : Number(nutrition[field])])
+		.filter(([, value]) => value !== null && Number.isFinite(value) || value === null)
+);
 
 const AddRecipe = () => {
 	const { auth } = useContext(AuthContext);
@@ -240,6 +292,31 @@ const AddRecipe = () => {
 		const { name } = event.target;
 		setValue(name, [...getValues(name), ""], { shouldDirty: true });
 	};
+	const handleStructuredChange = (index, field, value) => {
+		setDisabled(false);
+		setSubmitError("");
+		setValue(`structuredIngredients.${index}.${field}`, value, { shouldDirty: true });
+	};
+	const handleAddStructuredIngredient = () => {
+		setDisabled(false);
+		setSubmitError("");
+		setValue("structuredIngredients", [
+			...getValues("structuredIngredients"),
+			{ quantityText: "", unit: "", name: "", preparation: "" },
+		], { shouldDirty: true });
+	};
+	const handleDeleteStructuredIngredient = (index) => {
+		setDisabled(false);
+		setSubmitError("");
+		const remaining = getValues("structuredIngredients").filter((_, itemIndex) => itemIndex !== index);
+		setValue("structuredIngredients", remaining.length ? remaining : [{ quantityText: "", unit: "", name: "", preparation: "" }], { shouldDirty: true });
+	};
+	const handleToggleTag = (field, tag) => {
+		const selected = getValues(field) || [];
+		setValue(field, selected.includes(tag) ? selected.filter((item) => item !== tag) : [...selected, tag], { shouldDirty: true });
+		setDisabled(false);
+		setSubmitError("");
+	};
 	const handleTimeNumberChange = (event) => {
 		setDisabled(false);
 		setSubmitError("");
@@ -301,10 +378,48 @@ const AddRecipe = () => {
 		setDraftStatus("idle");
 	};
 
-	const handleSaveDraft = () => {
-		setDraftStatus(
-			saveRecipeDraft(window.localStorage, userId, getValues()) ? "saved" : "error"
-		);
+	const saveDraftLocally = (recipe) => {
+		const saved = saveRecipeDraft(window.localStorage, userId, recipe);
+		setDraftStatus(saved ? "saved" : "error");
+		return saved;
+	};
+
+	const saveDraftToServer = async (recipe, imageUrl) => {
+		const recipePayload = serializeCreateRecipeDraftPayload({
+			recipe,
+			categories,
+			meals,
+			imageUrl,
+		});
+		const existingId = recipe.serverRecipeId;
+		const response = existingId
+			? await axios.patch(apiRoutes.recipe(existingId), recipePayload)
+			: await axios.post(apiRoutes.userRecipeDrafts, recipePayload, { headers: { "Content-Type": "application/json" } });
+		const recipeId = existingId || getServerRecipeId(response);
+		if (!recipeId) throw new Error("The server did not return a draft recipe ID.");
+		await axios.put(apiRoutes.recipeIngredients(recipeId), { ingredients: normalizeStructuredIngredients(recipe.structuredIngredients, recipe.recipeIngredients) });
+		await axios.put(apiRoutes.recipeNutrition(recipeId), normalizeNutritionPayload(recipe.nutrition));
+		await axios.put(apiRoutes.recipeDietaryTags(recipeId), { dietaryTags: recipe.dietaryTags || [], allergenTags: recipe.allergenTags || [] });
+		return recipeId;
+	};
+
+	const handleSaveDraft = async () => {
+		const recipe = getValues();
+		const savedLocally = saveDraftLocally(recipe);
+		try {
+			setSubmitError("");
+			const recipeId = await saveDraftToServer(recipe);
+			setValue("serverRecipeId", recipeId, { shouldDirty: false });
+			saveDraftLocally({ ...recipe, serverRecipeId: recipeId });
+			showToast({ title: "Draft saved" });
+		} catch (error) {
+			console.error("Unable to save server draft:", error);
+			if (savedLocally) {
+				showToast({ title: "Draft saved locally", message: "The server draft could not be updated yet.", type: "error" });
+			} else {
+				setSubmitError(error.response?.data?.message || error.message || "Unable to save this draft.");
+			}
+		}
 	};
 
 	useEffect(() => {
@@ -369,22 +484,11 @@ const AddRecipe = () => {
 			});
 			setUploadStatus("saving");
 
-			const response = await axios.post(
-				apiRoutes.recipes,
-				serializeCreateRecipePayload({
-					recipe: cleanedRecipe,
-					categories,
-					meals,
-					imageUrl: imageUpload.url,
-				}),
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-				}
-			);
+			const recipeId = await saveDraftToServer(cleanedRecipe, imageUpload.url);
+			setValue("serverRecipeId", recipeId, { shouldDirty: false });
+			const response = await axios.post(apiRoutes.recipePublish(recipeId));
 
-			if (isRecipeCreateSuccess(response.status)) {
+			if (response.status >= 200 && response.status < 300) {
 				clearRecipeDraft(window.localStorage, userId);
 				// Keep the existing compatibility boundary; the provider now invalidates the query cache.
 				await refreshRecipes().catch((refreshError) =>
@@ -395,18 +499,23 @@ const AddRecipe = () => {
 			}
 		} catch (error) {
 			console.error("Error publishing recipe:", error);
-			setSubmitError(
+			const message =
 				error.response?.data?.message ||
-					error.message ||
-					"Unable to publish this recipe. Please try again."
-			);
+				error.message ||
+				"Unable to publish this recipe. Please try again.";
+			setSubmitError(message);
+			showToast({
+				title: "Couldn’t publish recipe",
+				message,
+				type: "error",
+			});
 			setUploadStatus("idle");
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 	return (
-		<div className="fr-page fr-add add">
+		<main className="fr-page fr-add add">
 			<PageHelmet
 				title="Add Recipe"
 				description="Create and share a new recipe with ingredients, cooking steps, images, and preparation time."
@@ -531,12 +640,16 @@ const AddRecipe = () => {
 											<img
 												src={preview}
 												alt="This is a preview"
+												width="800"
+												height="600"
 												className="add__container__form__imgContainer__img"
 											/>
 										) : (
 											<img
 												src={cameraPreview}
 												alt="Camera preview"
+												width="800"
+												height="600"
 												className="add__container__form__imgContainer__img"
 											/>
 										)}
@@ -667,49 +780,56 @@ const AddRecipe = () => {
 								controlId="formRecipeIngredients"
 								className="add__container__form__field"
 							>
-								<Form.Label>Ingredients</Form.Label>
-								{formRecipe.recipeIngredients.map(
-									(ingredient, index) => (
-										<div
-											key={index}
-											className="d-flex gap-2 mb-3"
-										>
-											<span>{index + 1}.</span>
-													<Form.Control
-														type="text"
-														{...register(`recipeIngredients.${index}`)}
-														value={ingredient}
-														onChange={(event) => handleArrayChange("recipeIngredients", index, event.target.value)}
-														onPaste={(event) => handleArrayPaste("recipeIngredients", event, index)}
-											/>
-
-													<button
-														name="recipeIngredients"
-														className="btn btn-danger"
-														type="button"
-														disabled={
-															formRecipe.recipeIngredients.length <= 1
-														}
-												onClick={(event) =>
-													handleDeleteField(
-														event,
-														index
-													)
-												}
-											>
-												X
-											</button>
-										</div>
-									)
+								<Form.Label>Structured ingredients</Form.Label>
+								<p className="add__container__form__hint">Add quantities and units when known. Nutrition is entered manually below.</p>
+								{(formRecipe.structuredIngredients || []).map((ingredient, index) => (
+									<div key={index} className="d-flex gap-2 mb-3 flex-wrap">
+										<span aria-hidden="true">{index + 1}.</span>
+										<Form.Control aria-label={`Ingredient ${index + 1} quantity`} placeholder="Qty" value={ingredient.quantityText || ""} onChange={(event) => handleStructuredChange(index, "quantityText", event.target.value)} />
+										<Form.Control aria-label={`Ingredient ${index + 1} unit`} placeholder="Unit" value={ingredient.unit || ""} onChange={(event) => handleStructuredChange(index, "unit", event.target.value)} />
+										<Form.Control aria-label={`Ingredient ${index + 1} name`} placeholder="Ingredient name" value={ingredient.name || ""} onChange={(event) => handleStructuredChange(index, "name", event.target.value)} />
+										<Form.Control aria-label={`Ingredient ${index + 1} preparation`} placeholder="Preparation (optional)" value={ingredient.preparation || ""} onChange={(event) => handleStructuredChange(index, "preparation", event.target.value)} />
+										<Button variant="danger" type="button" onClick={() => handleDeleteStructuredIngredient(index)} disabled={(formRecipe.structuredIngredients || []).length <= 1}>Remove</Button>
+									</div>
+								))}
+								<Button variant="light" type="button" onClick={handleAddStructuredIngredient}>+ Add ingredient</Button>
+								{formRecipe.recipeIngredients.some((ingredient) => ingredient.trim()) && (
+									<p className="add__container__form__hint">A legacy free-text ingredient list was restored and will be preserved.</p>
 								)}
-								<button
-									name="recipeIngredients"
-									className="add__container__form__field__button"
-									type="button"
-									onClick={handleAddField}
-								>
-									+ Add ingredient
-								</button>
+								<details className="mt-3">
+									<summary>Legacy free-text ingredient notes</summary>
+									{formRecipe.recipeIngredients.map((ingredient, index) => (
+										<div key={index} className="d-flex gap-2 mb-2">
+											<Form.Control aria-label={`Legacy ingredient ${index + 1}`} type="text" {...register(`recipeIngredients.${index}`)} value={ingredient} onChange={(event) => handleArrayChange("recipeIngredients", index, event.target.value)} onPaste={(event) => handleArrayPaste("recipeIngredients", event, index)} />
+											<Button variant="danger" type="button" name="recipeIngredients" disabled={formRecipe.recipeIngredients.length <= 1} onClick={(event) => handleDeleteField(event, index)}>Remove</Button>
+										</div>
+									))}
+									<Button variant="light" type="button" name="recipeIngredients" onClick={handleAddField}>+ Add legacy note</Button>
+								</details>
+							</Form.Group>
+
+							<Form.Group className="add__container__form__field" controlId="formRecipeNutrition">
+								<Form.Label>Nutrition per serving</Form.Label>
+								<p className="add__container__form__hint">Manual MVP input; values are not calculated or medically verified.</p>
+								<Row>
+									{NUTRITION_FIELDS.map((field) => (
+										<Col xs={6} md={3} key={field}>
+											<Form.Label className="text-capitalize">{field}</Form.Label>
+											<Form.Control type="number" min="0" step="any" placeholder="Optional" {...register(`nutrition.${field}`, { onChange: handleInputChange })} value={formRecipe.nutrition?.[field] || ""} />
+										</Col>
+									))}
+								</Row>
+							</Form.Group>
+
+							<Form.Group className="add__container__form__field" controlId="formRecipeDietary">
+								<Form.Label>Dietary preferences</Form.Label>
+								<div className="d-flex gap-2 flex-wrap mb-3">
+									{DIETARY_OPTIONS.map((tag) => <Button key={tag} type="button" variant={(formRecipe.dietaryTags || []).includes(tag) ? "primary" : "light"} aria-pressed={(formRecipe.dietaryTags || []).includes(tag)} onClick={() => handleToggleTag("dietaryTags", tag)}>{tag}</Button>)}
+								</div>
+								<Form.Label>Allergen tags</Form.Label>
+								<div className="d-flex gap-2 flex-wrap">
+									{ALLERGEN_OPTIONS.map((tag) => <Button key={tag} type="button" variant={(formRecipe.allergenTags || []).includes(tag) ? "primary" : "light"} aria-pressed={(formRecipe.allergenTags || []).includes(tag)} onClick={() => handleToggleTag("allergenTags", tag)}>{tag}</Button>)}
+								</div>
 							</Form.Group>
 							<Form.Group
 								controlId="formRecipeInstructions"
@@ -788,7 +908,7 @@ const AddRecipe = () => {
 					</div>
 				</div>
 			</div>
-		</div>
+		</main>
 	);
 };
 

@@ -69,6 +69,58 @@ export class WishlistRemovalResponseDto {
   message!: string;
 }
 
+export class RecipeIngredientResponseDto {
+  @ApiProperty({ example: 1 })
+  recipe_ingredient_id!: number;
+
+  @ApiProperty({ example: 1 })
+  position!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 1.5 })
+  quantity!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '1/2' })
+  quantity_text!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'cup' })
+  unit!: string | null;
+
+  @ApiProperty({ example: 'Tomatoes' })
+  name!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'diced' })
+  preparation!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '1 cup diced tomatoes' })
+  original_text!: string | null;
+}
+
+export class RecipeNutritionResponseDto {
+  @ApiProperty({ example: 4 })
+  servings!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 425 })
+  calories!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 18 })
+  protein!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 52 })
+  carbohydrates!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 12 })
+  fat!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 5 })
+  fiber!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 8 })
+  sugar!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 620 })
+  sodium!: number | null;
+}
+
 export class RecipeResponseDto {
   @ApiProperty({ example: 15 })
   recipe_id!: number;
@@ -79,14 +131,14 @@ export class RecipeResponseDto {
   @ApiProperty({ type: String, example: 'A quick weeknight pasta.', nullable: true })
   recipe_description!: string | null;
 
-  @ApiProperty({ example: 10 })
-  prep_time_minutes!: number;
+  @ApiProperty({ example: 10, nullable: true })
+  prep_time_minutes!: number | null;
 
-  @ApiProperty({ example: 20 })
-  cook_time_minutes!: number;
+  @ApiProperty({ example: 20, nullable: true })
+  cook_time_minutes!: number | null;
 
-  @ApiProperty({ example: 30, description: 'Preparation plus cooking time in minutes' })
-  total_time_minutes!: number;
+  @ApiProperty({ example: 30, nullable: true, description: 'Preparation plus cooking time in minutes' })
+  total_time_minutes!: number | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   date_added!: string | null;
@@ -99,6 +151,30 @@ export class RecipeResponseDto {
 
   @ApiPropertyOptional({ type: [String], nullable: true })
   instructions?: string[] | null;
+
+  @ApiProperty({ enum: ['draft', 'published', 'archived'], example: 'published' })
+  status!: 'draft' | 'published' | 'archived';
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  published_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  archived_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updated_at!: string;
+
+  @ApiProperty({ type: [RecipeIngredientResponseDto] })
+  structured_ingredients!: RecipeIngredientResponseDto[];
+
+  @ApiProperty({ type: RecipeNutritionResponseDto, nullable: true })
+  nutrition!: RecipeNutritionResponseDto | null;
+
+  @ApiProperty({ type: [String] })
+  dietary_tags!: string[];
+
+  @ApiProperty({ type: [String] })
+  allergen_tags!: string[];
 
   @ApiProperty({ example: 7 })
   user_id!: number;

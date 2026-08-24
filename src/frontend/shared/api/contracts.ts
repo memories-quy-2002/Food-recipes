@@ -30,10 +30,70 @@ export type NestRecipeSummary = RecipeSummaryBase & {
 
 export type RecipeSummary = NestRecipeSummary;
 
-export type RecipeDetail = RecipeSummary & {
+export type RecipeStatus = "draft" | "published" | "archived";
+
+export type StructuredIngredient = {
+	id?: number;
+	position?: number;
+	quantity?: number | null;
+	quantityText?: string | null;
+	unit?: string | null;
+	name: string;
+	preparation?: string | null;
+	originalText?: string | null;
+};
+
+export type RecipeNutrition = {
+	servings?: number | null;
+	calories?: number | null;
+	protein?: number | null;
+	carbohydrates?: number | null;
+	fat?: number | null;
+	fiber?: number | null;
+	sugar?: number | null;
+	sodium?: number | null;
+};
+
+export type RecipeLifecycleMetadata = {
+	status?: RecipeStatus;
+	publishedAt?: string | null;
+	archivedAt?: string | null;
+	updatedAt?: string | null;
+	structuredIngredients?: StructuredIngredient[];
+	nutrition?: RecipeNutrition | null;
+	dietaryTags?: string[];
+	allergenTags?: string[];
+};
+
+export type RecipeDetail = RecipeSummary & RecipeLifecycleMetadata & {
 	ingredients: string[] | null;
 	instructions: string[] | null;
 };
+
+export type RecipeDraftPayload = {
+	name: string;
+	description?: string;
+	mealId: number;
+	categoryId: number;
+	prepTimeMinutes: number;
+	cookTimeMinutes: number;
+	ingredients?: string[];
+	instructions?: string[];
+	imageUrl?: string | null;
+};
+
+export type StructuredIngredientsPayload = {
+	ingredients: StructuredIngredient[];
+};
+
+export type RecipeNutritionPayload = RecipeNutrition;
+
+export type RecipeTagsPayload = {
+	dietaryTags: string[];
+	allergenTags: string[];
+};
+
+export type OwnerRecipe = RecipeSummary & RecipeLifecycleMetadata;
 
 export type RecipePagination = {
 	page: number;

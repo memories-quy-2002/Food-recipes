@@ -145,6 +145,47 @@ describe('RecipesRepository duration normalization', () => {
     expect(sqlSource(query)).not.toMatch(/r\.cook_time\b/);
   });
 
+  it('restricts public list queries to published recipes', async () => {
+    mockList([recipe]);
+    const repository = new RecipesRepository(prisma as never);
+
+    await repository.list({});
+
+    expect(sqlSource(prisma.$queryRaw.mock.calls[0][0])).toContain(
+      "r.status = 'published'",
+    );
+    expect(sqlSource(prisma.$queryRaw.mock.calls[1][0])).toContain(
+      "r.status = 'published'",
+    );
+  });
+
+  it('restricts public detail queries to published recipes', async () => {
+    prisma.$queryRaw.mockResolvedValue([]);
+    const repository = new RecipesRepository(prisma as never);
+
+    await repository.findById(15);
+
+    expect(sqlSource(prisma.$queryRaw.mock.calls[0][0])).toContain(
+      "r.status = 'published'",
+    );
+  });
+
+  it('includes structured metadata in owner projections', async () => {
+    prisma.$queryRaw.mockResolvedValue([recipe]);
+    const repository = new RecipesRepository(prisma as never);
+
+    await (repository.findByUserId as unknown as (
+      userId: number,
+      status: string,
+    ) => Promise<unknown>)(2, 'all');
+
+    const query = prisma.$queryRaw.mock.calls[0][0];
+    expect(sqlSource(query)).toContain('recipe_ingredients');
+    expect(sqlSource(query)).toContain('recipe_nutrition');
+    expect(sqlSource(query)).toContain('recipe_dietary_tags');
+    expect(sqlSource(query)).toContain('recipe_allergen_tags');
+  });
+
   it('dual-writes native minutes and legacy intervals on create', async () => {
     prisma.$queryRaw
       .mockResolvedValueOnce([{ recipe_id: 15 }])

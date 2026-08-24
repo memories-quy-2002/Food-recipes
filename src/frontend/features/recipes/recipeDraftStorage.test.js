@@ -20,6 +20,11 @@ const recipe = {
 	recipePrepTime: { number: "10", unit: "minutes" },
 	recipeCookTime: { number: "20", unit: "minutes" },
 	userId: 42,
+	structuredIngredients: [{ quantityText: "1", unit: "cup", name: "water", preparation: "" }],
+	nutrition: { servings: "2", calories: "100", protein: "3", carbohydrates: "10", fat: "2", fiber: "1", sugar: "2", sodium: "20" },
+	dietaryTags: ["vegan"],
+	allergenTags: ["soy"],
+	serverRecipeId: 77,
 };
 
 describe("recipe draft storage", () => {
@@ -28,7 +33,7 @@ describe("recipe draft storage", () => {
 	it("serializes only non-sensitive recipe fields and excludes the image file and user id", () => {
 		const serialized = serializeRecipeDraft(recipe, 123);
 
-		expect(serialized).toMatchObject({ version: 1, userId: "123" });
+		expect(serialized).toMatchObject({ version: 2, userId: "123", serverRecipeId: 77 });
 		expect(serialized.form).toEqual({
 			recipeImage: null,
 			recipeName: "Soup",
@@ -39,6 +44,11 @@ describe("recipe draft storage", () => {
 			recipeInstructions: ["Boil"],
 			recipePrepTime: { number: "10", unit: "minutes" },
 			recipeCookTime: { number: "20", unit: "minutes" },
+			structuredIngredients: [{ quantityText: "1", unit: "cup", name: "water", preparation: "" }],
+			nutrition: { servings: "2", calories: "100", protein: "3", carbohydrates: "10", fat: "2", fiber: "1", sugar: "2", sodium: "20" },
+			dietaryTags: ["vegan"],
+			allergenTags: ["soy"],
+			serverRecipeId: 77,
 		});
 		expect(JSON.stringify(serialized)).not.toContain("jwt");
 	});
@@ -48,7 +58,7 @@ describe("recipe draft storage", () => {
 
 		expect(localStorage.getItem(getRecipeDraftStorageKey(42))).toBeTruthy();
 		expect(loadRecipeDraft(localStorage, 42)).toMatchObject({
-		version: 1,
+		version: 2,
 		userId: "42",
 		savedAt: 1000,
 		form: { recipeName: "Soup", recipeImage: null },
@@ -96,5 +106,30 @@ describe("recipe draft storage", () => {
 
 		expect(parsed.form).toMatchObject({ recipeName: "Soup", recipeImage: null });
 		expect(parsed.form.token).toBeUndefined();
+	});
+
+	it("keeps version-1 drafts readable while normalizing new fields to safe defaults", () => {
+		const parsed = parseRecipeDraft(JSON.stringify({
+			version: 1,
+			userId: "42",
+			savedAt: 1000,
+			form: {
+				recipeName: "Legacy soup",
+				recipeCategoryName: "",
+				recipeMealName: "",
+				recipeDescription: "",
+				recipeIngredients: ["water"],
+				recipeInstructions: ["Boil"],
+				recipePrepTime: { number: 15, unit: "minutes" },
+				recipeCookTime: { number: 30, unit: "minutes" },
+			},
+		}));
+
+		expect(parsed).toMatchObject({ version: 1, userId: "42" });
+		expect(parsed.form.structuredIngredients).toEqual([]);
+		expect(parsed.form.nutrition).toEqual({});
+		expect(parsed.form.dietaryTags).toEqual([]);
+		expect(parsed.form.allergenTags).toEqual([]);
+		expect(parsed.serverRecipeId).toBeNull();
 	});
 });
