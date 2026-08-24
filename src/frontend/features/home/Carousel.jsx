@@ -29,25 +29,19 @@ const Carousel = ({ items }) => {
 	);
 	const displayItems = items.length ? items : fallbackItems;
 
-	const handleSpecSlide = (index) => {
-		setCurrIndex(index);
-	};
-
+	const handleSpecSlide = (index) => setCurrIndex(index);
 	const handlePrevSlide = () => {
 		setCurrIndex(
 			(prevIndex) =>
 				(prevIndex - 1 + displayItems.length) % displayItems.length
 		);
 	};
-
 	const handleNextSlide = () => {
 		setCurrIndex((prevIndex) => (prevIndex + 1) % displayItems.length);
 	};
 
 	useEffect(() => {
-		if (currIndex >= displayItems.length) {
-			setCurrIndex(0);
-		}
+		if (currIndex >= displayItems.length) setCurrIndex(0);
 	}, [currIndex, displayItems.length]);
 
 	useEffect(() => {
@@ -59,16 +53,11 @@ const Carousel = ({ items }) => {
 		}
 
 		const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-		const handleChange = (event) => {
-			setPrefersReducedMotion(event.matches);
-		};
+		const handleChange = (event) => setPrefersReducedMotion(event.matches);
 
 		setPrefersReducedMotion(mediaQuery.matches);
 		mediaQuery.addEventListener?.("change", handleChange);
-
-		return () => {
-			mediaQuery.removeEventListener?.("change", handleChange);
-		};
+		return () => mediaQuery.removeEventListener?.("change", handleChange);
 	}, []);
 
 	const shouldAutoRotate =
@@ -84,14 +73,8 @@ const Carousel = ({ items }) => {
 		const intervalId = setInterval(() => {
 			setCurrIndex((prevIndex) => (prevIndex + 1) % displayItems.length);
 		}, 10000);
-		return () => {
-			clearInterval(intervalId);
-		};
+		return () => clearInterval(intervalId);
 	}, [displayItems.length, shouldAutoRotate]);
-
-	const handleFocusCapture = () => {
-		setIsFocusPaused(true);
-	};
 
 	const handleBlurCapture = (event) => {
 		if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -100,21 +83,21 @@ const Carousel = ({ items }) => {
 	};
 
 	return (
-		<div
-			className="home__carousel"
+		<section
+			className="relative isolate mx-auto mt-4 w-full max-w-[112rem] overflow-hidden bg-[#211813] text-[#fff8ef] shadow-[0_30px_80px_rgba(33,24,19,0.16)] sm:mt-6 sm:rounded-[2rem] lg:mt-8"
 			role="region"
 			aria-roledescription="carousel"
 			aria-label="Featured meals"
 			onMouseEnter={() => setIsPointerPaused(true)}
 			onMouseLeave={() => setIsPointerPaused(false)}
-			onFocusCapture={handleFocusCapture}
+			onFocusCapture={() => setIsFocusPaused(true)}
 			onBlurCapture={handleBlurCapture}
 		>
 			<div
-				className="home__carousel__container"
+				className="flex w-full will-change-transform"
 				style={{
 					transform: `translateX(-${currIndex * 100}%)`,
-					transition: prefersReducedMotion ? "none" : undefined,
+					transition: prefersReducedMotion ? "none" : "transform 600ms cubic-bezier(0.22,1,0.36,1)",
 				}}
 			>
 				{displayItems.map(({ id, name, description, imageName }, index) => (
@@ -143,7 +126,7 @@ const Carousel = ({ items }) => {
 					showPauseControl={!prefersReducedMotion}
 				/>
 			)}
-		</div>
+		</section>
 	);
 };
 
