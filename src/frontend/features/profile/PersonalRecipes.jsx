@@ -6,7 +6,7 @@ import { apiRoutes } from "@/shared/api/routes";
 import { isRecipeDeleteSuccess } from "@/shared/api/mutations";
 import PageState from "@/shared/ui/PageState";
 import convertImage from "@/shared/utils/convertImage";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col } from "@/shared/ui/legacy-ui";
 
 const STATUS_FILTERS = ["all", "draft", "published", "archived"];
 const statusLabel = (status) => status ? status[0].toUpperCase() + status.slice(1) : "Unknown";

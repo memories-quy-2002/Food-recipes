@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Form, Row } from "react-bootstrap";
+import { Button, Form, Row } from "@/shared/ui/legacy-ui";
 import { Link } from "react-router-dom";
 import { BsStar, BsStarFill } from "react-icons/bs";
 import RecipeReviewList from "./RecipeReviewList";

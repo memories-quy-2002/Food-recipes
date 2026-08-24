@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Row } from "react-bootstrap";
+import { Row } from "@/shared/ui/legacy-ui";
 import Pagination from "react-bootstrap/Pagination";
 import convertImage from "@/shared/utils/convertImage";
 import formatTimestamp from "@/shared/utils/formatTimestamp";

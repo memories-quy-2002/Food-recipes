@@ -1,6 +1,6 @@
 import cameraPreview from "@/shared/assets/images/cameraPreview.png";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Button, Col, Form, Row } from "react-bootstrap";
+import { Button, Col, Form, Row } from "@/shared/ui/legacy-ui";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";

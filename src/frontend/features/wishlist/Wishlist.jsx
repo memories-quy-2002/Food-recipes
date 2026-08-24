@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Container } from "react-bootstrap";
+import { Container } from "@/shared/ui/legacy-ui";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";

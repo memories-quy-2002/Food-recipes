@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Container } from "react-bootstrap";
+import { Container } from "@/shared/ui/legacy-ui";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { apiRoutes, getUserRecipeRatingRoute } from "@/shared/api/routes";

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form } from "@/shared/ui/legacy-ui";
 import { useDispatch } from "react-redux";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";

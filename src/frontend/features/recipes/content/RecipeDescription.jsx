@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col } from "@/shared/ui/legacy-ui";
 import RecipeIngredientChecklist, { getIngredientSignature } from "./RecipeIngredientChecklist";
 import { scaleStructuredIngredient } from "../structuredIngredients";
 

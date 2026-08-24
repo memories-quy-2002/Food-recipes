@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { Col, Container, Row } from "react-bootstrap";
+import { Col, Container, Row } from "@/shared/ui/legacy-ui";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";

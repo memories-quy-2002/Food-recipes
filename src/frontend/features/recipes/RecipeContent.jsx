@@ -1,5 +1,5 @@
 import React from "react";
-import { Row } from "react-bootstrap";
+import { Row } from "@/shared/ui/legacy-ui";
 import RecipeDescription from "./content/RecipeDescription";
 import RecipeRating from "./content/RecipeRating";
 import RecipeMetadataPanel from "./RecipeMetadataPanel";

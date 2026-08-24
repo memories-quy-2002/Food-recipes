@@ -1,7 +1,7 @@
 import React from "react";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
-import { Row, Col } from "react-bootstrap";
+import { Row, Col } from "@/shared/ui/legacy-ui";
 import { useNavigate } from "react-router-dom";
 import PageState from "@/shared/ui/PageState";
 const Reviews = ({ reviewsData = [] }) => {

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { Container } from "react-bootstrap";
+import { Container } from "@/shared/ui/legacy-ui";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import ProfileAside from "@/features/profile/ProfileAside";
