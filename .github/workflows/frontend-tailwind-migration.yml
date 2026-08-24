@@ -1,0 +1,87 @@
+name: One-time frontend Bootstrap migration
+
+on:
+  push:
+    branches:
+      - refactor/frontend-tailwind-shadcn
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Replace React Bootstrap imports and dependencies
+        working-directory: src/frontend
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const root = process.cwd();
+          const extensions = new Set(['.js', '.jsx', '.ts', '.tsx']);
+          const skip = new Set(['node_modules', 'dist']);
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (skip.has(entry.name)) continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walk(full);
+                continue;
+              }
+              if (!extensions.has(path.extname(entry.name))) continue;
+              const original = fs.readFileSync(full, 'utf8');
+              const next = original
+                .replaceAll('from "react-bootstrap"', 'from "@/shared/ui/legacy-ui"')
+                .replaceAll("from 'react-bootstrap'", "from '@/shared/ui/legacy-ui'");
+              if (next !== original) fs.writeFileSync(full, next);
+            }
+          }
+
+          walk(root);
+
+          const packagePath = path.join(root, 'package.json');
+          const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+          delete pkg.dependencies?.bootstrap;
+          delete pkg.dependencies?.['react-bootstrap'];
+          fs.writeFileSync(packagePath, `${JSON.stringify(pkg, null, 2)}\n`);
+          NODE
+
+          corepack pnpm@11.18.0 install --lockfile-only
+
+      - name: Verify Bootstrap is gone from frontend source and manifest
+        working-directory: src/frontend
+        shell: bash
+        run: |
+          if grep -R --line-number --exclude='pnpm-lock.yaml' --exclude-dir=node_modules --exclude-dir=dist -E '(from ["'"']react-bootstrap["'"']|["'"']bootstrap["'"']\s*:)' .; then
+            echo 'Bootstrap references remain in frontend source or package manifest.' >&2
+            exit 1
+          fi
+
+      - name: Commit migration
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No migration changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/frontend
+          git commit -m 'refactor(ui): remove bootstrap dependencies'
+          git push
