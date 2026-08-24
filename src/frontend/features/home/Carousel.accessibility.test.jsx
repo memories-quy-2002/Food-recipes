@@ -1,6 +1,6 @@
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Carousel from "./Carousel";
 
@@ -31,12 +31,23 @@ const renderCarousel = () => {
 	return renderer;
 };
 
+const getRegion = (renderer) =>
+	renderer.root.find((node) => node.props.className === "home__carousel");
+
+const getSlides = (renderer) =>
+	renderer.root.findAll(
+		(node) => node.props.className === "home__carousel__item"
+	);
+
+afterEach(() => {
+	vi.useRealTimers();
+	vi.restoreAllMocks();
+});
+
 describe("Carousel accessibility", () => {
 	it("keeps only the active slide in the accessibility and focus tree", () => {
 		const renderer = renderCarousel();
-		const slides = renderer.root.findAll(
-			(node) => node.props.className === "home__carousel__item"
-		);
+		const slides = getSlides(renderer);
 
 		expect(slides).toHaveLength(2);
 		expect(slides[0].props["aria-hidden"]).toBe(false);
@@ -54,12 +65,45 @@ describe("Carousel accessibility", () => {
 
 	it("labels the carousel as a discoverable region", () => {
 		const renderer = renderCarousel();
-		const region = renderer.root.find(
-			(node) => node.props.className === "home__carousel"
-		);
+		const region = getRegion(renderer);
 
 		expect(region.props.role).toBe("region");
 		expect(region.props["aria-roledescription"]).toBe("carousel");
 		expect(region.props["aria-label"]).toBe("Featured meals");
+	});
+
+	it("pauses automatic rotation while keyboard focus is inside", () => {
+		vi.useFakeTimers();
+		const renderer = renderCarousel();
+		const region = getRegion(renderer);
+
+		act(() => region.props.onFocusCapture());
+		act(() => vi.advanceTimersByTime(10000));
+		expect(getSlides(renderer)[0].props["aria-hidden"]).toBe(false);
+
+		act(() =>
+			region.props.onBlurCapture({
+				currentTarget: { contains: () => false },
+				relatedTarget: null,
+			})
+		);
+		act(() => vi.advanceTimersByTime(10000));
+		expect(getSlides(renderer)[1].props["aria-hidden"]).toBe(false);
+	});
+
+	it("does not auto-rotate when reduced motion is requested", () => {
+		vi.useFakeTimers();
+		vi.stubGlobal("window", {
+			matchMedia: vi.fn(() => ({
+				matches: true,
+				addEventListener: vi.fn(),
+				removeEventListener: vi.fn(),
+			})),
+		});
+
+		const renderer = renderCarousel();
+		act(() => vi.advanceTimersByTime(20000));
+
+		expect(getSlides(renderer)[0].props["aria-hidden"]).toBe(false);
 	});
 });
