@@ -4,6 +4,7 @@ import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import Account from "@/features/auth/Account";
 import About from "@/features/content/About";
 import News from "@/features/content/News";
+import ErrorPage from "@/features/content/ErrorPage";
 import Health from "@/features/diagnostics/Health";
 import Food from "@/features/food/Food";
 import Home from "@/features/home/Home";
@@ -84,6 +85,7 @@ const AppRoutes = () => (
 				</ProtectedRoute>
 			}
 		/>
+		<Route path="*" element={<ErrorPage />} />
 	</Routes>
 );
 

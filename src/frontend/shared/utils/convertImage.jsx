@@ -33,6 +33,8 @@ const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
 			<img
 				src={imageUrl}
 				alt={name[0].toUpperCase() + name.substring(1)}
+				width="800"
+				height="600"
 				className={`object-cover ${className}`}
 				loading="lazy"
 				decoding="async"
@@ -55,6 +57,8 @@ const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
 		<img
 			src={imageSrc}
 			alt={name[0].toUpperCase() + name.substring(1)}
+			width="800"
+			height="600"
 			className={`object-cover ${className}`}
 			loading="lazy"
 			decoding="async"

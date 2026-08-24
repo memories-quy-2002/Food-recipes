@@ -218,7 +218,7 @@
 		span {
 			display: block;
 			margin-bottom: 0.35rem;
-			color: #d56b00;
+			color: #9a3412;
 			font-size: 0.78rem;
 			font-weight: 900;
 			text-transform: uppercase;
@@ -244,7 +244,7 @@
 			&__eyebrow {
 				display: block;
 				margin-bottom: 0.55rem;
-				color: #d56b00;
+				color: #9a3412;
 				font-size: 0.8rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -281,8 +281,7 @@
 				background: #fffaf3;
 				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-				&:focus {
-					outline: none;
+				&:focus-visible {
 					border-color: #ff9f1c;
 					box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.16);
 				}
@@ -380,7 +379,7 @@
 				display: inline-flex;
 				align-items: center;
 				text-decoration: none;
-				color: #a84f00;
+				color: var(--accent-foreground);
 				cursor: pointer;
 				font-size: 0.98rem;
 				font-weight: 900;
@@ -391,7 +390,7 @@
 				}
 
 				&:hover {
-					color: #d56b00;
+					color: #9a3412;
 				}
 			}
 		}
@@ -572,12 +571,18 @@
 						align-items: center;
 
 						button {
+						display: inline-flex;
+						align-items: center;
+						justify-content: center;
 							background-color: transparent;
 							height: inherit;
+							width: 100%;
 							aspect-ratio: inherit;
 							border-radius: inherit;
 							border: none;
 							color: #fff8ef;
+							padding: 0;
+							line-height: 1;
 							cursor: pointer;
 
 							&:focus-visible {
@@ -594,7 +599,7 @@
 						padding: 0.25rem 0.55rem;
 						border-radius: 999px;
 						background: rgba(255, 159, 28, 0.15);
-						color: #a84f00;
+						color: var(--accent-foreground);
 						font-size: 0.72rem;
 					}
 

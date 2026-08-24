@@ -20,7 +20,7 @@
 		> div > span {
 			display: block;
 			margin-bottom: 0.55rem;
-			color: #d56b00;
+			color: #9a3412;
 			font-size: 0.82rem;
 			font-weight: 900;
 			text-transform: uppercase;
@@ -106,8 +106,7 @@
 			color: #211813;
 			font-weight: 800;
 
-			&:focus {
-				outline: none;
+			&:focus-visible {
 				border-color: #ff9f1c;
 				box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 			}
@@ -125,7 +124,7 @@
 		&__eyebrow {
 			display: block;
 			margin-bottom: 0.35rem;
-			color: #a84f00;
+			color: var(--accent-foreground);
 			font-size: 0.75rem;
 			font-weight: 900;
 			letter-spacing: 0.08em;
@@ -238,7 +237,7 @@
 							padding: 0.25rem 0.55rem;
 							border-radius: 999px;
 							background: rgba(255, 159, 28, 0.15);
-							color: #a84f00;
+							color: var(--accent-foreground);
 							font-size: 0.76rem;
 							font-weight: 900;
 						}
@@ -290,13 +289,13 @@
 							transform 0.2s ease;
 
 						&:hover {
-							background: #d56b00;
+							background: #9a3412;
 							transform: translateY(-1px);
 						}
 
 						&--danger {
 							background: #fff1d6;
-							color: #a84f00;
+							color: var(--accent-foreground);
 
 							&:hover {
 								background: #c83220;

@@ -79,11 +79,6 @@ const AccountForm = () => {
 					</div>
 				)}
 				<div className="form__btnBox" role="tablist" aria-label="Account mode">
-					<div
-						className={`form__btnBox__slider ${
-							isSignup ? "moveslider" : ""
-						}`}
-					/>
 					<button
 						type="button"
 						role="tab"

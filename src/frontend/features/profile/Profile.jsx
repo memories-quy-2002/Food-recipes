@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { Container } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import ProfileAside from "@/features/profile/ProfileAside";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -29,13 +30,17 @@ const profilePageList = [
 		name: "Recipes Reviews",
 	},
 ];
+const getProfilePageFromHash = (hash = "") => hash.replace(/^#\/?/, "");
 const Profile = () => {
 	const user = useSelector(
 		(state) => state.auth.local.user ?? state.auth.session.user
 	);
-	const [page, setPage] = useState(
-		window.location.hash.replace("#/", "") || ""
-	);
+	const location = useLocation();
+	const [page, setPage] = useState(() => getProfilePageFromHash(window.location.hash));
+
+	useEffect(() => {
+		setPage(getProfilePageFromHash(location.hash));
+	}, [location.hash]);
 	const dispatch = useDispatch();
 
 	const handleLogOut = () => {

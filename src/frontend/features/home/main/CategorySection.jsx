@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 
 // The categories endpoint currently includes recipe_count, but the Home should
@@ -69,11 +70,11 @@ const CategorySection = ({
 			<div className="home__sectionHeader">
 				<div>
 					<span>Cook by mood</span>
-					<h3 className="home__main__category__title">Categories</h3>
+				<h2 className="home__main__category__title">Categories</h2>
 				</div>
-				<a href="/food" className="home__main__category__link">
+				<Link to="/food" className="home__main__category__link">
 					Browse all categories
-				</a>
+				</Link>
 			</div>
 			<div className="home__main__category__list">
 				<button

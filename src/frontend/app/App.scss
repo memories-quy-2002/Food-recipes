@@ -1,10 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter&family=Montserrat:wght@300&family=Roboto:wght@500&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Lato&family=Nunito&display=swap");
-$color_1: #9880ff;
-$background-color_1: #9880ff;
+$color_1: var(--primary);
+$background-color_1: var(--primary);
 
 .loaderContainer {
-	height: 100vh;
+	min-height: 18rem;
+	padding: 2rem;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -25,6 +26,7 @@ $background-color_1: #9880ff;
 	gap: 2.5rem;
 	text-align: left;
 	box-shadow: 0 16px 44px rgba(45, 32, 20, 0.08);
+	transition: border-color 0.2s ease, background-color 0.2s ease;
 
 	h2 {
 		margin: 0;
@@ -52,49 +54,114 @@ $background-color_1: #9880ff;
 
 .toast-viewport {
 	position: fixed;
-	top: 1rem;
-	right: 1rem;
+	top: max(1rem, env(safe-area-inset-top));
+	right: max(1rem, env(safe-area-inset-right));
 	z-index: 1200;
 	display: grid;
 	gap: 0.75rem;
-	width: min(calc(100vw - 2rem), 360px);
+	width: min(24rem, calc(100vw - 2rem));
+	pointer-events: none;
 
 	&__item {
-		padding: 0.9rem 1rem;
-		border: 1px solid rgba(98, 58, 18, 0.12);
-		border-radius: 8px;
-		background: rgba(33, 24, 19, 0.96);
-		color: #fff8ef;
-		box-shadow: 0 18px 40px rgba(33, 24, 19, 0.18);
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
+		--toast-accent: var(--primary);
+		position: relative;
+		pointer-events: auto;
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: start;
+		gap: 0.75rem;
+		padding: 0.875rem 0.75rem 0.875rem 1rem;
+		border: 1px solid var(--border);
+		border-left: 0.25rem solid var(--toast-accent);
+		border-radius: 1rem;
+		background: var(--card);
+		color: var(--foreground);
+		box-shadow: 0 1rem 2.5rem rgba(33, 24, 19, 0.16);
+		animation: toast-enter 180ms ease-out both;
 
-		p {
+		.toast-viewport__indicator {
+			width: 0.625rem;
+			height: 0.625rem;
+			margin-top: 0.4rem;
+			border-radius: 50%;
+			background: var(--toast-accent);
+			box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--toast-accent) 16%, transparent);
+		}
+
+		.toast-viewport__content {
+			min-width: 0;
+		}
+
+		.toast-viewport__title,
+		.toast-viewport__message {
 			margin: 0;
-			font-weight: 800;
 			line-height: 1.45;
 		}
 
-		button {
-			margin: 0;
-			padding: 0;
-			border: none;
-			background: transparent;
-			color: inherit;
-			font-size: 0.82rem;
+		.toast-viewport__title {
 			font-weight: 900;
-			text-transform: uppercase;
+		}
+
+		.toast-viewport__message {
+			margin-top: 0.15rem;
+			color: var(--muted-foreground);
+			font-size: 0.9rem;
+		}
+
+		button {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 2.75rem;
+			min-width: 2.75rem;
+			height: 2.75rem;
+			margin: -0.5rem -0.5rem 0 0;
+			padding: 0;
+			border: 0;
+			border-radius: 0.75rem;
+			background: transparent;
+			color: var(--muted-foreground);
+			font-size: 1.5rem;
+			line-height: 1;
+			transition: background-color 160ms ease, color 160ms ease;
+
+			&:hover {
+				background: var(--muted);
+				color: var(--foreground);
+			}
+
+			&:focus-visible {
+				outline: 3px solid var(--ring);
+				outline-offset: 2px;
+			}
 		}
 
 		&--success {
-			border-color: rgba(95, 176, 120, 0.32);
+			--toast-accent: var(--success);
 		}
 
 		&--error {
-			border-color: rgba(217, 90, 74, 0.3);
+			--toast-accent: var(--destructive);
 		}
+
+		&--info {
+			--toast-accent: var(--info);
+		}
+
+		&--warning {
+			--toast-accent: var(--warning);
+		}
+	}
+}
+
+@keyframes toast-enter {
+	from {
+		opacity: 0;
+		transform: translate3d(0, -0.5rem, 0);
+	}
+	to {
+		opacity: 1;
+		transform: translate3d(0, 0, 0);
 	}
 }
 
@@ -115,7 +182,7 @@ $background-color_1: #9880ff;
 		span {
 			display: block;
 			margin-bottom: 0.5rem;
-			color: #d56b00;
+			color: #9a3412;
 			font-size: 0.82rem;
 			font-weight: 900;
 			text-transform: uppercase;
@@ -203,7 +270,7 @@ $background-color_1: #9880ff;
 			margin-bottom: 0.85rem;
 
 			span {
-				color: #d56b00;
+				color: #9a3412;
 				font-size: 0.76rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -268,9 +335,9 @@ $background-color_1: #9880ff;
 
 	.toast-viewport {
 		top: auto;
-		right: 0.75rem;
-		bottom: 0.75rem;
-		left: 0.75rem;
+		right: max(0.75rem, env(safe-area-inset-right));
+		bottom: max(0.75rem, env(safe-area-inset-bottom));
+		left: max(0.75rem, env(safe-area-inset-left));
 		width: auto;
 	}
 }

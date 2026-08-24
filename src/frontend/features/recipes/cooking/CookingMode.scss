@@ -3,7 +3,6 @@
 	padding: clamp(1rem, 4vw, 3rem);
 	background: #211813;
 	color: #fff8ef;
-	outline: none;
 
 	&__topbar,
 	&__content {
@@ -89,7 +88,10 @@
 
 			&:disabled {
 				cursor: not-allowed;
-				opacity: 0.42;
+				border: 1px solid rgba(255, 209, 139, 0.28);
+				background: rgba(255, 159, 28, 0.24);
+				color: rgba(255, 248, 239, 0.72);
+				opacity: 1;
 			}
 		}
 	}

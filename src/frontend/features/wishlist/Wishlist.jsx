@@ -10,6 +10,7 @@ import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { RecipeContext } from "@/app/RecipeProvider";
+import { useToast } from "@/app/ToastProvider";
 import SavedCollectionsNotice from "@/features/saved/collections/SavedCollectionsNotice";
 import { getSavedAtTimestamp } from "./savedRecipe";
 import "./Wishlist.scss";
@@ -102,6 +103,7 @@ const Wishlist = () => {
 	const pendingRecipeIdRef = useRef(null);
 	const isRemovingRef = useRef(false);
 	const navigate = useNavigate();
+	const { showToast } = useToast();
 	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { local, session } = useSelector(({ auth }) => auth);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
@@ -206,9 +208,15 @@ const Wishlist = () => {
 				);
 				setShowModal(false);
 				pendingRecipeIdRef.current = null;
+				showToast({ title: "Removed from Saved" });
 			}
 		} catch (err) {
 			console.error(err);
+			showToast({
+				title: "Couldn’t remove saved recipe",
+				message: "Please try again in a moment.",
+				type: "error",
+			});
 			setRemoveError(
 				err.response?.data?.message ||
 					"We could not remove this saved recipe. Please try again."
@@ -220,7 +228,7 @@ const Wishlist = () => {
 	};
 
 	return (
-		<Container fluid className="fr-page wishlist">
+		<Container as="main" fluid className="fr-page wishlist">
 			<PageHelmet
 				title="Saved Recipes"
 				description="Review and organize the recipes you saved for later."

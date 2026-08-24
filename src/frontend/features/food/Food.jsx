@@ -54,7 +54,7 @@ const Food = () => {
 
 	const filtersReady = !isLoadingFilters && !filtersError;
 	return (
-		<Container fluid className="fr-page food">
+		<Container as="main" fluid className="fr-page food">
 			<PageHelmet title="Recipes" description="Search, filter, and compare recipes by category, meal type, name, and rating." path="/food" />
 			<div className="food__intro">
 				<div className="food__intro__content"><span>Recipe finder</span><h1>Explore delicious recipes</h1><p>Filter by category, meal type, or search by name to find the right dish faster.</p></div>

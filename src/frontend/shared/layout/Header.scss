@@ -57,7 +57,7 @@
 			display: none;
 
 			&:hover,
-			&:focus {
+			&:focus-visible {
 				background-color: #fff1d6;
 				color: #211813;
 				border-color: rgba(255, 159, 28, 0.6);
@@ -95,7 +95,7 @@
 
 					&--active {
 						background-color: #fff1d6;
-						color: #a84f00;
+						color: var(--accent-foreground);
 					}
 				}
 
@@ -123,7 +123,10 @@
 				border-right: none;
 				padding: 0.5rem 0.8rem;
 				border-radius: 5px 0 0 5px;
-				outline: none;
+				&:focus-visible {
+					outline: 3px solid #9a3412;
+					outline-offset: 2px;
+				}
 			}
 
 			button {
@@ -186,7 +189,7 @@
 			&:hover,
 			&--active {
 				background-color: #fff1d6;
-				color: #a84f00;
+				color: var(--accent-foreground);
 			}
 		}
 	}
@@ -211,7 +214,7 @@
 					transform 0.2s ease;
 
 				&:hover {
-					background-color: #d56b00;
+					background-color: #9a3412;
 					transform: translateY(-1px);
 				}
 			}
@@ -274,7 +277,7 @@
 
 					&:hover {
 						background-color: #fff1d6;
-						color: #a84f00;
+						color: var(--accent-foreground);
 					}
 				}
 			}
