@@ -32,7 +32,7 @@
 - The dialog will call planning mutations with `{ planId, input: { recipeId, date, slot, servings } }` and call `onAdded` after the item is created.
 - `RecipeContainerSummary` will expose optional `onAddToPlan` and `isAddingToPlan` props while preserving the existing Start cooking, Save, and Shopping actions.
 
-- [ ] **Step 1: Write the failing dialog tests**
+- [x] **Step 1: Write the failing dialog tests**
 
   Mock the existing planning query/mutations and assert default date/meal/servings, validation before submit, adding to an existing plan, and create-then-add when no plan exists:
 
@@ -63,7 +63,7 @@
   });
   ```
 
-- [ ] **Step 2: Run the focused dialog test to verify RED**
+- [x] **Step 2: Run the focused dialog test to verify RED**
 
   Run from `src/frontend`:
 
@@ -73,11 +73,11 @@
 
   Expected: FAIL because `AddToPlanDialog.tsx` and the new component contract do not exist.
 
-- [ ] **Step 3: Write the failing Recipe Summary action test**
+- [x] **Step 3: Write the failing Recipe Summary action test**
 
   Render `RecipeContainerSummary` with `onAddToPlan={vi.fn()}` and assert the labelled button calls the callback and becomes disabled with `aria-busy="true"` while pending.
 
-- [ ] **Step 4: Run the summary test to verify RED**
+- [x] **Step 4: Run the summary test to verify RED**
 
   Run:
 
@@ -102,7 +102,7 @@
 - `useMealPlanForWeekQuery(range, options?: { enabled?: boolean })` keeps existing callers compatible and skips network work when disabled.
 - `AddToPlanDialog` uses `getWeekRange`, `toIsoDate`, `useMealPlanForWeekQuery`, `useCreateMealPlanMutation`, and `useAddMealPlanItemMutation`.
 
-- [ ] **Step 1: Add the optional query enablement**
+- [x] **Step 1: Add the optional query enablement**
 
   Change only the hook signature/options:
 
@@ -118,7 +118,7 @@
   });
   ```
 
-- [ ] **Step 2: Implement the minimal dialog behavior**
+- [x] **Step 2: Implement the minimal dialog behavior**
 
   Initialize `date` with `toIsoDate(new Date())`, `slot` with `dinner`, and `servings` with `4`. Derive `selectedWeek` from the date. On submit, validate recipe/date/servings; use the existing plan when available, otherwise call `createMealPlan({ name: "This week", from: selectedWeek.from, to: selectedWeek.to })`, then add:
 
@@ -135,11 +135,11 @@
 
   Render a semantic dialog with Date, Meal (`breakfast`, `lunch`, `dinner`, `snack`), Servings, Cancel, Add to plan, query loading copy, and non-raw retry guidance. Close on Escape only when not submitting.
 
-- [ ] **Step 3: Add focused dialog styles**
+- [x] **Step 3: Add focused dialog styles**
 
   Reuse the existing planning dialog tokens and add `planning-dialog__recipe-context`, responsive field layout, visible focus, 44px controls, a high-contrast primary button, and a reduced-motion rule. At mobile width, keep the sheet bottom-aligned and at desktop width center it.
 
-- [ ] **Step 4: Run the focused dialog tests to verify GREEN**
+- [x] **Step 4: Run the focused dialog tests to verify GREEN**
 
   Run the command from Task 1 and expect all dialog tests to pass.
 
@@ -159,11 +159,11 @@
 - `Recipe` owns `isAddToPlanOpen`, redirects guests to account with `state.from`, and passes `onAddToPlan`/`isAddingToPlan` to the summary.
 - `Recipe` renders `AddToPlanDialog` next to the recipe content and shows `Added Chicken Curry to your plan` on success or actionable error copy on failure.
 
-- [ ] **Step 1: Wire the action callback and dialog**
+- [x] **Step 1: Wire the action callback and dialog**
 
   Add `isAddToPlanOpen` state and handlers. For guests, navigate to `/account?signup=false` with the current path. For authenticated users, open the dialog; on success close it and call `showToast`.
 
-- [ ] **Step 2: Add the optional summary button**
+- [x] **Step 2: Add the optional summary button**
 
   Render a labelled button only when `onAddToPlan` exists:
 
@@ -179,11 +179,11 @@
   </button>
   ```
 
-- [ ] **Step 3: Make the action group responsive**
+- [x] **Step 3: Make the action group responsive**
 
   Keep the existing desktop group. At `max-width: 576px`, make the group sticky to the bottom of the summary, use a cream translucent surface with a top border, stack/expand the actions to the available width, preserve 44px heights, and add `padding-bottom` so the action strip does not cover the next content. Use `prefers-reduced-motion` to remove transforms/transitions.
 
-- [ ] **Step 4: Run Recipe Summary and existing cooking tests**
+- [x] **Step 4: Run Recipe Summary and existing cooking tests**
 
   Run:
 
@@ -205,19 +205,19 @@
 
 - Mock the existing `/users/me/meal-plans` endpoints and Recipe Detail endpoints; no new production API is introduced.
 
-- [ ] **Step 1: Add the authenticated journey**
+- [x] **Step 1: Add the authenticated journey**
 
   Stub an empty week plan, click Recipe Detail → Add to plan, submit date/meal/servings, assert the create then item POST payloads, return to Planning, open the planned recipe, start Cooking Mode, finish, and click Back to plan.
 
-- [ ] **Step 2: Add the existing-plan path**
+- [x] **Step 2: Add the existing-plan path**
 
   In a second test, return an existing plan and assert Add to plan posts directly to `/meal-plans/:planId/items` without creating another plan.
 
-- [ ] **Step 3: Add responsive checks**
+- [x] **Step 3: Add responsive checks**
 
   At widths 375, 768, 1024, and 1440, assert no document overflow, all `.recipe__container__summary__fav button, .recipe__container__summary__fav a` controls are at least 44px, and the mobile action group is sticky at 375px.
 
-- [ ] **Step 4: Run the focused Playwright file**
+- [x] **Step 4: Run the focused Playwright file**
 
   Build with `VITE_KONG_BASE_URL=http://127.0.0.1:3000/api/v1`, serve the Vite preview, and run:
 
@@ -231,8 +231,8 @@
 
 ### Task 5: Full verification and commit
 
-- [ ] Run frontend focused tests, full `test:ci`, lint, typecheck, and production build.
-- [ ] Run backend typecheck and `prisma validate`; backend source should remain unchanged.
-- [ ] Run `git diff --check` and inspect staged files.
-- [ ] Stage only Phase 3 spec, plan, dialog, Recipe action, tests, and E2E files; leave user-owned files unstaged.
-- [ ] Commit with `feat(planning): connect recipe planning and cooking flows`.
+- [x] Run frontend focused tests, full `test:ci`, lint, typecheck, and production build.
+- [x] Run backend typecheck and `prisma validate`; backend source should remain unchanged.
+- [x] Run `git diff --check` and inspect staged files.
+- [x] Stage only Phase 3 spec, plan, dialog, Recipe action, tests, and E2E files; leave user-owned files unstaged.
+- [x] Commit with `feat(planning): connect recipe planning and cooking flows`.

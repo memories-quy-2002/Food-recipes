@@ -12,6 +12,7 @@ import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
 import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { AuthContext } from "@/app/AuthProvider";
@@ -43,6 +44,7 @@ const Recipe = () => {
 	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 	const [isDeletingReview, setIsDeletingReview] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState(null);
+	const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
@@ -288,6 +290,19 @@ const Recipe = () => {
 			},
 		});
 	};
+
+	const handleAddToPlan = () => {
+		if (!isAuthenticated) {
+			navigate("/account?signup=false", { state: { from: currentPath } });
+			return;
+		}
+		setIsAddToPlanOpen(true);
+	};
+
+	const handleRecipeAddedToPlan = () => {
+		setIsAddToPlanOpen(false);
+		showToast({ title: `Added ${recipe?.recipe_name || "recipe"} to your plan` });
+	};
 	useEffect(() => {
 		const intent = location.state?.pendingAuthIntent;
 		if (
@@ -419,8 +434,15 @@ const Recipe = () => {
 						recipe={recipe}
 						favorite={favorite}
 						onClickFavorite={handleClickFavorite}
+						onAddToPlan={handleAddToPlan}
 						onAddIngredients={handleAddIngredientsToShoppingList}
 						isAddingIngredients={addIngredientsMutation.isPending}
+					/>
+					<AddToPlanDialog
+						open={isAddToPlanOpen}
+						recipe={recipe}
+						onClose={() => setIsAddToPlanOpen(false)}
+						onAdded={handleRecipeAddedToPlan}
 					/>
 					<RecipeContent
 						recipe={recipe}

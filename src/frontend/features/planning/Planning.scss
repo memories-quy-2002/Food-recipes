@@ -1,4 +1,5 @@
-.planning-page {
+.planning-page,
+.planning-dialog-backdrop {
 	--planning-surface: var(--card, #ffffff);
 	--planning-surface-muted: var(--muted, #f6f1e8);
 	--planning-text-muted: var(--muted-foreground, #746b63);
@@ -7,6 +8,9 @@
 	--planning-primary-strong: #783900;
 	--planning-accent: #8a4300;
 	--planning-ring: var(--ring, rgba(213, 107, 0, 0.35));
+}
+
+.planning-page {
 	min-height: calc(100dvh - 8rem);
 	background:
 		radial-gradient(circle at 95% 0%, rgba(213, 107, 0, 0.12), transparent 28rem),
@@ -475,6 +479,36 @@
 	letter-spacing: -0.04em;
 }
 
+.planning-dialog--recipe {
+	max-width: 38rem;
+}
+
+.planning-dialog__recipe-context,
+.planning-dialog__hint {
+	margin: 1rem 0 0;
+	color: var(--planning-text-muted);
+	font-size: 0.9rem;
+	line-height: 1.55;
+}
+
+.planning-dialog__error-state {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-top: 1rem;
+	padding: 0.75rem;
+	border: 1px solid color-mix(in srgb, var(--destructive, #c83220) 28%, var(--planning-border));
+	border-radius: 0.75rem;
+	background: color-mix(in srgb, var(--destructive, #c83220) 5%, var(--planning-surface));
+}
+
+.planning-dialog__error-state p {
+	margin: 0;
+	color: var(--destructive, #c83220);
+	font-size: 0.9rem;
+}
+
 .planning-dialog__close {
 	width: 2.75rem;
 	background: transparent;
@@ -682,7 +716,9 @@
 @media (prefers-reduced-motion: reduce) {
 	.planning-page *,
 	.planning-page *::before,
-	.planning-page *::after {
+	.planning-page *::after,
+	.planning-dialog,
+	.planning-dialog * {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;
 		scroll-behavior: auto !important;

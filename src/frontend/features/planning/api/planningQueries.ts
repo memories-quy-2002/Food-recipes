@@ -21,7 +21,8 @@ import {
 
 export const planningQueryKeys = {
 	all: ["planning"] as const,
-	week: (from: string, to: string) => ["planning", "week", from, to] as const,
+	week: (from: string, to: string, selectedDate?: string) =>
+		["planning", "week", from, to, selectedDate ?? null] as const,
 	savedRecipeIds: () => ["planning", "saved-recipe-ids"] as const,
 };
 
@@ -31,19 +32,29 @@ const fetchMealPlanForWeek = async ({
 	queryKey,
 	signal,
 }: QueryFunctionContext<WeekQueryKey>): Promise<MealPlanResponse | null> => {
-	const [, , from, to] = queryKey;
+	const [, , from, to, selectedDate] = queryKey;
 	const listResponse = await listMealPlans({ from, to }, signal);
 	const plan = listResponse.plans.find(
-		(candidate) => candidate.end_date.slice(0, 10) >= from && candidate.start_date.slice(0, 10) <= to,
+		(candidate) => {
+			const startDate = candidate.start_date.slice(0, 10);
+			const endDate = candidate.end_date.slice(0, 10);
+			return selectedDate
+				? startDate <= selectedDate && endDate >= selectedDate
+				: endDate >= from && startDate <= to;
+		},
 	);
 
 	return plan ? getMealPlan(plan.plan_id, signal) : null;
 };
 
-export const useMealPlanForWeekQuery = (range: DateRange) =>
+export const useMealPlanForWeekQuery = (
+	range: DateRange,
+	options: { enabled?: boolean; selectedDate?: string } = {},
+) =>
 	useQuery({
-		queryKey: planningQueryKeys.week(range.from, range.to),
+		queryKey: planningQueryKeys.week(range.from, range.to, options.selectedDate),
 		queryFn: fetchMealPlanForWeek,
+		enabled: options.enabled ?? true,
 		placeholderData: (previousData) => previousData,
 	});
 

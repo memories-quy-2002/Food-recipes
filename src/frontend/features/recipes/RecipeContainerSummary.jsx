@@ -10,6 +10,8 @@ const RecipeContainerSummary = ({
 	recipe,
 	favorite,
 	onClickFavorite,
+	onAddToPlan,
+	isAddingToPlan = false,
 	onAddIngredients,
 	isAddingIngredients = false,
 }) => {
@@ -34,6 +36,17 @@ const RecipeContainerSummary = ({
 							{favorite ? <BsHeartFill size={24} color="white" /> : <BsHeart size={24} color="white" />}
 							<strong>{favorite ? "Remove from favorite" : "Add to favorite"}</strong>
 						</button>
+						{onAddToPlan && (
+							<button
+								type="button"
+								className="recipe__container__summary__plan"
+								onClick={onAddToPlan}
+								disabled={isAddingToPlan}
+								aria-busy={isAddingToPlan}
+							>
+								<strong>{isAddingToPlan ? "Adding to plan..." : "Add to plan"}</strong>
+							</button>
+						)}
 						{onAddIngredients && (
 							<button
 								type="button"
