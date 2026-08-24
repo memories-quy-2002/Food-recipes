@@ -66,12 +66,42 @@ jobs:
 
       - name: Verify Bootstrap is gone from frontend source and manifest
         working-directory: src/frontend
-        shell: bash
         run: |
-          if grep -R --line-number --exclude='pnpm-lock.yaml' --exclude-dir=node_modules --exclude-dir=dist -E '(from ["'"']react-bootstrap["'"']|["'"']bootstrap["'"']\s*:)' .; then
-            echo 'Bootstrap references remain in frontend source or package manifest.' >&2
-            exit 1
-          fi
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const root = process.cwd();
+          const extensions = new Set(['.js', '.jsx', '.ts', '.tsx', '.json']);
+          const skip = new Set(['node_modules', 'dist']);
+          const violations = [];
+
+          function walk(dir) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (skip.has(entry.name) || entry.name === 'pnpm-lock.yaml') continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walk(full);
+                continue;
+              }
+              if (!extensions.has(path.extname(entry.name))) continue;
+              const source = fs.readFileSync(full, 'utf8');
+              if (/from\s+["']react-bootstrap["']/.test(source)) {
+                violations.push(`${path.relative(root, full)}: react-bootstrap import`);
+              }
+            }
+          }
+
+          walk(root);
+          const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+          if (pkg.dependencies?.bootstrap) violations.push('package.json: bootstrap dependency');
+          if (pkg.dependencies?.['react-bootstrap']) violations.push('package.json: react-bootstrap dependency');
+
+          if (violations.length) {
+            console.error(violations.join('\n'));
+            process.exit(1);
+          }
+          NODE
 
       - name: Commit migration
         shell: bash
