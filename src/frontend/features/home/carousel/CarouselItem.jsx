@@ -1,7 +1,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
-const CarouselItem = ({ id, title, desc, imgSrc, index, total }) => {
+
+const CarouselItem = ({
+	id,
+	title,
+	desc,
+	imgSrc,
+	index,
+	total,
+	isActive,
+}) => {
 	const navigate = useNavigate();
 	const handleClick = () => {
 		navigate(id ? `/food?meals=${id}` : "/food");
@@ -9,16 +18,24 @@ const CarouselItem = ({ id, title, desc, imgSrc, index, total }) => {
 	const handleBrowseAll = () => {
 		navigate("/food");
 	};
+
 	return (
-		<div className="home__carousel__item">
+		<div
+			className="home__carousel__item"
+			role="group"
+			aria-roledescription="slide"
+			aria-label={`${index + 1} of ${total}: ${title}`}
+			aria-hidden={!isActive}
+			inert={isActive ? undefined : true}
+		>
 			<div className="home__carousel__item__content">
 				<span className="home__carousel__item__content__count">
 					{String(index + 1).padStart(2, "0")} /{" "}
 					{String(total).padStart(2, "0")}
 				</span>
-				<h1 className="home__carousel__item__content__title">
+				<h2 className="home__carousel__item__content__title">
 					{title}
-				</h1>
+				</h2>
 				<p className="home__carousel__item__content__desc">{desc}</p>
 				<div className="home__carousel__item__content__actions">
 					<button
