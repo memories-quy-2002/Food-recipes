@@ -62,4 +62,28 @@ describe("RecipeContainerSummary planning action", () => {
 		expect(button.props["aria-busy"]).toBe(true);
 		expect(button.findByType("strong").children).toEqual(["Adding to plan..."]);
 	});
+
+	it("exposes Save to collection without replacing the default save action", () => {
+		const onSaveToCollection = vi.fn();
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<MemoryRouter>
+					<RecipeContainerSummary
+						recipe={recipe}
+						favorite={false}
+						onClickFavorite={vi.fn()}
+						onSaveToCollection={onSaveToCollection}
+					/>
+				</MemoryRouter>,
+			);
+		});
+
+		const button = renderer.root.findAllByType("button").find(
+			(node) => node.props.className === "recipe__container__summary__collection",
+		);
+		expect(button.findByType("strong").children).toEqual(["Save to..."]);
+		act(() => button.props.onClick());
+		expect(onSaveToCollection).toHaveBeenCalledOnce();
+	});
 });

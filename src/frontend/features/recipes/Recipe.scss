@@ -142,6 +142,15 @@
 						background: #ffe1b2;
 					}
 				}
+
+				.recipe__container__summary__collection {
+					background: #fff8ef;
+					color: #211813;
+
+					&:hover {
+						background: #ffd18b;
+					}
+				}
 			}
 
 			&__review {

@@ -22,7 +22,13 @@ import ErrorPage from "@/features/content/ErrorPage";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
+	isMatchingSaveToCollectionIntent,
 } from "@/features/auth/returnIntent";
+import {
+	useAddRecipeToCollectionMutation,
+	useCollectionsQuery,
+} from "@/features/saved/api/collectionsQueries";
+import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
 import "./Recipe.scss";
 
 const Recipe = () => {
@@ -45,9 +51,14 @@ const Recipe = () => {
 	const [isDeletingReview, setIsDeletingReview] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState(null);
 	const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
+	const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
+	const [collectionDialogError, setCollectionDialogError] = useState(null);
+	const [pendingCollectionId, setPendingCollectionId] = useState(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
+	const collectionsQuery = useCollectionsQuery(isAuthenticated);
+	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
 	const canMutateReview = true;
 
@@ -299,25 +310,65 @@ const Recipe = () => {
 		setIsAddToPlanOpen(true);
 	};
 
+	const handleSaveToCollection = () => {
+		if (!isAuthenticated) {
+			beginAuthIntent({
+				returnTo: currentPath,
+				action: "saveToCollection",
+				recipeId: recipe?.recipe_id,
+			});
+			navigate("/account?signup=false", { state: { from: currentPath } });
+			return;
+		}
+		setCollectionDialogError(null);
+		setIsCollectionDialogOpen(true);
+	};
+
+	const handleAddRecipeToCollection = (collectionId) => {
+		if (!recipe || addRecipeToCollectionMutation.isPending) return;
+		setPendingCollectionId(collectionId);
+		setCollectionDialogError(null);
+		addRecipeToCollectionMutation.mutate(
+			{ collectionId, recipeId: Number(recipe.recipe_id) },
+			{
+				onSuccess: () => {
+					showToast({ title: "Saved to collection" });
+				},
+				onError: (error) => {
+					setCollectionDialogError(
+						error.response?.data?.message ||
+							"We could not save this recipe to that collection. Try again.",
+					);
+				},
+				onSettled: () => setPendingCollectionId(null),
+			},
+		);
+	};
+
 	const handleRecipeAddedToPlan = () => {
 		setIsAddToPlanOpen(false);
 		showToast({ title: `Added ${recipe?.recipe_name || "recipe"} to your plan` });
 	};
 	useEffect(() => {
 		const intent = location.state?.pendingAuthIntent;
-		if (
-			!isAuthenticated ||
-			!recipe ||
-			!isFavoriteLoaded ||
-			!isMatchingSaveRecipeIntent(intent, currentPath, recipe.recipe_id) ||
-			processedAuthIntent.current === intent
-		) {
+		if (!isAuthenticated || !recipe || processedAuthIntent.current === intent) {
 			return;
 		}
 
-		processedAuthIntent.current = intent;
-		navigate(currentPath, { replace: true, state: null });
-		if (!favorite) handleClickFavorite();
+		if (isMatchingSaveRecipeIntent(intent, currentPath, recipe.recipe_id)) {
+			if (!isFavoriteLoaded) return;
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			if (!favorite) handleClickFavorite();
+			return;
+		}
+
+		if (isMatchingSaveToCollectionIntent(intent, currentPath, recipe.recipe_id)) {
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			setCollectionDialogError(null);
+			setIsCollectionDialogOpen(true);
+		}
 	}, [currentPath, favorite, handleClickFavorite, isAuthenticated, isFavoriteLoaded, location.state, navigate, recipe]);
 	useEffect(() => {
 		fetchRecipe();
@@ -434,6 +485,7 @@ const Recipe = () => {
 						recipe={recipe}
 						favorite={favorite}
 						onClickFavorite={handleClickFavorite}
+						onSaveToCollection={handleSaveToCollection}
 						onAddToPlan={handleAddToPlan}
 						onAddIngredients={handleAddIngredientsToShoppingList}
 						isAddingIngredients={addIngredientsMutation.isPending}
@@ -443,6 +495,27 @@ const Recipe = () => {
 						recipe={recipe}
 						onClose={() => setIsAddToPlanOpen(false)}
 						onAdded={handleRecipeAddedToPlan}
+					/>
+					<CollectionRecipeDialog
+						open={isCollectionDialogOpen}
+						recipeName={recipe.recipe_name}
+						collections={collectionsQuery.data?.collections ?? []}
+						isLoading={collectionsQuery.isLoading}
+						isSubmitting={addRecipeToCollectionMutation.isPending}
+						pendingCollectionId={pendingCollectionId}
+						errorMessage={
+							collectionDialogError ||
+							(collectionsQuery.isError
+								? "Unable to load your collections. Try again from Saved Recipes."
+								: null)
+						}
+						onAdd={handleAddRecipeToCollection}
+						onClose={() => {
+							if (!addRecipeToCollectionMutation.isPending) {
+								setIsCollectionDialogOpen(false);
+								setCollectionDialogError(null);
+							}
+						}}
 					/>
 					<RecipeContent
 						recipe={recipe}

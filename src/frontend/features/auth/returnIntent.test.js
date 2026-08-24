@@ -84,4 +84,18 @@ describe("authentication return intent", () => {
 		expect(isMatchingSaveRecipeIntent(intent, "/recipe?id=8", 7)).toBe(false);
 		expect(isMatchingSaveRecipeIntent(intent, "/", 7)).toBe(false);
 	});
+
+	it("preserves a save-to-collection intent through authentication", () => {
+		beginAuthIntent({
+			returnTo: "/recipe?id=7",
+			action: "saveToCollection",
+			recipeId: 7,
+		});
+
+		expect(consumeAuthIntent()).toEqual({
+			returnTo: "/recipe?id=7",
+			action: "saveToCollection",
+			recipeId: "7",
+		});
+	});
 });

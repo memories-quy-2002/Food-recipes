@@ -19,7 +19,7 @@ import { AddCollectionRecipeDto } from './dto/add-collection-recipe.dto';
 import { CreateCollectionDto } from './dto/create-collection.dto';
 import { UpdateCollectionDto } from './dto/update-collection.dto';
 import { CollectionsService, CollectionsServicePort } from './collections.service';
-import { ApiErrorResponseDto, CollectionResponseDto, CollectionsResponseDto, MessageResponseDto } from '../../common/swagger/response.schemas';
+import { ApiErrorResponseDto, CollectionResponseDto, CollectionsResponseDto, MessageResponseDto, RecipeListResponseDto } from '../../common/swagger/response.schemas';
 
 @ApiTags('Collections')
 @ApiBearerAuth()
@@ -33,6 +33,12 @@ export class CollectionsController {
   @ApiOperation({ summary: 'List the authenticated user collections' })
   @ApiOkResponse({ type: CollectionsResponseDto })
   list(@CurrentUser() user: AuthUser) { return this.service.list(user.id); }
+
+  @Get(':collectionId/recipes')
+  @ApiOperation({ summary: 'List recipes in an owned private collection' })
+  @ApiOkResponse({ type: RecipeListResponseDto })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto })
+  listRecipes(@CurrentUser() user: AuthUser, @Param('collectionId', ParseIntPipe) collectionId: number) { return this.service.listRecipes(user.id, collectionId); }
 
   @Post()
   @ApiOperation({ summary: 'Create a private recipe collection' })

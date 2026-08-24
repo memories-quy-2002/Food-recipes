@@ -12,6 +12,7 @@ const RecipeContainerSummary = ({
 	onClickFavorite,
 	onAddToPlan,
 	isAddingToPlan = false,
+	onSaveToCollection,
 	onAddIngredients,
 	isAddingIngredients = false,
 }) => {
@@ -45,6 +46,15 @@ const RecipeContainerSummary = ({
 								aria-busy={isAddingToPlan}
 							>
 								<strong>{isAddingToPlan ? "Adding to plan..." : "Add to plan"}</strong>
+							</button>
+						)}
+						{onSaveToCollection && (
+							<button
+								type="button"
+								className="recipe__container__summary__collection"
+								onClick={onSaveToCollection}
+							>
+								<strong>Save to...</strong>
 							</button>
 						)}
 						{onAddIngredients && (
