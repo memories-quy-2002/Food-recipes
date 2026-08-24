@@ -48,9 +48,13 @@ const Carousel = ({ items }) => {
 			clearInterval(intervalId);
 		};
 	}, [displayItems.length, isPaused]);
+
 	return (
 		<div
 			className="home__carousel"
+			role="region"
+			aria-roledescription="carousel"
+			aria-label="Featured meals"
 			onMouseEnter={() => setIsPaused(true)}
 			onMouseLeave={() => setIsPaused(false)}
 		>
@@ -70,6 +74,7 @@ const Carousel = ({ items }) => {
 							imgSrc={imageName || name}
 							index={index}
 							total={displayItems.length}
+							isActive={currIndex === index}
 						/>
 					))}
 			</div>
