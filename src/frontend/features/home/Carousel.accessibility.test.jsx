@@ -42,6 +42,7 @@ const getSlides = (renderer) =>
 afterEach(() => {
 	vi.useRealTimers();
 	vi.restoreAllMocks();
+	vi.unstubAllGlobals();
 });
 
 describe("Carousel accessibility", () => {
@@ -102,7 +103,7 @@ describe("Carousel accessibility", () => {
 		});
 
 		const renderer = renderCarousel();
-		act(() => vi.advanceTimersByTime(20000));
+		act(() => vi.advanceTimersByTime(10000));
 
 		expect(getSlides(renderer)[0].props["aria-hidden"]).toBe(false);
 	});
