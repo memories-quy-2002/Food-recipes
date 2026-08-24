@@ -88,4 +88,25 @@ describe("recipe servings", () => {
 		expect(ingredientText).toEqual([JSON.stringify({ name: "flour", quantity: 2, unit: "cups" })]);
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("unsupported");
 	});
+
+	it("scales structured ingredient quantities from the recipe serving baseline", () => {
+		let renderer;
+		act(() => {
+			renderer = TestRenderer.create(
+				<RecipeDescription
+					recipe={{
+					...recipe,
+					structured_ingredients: [
+						{ name: "chicken breast", quantity: 500, unit: "GRAM", note: "diced" },
+					],
+				}}
+				/>,
+			);
+		});
+
+		act(() => renderer.root.findByProps({ "aria-label": "Increase servings" }).props.onClick());
+		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node) => node.children);
+		expect(ingredientText).toEqual(["625 g chicken breast, diced"]);
+		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("scaled");
+	});
 });

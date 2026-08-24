@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -7,8 +7,12 @@ import HomeMain from "@/features/home/HomeMain";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import "./Home.scss";
+import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
+import { AuthContext } from "@/app/AuthProvider";
 
 const Home = () => {
+	const { auth } = useContext(AuthContext);
+	const isAuthenticated = Boolean(auth?.current?.isAuthenticated);
 	const [meals, setMeals] = useState([]);
 	const [isLoadingMeals, setIsLoadingMeals] = useState(true);
 	const [mealsError, setMealsError] = useState(null);
@@ -49,6 +53,7 @@ const Home = () => {
 				path="/"
 			/>
 			<HomeMain />
+			<SuggestionPanel allowPersonalized isAuthenticated={isAuthenticated} />
 			{isLoadingMeals ? (
 				<PageState
 					title="Loading featured meals"

@@ -1,0 +1,155 @@
+.suggestion-panel {
+	width: 100%;
+	max-width: 980px;
+	margin: 0 auto 1.25rem;
+	padding: 1.25rem;
+	border: 1px solid rgba(98, 58, 18, 0.1);
+	border-radius: 8px;
+	background: #ffffff;
+	box-shadow: 0 16px 44px rgba(45, 32, 20, 0.08);
+
+	&__header {
+		span {
+			color: #a94e00;
+			font-size: 0.78rem;
+			font-weight: 900;
+			text-transform: uppercase;
+		}
+
+		h2 {
+			margin: 0.25rem 0 0;
+			font-size: 1.45rem;
+			font-weight: 900;
+		}
+
+		p {
+			margin: 0.45rem 0 0;
+			color: #6d6258;
+			line-height: 1.55;
+		}
+	}
+
+	&__form {
+		display: grid;
+		grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr) auto;
+		align-items: end;
+		gap: 0.75rem;
+		margin-top: 1rem;
+
+		label {
+			display: grid;
+			gap: 0.35rem;
+			color: #42372f;
+			font-weight: 800;
+		}
+
+		input,
+		select {
+			min-height: 2.75rem;
+			width: 100%;
+			padding: 0.6rem 0.75rem;
+			border: 1px solid rgba(98, 58, 18, 0.22);
+			border-radius: 8px;
+			background: #fffaf3;
+			color: #211813;
+
+			&:focus-visible {
+				border-color: #a94e00;
+				box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.18);
+				outline: 3px solid transparent;
+				outline-offset: 2px;
+			}
+		}
+
+		button {
+			min-height: 2.75rem;
+			padding: 0.6rem 1rem;
+			border: none;
+			border-radius: 999px;
+			background: #211813;
+			color: #fff8ef;
+			font-weight: 900;
+
+			&:hover {
+				background: #a94e00;
+			}
+
+			&:focus-visible {
+				outline: 3px solid #ff9f1c;
+				outline-offset: 3px;
+			}
+
+			&:disabled {
+				cursor: wait;
+				opacity: 0.65;
+			}
+		}
+	}
+
+	&__error,
+	&__disclaimer {
+		margin: 0.9rem 0 0;
+		padding: 0.75rem;
+		border-radius: 8px;
+		line-height: 1.5;
+	}
+
+	&__error {
+		background: #fff1d6;
+		color: #8f3200;
+		font-weight: 800;
+	}
+
+	&__disclaimer {
+		background: #f6f3ee;
+		color: #42372f;
+	}
+
+	&__source {
+		margin: 0.65rem 0 0;
+		color: #6d6258;
+		font-size: 0.85rem;
+	}
+
+	&__results ul {
+		display: grid;
+		gap: 0.55rem;
+		margin: 0.75rem 0 0;
+		padding: 0;
+		list-style: none;
+
+		li {
+			display: grid;
+			gap: 0.2rem;
+			padding: 0.7rem;
+			border: 1px solid rgba(98, 58, 18, 0.1);
+			border-radius: 8px;
+
+			a {
+				color: #a94e00;
+				font-weight: 900;
+
+				&:focus-visible {
+					outline: 3px solid #ff9f1c;
+					outline-offset: 3px;
+				}
+			}
+
+			span {
+				color: #6d6258;
+				font-size: 0.9rem;
+				line-height: 1.45;
+			}
+		}
+	}
+}
+
+@media (max-width: 768px) {
+	.suggestion-panel__form {
+		grid-template-columns: 1fr;
+
+		button {
+			width: 100%;
+		}
+	}
+}

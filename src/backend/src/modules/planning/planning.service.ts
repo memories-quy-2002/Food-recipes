@@ -5,7 +5,7 @@ import { AddMealPlanItemDto } from './dto/add-meal-plan-item.dto';
 import { UpdateMealPlanItemDto } from './dto/update-meal-plan-item.dto';
 import { AddShoppingListItemDto } from './dto/add-shopping-list-item.dto';
 import { UpdateShoppingListItemDto } from './dto/update-shopping-list-item.dto';
-import { PLANNING_REPOSITORY, PlanningRepositoryPort } from './planning.repository';
+import { PLANNING_REPOSITORY, PlanningRepositoryPort, StructuredShoppingIngredient } from './planning.repository';
 
 @Injectable()
 export class PlanningService {
@@ -98,6 +98,36 @@ export class PlanningService {
     return { recipe: recipe.name, items };
   }
 
+  async addRecipeIngredientsFromRecipes(userId: number, recipeIds: number[]) {
+    const uniqueRecipeIds = [...new Set(recipeIds.map(Number))];
+    const recipes = await Promise.all(uniqueRecipeIds.map((recipeId) => this.repository.recipeIngredients(recipeId)));
+    if (recipes.some((recipe) => !recipe)) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
+
+    const structured: Array<StructuredShoppingIngredient & { sourceRecipeId: number }> = [];
+    const legacy: Array<{ label: string; sourceRecipeId: number }> = [];
+    recipes.forEach((recipe, index) => {
+      if (!recipe) return;
+      const sourceRecipeId = uniqueRecipeIds[index];
+      if (recipe.structuredIngredients?.length) {
+        recipe.structuredIngredients.forEach((ingredient) => structured.push({ ...ingredient, sourceRecipeId }));
+      } else {
+        recipe.ingredients.forEach((ingredient) => {
+          const label = ingredient.trim();
+          if (label) legacy.push({ label, sourceRecipeId });
+        });
+      }
+    });
+
+    const items = [];
+    for (const ingredient of this.consolidateStructuredIngredients(structured)) {
+      items.push(await this.repository.addShoppingItem(userId, ingredient.name, this.formatStructuredQuantity(ingredient), ingredient.sourceRecipeId));
+    }
+    for (const ingredient of legacy) {
+      items.push(await this.repository.addShoppingItem(userId, ingredient.label, null, ingredient.sourceRecipeId));
+    }
+    return { recipes: recipes.filter(Boolean).map((recipe) => recipe!.name), items };
+  }
+
   async clearCompletedShoppingItems(userId: number) {
     const removed = await this.repository.clearCompletedShoppingItems(userId);
     return { removed };
@@ -142,4 +172,24 @@ export class PlanningService {
   private dateText(value: Date | string): string { return value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10); }
   private invalidRange(): BadRequestException { return new BadRequestException({ code: 'MEAL_PLAN_DATE_RANGE_INVALID', message: 'Meal plan dates must be an inclusive range of 1 to 31 days' }); }
   private planNotFound(): NotFoundException { return new NotFoundException({ code: 'MEAL_PLAN_NOT_FOUND', message: 'Meal plan not found' }); }
+
+  private consolidateStructuredIngredients(ingredients: Array<StructuredShoppingIngredient & { sourceRecipeId: number }>) {
+    const consolidated: Array<StructuredShoppingIngredient & { sourceRecipeId: number }> = [];
+    for (const ingredient of ingredients) {
+      if (ingredient.quantity === null || !ingredient.unit) {
+        consolidated.push(ingredient);
+        continue;
+      }
+      const index = consolidated.findIndex((candidate) => candidate.name.toLowerCase() === ingredient.name.toLowerCase() && candidate.note === ingredient.note && candidate.unit === ingredient.unit && candidate.quantity !== null);
+      if (index === -1) consolidated.push({ ...ingredient });
+      else consolidated[index] = { ...consolidated[index], quantity: Number((consolidated[index].quantity! + ingredient.quantity).toFixed(2)) };
+    }
+    return consolidated;
+  }
+
+  private formatStructuredQuantity(ingredient: StructuredShoppingIngredient): string | null {
+    if (ingredient.quantity === null) return ingredient.note;
+    const unitLabels: Record<string, string> = { GRAM: 'g', KILOGRAM: 'kg', MILLILITER: 'ml', LITER: 'l', TEASPOON: 'tsp', TABLESPOON: 'tbsp', CUP: 'cup', PIECE: 'piece' };
+    return `${ingredient.quantity}${ingredient.unit ? ` ${unitLabels[ingredient.unit] ?? ingredient.unit.toLowerCase()}` : ''}${ingredient.note ? `, ${ingredient.note}` : ''}`;
+  }
 }

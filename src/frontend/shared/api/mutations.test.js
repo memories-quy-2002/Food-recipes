@@ -49,6 +49,34 @@ const recipeForm = {
 		});
 	});
 
+	it("serializes only explicitly entered metadata", () => {
+		expect(serializeCreateRecipePayload({
+			recipe: {
+				...recipeForm,
+				recipeNutrition: {
+					caloriesPerServing: "420",
+					proteinGrams: "28",
+					carbohydratesGrams: "",
+					fatGrams: "",
+					fiberGrams: "",
+					sugarGrams: "",
+					sodiumMilligrams: "",
+					source: "provided_by_author",
+					sourceReference: "Recipe card",
+				},
+				recipeAllergens: ["peanuts", "peanuts"],
+			},
+			categories: [{ id: 8, name: "Pasta" }],
+			meals: [{ id: 3, name: "Dinner" }],
+			imageUrl: null,
+		})).toMatchObject({
+			metadata: {
+				nutrition: expect.objectContaining({ caloriesPerServing: 420, source: "provided_by_author" }),
+				allergens: [{ name: "peanuts", source: "provided_by_author" }],
+			},
+		});
+	});
+
 	it("accepts Nest mutation statuses", () => {
 		expect(isWishlistAddSuccess(201)).toBe(true);
 		expect(isWishlistAddSuccess(200)).toBe(false);

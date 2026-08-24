@@ -36,7 +36,7 @@
 
 				svg {
 					flex: 0 0 auto;
-					color: #d56b00;
+					color: #a94e00;
 				}
 
 				&__img {
@@ -131,7 +131,7 @@
 							border-radius: 8px;
 							background: #fffaf3;
 
-							&:focus {
+							&:focus-visible {
 								border-color: #ff9f1c;
 								box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 							}
@@ -152,7 +152,7 @@
 							transform 0.2s ease;
 
 						&:hover:not(:disabled) {
-							background-color: #d56b00;
+							background-color: #a94e00;
 							transform: translateY(-1px);
 						}
 					}
@@ -220,7 +220,7 @@
 							font-weight: 900;
 
 							&:hover {
-								background-color: #d56b00;
+								background-color: #a94e00;
 							}
 						}
 					}
@@ -330,7 +330,7 @@
 						font-weight: 900;
 
 						&:hover {
-							background-color: #d56b00;
+							background-color: #a94e00;
 						}
 					}
 				}

@@ -19,6 +19,10 @@ export type RecipeDiscoveryState = {
 	limit: number;
 };
 
+export type RecipeQueryOptions = {
+	enabled?: boolean;
+};
+
 const positiveInteger = (
 	value: string | null,
 	fallback: number,
@@ -128,8 +132,12 @@ const fetchRecipes = async ({
 	return parseRecipeListPayload(response.data);
 };
 
-export const useRecipesQuery = (state: RecipeDiscoveryState) => useQuery({
+export const useRecipesQuery = (
+	state: RecipeDiscoveryState,
+	options: RecipeQueryOptions = {},
+) => useQuery({
 	queryKey: createRecipeQueryKey(state),
 	queryFn: fetchRecipes,
 	placeholderData: keepPreviousData,
+	enabled: options.enabled ?? true,
 });

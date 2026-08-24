@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { formatStructuredIngredient } from "../structuredIngredients";
 
 const toIngredientText = (ingredient) => (
-	typeof ingredient === "string" ? ingredient : JSON.stringify(ingredient)
+	typeof ingredient === "string" ? ingredient : formatStructuredIngredient(ingredient)
 );
 
 const toRecipeScope = (recipeIdentity) => String(recipeIdentity ?? "recipe").replace(/[^a-zA-Z0-9_-]/g, "-");

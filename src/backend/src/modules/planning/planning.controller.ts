@@ -82,7 +82,9 @@ export class PlanningController {
   @Post('shopping-list/from-recipe')
   @ApiOperation({ summary: 'Copy recipe ingredients as separate shopping list lines' })
   addRecipeIngredients(@CurrentUser() user: AuthUser, @Body() dto: AddRecipeIngredientsDto) {
-    return this.service.addRecipeIngredients(user.id, dto.recipeId);
+    return dto.recipeIds?.length
+      ? this.service.addRecipeIngredientsFromRecipes(user.id, dto.recipeIds)
+      : this.service.addRecipeIngredients(user.id, dto.recipeId!);
   }
 
   @Delete('shopping-list/completed')

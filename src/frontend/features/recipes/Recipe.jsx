@@ -11,16 +11,26 @@ import RecipeContainerSummary from "@/features/recipes/RecipeContainerSummary";
 import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
+import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
 import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
+import PrivateRecipeNotes from "@/features/recipes/notes/PrivateRecipeNotes";
+import { recordRecentlyViewedRecipe } from "@/features/recipes/recentlyViewed";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
+	isMatchingSaveToCollectionIntent,
 } from "@/features/auth/returnIntent";
+import {
+	useAddRecipeToCollectionMutation,
+	useCollectionsQuery,
+} from "@/features/saved/api/collectionsQueries";
+import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
 import "./Recipe.scss";
 
 const Recipe = () => {
@@ -42,8 +52,15 @@ const Recipe = () => {
 	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 	const [isDeletingReview, setIsDeletingReview] = useState(false);
 	const [reviewMessage, setReviewMessage] = useState(null);
+	const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
+	const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
+	const [collectionDialogError, setCollectionDialogError] = useState(null);
+	const [pendingCollectionId, setPendingCollectionId] = useState(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
+	const addIngredientsMutation = useAddRecipeIngredientsMutation();
+	const collectionsQuery = useCollectionsQuery(isAuthenticated);
+	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
 	const canMutateReview = true;
 
@@ -51,6 +68,28 @@ const Recipe = () => {
 	const searchParams = new URLSearchParams(location.search);
 	const id = searchParams.get("id");
 	const isCookingMode = location.pathname === "/recipe/cooking";
+	const planningDate = searchParams.get("date");
+	const planningSlot = searchParams.get("slot");
+	const planningServings = Number(searchParams.get("servings"));
+	const planningItemId = searchParams.get("planItemId");
+	const requestedReturnTo = searchParams.get("returnTo");
+	const safeReturnTo =
+		requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+			? requestedReturnTo
+			: "/planning";
+	const planningContext =
+		planningItemId &&
+		planningDate &&
+		planningSlot &&
+		Number.isInteger(planningServings) &&
+		planningServings > 0
+			? {
+					date: planningDate,
+					slot: planningSlot,
+					servings: Math.min(planningServings, 24),
+					returnTo: safeReturnTo,
+			  }
+			: null;
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef(null);
 	const favoriteLoadKey =
@@ -241,21 +280,97 @@ const Recipe = () => {
 			setIsUpdatingFavorite(false);
 		}
 	};
+
+	const handleAddIngredientsToShoppingList = () => {
+		if (!isAuthenticated) {
+			navigate("/account?signup=false", { state: { from: currentPath } });
+			return;
+		}
+		if (!recipe || addIngredientsMutation.isPending) return;
+
+		addIngredientsMutation.mutate(recipe.recipe_id, {
+			onSuccess: (response) => {
+				const count = response?.items?.length ?? 0;
+				showToast({
+					title: `${count} ingredient${count === 1 ? "" : "s"} added to Shopping List`,
+				});
+			},
+			onError: () => {
+				showToast({
+					title: "We could not add those ingredients. Try again.",
+					type: "error",
+				});
+			},
+		});
+	};
+
+	const handleAddToPlan = () => {
+		if (!isAuthenticated) {
+			navigate("/account?signup=false", { state: { from: currentPath } });
+			return;
+		}
+		setIsAddToPlanOpen(true);
+	};
+
+	const handleSaveToCollection = () => {
+		if (!isAuthenticated) {
+			beginAuthIntent({
+				returnTo: currentPath,
+				action: "saveToCollection",
+				recipeId: recipe?.recipe_id,
+			});
+			navigate("/account?signup=false", { state: { from: currentPath } });
+			return;
+		}
+		setCollectionDialogError(null);
+		setIsCollectionDialogOpen(true);
+	};
+
+	const handleAddRecipeToCollection = (collectionId) => {
+		if (!recipe || addRecipeToCollectionMutation.isPending) return;
+		setPendingCollectionId(collectionId);
+		setCollectionDialogError(null);
+		addRecipeToCollectionMutation.mutate(
+			{ collectionId, recipeId: Number(recipe.recipe_id) },
+			{
+				onSuccess: () => {
+					showToast({ title: "Saved to collection" });
+				},
+				onError: (error) => {
+					setCollectionDialogError(
+						error.response?.data?.message ||
+							"We could not save this recipe to that collection. Try again.",
+					);
+				},
+				onSettled: () => setPendingCollectionId(null),
+			},
+		);
+	};
+
+	const handleRecipeAddedToPlan = () => {
+		setIsAddToPlanOpen(false);
+		showToast({ title: `Added ${recipe?.recipe_name || "recipe"} to your plan` });
+	};
 	useEffect(() => {
 		const intent = location.state?.pendingAuthIntent;
-		if (
-			!isAuthenticated ||
-			!recipe ||
-			!isFavoriteLoaded ||
-			!isMatchingSaveRecipeIntent(intent, currentPath, recipe.recipe_id) ||
-			processedAuthIntent.current === intent
-		) {
+		if (!isAuthenticated || !recipe || processedAuthIntent.current === intent) {
 			return;
 		}
 
-		processedAuthIntent.current = intent;
-		navigate(currentPath, { replace: true, state: null });
-		if (!favorite) handleClickFavorite();
+		if (isMatchingSaveRecipeIntent(intent, currentPath, recipe.recipe_id)) {
+			if (!isFavoriteLoaded) return;
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			if (!favorite) handleClickFavorite();
+			return;
+		}
+
+		if (isMatchingSaveToCollectionIntent(intent, currentPath, recipe.recipe_id)) {
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			setCollectionDialogError(null);
+			setIsCollectionDialogOpen(true);
+		}
 	}, [currentPath, favorite, handleClickFavorite, isAuthenticated, isFavoriteLoaded, location.state, navigate, recipe]);
 	useEffect(() => {
 		fetchRecipe();
@@ -325,6 +440,7 @@ const Recipe = () => {
 	}, [isAuthenticated, recipe, userId]);
 	useEffect(() => {
 		if (!recipe) return;
+		recordRecentlyViewedRecipe(window.localStorage, Number(recipe.recipe_id));
 
 		fetchReviews(recipe.recipe_id).catch((err) => console.error(err));
 	}, [fetchReviews, recipe]);
@@ -358,6 +474,12 @@ const Recipe = () => {
 			) : recipe && isCookingMode ? (
 				<CookingMode
 					recipe={recipe}
+					planningContext={planningContext || undefined}
+					onBackToPlan={
+						planningContext
+							? () => navigate(planningContext.returnTo || "/planning")
+							: undefined
+					}
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (
@@ -366,6 +488,37 @@ const Recipe = () => {
 						recipe={recipe}
 						favorite={favorite}
 						onClickFavorite={handleClickFavorite}
+						onSaveToCollection={handleSaveToCollection}
+						onAddToPlan={handleAddToPlan}
+						onAddIngredients={handleAddIngredientsToShoppingList}
+						isAddingIngredients={addIngredientsMutation.isPending}
+					/>
+					<AddToPlanDialog
+						open={isAddToPlanOpen}
+						recipe={recipe}
+						onClose={() => setIsAddToPlanOpen(false)}
+						onAdded={handleRecipeAddedToPlan}
+					/>
+					<CollectionRecipeDialog
+						open={isCollectionDialogOpen}
+						recipeName={recipe.recipe_name}
+						collections={collectionsQuery.data?.collections ?? []}
+						isLoading={collectionsQuery.isLoading}
+						isSubmitting={addRecipeToCollectionMutation.isPending}
+						pendingCollectionId={pendingCollectionId}
+						errorMessage={
+							collectionDialogError ||
+							(collectionsQuery.isError
+								? "Unable to load your collections. Try again from Saved Recipes."
+								: null)
+						}
+						onAdd={handleAddRecipeToCollection}
+						onClose={() => {
+							if (!addRecipeToCollectionMutation.isPending) {
+								setIsCollectionDialogOpen(false);
+								setCollectionDialogError(null);
+							}
+						}}
 					/>
 					<RecipeContent
 						recipe={recipe}
@@ -379,11 +532,11 @@ const Recipe = () => {
 							Number(recipe.user_id) === Number(userId) &&
 							isAuthenticated
 						}
+						isAuthenticated={isAuthenticated}
 						canDeleteReview={canDeleteReview}
 						canMutateReview={canMutateReview}
 						isLoadingReviews={isLoadingReviews}
 						reviewsError={reviewsError}
-						isAuthenticated={isAuthenticated}
 						isSubmittingReview={isSubmittingReview}
 						isDeletingReview={isDeletingReview}
 						onSubmit={handleSubmit}
@@ -392,6 +545,7 @@ const Recipe = () => {
 						onToggleReview={handleToggleReview}
 						onReviewChange={handleReviewChange}
 					/>
+					<PrivateRecipeNotes recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
 					<RecipeOtherList recipeId={recipe.recipe_id} />
 				</Container>
 			)}

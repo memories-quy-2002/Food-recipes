@@ -7,6 +7,7 @@ import {
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { RecipeQueryDto } from './dto/recipe-query.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import { RecipeMetadataService, RecipeMetadataServicePort, validateRecipeMetadata } from '../recipe-metadata/recipe-metadata.service';
 import {
   RecipeListResult,
   RecipeRecord,
@@ -19,6 +20,8 @@ export class RecipesService {
   constructor(
     @Inject(RecipesRepository)
     private readonly repository: RecipesRepositoryPort,
+    @Inject(RecipeMetadataService)
+    private readonly metadataService: RecipeMetadataServicePort,
   ) {}
 
   async list(query: RecipeQueryDto): Promise<RecipeListResult> {
@@ -30,7 +33,7 @@ export class RecipesService {
     if (!recipe) {
       throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
     }
-    return { recipe };
+    return { recipe: { ...recipe, metadata: await this.metadataService.get(id) } };
   }
 
   async listMine(userId: number): Promise<{ recipes: RecipeRecord[] }> {
@@ -38,7 +41,13 @@ export class RecipesService {
   }
 
   async create(userId: number, dto: CreateRecipeDto): Promise<{ recipe: RecipeRecord }> {
-    return { recipe: await this.repository.create(userId, dto) };
+    if (dto.metadata) validateRecipeMetadata(dto.metadata);
+    const recipe = await this.repository.create(userId, dto);
+    if (dto.metadata) {
+      const metadata = await this.metadataService.replace(recipe.recipe_id, userId, dto.metadata);
+      return { recipe: { ...recipe, metadata } };
+    }
+    return { recipe: { ...recipe, metadata: { nutrition: null, allergens: [] } } };
   }
 
   async update(
@@ -49,7 +58,13 @@ export class RecipesService {
     const existing = await this.repository.findById(id);
     if (!existing) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
     if (existing.user_id !== userId) throw new ForbiddenException({ code: 'RECIPE_FORBIDDEN', message: 'You do not own this recipe' });
-    return { recipe: await this.repository.update(id, dto) };
+    if (dto.metadata) validateRecipeMetadata(dto.metadata);
+    const recipe = await this.repository.update(id, dto);
+    if (dto.metadata) {
+      const metadata = await this.metadataService.replace(id, userId, dto.metadata);
+      return { recipe: { ...recipe, metadata } };
+    }
+    return { recipe: { ...recipe, metadata: await this.metadataService.get(id) } };
   }
 
   async delete(id: number, userId: number): Promise<void> {

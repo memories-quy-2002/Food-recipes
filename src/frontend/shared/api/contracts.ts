@@ -30,9 +30,39 @@ export type NestRecipeSummary = RecipeSummaryBase & {
 
 export type RecipeSummary = NestRecipeSummary;
 
+export type RecipeMetadata = {
+	nutrition: {
+		calories_per_serving: number;
+		protein_grams: number | null;
+		carbohydrates_grams: number | null;
+		fat_grams: number | null;
+		fiber_grams: number | null;
+		sugar_grams: number | null;
+		sodium_milligrams: number | null;
+		source: "provided_by_author" | "estimated" | "verified_external";
+		source_reference: string | null;
+	} | null;
+	allergens: Array<{
+		allergen_id?: number;
+		name: string;
+		source: "provided_by_author" | "estimated" | "verified_external";
+		source_reference?: string | null;
+	}>;
+};
+
 export type RecipeDetail = RecipeSummary & {
 	ingredients: string[] | null;
 	instructions: string[] | null;
+	structured_ingredients?: Array<{
+		ingredient_id?: number;
+		recipe_id?: number;
+		name: string;
+		quantity?: number | null;
+		unit?: string | null;
+		note?: string | null;
+		position?: number;
+	}> | null;
+	metadata?: RecipeMetadata;
 };
 
 export type RecipePagination = {

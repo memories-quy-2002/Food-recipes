@@ -17,7 +17,7 @@
 			span {
 				display: block;
 				margin-bottom: 0.55rem;
-				color: #d56b00;
+				color: #a94e00;
 				font-size: 0.82rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -82,6 +82,238 @@
 		}
 	}
 
+	&__mobile-toolbar {
+		display: none;
+	}
+
+	&__active-filters {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin: 0 0 1rem;
+
+		&__chips {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.5rem;
+			min-width: 0;
+		}
+
+		&__chip {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.25rem;
+			min-height: 2.75rem;
+			max-width: 100%;
+			padding: 0.3rem 0.35rem 0.3rem 0.75rem;
+			border: 1px solid rgba(213, 107, 0, 0.25);
+			border-radius: 999px;
+			background: #fff1d6;
+			color: #7e3c00;
+			font-size: 0.86rem;
+			font-weight: 900;
+
+			> span {
+				max-width: min(28ch, 100%);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			button {
+				min-width: 2.75rem;
+				width: 2.75rem;
+				height: 2.75rem;
+				border: 0;
+				border-radius: 50%;
+				background: transparent;
+				color: #7e3c00;
+				font-size: 1.25rem;
+				line-height: 1;
+
+				&:hover,
+				&:focus-visible {
+					background: rgba(213, 107, 0, 0.14);
+				}
+			}
+		}
+
+		&__clear {
+			min-height: 2.75rem;
+			flex: 0 0 auto;
+			padding: 0.5rem 0.75rem;
+			border: 1px solid rgba(98, 58, 18, 0.16);
+			border-radius: 999px;
+			background: transparent;
+			color: #a84f00;
+			font-size: 0.82rem;
+			font-weight: 900;
+
+			&:hover {
+				background: #fff1d6;
+			}
+		}
+	}
+
+	&__filter-sheet-backdrop {
+		display: none;
+	}
+
+	&__filter-sheet {
+		width: min(100%, 40rem);
+		max-height: min(90dvh, 48rem);
+		margin: 0 auto;
+		padding: 1.25rem;
+		border: 1px solid rgba(98, 58, 18, 0.14);
+		border-radius: 1.25rem 1.25rem 0 0;
+		background: #ffffff;
+		box-shadow: 0 -1.5rem 4rem rgba(45, 32, 20, 0.2);
+		overflow-y: auto;
+		animation: food-filter-sheet-enter 220ms ease-out both;
+
+		&__header,
+		&__footer {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+		}
+
+		&__header {
+			align-items: flex-start;
+			padding-bottom: 1rem;
+			border-bottom: 1px solid rgba(98, 58, 18, 0.1);
+
+			h2 {
+				margin: 0;
+				font-size: 1.7rem;
+				font-weight: 900;
+			}
+		}
+
+		&__eyebrow {
+			display: block;
+			margin-bottom: 0.25rem;
+			color: #a94e00;
+			font-size: 0.75rem;
+			font-weight: 900;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+		}
+
+		&__close {
+			min-width: 2.75rem;
+			width: 2.75rem;
+			height: 2.75rem;
+			border: 1px solid rgba(98, 58, 18, 0.16);
+			border-radius: 50%;
+			background: #fffaf3;
+			color: #211813;
+			font-size: 1.4rem;
+			line-height: 1;
+		}
+
+		&__body {
+			display: grid;
+			gap: 0.75rem;
+			padding: 1.25rem 0;
+
+			> label,
+			> fieldset legend {
+				color: #42372f;
+				font-size: 0.9rem;
+				font-weight: 900;
+			}
+
+			> input {
+				min-height: 2.75rem;
+				padding: 0.65rem 0.8rem;
+				border: 1px solid rgba(213, 107, 0, 0.24);
+				border-radius: 0.75rem;
+				background: #fffaf3;
+				color: #211813;
+			}
+
+			fieldset {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 0.5rem;
+				margin: 0;
+				padding: 0;
+				border: 0;
+
+				legend {
+					grid-column: 1 / -1;
+					float: left;
+					width: 100%;
+					margin: 0;
+				}
+
+				button {
+					min-height: 2.75rem;
+					padding: 0.55rem 0.75rem;
+					border: 1px solid rgba(98, 58, 18, 0.14);
+					border-radius: 0.75rem;
+					background: #fffaf3;
+					color: #42372f;
+					font-weight: 800;
+					text-align: left;
+
+					&.is-active,
+					&:hover {
+						border-color: rgba(255, 159, 28, 0.5);
+						background: #fff1d6;
+						color: #a84f00;
+					}
+				}
+			}
+		}
+
+		&__footer {
+			padding-top: 1rem;
+			border-top: 1px solid rgba(98, 58, 18, 0.1);
+
+			button {
+				min-height: 2.75rem;
+				padding: 0.65rem 1rem;
+				border-radius: 999px;
+				font-weight: 900;
+			}
+		}
+
+		&__clear {
+			border: 1px solid rgba(98, 58, 18, 0.16);
+			background: transparent;
+			color: #a84f00;
+
+			&:disabled {
+				cursor: not-allowed;
+				opacity: 0.45;
+			}
+		}
+
+		&__done {
+			border: 0;
+			background: #211813;
+			color: #ffffff;
+
+			&:hover {
+				background: #a94e00;
+			}
+		}
+	}
+
+	&__mobile-toolbar__filter,
+	&__active-filters__clear,
+	&__filter-sheet button,
+	&__filter-sheet input {
+		&:focus-visible {
+			outline: 3px solid #ff9f1c;
+			outline-offset: 3px;
+		}
+	}
+
 	&__menubar {
 		position: sticky;
 		top: 96px;
@@ -104,7 +336,7 @@
 			span {
 				display: block;
 				margin-bottom: 0.2rem;
-				color: #d56b00;
+				color: #a94e00;
 				font-size: 0.76rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -118,6 +350,7 @@
 		}
 
 		&__clear {
+			min-height: 2.75rem;
 			border: 1px solid rgba(98, 58, 18, 0.12);
 			border-radius: 999px;
 			background: #fffaf3;
@@ -154,13 +387,13 @@
 
 			&__search {
 				width: 100%;
+				min-height: 2.75rem;
 				padding: 0.78rem 0.9rem;
 				border: 1px solid rgba(213, 107, 0, 0.24);
 				border-radius: 999px;
 				background: #fffaf3;
 
-				&:focus {
-					outline: none;
+				&:focus-visible {
 					border-color: #ff9f1c;
 					box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 				}
@@ -175,7 +408,7 @@
 
 				&__button {
 					width: 100%;
-					min-height: 2.45rem;
+					min-height: 2.75rem;
 					padding: 0.5rem 0.7rem;
 					border: 1px solid transparent;
 					border-radius: 8px;
@@ -230,7 +463,7 @@
 			&__eyebrow {
 				display: block;
 				margin-bottom: 0.2rem;
-				color: #d56b00;
+				color: #a94e00;
 				font-size: 0.76rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -259,7 +492,7 @@
 				}
 
 				select {
-					height: 2.55rem;
+					min-height: 2.75rem;
 					padding: 0 2rem 0 0.8rem;
 					border: 1px solid rgba(98, 58, 18, 0.14);
 					border-radius: 999px;
@@ -267,8 +500,7 @@
 					color: #211813;
 					font-weight: 800;
 
-					&:focus {
-						outline: none;
+					&:focus-visible {
 						border-color: #ff9f1c;
 						box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 					}
@@ -277,7 +509,7 @@
 		}
 
 		&__view {
-			height: 2.55rem;
+			min-height: 3.25rem;
 			padding: 0.25rem;
 			border: 1px solid rgba(98, 58, 18, 0.12);
 			border-radius: 999px;
@@ -287,8 +519,9 @@
 			gap: 0.2rem;
 
 			button {
-				width: 2rem;
-				height: 2rem;
+				min-width: 2.75rem;
+				width: 2.75rem;
+				height: 2.75rem;
 				border: none;
 				border-radius: 50%;
 				background: transparent;
@@ -306,7 +539,7 @@
 		}
 
 		&__add {
-			height: 2.55rem;
+			min-height: 2.75rem;
 			padding: 0 1rem;
 			border: none;
 			border-radius: 999px;
@@ -321,7 +554,7 @@
 				transform 0.2s ease;
 
 			&:hover {
-				background-color: #d56b00;
+				background-color: #a94e00;
 				transform: translateY(-1px);
 			}
 		}
@@ -565,6 +798,17 @@
 	}
 }
 
+@keyframes food-filter-sheet-enter {
+	from {
+		opacity: 0;
+		transform: translateY(1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 @media screen and (max-width: 1100px) {
 	.food {
 		&__intro {
@@ -613,6 +857,54 @@
 	}
 }
 
+@media screen and (max-width: 767px) {
+	.food {
+		&__layout__aside {
+			display: none;
+		}
+
+		&__mobile-toolbar {
+			display: flex;
+			margin-bottom: 0.75rem;
+
+			&__filter {
+				width: 100%;
+				min-height: 2.75rem;
+				padding: 0.65rem 1rem;
+				border: 1px solid rgba(98, 58, 18, 0.16);
+				border-radius: 999px;
+				background: #211813;
+				color: #ffffff;
+				font-weight: 900;
+
+				&:hover {
+					background: #a94e00;
+				}
+			}
+		}
+
+		&__filter-sheet-backdrop {
+			position: fixed;
+			inset: 0;
+			z-index: 1000;
+			display: grid;
+			align-items: end;
+			padding: 0;
+			background: rgba(33, 24, 19, 0.48);
+			overflow-y: auto;
+		}
+
+		&__active-filters {
+			align-items: flex-start;
+			flex-direction: column;
+
+			&__clear {
+				align-self: flex-end;
+			}
+		}
+	}
+}
+
 @media screen and (max-width: 576px) {
 	.food {
 		padding-inline: 0.8rem;
@@ -655,5 +947,17 @@
 				}
 			}
 		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.food__filter-sheet,
+	.food__filter-sheet *,
+	.food__content__section__list__item,
+	.food__content__section__list__item * {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
 	}
 }

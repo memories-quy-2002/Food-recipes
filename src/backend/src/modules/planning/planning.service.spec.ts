@@ -65,4 +65,25 @@ describe('PlanningService', () => {
 
     await expect(service.addRecipeIngredients(7, 999)).rejects.toBeInstanceOf(NotFoundException);
   });
+
+  it('consolidates compatible structured ingredients across recipes', async () => {
+    repository.recipeIngredients
+      .mockResolvedValueOnce({ name: 'Pasta', ingredients: [], structuredIngredients: [{ name: 'eggs', quantity: 2, unit: 'PIECE', note: null, position: 0 }] })
+      .mockResolvedValueOnce({ name: 'Omelette', ingredients: [], structuredIngredients: [{ name: 'eggs', quantity: 3, unit: 'PIECE', note: null, position: 0 }] });
+    repository.addShoppingItem.mockResolvedValue({
+      item_id: 1,
+      label: 'eggs',
+      quantity: '5 piece',
+      source_recipe_id: 15,
+      source_recipe_name: 'Pasta',
+      checked: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    });
+    const service = new PlanningService(repository);
+
+    await service.addRecipeIngredientsFromRecipes(7, [15, 16]);
+
+    expect(repository.addShoppingItem).toHaveBeenCalledWith(7, 'eggs', '5 piece', 15);
+  });
 });
