@@ -42,22 +42,32 @@ const recipes = [
 ];
 
 async function stubRecipeApi(page) {
-	await page.route("**/recipes**", (route) =>
-		route.fulfill({
+	await page.route("**/recipes**", (route) => {
+		const requestUrl = new URL(route.request().url());
+		if (!requestUrl.pathname.endsWith("/recipes")) return route.fallback();
+		const query = (requestUrl.searchParams.get("q") || "").toLowerCase();
+		const limit = Number(requestUrl.searchParams.get("limit")) || 100;
+		const matchingRecipes = query
+			? recipes.filter((recipe) =>
+				[recipe.recipe_name, recipe.recipe_description]
+					.some((value) => value.toLowerCase().includes(query))
+			)
+			: recipes;
+		return route.fulfill({
 			status: 200,
 			contentType: "application/json",
 			body: JSON.stringify({
-				recipes,
+				recipes: matchingRecipes,
 				pagination: {
 					page: 1,
-					limit: 100,
-					total: recipes.length,
-					totalPages: 1,
+					limit,
+					total: matchingRecipes.length,
+					totalPages: Math.max(1, Math.ceil(matchingRecipes.length / limit)),
 					hasNext: false,
 				},
 			}),
-		})
-	);
+		});
+	});
 	await page.route("**/recipes/*", (route) => {
 		const id = Number(new URL(route.request().url()).pathname.split("/").pop());
 		const recipe = recipes.find((item) => item.recipe_id === id) || recipes[0];
@@ -210,7 +220,7 @@ test("authenticated Home favorite is a separate keyboard control and stays on Ho
 });
 
 test("guest navigates Home search results with accessible keyboard behavior", async ({ page }) => {
-	await page.goto("/?q=a");
+	await page.goto("/?q=ch");
 
 	const input = page.getByRole("combobox", { name: "Search recipes" });
 	const listbox = page.getByRole("listbox", { name: "Recipe search results" });
