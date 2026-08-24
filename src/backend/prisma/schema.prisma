@@ -127,6 +127,35 @@ model RecipeIngredient {
   @@map("recipe_ingredients")
 }
 
+model RecipeNutrition {
+  recipeId           Int      @id @map("recipe_id")
+  caloriesPerServing Int      @map("calories_per_serving")
+  proteinGrams       Float?   @map("protein_grams")
+  carbohydratesGrams Float?   @map("carbohydrates_grams")
+  fatGrams           Float?   @map("fat_grams")
+  fiberGrams         Float?   @map("fiber_grams")
+  sugarGrams         Float?   @map("sugar_grams")
+  sodiumMilligrams   Int?     @map("sodium_milligrams")
+  source             String   @db.VarChar(32)
+  sourceReference    String?  @map("source_reference") @db.VarChar(255)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("recipe_nutrition")
+}
+
+model RecipeAllergen {
+  id              Int      @id @default(autoincrement()) @map("allergen_id")
+  recipeId        Int      @map("recipe_id")
+  name            String   @db.VarChar(32)
+  source          String   @db.VarChar(32)
+  sourceReference String?  @map("source_reference") @db.VarChar(255)
+  updatedAt       DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@unique([recipeId, name], map: "recipe_allergens_recipe_name_key")
+  @@index([recipeId, name], map: "recipe_allergens_recipe_idx")
+  @@map("recipe_allergens")
+}
+
 model RecipeNote {
   id        Int      @id @default(autoincrement()) @map("note_id")
   userId    Int      @map("user_id")

@@ -2,8 +2,11 @@ import React from "react";
 import { Row } from "react-bootstrap";
 import RecipeDescription from "./content/RecipeDescription";
 import RecipeRating from "./content/RecipeRating";
+import RecipeMetadataPanel from "./RecipeMetadataPanel";
+import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
 const RecipeContent = ({
 	recipe,
+	isAuthenticated,
 	ratingScore,
 	showReview,
 	review,
@@ -15,7 +18,6 @@ const RecipeContent = ({
 	canDeleteReview,
 	isLoadingReviews,
 	reviewsError,
-	isAuthenticated,
 	isSubmittingReview,
 	isDeletingReview,
 	onSubmit,
@@ -27,6 +29,8 @@ const RecipeContent = ({
 	return (
 		<Row className="recipe__content" aria-label="Recipe cooking details">
 			<RecipeDescription recipe={recipe} />
+			<RecipeMetadataPanel metadata={recipe.metadata} />
+			<SuggestionPanel mode="substitution" recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
 			<RecipeRating
 				ratingScore={ratingScore}
 				review={review}

@@ -532,11 +532,11 @@ const Recipe = () => {
 							Number(recipe.user_id) === Number(userId) &&
 							isAuthenticated
 						}
+						isAuthenticated={isAuthenticated}
 						canDeleteReview={canDeleteReview}
 						canMutateReview={canMutateReview}
 						isLoadingReviews={isLoadingReviews}
 						reviewsError={reviewsError}
-						isAuthenticated={isAuthenticated}
 						isSubmittingReview={isSubmittingReview}
 						isDeletingReview={isDeletingReview}
 						onSubmit={handleSubmit}

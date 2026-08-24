@@ -115,6 +115,10 @@ describe('Swagger document', () => {
       'PATCH /api/v1/users/me/pantry/{pantryId}',
       'DELETE /api/v1/users/me/pantry/{pantryId}',
       'POST /api/v1/media/recipe-image/upload-url',
+      'GET /api/v1/recipes/{recipeId}/metadata',
+      'PUT /api/v1/recipes/{recipeId}/metadata',
+      'POST /api/v1/suggestions',
+      'POST /api/v1/users/me/suggestions',
     ];
     const actualRoutes = Object.entries(document.paths).flatMap(([path, operations]) =>
       Object.keys(operations).map((method) => `${method.toUpperCase()} ${path}`),

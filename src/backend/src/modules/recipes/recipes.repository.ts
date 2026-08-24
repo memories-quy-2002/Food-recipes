@@ -12,6 +12,7 @@ import {
 } from './dto/recipe-query.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
 import type { IngredientUnit } from './dto/structured-ingredient.dto';
+import type { RecipeMetadataRecord } from '../recipe-metadata/recipe-metadata.repository';
 
 export type StructuredIngredientRecord = {
   ingredient_id: number;
@@ -44,6 +45,7 @@ export type RecipeRecord = {
   overall_score?: number;
   num_ratings?: number;
   structured_ingredients?: StructuredIngredientRecord[];
+  metadata?: RecipeMetadataRecord;
 };
 
 export type RecipePagination = {

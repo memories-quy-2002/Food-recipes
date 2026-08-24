@@ -115,6 +115,57 @@ export class WishlistRemovalResponseDto {
   message!: string;
 }
 
+export class RecipeNutritionResponseDto {
+  @ApiProperty({ example: 420 })
+  calories_per_serving!: number;
+
+  @ApiPropertyOptional({ example: 28, nullable: true })
+  protein_grams!: number | null;
+
+  @ApiPropertyOptional({ example: 45, nullable: true })
+  carbohydrates_grams!: number | null;
+
+  @ApiPropertyOptional({ example: 12, nullable: true })
+  fat_grams!: number | null;
+
+  @ApiPropertyOptional({ example: 6, nullable: true })
+  fiber_grams!: number | null;
+
+  @ApiPropertyOptional({ example: 8, nullable: true })
+  sugar_grams!: number | null;
+
+  @ApiPropertyOptional({ example: 540, nullable: true })
+  sodium_milligrams!: number | null;
+
+  @ApiProperty({ example: 'provided_by_author' })
+  source!: string;
+
+  @ApiPropertyOptional({ example: 'Recipe card', nullable: true })
+  source_reference!: string | null;
+}
+
+export class RecipeAllergenResponseDto {
+  @ApiProperty({ example: 2 })
+  allergen_id!: number;
+
+  @ApiProperty({ example: 'peanuts' })
+  name!: string;
+
+  @ApiProperty({ example: 'provided_by_author' })
+  source!: string;
+
+  @ApiPropertyOptional({ example: 'Ingredient label checked', nullable: true })
+  source_reference!: string | null;
+}
+
+export class RecipeMetadataResponseDto {
+  @ApiProperty({ type: RecipeNutritionResponseDto, nullable: true })
+  nutrition!: RecipeNutritionResponseDto | null;
+
+  @ApiProperty({ type: [RecipeAllergenResponseDto] })
+  allergens!: RecipeAllergenResponseDto[];
+}
+
 export class RecipeResponseDto {
   @ApiProperty({ example: 15 })
   recipe_id!: number;
@@ -148,6 +199,9 @@ export class RecipeResponseDto {
 
   @ApiPropertyOptional({ type: () => [RecipeStructuredIngredientDto], nullable: true })
   structured_ingredients?: RecipeStructuredIngredientDto[] | null;
+
+  @ApiPropertyOptional({ type: RecipeMetadataResponseDto })
+  metadata?: RecipeMetadataResponseDto;
 
   @ApiProperty({ example: 7 })
   user_id!: number;

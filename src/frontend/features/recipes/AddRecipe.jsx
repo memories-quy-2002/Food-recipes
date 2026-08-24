@@ -28,6 +28,18 @@ import {
 } from "./recipeDraftStorage";
 import { createRecipeFormSchema } from "./recipeForm.schema";
 
+const ALLERGEN_OPTIONS = [
+	["milk", "Milk"],
+	["eggs", "Eggs"],
+	["peanuts", "Peanuts"],
+	["tree_nuts", "Tree nuts"],
+	["soy", "Soy"],
+	["wheat", "Wheat"],
+	["fish", "Fish"],
+	["shellfish", "Shellfish"],
+	["sesame", "Sesame"],
+];
+
 const createInitialRecipeState = (userId) => ({
 	recipeImage: null,
 	recipeName: "",
@@ -38,6 +50,18 @@ const createInitialRecipeState = (userId) => ({
 	recipeInstructions: [""],
 	recipePrepTime: { number: 15, unit: "minutes" },
 	recipeCookTime: { number: 30, unit: "minutes" },
+	recipeNutrition: {
+		caloriesPerServing: "",
+		proteinGrams: "",
+		carbohydratesGrams: "",
+		fatGrams: "",
+		fiberGrams: "",
+		sugarGrams: "",
+		sodiumMilligrams: "",
+		source: "provided_by_author",
+		sourceReference: "",
+	},
+	recipeAllergens: [],
 });
 
 const hasDraftContent = (recipe) =>
@@ -48,6 +72,8 @@ const hasDraftContent = (recipe) =>
 		recipe.recipeDescription,
 		...(recipe.recipeIngredients || []),
 		...(recipe.recipeInstructions || []),
+		recipe.recipeNutrition?.caloriesPerServing,
+		...(recipe.recipeAllergens || []),
 	].some((value) => String(value || "").trim()) ||
 	String(recipe.recipePrepTime?.number) !== "15" ||
 	String(recipe.recipePrepTime?.unit) !== "minutes" ||
@@ -252,6 +278,16 @@ const AddRecipe = () => {
 		setSubmitError("");
 		const { name, value } = event.target;
 		setValue(name, value, { shouldDirty: true });
+	};
+
+	const handleAllergenToggle = (name, checked) => {
+		setDisabled(false);
+		setSubmitError("");
+		const current = getValues("recipeAllergens") || [];
+		const next = checked
+			? [...new Set([...current, name])]
+			: current.filter((value) => value !== name);
+		setValue("recipeAllergens", next, { shouldDirty: true });
 	};
 
 	const handleCategoryOptionChange = (event) => {
@@ -667,6 +703,68 @@ const AddRecipe = () => {
 									)}
 								</p>
 							</div>
+							<section className="add__metadata" aria-labelledby="recipeMetadataHeading">
+								<h2 id="recipeMetadataHeading">Optional nutrition and allergen metadata</h2>
+								<p>Only enter values from the recipe card, a verified external source, or clearly marked estimates. Ingredients are never scanned automatically.</p>
+								<div className="add__metadata__grid">
+									{[
+										["caloriesPerServing", "Calories per serving"],
+										["proteinGrams", "Protein (g)"],
+										["carbohydratesGrams", "Carbohydrates (g)"],
+										["fatGrams", "Fat (g)"],
+										["fiberGrams", "Fiber (g)"],
+										["sugarGrams", "Sugar (g)"],
+										["sodiumMilligrams", "Sodium (mg)"],
+								].map(([name, label]) => (
+										<Form.Group key={name} controlId={`formRecipeNutrition${name}`}>
+											<Form.Label>{label}</Form.Label>
+											<Form.Control
+												type="number"
+												min="0"
+												step={name === "caloriesPerServing" || name === "sodiumMilligrams" ? "1" : "any"}
+												{...register(`recipeNutrition.${name}`, { onChange: handleInputChange })}
+												value={formRecipe.recipeNutrition[name]}
+											/>
+										</Form.Group>
+									))}
+								</div>
+								<Form.Group controlId="formRecipeNutritionSource">
+									<Form.Label>Metadata source</Form.Label>
+									<Form.Select
+										{...register("recipeNutrition.source", { onChange: handleSelectChange })}
+										value={formRecipe.recipeNutrition.source}
+									>
+										<option value="provided_by_author">Provided by recipe author</option>
+										<option value="estimated">Estimated</option>
+										<option value="verified_external">Verified external data</option>
+									</Form.Select>
+								</Form.Group>
+								<Form.Group controlId="formRecipeNutritionReference">
+									<Form.Label>Source reference (optional)</Form.Label>
+									<Form.Control
+										type="text"
+										{...register("recipeNutrition.sourceReference", { onChange: handleInputChange })}
+										value={formRecipe.recipeNutrition.sourceReference}
+										placeholder="Recipe card or source URL"
+									/>
+								</Form.Group>
+								<fieldset className="add__metadata__allergens">
+									<legend>Declared allergens</legend>
+									<p>Leave empty when the recipe author has not checked this information. Empty does not mean allergen-free.</p>
+									<div>
+										{ALLERGEN_OPTIONS.map(([value, label]) => (
+											<Form.Check
+												key={value}
+												type="checkbox"
+												id={`recipe-allergen-${value}`}
+												label={label}
+												checked={(formRecipe.recipeAllergens || []).includes(value)}
+												onChange={(event) => handleAllergenToggle(value, event.target.checked)}
+											/>
+										))}
+									</div>
+								</fieldset>
+							</section>
 							<Form.Group
 								controlId="formRecipeIngredients"
 								className="add__container__form__field"

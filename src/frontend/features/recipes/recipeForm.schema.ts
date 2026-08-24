@@ -43,6 +43,28 @@ const durationSchema = (message: string) =>
 		unit: z.enum(DURATION_UNITS),
 	});
 
+const optionalNumberSchema = z.union([z.string(), z.number()]).refine(
+	(value) => value === "" || (Number.isFinite(Number(value)) && Number(value) >= 0),
+	{ message: "Nutrition values must be zero or greater." },
+);
+
+const optionalIntegerSchema = z.union([z.string(), z.number()]).refine(
+	(value) => value === "" || (Number.isInteger(Number(value)) && Number(value) >= 0),
+	{ message: "This nutrition value must be a whole number." },
+);
+
+const recipeNutritionSchema = z.object({
+	caloriesPerServing: optionalIntegerSchema,
+	proteinGrams: optionalNumberSchema,
+	carbohydratesGrams: optionalNumberSchema,
+	fatGrams: optionalNumberSchema,
+	fiberGrams: optionalNumberSchema,
+	sugarGrams: optionalNumberSchema,
+	sodiumMilligrams: optionalIntegerSchema,
+	source: z.enum(["provided_by_author", "estimated", "verified_external"]),
+	sourceReference: z.string(),
+});
+
 const baseRecipeFormSchema = ({ categories = [], meals = [] }: RecipeFormSchemaOptions = {}) =>
 	z.object({
 		recipeName: z.string().trim().min(1, "Recipe name is required."),
@@ -62,6 +84,8 @@ const baseRecipeFormSchema = ({ categories = [], meals = [] }: RecipeFormSchemaO
 		recipePrepTime: durationSchema("Preparation time must be a positive number."),
 		recipeCookTime: durationSchema("Cooking time must be a positive number."),
 		recipeImage: z.any().nullable().optional(),
+		recipeNutrition: recipeNutritionSchema.optional(),
+		recipeAllergens: z.array(z.string()).optional(),
 	});
 
 export const createRecipeFormSchema = ({ categories = [], meals = [], isPublishing = false }: RecipeFormSchemaOptions = {}) => {
