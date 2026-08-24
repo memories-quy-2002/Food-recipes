@@ -1,0 +1,111 @@
+name: Visual audit PR 124
+
+on:
+  push:
+    branches:
+      - refactor/frontend-tailwind-shadcn
+    paths:
+      - .github/workflows/visual-audit-pr124.yml
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: corepack enable
+      - run: corepack pnpm@11.18.0 install --frozen-lockfile
+      - run: corepack pnpm@11.18.0 exec playwright install --with-deps chromium
+      - name: Capture responsive screenshots
+        env:
+          BASE_URL: https://food-recipes-awlm2n4ny-memories-projects-2002.vercel.app
+        run: |
+          node <<'NODE'
+          const { chromium } = require('playwright');
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          const baseUrl = process.env.BASE_URL;
+          const viewports = [
+            { name: 'mobile-390', width: 390, height: 844 },
+            { name: 'desktop-1080', width: 1920, height: 1080 },
+            { name: 'desktop-1440', width: 2560, height: 1440 },
+          ];
+          const routes = [
+            { name: 'home', path: '/' },
+            { name: 'account-login', path: '/account?signup=false' },
+            { name: 'account-signup', path: '/account?signup=true' },
+            { name: 'food', path: '/food' },
+          ];
+
+          fs.mkdirSync('visual-audit', { recursive: true });
+          const browser = await chromium.launch();
+          const report = [];
+
+          for (const viewport of viewports) {
+            const context = await browser.newContext({ viewport });
+            const page = await context.newPage();
+            const consoleErrors = [];
+            const pageErrors = [];
+            page.on('console', (msg) => {
+              if (msg.type() === 'error') consoleErrors.push(msg.text());
+            });
+            page.on('pageerror', (err) => pageErrors.push(err.message));
+
+            for (const route of routes) {
+              const url = `${baseUrl}${route.path}`;
+              const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+              await page.waitForTimeout(1000);
+              const file = `${route.name}-${viewport.name}.png`;
+              await page.screenshot({ path: path.join('visual-audit', file), fullPage: true });
+              report.push({
+                route: route.name,
+                viewport: viewport.name,
+                url: page.url(),
+                status: response?.status(),
+                title: await page.title(),
+                bodyText: (await page.locator('body').innerText()).slice(0, 4000),
+                consoleErrors: [...consoleErrors],
+                pageErrors: [...pageErrors],
+              });
+              consoleErrors.length = 0;
+              pageErrors.length = 0;
+            }
+
+            await page.goto(`${baseUrl}/food`, { waitUntil: 'networkidle', timeout: 60000 });
+            const recipeHref = await page.locator('a[href*="/recipe?id="]').first().getAttribute('href').catch(() => null);
+            if (recipeHref) {
+              const response = await page.goto(new URL(recipeHref, baseUrl).toString(), { waitUntil: 'networkidle', timeout: 60000 });
+              await page.waitForTimeout(1000);
+              const file = `recipe-${viewport.name}.png`;
+              await page.screenshot({ path: path.join('visual-audit', file), fullPage: true });
+              report.push({
+                route: 'recipe',
+                viewport: viewport.name,
+                url: page.url(),
+                status: response?.status(),
+                title: await page.title(),
+                bodyText: (await page.locator('body').innerText()).slice(0, 4000),
+                consoleErrors: [...consoleErrors],
+                pageErrors: [...pageErrors],
+              });
+            } else {
+              report.push({ route: 'recipe', viewport: viewport.name, skipped: 'No recipe link found on /food' });
+            }
+
+            await context.close();
+          }
+
+          await browser.close();
+          fs.writeFileSync('visual-audit/report.json', JSON.stringify(report, null, 2));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr124-visual-audit
+          path: src/frontend/visual-audit
+          if-no-files-found: error
