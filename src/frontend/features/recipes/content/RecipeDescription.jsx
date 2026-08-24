@@ -74,7 +74,6 @@ const RecipeDescription = ({ recipe }) => {
 	});
 	return (
 		<>
-			<Row className="recipe__content__desc"><div><h2>About</h2><p>{recipe.recipe_description ?? "There is no description for this recipe"}</p></div></Row>
 			<Row className="recipe__content__time">
 				{[["Prep", prep], ["Cook", cook], ["Total", total]].map(([label, value]) => (
 					<Col xs={6} md={3} key={label}><h3>{label}</h3><p>{formatRecipeDuration(value)}</p></Col>
@@ -88,8 +87,9 @@ const RecipeDescription = ({ recipe }) => {
 					</div>
 				</Col>
 			</Row>
-			<Row className="recipe__content__ingredient"><div id="ingredients"><h2>Ingredients</h2><p role="note">Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data.</p><RecipeIngredientChecklist key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(recipe.ingredients)}`} recipeIdentity={recipeIdentity} ingredients={recipe.ingredients} /></div></Row>
-			<Row className="recipe__content__instruction"><div><h2>Instructions</h2>{instructions.length > 0 ? (
+			<Row className="recipe__content__desc"><div className="recipe__content__prose"><h2>About</h2><p>{recipe.recipe_description ?? "There is no description for this recipe"}</p></div></Row>
+			<Row className="recipe__content__ingredient"><div id="ingredients" className="recipe__content__prose"><h2>Ingredients</h2><p role="note">Ingredient quantities are shown as written; automatic scaling is unavailable for free-text or unsupported ingredient data.</p><RecipeIngredientChecklist key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(recipe.ingredients)}`} recipeIdentity={recipeIdentity} ingredients={recipe.ingredients} /></div></Row>
+			<Row className="recipe__content__instruction"><div className="recipe__content__prose"><h2>Instructions</h2>{instructions.length > 0 ? (
 				<ol className="recipe__instruction-steps">
 					{instructions.map((instruction, index) => (
 						<li className="recipe__instruction-step" key={index}>

@@ -260,6 +260,11 @@
 		padding: 2rem clamp(1rem, 4vw, 3rem);
 		background: #fffaf3;
 
+		&__prose {
+			width: min(100%, 68ch);
+			max-width: 100%;
+		}
+
 		&__desc,
 		&__time,
 		&__ingredient,
@@ -292,6 +297,7 @@
 
 		&__time {
 			row-gap: 0.75rem;
+			border-top: 4px solid #ff9f1c;
 
 			> [class*="col-"] {
 				padding: 0.75rem;
@@ -319,8 +325,9 @@
 			min-height: 2.4rem;
 
 			button {
-				width: 2.2rem;
-				height: 2.2rem;
+				min-width: 2.75rem;
+				width: 2.75rem;
+				height: 2.75rem;
 				border: 1px solid rgba(98, 58, 18, 0.25);
 				border-radius: 999px;
 				background: #ffffff;
@@ -711,6 +718,11 @@
 
 		&__content {
 			padding-inline: 0.8rem;
+			padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+
+			&__time {
+				padding: 0.9rem;
+			}
 		}
 	}
 }

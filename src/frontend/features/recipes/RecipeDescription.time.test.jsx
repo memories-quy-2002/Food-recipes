@@ -46,6 +46,15 @@ describe("recipe description time summary", () => {
 		expect(renderer.root.findByProps({ id: "ingredients" })).toBeTruthy();
 	});
 
+	it("puts the cooking decision strip before long-form recipe copy", () => {
+		let renderer;
+		act(() => { renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, prep_time_minutes: 10 }} />); });
+
+		const contentRows = renderer.root.findAll((node) => node.props?.className?.startsWith("recipe__content__"));
+		expect(contentRows[0].props.className).toBe("recipe__content__time");
+		expect(renderer.root.findAllByProps({ className: "recipe__content__prose" })).toHaveLength(3);
+	});
+
 	it("keeps rating, tags, Start cooking, and Save available near the title", () => {
 		const onClickFavorite = vi.fn();
 		let renderer;
