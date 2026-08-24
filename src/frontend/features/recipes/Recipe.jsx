@@ -51,6 +51,28 @@ const Recipe = () => {
 	const searchParams = new URLSearchParams(location.search);
 	const id = searchParams.get("id");
 	const isCookingMode = location.pathname === "/recipe/cooking";
+	const planningDate = searchParams.get("date");
+	const planningSlot = searchParams.get("slot");
+	const planningServings = Number(searchParams.get("servings"));
+	const planningItemId = searchParams.get("planItemId");
+	const requestedReturnTo = searchParams.get("returnTo");
+	const safeReturnTo =
+		requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
+			? requestedReturnTo
+			: "/planning";
+	const planningContext =
+		planningItemId &&
+		planningDate &&
+		planningSlot &&
+		Number.isInteger(planningServings) &&
+		planningServings > 0
+			? {
+					date: planningDate,
+					slot: planningSlot,
+					servings: Math.min(planningServings, 24),
+					returnTo: safeReturnTo,
+			  }
+			: null;
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef(null);
 	const favoriteLoadKey =
@@ -358,6 +380,12 @@ const Recipe = () => {
 			) : recipe && isCookingMode ? (
 				<CookingMode
 					recipe={recipe}
+					planningContext={planningContext || undefined}
+					onBackToPlan={
+						planningContext
+							? () => navigate(planningContext.returnTo || "/planning")
+							: undefined
+					}
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (

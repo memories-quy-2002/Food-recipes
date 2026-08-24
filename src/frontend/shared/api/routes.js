@@ -16,6 +16,10 @@ const apiRoutes = {
 	authRefresh: "/auth/refresh",
 	userProfile: "/users/me/profile",
 	userPassword: "/users/me/password",
+	mealPlans: "/users/me/meal-plans",
+	mealPlan: (planId) => `/users/me/meal-plans/${planId}`,
+	mealPlanItems: (planId) => `/users/me/meal-plans/${planId}/items`,
+	mealPlanItem: (planId, itemId) => `/users/me/meal-plans/${planId}/items/${itemId}`,
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
 };

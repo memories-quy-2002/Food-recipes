@@ -97,12 +97,20 @@ describe("primary navigation", () => {
 
 	it("shows Add Recipe only for authenticated users", () => {
 		expect(getPrimaryNavigation(true)).toContainEqual({
-			title: "Add Recipe",
+			 title: "Add Recipe",
 			href: "/food/add",
+		});
+		expect(getPrimaryNavigation(true)).toContainEqual({
+			title: "Planning",
+			href: "/planning",
 		});
 		expect(getPrimaryNavigation(false)).not.toContainEqual({
 			title: "Add Recipe",
 			href: "/food/add",
+		});
+		expect(getPrimaryNavigation(false)).not.toContainEqual({
+			title: "Planning",
+			href: "/planning",
 		});
 	});
 

@@ -54,6 +54,13 @@
 		font-weight: 900;
 	}
 
+	&__planning-context {
+		margin: 0.5rem 0 1.25rem;
+		color: rgba(255, 248, 239, 0.78);
+		font-size: 1.05rem;
+		font-weight: 800;
+	}
+
 	&__step {
 		min-height: 12rem;
 		padding: clamp(1.5rem, 5vw, 3rem);
@@ -105,6 +112,51 @@
 		padding: 1.25rem;
 		border: 1px dashed rgba(255, 209, 139, 0.5);
 		border-radius: 0.75rem;
+	}
+
+	&__complete {
+		margin-top: 2rem;
+		padding: clamp(1.5rem, 5vw, 3rem);
+		border: 1px solid rgba(255, 209, 139, 0.35);
+		border-radius: 1rem;
+		background: #fffaf3;
+		color: #211813;
+
+		h2 {
+			margin: 0.5rem 0;
+			font-size: clamp(1.75rem, 5vw, 3rem);
+		}
+
+		p:not(.cooking-mode__eyebrow) {
+			margin: 0;
+			line-height: 1.6;
+		}
+	}
+
+	&__complete-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin-top: 1.5rem;
+
+		button {
+			min-height: 3rem;
+			padding: 0.75rem 1rem;
+			border: 0;
+			border-radius: 0.75rem;
+			background: #ff9f1c;
+			color: #17110c;
+			font-weight: 900;
+		}
+	}
+
+	button {
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 3px solid #ffd18b;
+			outline-offset: 3px;
+		}
 	}
 }
 
