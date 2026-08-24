@@ -31,8 +31,8 @@ for (const tableName of ['accounts', 'categories', 'meals', 'recipes', 'wishlist
   assert.match(legacySql, new RegExp(`CREATE TABLE public\\.${tableName}`), `legacy schema must document ${tableName}`);
 }
 
-assert.match(contents.schema, /prepTime\s+Unsupported\("interval"\)\s+@map\("prep_time"\)/);
-assert.match(contents.schema, /cookTime\s+Unsupported\("interval"\)\s+@map\("cook_time"\)/);
+assert.match(contents.schema, /prepTime\s+Unsupported\("interval"\)\?\s+@map\("prep_time"\)/);
+assert.match(contents.schema, /cookTime\s+Unsupported\("interval"\)\?\s+@map\("cook_time"\)/);
 assert.match(contents.schema, /imageUrl\s+String\?\s+@map\("image_url"\)/);
 assert.doesNotMatch(legacySql, /\bimage_url\b/i, 'legacy evidence must document the historical image_url discrepancy');
 assert.doesNotMatch(legacySql, /\bCOPY\b|\bINSERT\b/i, 'legacy evidence must be schema-only and contain no application rows');
