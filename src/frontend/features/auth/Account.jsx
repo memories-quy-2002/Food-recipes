@@ -3,6 +3,8 @@ import { Container } from "react-bootstrap";
 import AccountForm from "@/features/auth/components/AccountForm";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import "./Account.scss";
+import "./AccountRefinement.scss";
+
 const Account = () => {
 	return (
 		<Container as="main" fluid className="fr-page fr-account main">
