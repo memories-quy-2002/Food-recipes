@@ -533,6 +533,16 @@
 	color: var(--accent-foreground);
 }
 
+.fr-page.home .home__main__category__list__item--all
+	.home__main__category__list__item__content {
+	color: var(--accent-foreground);
+}
+
+.fr-page.home .home__main__category__list__item--all
+	.home__main__category__list__item__content p {
+	color: var(--accent-foreground);
+}
+
 .fr-page.home .home__main__cardList__feature__item__fav,
 .fr-page.home .home__main__category__list__item--all {
 	background: var(--accent);
@@ -554,7 +564,7 @@
 
 .fr-page.home .home__carousel__item__content__title,
 .fr-page.home .home__carousel__item__content__desc {
-	color: var(--foreground);
+	color: #fff8ef;
 }
 
 .fr-page.home .home__carousel__item__content__button--ghost,
@@ -741,6 +751,37 @@
 .fr-recipe .recipe__container__summary__content p,
 .fr-recipe .recipe__container__summary__content__meta {
 	color: var(--muted-foreground);
+}
+
+.fr-recipe .recipe__container__summary__author {
+	color: var(--accent-foreground);
+}
+
+.fr-recipe .recipe__container__summary__date,
+.fr-recipe .recipe__container__summary__review__count {
+	color: var(--muted-foreground);
+}
+
+.fr-recipe .recipe__container__summary__tags span {
+	border-color: var(--border);
+	background: var(--accent);
+	color: var(--accent-foreground);
+}
+
+.fr-recipe .recipe__container__summary__start {
+	border-color: var(--foreground);
+	background: var(--foreground);
+	color: var(--card);
+}
+
+.fr-recipe .recipe__container__summary__start:hover {
+	background: var(--primary);
+	color: var(--primary-foreground);
+}
+
+.fr-recipe .recipe__container__summary__fav > button:first-of-type {
+	background: var(--primary);
+	color: var(--primary-foreground);
 }
 
 .fr-recipe .recipe__container__img {

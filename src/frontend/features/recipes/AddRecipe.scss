@@ -68,7 +68,7 @@
 				border-radius: 8px;
 				background: #fffaf3;
 
-				&:focus {
+				&:focus-visible {
 					border-color: #ff9f1c;
 					box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 				}
@@ -108,7 +108,6 @@
 				}
 
 				&__button {
-					outline: none;
 					border: none;
 					border-radius: 999px;
 					color: #a84f00;
@@ -118,6 +117,11 @@
 
 					&:hover {
 						background: #ffd18b;
+					}
+
+					&:focus-visible {
+						outline: 3px solid #a94e00;
+						outline-offset: 3px;
 					}
 				}
 			}
@@ -200,7 +204,7 @@
 				color: #ffffff;
 
 				&:hover:not(:disabled) {
-					background: #d56b00;
+					background: #a94e00;
 				}
 			}
 		}

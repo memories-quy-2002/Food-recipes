@@ -21,7 +21,7 @@
 		a { min-height: 2.75rem; display: inline-flex; align-items: center; padding: 0 1rem; border-radius: 999px; background: #211813; color: white; font-weight: 900; text-decoration: none; }
 	}
 
-	&__eyebrow { margin: 0 0 0.5rem; color: #d56b00; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
+	&__eyebrow { margin: 0 0 0.5rem; color: #a94e00; font-size: 0.78rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; }
 
 	&__add, &__lists > div, &__state {
 		padding: 1.25rem;
@@ -41,7 +41,7 @@
 	}
 
 	&__lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; h2 { display: flex; justify-content: space-between; margin: 0 0 1rem; font-size: 1.2rem; font-weight: 900; span { color: #a84f00; } } ul { display: grid; gap: 0.55rem; padding: 0; margin: 0; list-style: none; } }
-	&__item { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-height: 3.2rem; padding: 0.45rem 0.55rem 0.45rem 0.75rem; border: 1px solid rgba(98, 58, 18, 0.1); border-radius: 8px; background: #fffaf3; label { display: flex; align-items: center; gap: 0.65rem; min-height: 2.75rem; font-weight: 800; } input { width: 1.2rem; height: 1.2rem; accent-color: #d56b00; } button { min-height: 2.75rem; border: 0; background: transparent; color: #a12c1c; font-weight: 800; } &--missing label { color: #6d6258; text-decoration: line-through; } }
+	&__item { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; min-height: 3.2rem; padding: 0.45rem 0.55rem 0.45rem 0.75rem; border: 1px solid rgba(98, 58, 18, 0.1); border-radius: 8px; background: #fffaf3; label { display: flex; align-items: center; gap: 0.65rem; min-height: 2.75rem; font-weight: 800; } input { width: 1.2rem; height: 1.2rem; accent-color: #a94e00; } button { min-height: 2.75rem; border: 0; background: transparent; color: #a12c1c; font-weight: 800; } &--missing label { color: #6d6258; text-decoration: line-through; } }
 	&__empty-line, &__state { color: #6d6258; line-height: 1.55; }
 	&__state { margin-top: 1rem; text-align: center; h2 { margin: 0 0 0.4rem; font-weight: 900; } p { margin: 0; } button { min-height: 2.75rem; margin-top: 1rem; padding: 0 1rem; border: 0; border-radius: 999px; background: #211813; color: white; font-weight: 900; } }
 }

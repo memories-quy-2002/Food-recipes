@@ -3,7 +3,11 @@
 	padding: clamp(1rem, 4vw, 3rem);
 	background: #211813;
 	color: #fff8ef;
-	outline: none;
+
+	&:focus-visible {
+		outline: 3px solid #ffd18b;
+		outline-offset: -3px;
+	}
 
 	&__topbar,
 	&__content {

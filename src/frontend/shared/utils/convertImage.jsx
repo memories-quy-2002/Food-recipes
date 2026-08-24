@@ -27,17 +27,28 @@ const normalizeImageName = (value = "") =>
 		.replace(/[^a-z0-9]+/g, "_")
 		.replace(/^_+|_+$/g, "");
 
+const handleImageError = (event) => {
+	const image = event.currentTarget;
+	if (image.dataset.fallback === "true") return;
+
+	image.dataset.fallback = "true";
+	image.onerror = null;
+	image.src = default_image;
+};
+
 const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
+	const imageProps = {
+		alt: name[0].toUpperCase() + name.substring(1),
+		className: `object-cover ${className}`,
+		width: 900,
+		height: 600,
+		loading: "lazy",
+		decoding: "async",
+		onError: handleImageError,
+	};
+
 	if (isRemoteImage(imageUrl)) {
-		return (
-			<img
-				src={imageUrl}
-				alt={name[0].toUpperCase() + name.substring(1)}
-				className={`object-cover ${className}`}
-				loading="lazy"
-				decoding="async"
-			/>
-		);
+		return <img {...imageProps} src={imageUrl} />;
 	}
 
 	const normalizedName = normalizeImageName(name);
@@ -51,15 +62,7 @@ const convertImage = (name = "Recipe image", className = "", imageUrl = "") => {
 
 	const imageSrc = imageEntry ? imageEntry[1] : default_image;
 
-	return (
-		<img
-			src={imageSrc}
-			alt={name[0].toUpperCase() + name.substring(1)}
-			className={`object-cover ${className}`}
-			loading="lazy"
-			decoding="async"
-		/>
-	);
+	return <img {...imageProps} src={imageSrc} />;
 };
 
 

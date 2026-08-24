@@ -532,12 +532,16 @@ const AddRecipe = () => {
 												src={preview}
 												alt="This is a preview"
 												className="add__container__form__imgContainer__img"
+												width={900}
+												height={600}
 											/>
 										) : (
 											<img
 												src={cameraPreview}
 												alt="Camera preview"
 												className="add__container__form__imgContainer__img"
+												width={900}
+												height={600}
 											/>
 										)}
 										<Form.Control

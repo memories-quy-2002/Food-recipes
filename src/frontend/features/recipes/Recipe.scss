@@ -324,8 +324,7 @@
 				color: #211813;
 				line-height: 1.55;
 
-				&:focus {
-					outline: none;
+				&:focus-visible {
 					border-color: #ff9f1c;
 					box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 				}
@@ -383,7 +382,7 @@
 			h3 {
 				font-size: 0.85rem;
 				font-weight: 900;
-				color: #d56b00;
+				color: #a94e00;
 				text-transform: uppercase;
 			}
 
@@ -509,7 +508,7 @@
 						width: 1.25rem;
 						height: 1.25rem;
 						margin: 0;
-						accent-color: #d56b00;
+						accent-color: #a94e00;
 						flex: 0 0 auto;
 					}
 				}
@@ -586,7 +585,7 @@
 					cursor: pointer;
 
 					&:hover {
-						color: #d56b00;
+						color: #a94e00;
 					}
 				}
 
@@ -594,7 +593,7 @@
 					border: 1px solid rgba(213, 107, 0, 0.24);
 					border-radius: 8px;
 
-					&:focus {
+					&:focus-visible {
 						border-color: #ff9f1c;
 						box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 					}
@@ -646,7 +645,7 @@
 					background-color: #211813;
 
 					&:hover {
-						background-color: #d56b00;
+						background-color: #a94e00;
 					}
 
 					&:disabled {

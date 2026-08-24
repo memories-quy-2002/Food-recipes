@@ -41,7 +41,7 @@ const News = () => {
 			/>
 			<section className="mx-auto max-w-6xl rounded-[28px] border border-[#eee8df] bg-[#fffdf9] px-6 py-10 shadow-[0_18px_40px_rgba(33,24,19,0.07)] sm:px-10 sm:py-12 lg:px-14 lg:py-14">
 				<div className="max-w-3xl">
-					<span className="mb-5 block text-xs font-extrabold uppercase tracking-[0.08em] text-[#d56b00]">
+					<span className="mb-5 block text-xs font-extrabold uppercase tracking-[0.08em] text-[#a94e00]">
 						Latest from Food Recipes
 					</span>
 					<h1 className="max-w-3xl text-[clamp(2.5rem,6vw,4.5rem)] font-extrabold leading-[0.98] tracking-[-0.055em]">
@@ -58,13 +58,13 @@ const News = () => {
 				<div className="grid gap-4">
 					{newsItems.map((item) => (
 						<article className="rounded-[22px] border border-[#e7e1d9] bg-white p-6 shadow-[0_18px_40px_rgba(33,24,19,0.07)] sm:p-7" key={item.title}>
-							<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-extrabold uppercase tracking-[0.08em] text-[#d56b00]">
+							<div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-extrabold uppercase tracking-[0.08em] text-[#a94e00]">
 								<span>{item.category}</span>
 								<time dateTime={item.date}>{item.date}</time>
 							</div>
 							<h2 className="mt-4 text-2xl font-extrabold leading-tight tracking-[-0.035em] sm:text-3xl">{item.title}</h2>
 							<p className="mt-3 max-w-2xl text-sm leading-6 text-[#746b63] sm:text-base">{item.description}</p>
-							<a className="mt-5 inline-flex text-sm font-extrabold text-[#a94e00] underline decoration-[#f0c7a1] underline-offset-4 transition-colors hover:text-[#d56b00]" href="/food">Browse recipes</a>
+							<a className="mt-5 inline-flex text-sm font-extrabold text-[#a94e00] underline decoration-[#f0c7a1] underline-offset-4 transition-colors hover:text-[#a94e00]" href="/food">Browse recipes</a>
 						</article>
 					))}
 				</div>
@@ -73,7 +73,7 @@ const News = () => {
 					<h2 className="text-2xl font-extrabold tracking-[-0.035em]" id="quick-tips-title">Quick tips</h2>
 					<ul className="mt-5 grid gap-4 text-sm leading-6 text-[#746b63]">
 						{quickTips.map((tip) => (
-							<li className="flex gap-3" key={tip}><span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#d56b00]" />{tip}</li>
+							<li className="flex gap-3" key={tip}><span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#a94e00]" />{tip}</li>
 						))}
 					</ul>
 				</aside>

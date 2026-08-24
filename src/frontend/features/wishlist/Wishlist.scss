@@ -20,7 +20,7 @@
 		> div > span {
 			display: block;
 			margin-bottom: 0.55rem;
-			color: #d56b00;
+			color: #a94e00;
 			font-size: 0.82rem;
 			font-weight: 900;
 			text-transform: uppercase;
@@ -106,8 +106,7 @@
 			color: #211813;
 			font-weight: 800;
 
-			&:focus {
-				outline: none;
+			&:focus-visible {
 				border-color: #ff9f1c;
 				box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 			}
@@ -343,8 +342,7 @@
 			background: #fffaf3;
 			color: #211813;
 
-			&:focus {
-				outline: none;
+			&:focus-visible {
 				border-color: #ff9f1c;
 				box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 			}
@@ -554,7 +552,7 @@
 							transform 0.2s ease;
 
 						&:hover {
-							background: #d56b00;
+							background: #a94e00;
 							transform: translateY(-1px);
 						}
 

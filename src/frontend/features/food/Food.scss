@@ -17,7 +17,7 @@
 			span {
 				display: block;
 				margin-bottom: 0.55rem;
-				color: #d56b00;
+				color: #a94e00;
 				font-size: 0.82rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -195,7 +195,7 @@
 		&__eyebrow {
 			display: block;
 			margin-bottom: 0.25rem;
-			color: #d56b00;
+			color: #a94e00;
 			font-size: 0.75rem;
 			font-weight: 900;
 			letter-spacing: 0.1em;
@@ -299,7 +299,7 @@
 			color: #ffffff;
 
 			&:hover {
-				background: #d56b00;
+				background: #a94e00;
 			}
 		}
 	}
@@ -336,7 +336,7 @@
 			span {
 				display: block;
 				margin-bottom: 0.2rem;
-				color: #d56b00;
+				color: #a94e00;
 				font-size: 0.76rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -393,8 +393,7 @@
 				border-radius: 999px;
 				background: #fffaf3;
 
-				&:focus {
-					outline: none;
+				&:focus-visible {
 					border-color: #ff9f1c;
 					box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 				}
@@ -464,7 +463,7 @@
 			&__eyebrow {
 				display: block;
 				margin-bottom: 0.2rem;
-				color: #d56b00;
+				color: #a94e00;
 				font-size: 0.76rem;
 				font-weight: 900;
 				text-transform: uppercase;
@@ -501,8 +500,7 @@
 					color: #211813;
 					font-weight: 800;
 
-					&:focus {
-						outline: none;
+					&:focus-visible {
 						border-color: #ff9f1c;
 						box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
 					}
@@ -556,7 +554,7 @@
 				transform 0.2s ease;
 
 			&:hover {
-				background-color: #d56b00;
+				background-color: #a94e00;
 				transform: translateY(-1px);
 			}
 		}
@@ -880,7 +878,7 @@
 				font-weight: 900;
 
 				&:hover {
-					background: #d56b00;
+					background: #a94e00;
 				}
 			}
 		}
