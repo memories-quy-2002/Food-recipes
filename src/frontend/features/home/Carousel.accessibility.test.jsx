@@ -1,6 +1,6 @@
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Carousel from "./Carousel";
 
@@ -42,7 +42,7 @@ describe("Carousel accessibility", () => {
 		expect(slides[0].props["aria-hidden"]).toBe(false);
 		expect(slides[0].props.inert).toBeUndefined();
 		expect(slides[1].props["aria-hidden"]).toBe(true);
-		expect(slides[1].props.inert).toBe("");
+		expect(slides[1].props.inert).toBe(true);
 	});
 
 	it("uses section-level headings for slide titles", () => {
