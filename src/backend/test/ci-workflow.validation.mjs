@@ -6,7 +6,14 @@ import { fileURLToPath } from 'node:url';
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(testDirectory, '../../..');
 const workflowPath = path.join(repositoryRoot, '.github/workflows/quality-gates.yml');
-const workflow = await readFile(workflowPath, 'utf8');
+const baselineWorkflowPath = path.join(
+  repositoryRoot,
+  '.github/workflows/production-prisma-baseline.yml',
+);
+const [workflow, baselineWorkflow] = await Promise.all([
+  readFile(workflowPath, 'utf8'),
+  readFile(baselineWorkflowPath, 'utf8'),
+]);
 
 const jobsSectionMatch = workflow.match(/^jobs:\r?\n([\s\S]*)$/m);
 assert.ok(jobsSectionMatch, 'workflow must define a jobs section');
@@ -100,4 +107,40 @@ assert.equal(
 );
 assert.doesNotMatch(workflow, /prisma migrate reset/i, 'CI must never reset a data-bearing database');
 
-console.log('CI workflow validation passed for master release flow, Node 24, quality gates, and one-shot migrations.');
+assert.match(
+  baselineWorkflow,
+  /^on:\r?\n  workflow_dispatch:/m,
+  'production baseline must only be manually dispatched',
+);
+assert.doesNotMatch(
+  baselineWorkflow,
+  /^  (?:push|pull_request):/m,
+  'production baseline must never run automatically',
+);
+assert.match(
+  baselineWorkflow,
+  /if:\s*\$\{\{ inputs\.confirm == 'BASELINE' \}\}/,
+  'production baseline must require explicit BASELINE confirmation',
+);
+assert.match(
+  baselineWorkflow,
+  /DATABASE_URL:\s*\$\{\{ secrets\.PRODUCTION_DATABASE_URL \}\}/,
+  'production baseline must use the production database secret',
+);
+assert.match(
+  baselineWorkflow,
+  /prisma migrate resolve --applied 0_init --config prisma\.config\.ts/,
+  'production baseline must mark only 0_init as applied',
+);
+assert.match(
+  baselineWorkflow,
+  /pnpm prisma:migrate:deploy/,
+  'production baseline must deploy remaining migrations after resolving 0_init',
+);
+assert.doesNotMatch(
+  baselineWorkflow,
+  /prisma migrate reset/i,
+  'production baseline must never reset the production database',
+);
+
+console.log('CI workflow validation passed for master release flow, Node 24, quality gates, and guarded production baseline/migrations.');
