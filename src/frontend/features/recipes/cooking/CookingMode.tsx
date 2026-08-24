@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { RecipeDetail } from "@/shared/api/contracts";
 import { useCookingMode, getCookingInstructions } from "./useCookingMode";
+import ManualTimer from "./ManualTimer";
 import "./CookingMode.scss";
 
 type CookingRecipe = Partial<RecipeDetail> & {
@@ -117,6 +118,7 @@ const CookingMode = ({ recipe, onExit, planningContext, onBackToPlan }: CookingM
 						<section className="cooking-mode__step" aria-label={`Step ${stepIndex + 1}`}>
 							<p>{steps[stepIndex]}</p>
 						</section>
+						<ManualTimer />
 						<div className="cooking-mode__controls">
 							<button type="button" onClick={goToPrevious} disabled={isFirstStep}>
 								Previous step

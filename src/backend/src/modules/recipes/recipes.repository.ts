@@ -11,6 +11,17 @@ import {
   RecipeSort,
 } from './dto/recipe-query.dto';
 import { UpdateRecipeDto } from './dto/update-recipe.dto';
+import type { IngredientUnit } from './dto/structured-ingredient.dto';
+
+export type StructuredIngredientRecord = {
+  ingredient_id: number;
+  recipe_id: number;
+  name: string;
+  quantity: number | null;
+  unit: IngredientUnit | null;
+  note: string | null;
+  position: number;
+};
 
 export type RecipeRecord = {
   recipe_id: number;
@@ -32,6 +43,7 @@ export type RecipeRecord = {
   category_name?: string;
   overall_score?: number;
   num_ratings?: number;
+  structured_ingredients?: StructuredIngredientRecord[];
 };
 
 export type RecipePagination = {
@@ -86,6 +98,15 @@ const toJsonSafeRecipe = (recipe: RecipeRecord): RecipeRecord => {
   }
   if (recipe.num_ratings !== undefined) {
     safeRecipe.num_ratings = toSafeInteger(recipe.num_ratings);
+  }
+  if (recipe.structured_ingredients) {
+    safeRecipe.structured_ingredients = recipe.structured_ingredients.map((ingredient) => ({
+      ...ingredient,
+      ingredient_id: toSafeInteger(ingredient.ingredient_id),
+      recipe_id: toSafeInteger(ingredient.recipe_id),
+      quantity: ingredient.quantity === null ? null : Number(ingredient.quantity),
+      position: toSafeInteger(ingredient.position),
+    }));
   }
   return safeRecipe;
 };
@@ -201,7 +222,38 @@ export class RecipesRepository implements RecipesRepositoryPort {
       WHERE r.recipe_id = ${id}
       GROUP BY r.recipe_id, a.full_name, m.meal_id, c.category_id
     `);
-    return rows[0] ? toJsonSafeRecipe(rows[0]) : null;
+    if (!rows[0]) return null;
+    const recipe = toJsonSafeRecipe(rows[0]);
+    recipe.structured_ingredients = await this.listStructuredIngredients(id);
+    return recipe;
+  }
+
+  private async listStructuredIngredients(recipeId: number): Promise<StructuredIngredientRecord[]> {
+    const rows = await this.prisma.$queryRaw<StructuredIngredientRecord[]>(Prisma.sql`
+      SELECT ingredient_id, recipe_id, name, quantity, unit, note, position
+      FROM recipe_ingredients
+      WHERE recipe_id = ${recipeId}
+      ORDER BY position ASC, ingredient_id ASC
+    `);
+    return (rows ?? []).map((ingredient) => ({
+      ingredient_id: Number(ingredient.ingredient_id),
+      recipe_id: Number(ingredient.recipe_id),
+      name: String(ingredient.name ?? ''),
+      quantity: ingredient.quantity === null ? null : Number(ingredient.quantity),
+      unit: ingredient.unit ?? null,
+      note: ingredient.note ?? null,
+      position: Number(ingredient.position),
+    }));
+  }
+
+  private async replaceStructuredIngredients(recipeId: number, ingredients: NonNullable<CreateRecipeDto['structuredIngredients']>): Promise<void> {
+    await this.prisma.$executeRaw(Prisma.sql`DELETE FROM recipe_ingredients WHERE recipe_id = ${recipeId}`);
+    for (const [position, ingredient] of ingredients.entries()) {
+      await this.prisma.$executeRaw(Prisma.sql`
+        INSERT INTO recipe_ingredients (recipe_id, name, quantity, unit, note, position)
+        VALUES (${recipeId}, ${ingredient.name.trim()}, ${ingredient.quantity ?? null}, ${ingredient.unit ?? null}, ${ingredient.note?.trim() || null}, ${position})
+      `);
+    }
   }
 
   async findByUserId(userId: number): Promise<RecipeRecord[]> {
@@ -246,6 +298,9 @@ export class RecipesRepository implements RecipesRepositoryPort {
       )
       RETURNING recipe_id
     `);
+    if (dto.structuredIngredients !== undefined) {
+      await this.replaceStructuredIngredients(rows[0].recipe_id, dto.structuredIngredients);
+    }
     const recipe = await this.findById(rows[0].recipe_id);
     if (!recipe) throw new Error('Recipe was inserted but could not be read');
     return recipe;
@@ -288,6 +343,9 @@ export class RecipesRepository implements RecipesRepositoryPort {
         SET ${Prisma.join(updates, ', ')}
         WHERE recipe_id = ${id}
       `);
+    }
+    if (dto.structuredIngredients !== undefined) {
+      await this.replaceStructuredIngredients(id, dto.structuredIngredients);
     }
     const recipe = await this.findById(id);
     if (!recipe) throw new Error('Recipe not found after update');

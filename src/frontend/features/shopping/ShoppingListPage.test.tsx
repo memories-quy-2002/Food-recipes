@@ -17,6 +17,7 @@ const mockShopping = vi.hoisted(() => ({
 	remove: vi.fn(),
 	clear: vi.fn(),
 	importRecipe: vi.fn(),
+	importPlanned: vi.fn(),
 }));
 
 vi.mock("./api/shoppingQueries", () => ({
@@ -26,6 +27,11 @@ vi.mock("./api/shoppingQueries", () => ({
 	useDeleteShoppingItemMutation: () => ({ mutate: mockShopping.remove, isPending: false, isError: false }),
 	useClearCompletedShoppingItemsMutation: () => ({ mutate: mockShopping.clear, isPending: false, isError: false }),
 	useAddRecipeIngredientsMutation: () => ({ mutate: mockShopping.importRecipe, isPending: false, isError: false }),
+	useAddRecipeIngredientsFromRecipesMutation: () => ({ mutate: mockShopping.importPlanned, isPending: false, isError: false }),
+}));
+
+vi.mock("@/features/planning/api/planningQueries", () => ({
+	useMealPlanForWeekQuery: () => ({ data: null, isPending: false, isError: false }),
 }));
 
 const renderPage = () => {
@@ -54,6 +60,7 @@ describe("ShoppingListPage", () => {
 		mockShopping.remove.mockReset();
 		mockShopping.clear.mockReset();
 		mockShopping.importRecipe.mockReset();
+		mockShopping.importPlanned.mockReset();
 	});
 
 	afterEach(() => {

@@ -64,6 +64,52 @@ export class MessageResponseDto {
   message!: string;
 }
 
+export class RecipeNoteDto {
+  @ApiProperty({ example: 7 })
+  user_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Use half the salt next time.' })
+  note!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updated_at!: string;
+}
+
+export class NoteResponseDto {
+  @ApiProperty({ type: RecipeNoteDto, nullable: true })
+  note!: RecipeNoteDto | null;
+}
+
+export class PantryItemDto {
+  @ApiProperty({ example: 4 })
+  pantry_id!: number;
+
+  @ApiProperty({ example: 7 })
+  user_id!: number;
+
+  @ApiProperty({ example: 'Eggs' })
+  name!: string;
+
+  @ApiProperty({ example: true })
+  have!: boolean;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updated_at!: string;
+}
+
+export class PantryItemResponseDto {
+  @ApiProperty({ type: PantryItemDto })
+  item!: PantryItemDto;
+}
+
+export class PantryResponseDto {
+  @ApiProperty({ type: [PantryItemDto] })
+  items!: PantryItemDto[];
+}
+
 export class WishlistRemovalResponseDto {
   @ApiProperty({ example: 'Wishlist item removed' })
   message!: string;
@@ -100,6 +146,9 @@ export class RecipeResponseDto {
   @ApiPropertyOptional({ type: [String], nullable: true })
   instructions?: string[] | null;
 
+  @ApiPropertyOptional({ type: () => [RecipeStructuredIngredientDto], nullable: true })
+  structured_ingredients?: RecipeStructuredIngredientDto[] | null;
+
   @ApiProperty({ example: 7 })
   user_id!: number;
 
@@ -126,6 +175,29 @@ export class RecipeResponseDto {
 
   @ApiPropertyOptional({ example: 12 })
   num_ratings?: number;
+}
+
+export class RecipeStructuredIngredientDto {
+  @ApiProperty({ example: 1 })
+  ingredient_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'chicken breast' })
+  name!: string;
+
+  @ApiProperty({ example: 500, nullable: true })
+  quantity!: number | null;
+
+  @ApiProperty({ example: 'GRAM', nullable: true })
+  unit!: string | null;
+
+  @ApiProperty({ example: 'diced', nullable: true })
+  note!: string | null;
+
+  @ApiProperty({ example: 0 })
+  position!: number;
 }
 
 export class RecipePaginationResponseDto {

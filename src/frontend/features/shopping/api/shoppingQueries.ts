@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	addRecipeIngredients,
+	addRecipeIngredientsFromRecipes,
 	addShoppingItem,
 	clearCompletedShoppingItems,
 	deleteShoppingItem,
@@ -61,6 +62,14 @@ export const useAddRecipeIngredientsMutation = () => {
 	const queryClient = useQueryClient();
 	return useMutation({
 		mutationFn: (recipeId: number) => addRecipeIngredients(recipeId),
+		onSuccess: () => invalidateShoppingList(queryClient),
+	});
+};
+
+export const useAddRecipeIngredientsFromRecipesMutation = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: (recipeIds: number[]) => addRecipeIngredientsFromRecipes(recipeIds),
 		onSuccess: () => invalidateShoppingList(queryClient),
 	});
 };

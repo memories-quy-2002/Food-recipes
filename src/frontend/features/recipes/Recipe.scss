@@ -288,6 +288,72 @@
 			box-shadow: 0 16px 44px rgba(45, 32, 20, 0.08);
 		}
 
+		&__notes {
+			margin: 0 auto 1.25rem;
+			padding: 1.25rem;
+			border: 1px solid rgba(98, 58, 18, 0.1);
+			border-radius: 8px;
+			background: #ffffff;
+			box-shadow: 0 16px 44px rgba(45, 32, 20, 0.08);
+
+			h2 {
+				margin: 0;
+				font-size: 1.45rem;
+				font-weight: 900;
+			}
+
+			p {
+				margin: 0.4rem 0 1rem;
+				color: #6d6258;
+				line-height: 1.55;
+			}
+
+			label {
+				display: block;
+				margin-bottom: 0.45rem;
+				font-weight: 900;
+			}
+
+			textarea {
+				display: block;
+				width: 100%;
+				padding: 0.8rem;
+				border: 1px solid rgba(213, 107, 0, 0.3);
+				border-radius: 8px;
+				background: #fffaf3;
+				color: #211813;
+				line-height: 1.55;
+
+				&:focus {
+					outline: none;
+					border-color: #ff9f1c;
+					box-shadow: 0 0 0 4px rgba(255, 159, 28, 0.14);
+				}
+			}
+
+			&__actions {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 0.65rem;
+				margin-top: 0.75rem;
+
+				button {
+					min-height: 2.75rem;
+					padding: 0.6rem 1rem;
+					border: none;
+					border-radius: 999px;
+					background: #211813;
+					color: #ffffff;
+					font-weight: 900;
+
+					&:last-child {
+						background: #fff1d6;
+						color: #a84f00;
+					}
+				}
+			}
+		}
+
 		&__desc {
 			color: #42372f;
 			font-size: 1.08rem;

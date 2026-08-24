@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "@/shared/api/axios";
 import {
 	addRecipeIngredients,
+	addRecipeIngredientsFromRecipes,
 	addShoppingItem,
 	clearCompletedShoppingItems,
 	deleteShoppingItem,
@@ -66,6 +67,16 @@ describe("shopping list API", () => {
 		expect(mockedAxios.delete).toHaveBeenCalledWith("/users/me/shopping-list/completed");
 		expect(mockedAxios.post).toHaveBeenCalledWith("/users/me/shopping-list/from-recipe", {
 			recipeId: 15,
+		});
+	});
+
+	it("imports multiple planned recipes through the consolidation route", async () => {
+		mockedAxios.post.mockResolvedValueOnce({ data: { recipes: ["Pasta", "Omelette"], items: [] } });
+
+		await addRecipeIngredientsFromRecipes([15, 16]);
+
+		expect(mockedAxios.post).toHaveBeenCalledWith("/users/me/shopping-list/from-recipe", {
+			recipeIds: [15, 16],
 		});
 	});
 });

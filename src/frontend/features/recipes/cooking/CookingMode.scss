@@ -114,6 +114,76 @@
 		border-radius: 0.75rem;
 	}
 
+	&__timer {
+		margin-top: 1rem;
+		padding: 1rem;
+		border: 1px solid rgba(255, 209, 139, 0.3);
+		border-radius: 0.75rem;
+		background: rgba(255, 248, 239, 0.08);
+
+		&__header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 1rem;
+
+			h2 {
+				margin: 0;
+				font-size: 1.05rem;
+				font-weight: 900;
+			}
+
+			p {
+				max-width: 48ch;
+				margin: 0.35rem 0 0;
+				color: rgba(255, 248, 239, 0.72);
+				font-size: 0.9rem;
+				line-height: 1.45;
+			}
+
+			strong {
+				font-size: 1.6rem;
+				font-variant-numeric: tabular-nums;
+				white-space: nowrap;
+			}
+		}
+
+		label {
+			display: block;
+			margin-top: 0.85rem;
+			font-size: 0.85rem;
+			font-weight: 900;
+		}
+
+		input {
+			width: 7rem;
+			min-height: 2.75rem;
+			margin-top: 0.35rem;
+			padding: 0 0.7rem;
+			border: 1px solid rgba(255, 248, 239, 0.35);
+			border-radius: 0.5rem;
+			background: #fffaf3;
+			color: #211813;
+		}
+
+		&__actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.6rem;
+			margin-top: 0.75rem;
+
+			button {
+				min-height: 2.75rem;
+				padding: 0.6rem 0.85rem;
+				border: none;
+				border-radius: 0.65rem;
+				background: #ff9f1c;
+				color: #17110c;
+				font-weight: 900;
+			}
+		}
+	}
+
 	&__complete {
 		margin-top: 2rem;
 		padding: clamp(1.5rem, 5vw, 3rem);
@@ -163,5 +233,10 @@
 @media (max-width: 480px) {
 	.cooking-mode__controls {
 		grid-template-columns: 1fr;
+	}
+
+	.cooking-mode__timer__header {
+		align-items: flex-start;
+		flex-direction: column;
 	}
 }

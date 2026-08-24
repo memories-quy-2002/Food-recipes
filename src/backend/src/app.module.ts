@@ -15,6 +15,8 @@ import { CollectionsModule } from './modules/collections/collections.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { PlanningModule } from './modules/planning/planning.module';
 import { MediaModule } from './modules/media/media.module';
+import { NotesModule } from './modules/notes/notes.module';
+import { PantryModule } from './modules/pantry/pantry.module';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { MediaModule } from './modules/media/media.module';
     ReportsModule,
     PlanningModule,
     MediaModule,
+    NotesModule,
+    PantryModule,
   ],
 })
 export class AppModule {}

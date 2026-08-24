@@ -19,6 +19,8 @@ import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
 import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
+import PrivateRecipeNotes from "@/features/recipes/notes/PrivateRecipeNotes";
+import { recordRecentlyViewedRecipe } from "@/features/recipes/recentlyViewed";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
@@ -438,6 +440,7 @@ const Recipe = () => {
 	}, [isAuthenticated, recipe, userId]);
 	useEffect(() => {
 		if (!recipe) return;
+		recordRecentlyViewedRecipe(window.localStorage, Number(recipe.recipe_id));
 
 		fetchReviews(recipe.recipe_id).catch((err) => console.error(err));
 	}, [fetchReviews, recipe]);
@@ -542,6 +545,7 @@ const Recipe = () => {
 						onToggleReview={handleToggleReview}
 						onReviewChange={handleReviewChange}
 					/>
+					<PrivateRecipeNotes recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
 					<RecipeOtherList recipeId={recipe.recipe_id} />
 				</Container>
 			)}

@@ -6,6 +6,8 @@ import { MealPlanSlot } from './dto/add-meal-plan-item.dto';
 export type MealPlanRecord = { plan_id: number; name: string; start_date: Date | string; end_date: Date | string; created_at: Date; updated_at: Date };
 export type MealPlanItemRecord = { item_id: number; plan_id: number; recipe_id: number; recipe_name: string; planned_date: Date | string; slot: MealPlanSlot; servings: number; created_at: Date };
 export type ShoppingListItemRecord = { item_id: number; label: string; quantity: string | null; source_recipe_id: number | null; source_recipe_name: string | null; checked: boolean; created_at: Date; updated_at: Date };
+export type StructuredShoppingIngredient = { name: string; quantity: number | null; unit: string | null; note: string | null; position: number; recipe_id?: number };
+export type RecipeIngredientsRecord = { name: string; ingredients: string[]; structuredIngredients?: StructuredShoppingIngredient[] };
 
 export interface PlanningRepositoryPort {
   listPlans(userId: number, from?: string, to?: string): Promise<MealPlanRecord[]>;
@@ -23,7 +25,7 @@ export interface PlanningRepositoryPort {
   addShoppingItem(userId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord>;
   updateShoppingItem(userId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null>;
   deleteShoppingItem(userId: number, itemId: number): Promise<boolean>;
-  recipeIngredients(recipeId: number): Promise<{ name: string; ingredients: string[] } | null>;
+  recipeIngredients(recipeId: number): Promise<RecipeIngredientsRecord | null>;
   clearCompletedShoppingItems(userId: number): Promise<number>;
 }
 
@@ -166,9 +168,21 @@ export class PlanningRepository implements PlanningRepositoryPort {
     return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE user_id = ${userId} AND item_id = ${itemId}`)) > 0;
   }
 
-  async recipeIngredients(recipeId: number): Promise<{ name: string; ingredients: string[] } | null> {
+  async recipeIngredients(recipeId: number): Promise<RecipeIngredientsRecord | null> {
     const rows = await this.prisma.$queryRaw<{ name: string; ingredients: string[] }[]>(Prisma.sql`SELECT recipe_name AS name, ingredients FROM recipes WHERE recipe_id = ${recipeId}`);
-    return rows[0] ?? null;
+    if (!rows[0]) return null;
+    const structuredIngredients = await this.prisma.$queryRaw<StructuredShoppingIngredient[]>(Prisma.sql`
+      SELECT recipe_id, name, quantity, unit, note, position
+      FROM recipe_ingredients
+      WHERE recipe_id = ${recipeId}
+      ORDER BY position ASC, ingredient_id ASC
+    `);
+    return { ...rows[0], structuredIngredients: (structuredIngredients ?? []).map((ingredient) => ({
+      ...ingredient,
+      recipe_id: Number(ingredient.recipe_id),
+      quantity: ingredient.quantity === null ? null : Number(ingredient.quantity),
+      position: Number(ingredient.position),
+    })) };
   }
 
   clearCompletedShoppingItems(userId: number): Promise<number> {

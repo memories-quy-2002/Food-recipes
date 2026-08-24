@@ -33,6 +33,15 @@ export type RecipeSummary = NestRecipeSummary;
 export type RecipeDetail = RecipeSummary & {
 	ingredients: string[] | null;
 	instructions: string[] | null;
+	structured_ingredients?: Array<{
+		ingredient_id?: number;
+		recipe_id?: number;
+		name: string;
+		quantity?: number | null;
+		unit?: string | null;
+		note?: string | null;
+		position?: number;
+	}> | null;
 };
 
 export type RecipePagination = {

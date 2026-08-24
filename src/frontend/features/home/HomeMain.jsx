@@ -15,6 +15,7 @@ import FoodCardList from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
 import { useHomeSearchQuery } from "./main/api/useHomeSearchQuery";
 import PageState from "@/shared/ui/PageState";
+import RecentlyViewedRecipes from "@/features/recipes/RecentlyViewedRecipes";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
@@ -260,6 +261,7 @@ const HomeMain = () => {
 						featuredMode={featuredMode}
 						onFeaturedModeChange={setFeaturedMode}
 					/>
+					<RecentlyViewedRecipes recipes={recipes} />
 				</>
 			)}
 		</div>

@@ -15,7 +15,8 @@ export type ShoppingListItemResponse = { item: ShoppingListItem };
 export type ShoppingListMessageResponse = { message: string };
 export type ClearCompletedResponse = { removed: number };
 export type AddRecipeIngredientsResponse = {
-	recipe: string;
+	recipe?: string;
+	recipes?: string[];
 	items: ShoppingListItem[];
 };
 
@@ -78,6 +79,16 @@ export const addRecipeIngredients = async (
 	const response = await axios.post<AddRecipeIngredientsResponse>(
 		apiRoutes.shoppingListFromRecipe,
 		{ recipeId },
+	);
+	return response.data;
+};
+
+export const addRecipeIngredientsFromRecipes = async (
+	recipeIds: number[],
+): Promise<AddRecipeIngredientsResponse> => {
+	const response = await axios.post<AddRecipeIngredientsResponse>(
+		apiRoutes.shoppingListFromRecipe,
+		{ recipeIds },
 	);
 	return response.data;
 };

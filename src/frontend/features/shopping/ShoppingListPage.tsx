@@ -1,8 +1,11 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import { getWeekRange } from "@/features/planning/api/planningDates";
+import { useMealPlanForWeekQuery } from "@/features/planning/api/planningQueries";
 import type { ShoppingListItem } from "./api/shoppingApi";
 import {
+	useAddRecipeIngredientsFromRecipesMutation,
 	useAddShoppingItemMutation,
 	useClearCompletedShoppingItemsMutation,
 	useDeleteShoppingItemMutation,
@@ -17,6 +20,8 @@ const ShoppingListPage = () => {
 	const updateMutation = useUpdateShoppingItemMutation();
 	const deleteMutation = useDeleteShoppingItemMutation();
 	const clearMutation = useClearCompletedShoppingItemsMutation();
+	const plannedIngredientsMutation = useAddRecipeIngredientsFromRecipesMutation();
+	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()));
 	const [label, setLabel] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [editingItemId, setEditingItemId] = useState<number | null>(null);
@@ -28,10 +33,18 @@ const ShoppingListPage = () => {
 	const items = shoppingQuery.data?.items ?? [];
 	const activeItems = items.filter((item) => !item.checked);
 	const completedItems = items.filter((item) => item.checked);
+	const plannedRecipeIds = [...new Set((mealPlanQuery.data?.items ?? []).map((item) => item.recipe_id))];
 	const actionError =
-		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError
+		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || plannedIngredientsMutation.isError
 			? "We could not save that change. Try again."
 			: null;
+
+	const importPlannedIngredients = () => {
+		if (plannedRecipeIds.length === 0 || plannedIngredientsMutation.isPending) return;
+		plannedIngredientsMutation.mutate(plannedRecipeIds, {
+			onSuccess: (response) => setMessage(`${response.items.length} planned ingredient${response.items.length === 1 ? "" : "s"} added to your shopping list.`),
+		});
+	};
 
 	const submitItem = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
@@ -170,7 +183,10 @@ const ShoppingListPage = () => {
 						<h1 id="shopping-list-title">Shopping List</h1>
 						<p>Keep the next shop clear, flexible, and close to the recipes you actually want to cook.</p>
 					</div>
-					<Link className="shopping-list-page__secondary-link" to="/planning">Back to planning</Link>
+					<div className="shopping-list-page__header-links">
+						<Link className="shopping-list-page__secondary-link" to="/planning">Back to planning</Link>
+						<Link className="shopping-list-page__secondary-link" to="/pantry">My pantry</Link>
+					</div>
 				</header>
 
 				{message && <p className="shopping-list-page__message" role="status">{message}</p>}
@@ -195,6 +211,18 @@ const ShoppingListPage = () => {
 							{formError && <p className="shopping-list-page__inline-error" role="alert">{formError}</p>}
 							{actionError && <p className="shopping-list-page__inline-error" role="alert">{actionError}</p>}
 						</form>
+						<section className="shopping-list__planned-import" aria-labelledby="planned-import-title">
+							<h3 id="planned-import-title">From this week’s plan</h3>
+							{mealPlanQuery.isError ? (
+								<p role="alert">We could not read this week’s plan.</p>
+							) : plannedRecipeIds.length === 0 ? (
+								<p>Add meals to your plan to import their ingredients together.</p>
+							) : (
+								<button className="shopping-list__button shopping-list__button--quiet" type="button" onClick={importPlannedIngredients} disabled={plannedIngredientsMutation.isPending} aria-busy={plannedIngredientsMutation.isPending}>
+									{plannedIngredientsMutation.isPending ? "Importing…" : `Import ${plannedRecipeIds.length} planned recipe${plannedRecipeIds.length === 1 ? "" : "s"}`}
+								</button>
+							)}
+						</section>
 					</section>
 
 					<section className="shopping-list__items-card" aria-labelledby="shopping-list-items-title">

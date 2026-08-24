@@ -1,5 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsInt, IsOptional, IsString, Min, MinLength, ValidateNested } from 'class-validator';
+import { StructuredIngredientDto } from './structured-ingredient.dto';
 
 export class CreateRecipeDto {
   @ApiProperty({ example: 'Pasta Carbonara' })
@@ -37,6 +39,13 @@ export class CreateRecipeDto {
   @IsArray()
   @IsString({ each: true })
   ingredients?: string[];
+
+  @ApiPropertyOptional({ type: [StructuredIngredientDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => StructuredIngredientDto)
+  structuredIngredients?: StructuredIngredientDto[];
 
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
