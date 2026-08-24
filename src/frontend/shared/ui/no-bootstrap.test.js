@@ -4,12 +4,11 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const frontendRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-const sourceRoot = join(frontendRoot, "src");
 const sourceExtensions = new Set([".js", ".jsx", ".ts", ".tsx"]);
 
 const collectBootstrapImports = (directory, violations = []) => {
 	for (const entry of readdirSync(directory, { withFileTypes: true })) {
-		if (["node_modules", "dist"].includes(entry.name)) continue;
+		if (["node_modules", "dist", ".git"].includes(entry.name)) continue;
 		const fullPath = join(directory, entry.name);
 		if (entry.isDirectory()) {
 			collectBootstrapImports(fullPath, violations);
@@ -26,7 +25,7 @@ const collectBootstrapImports = (directory, violations = []) => {
 
 describe("Bootstrap migration guard", () => {
 	it("keeps react-bootstrap out of application source", () => {
-		expect(collectBootstrapImports(sourceRoot)).toEqual([]);
+		expect(collectBootstrapImports(frontendRoot)).toEqual([]);
 	});
 
 	it("keeps Bootstrap packages out of the frontend manifest", () => {
