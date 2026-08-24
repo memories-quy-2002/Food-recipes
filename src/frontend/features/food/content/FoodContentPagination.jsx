@@ -1,5 +1,5 @@
 import React from "react";
-import Pagination from "react-bootstrap/Pagination";
+import { Pagination } from "@/shared/ui/legacy-ui";
 
 export const getPaginationPageNumbers = (totalPages, currentPage) => {
 	if (totalPages <= 5) return Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -52,16 +52,13 @@ const FoodContentPagination = ({
 					<Pagination.Next
 						onClick={() =>
 							onPagination(
-								normalizedCurrentPage <
-									totalPages
+								normalizedCurrentPage < totalPages
 									? normalizedCurrentPage + 1
 									: totalPages
 							)
 						}
 					/>
-					<Pagination.Last
-						onClick={() => onPagination(totalPages)}
-					/>
+					<Pagination.Last onClick={() => onPagination(totalPages)} />
 				</>
 			)}
 		</Pagination>
