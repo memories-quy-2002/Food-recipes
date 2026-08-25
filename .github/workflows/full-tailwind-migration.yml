@@ -1,5 +1,6 @@
 name: One-time full Tailwind migration
 
+# trigger: 2026-08-25
 on:
   push:
     branches:
@@ -198,30 +199,14 @@ export default Alert;
           fs.writeFileSync(path.join(root, 'shared/ui/Alert.jsx'), alertSource);
 
           const replacements = new Map([
-            ['features/food/Food.jsx', [
-              ['import { Col, Container, Row } from "@/shared/ui/legacy-ui";', 'import { Col, Container, Row } from "@/shared/ui/layout";'],
-            ]],
-            ['features/profile/ChangePassword.jsx', [
-              ['import { Button, Form } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";'],
-            ]],
-            ['features/profile/PersonalInfo.jsx', [
-              ['import { Button, Form } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";'],
-            ]],
-            ['features/profile/PersonalRecipes.jsx', [
-              ['import { Row, Col } from "@/shared/ui/legacy-ui";', 'import { Col, Row } from "@/shared/ui/layout";'],
-            ]],
-            ['features/profile/Profile.jsx', [
-              ['import { Container } from "@/shared/ui/legacy-ui";', 'import { Container } from "@/shared/ui/layout";'],
-            ]],
-            ['features/profile/Reviews.jsx', [
-              ['import { Row, Col } from "@/shared/ui/legacy-ui";', 'import { Col, Row } from "@/shared/ui/layout";'],
-            ]],
-            ['features/recipes/AddRecipe.jsx', [
-              ['import { Button, Col, Form, Row } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";\nimport { Col, Row } from "@/shared/ui/layout";'],
-            ]],
-            ['features/wishlist/Wishlist.jsx', [
-              ['import { Container } from "@/shared/ui/legacy-ui";', 'import { Container } from "@/shared/ui/layout";'],
-            ]],
+            ['features/food/Food.jsx', [['import { Col, Container, Row } from "@/shared/ui/legacy-ui";', 'import { Col, Container, Row } from "@/shared/ui/layout";']]],
+            ['features/profile/ChangePassword.jsx', [['import { Button, Form } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";']]],
+            ['features/profile/PersonalInfo.jsx', [['import { Button, Form } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";']]],
+            ['features/profile/PersonalRecipes.jsx', [['import { Row, Col } from "@/shared/ui/legacy-ui";', 'import { Col, Row } from "@/shared/ui/layout";']]],
+            ['features/profile/Profile.jsx', [['import { Container } from "@/shared/ui/legacy-ui";', 'import { Container } from "@/shared/ui/layout";']]],
+            ['features/profile/Reviews.jsx', [['import { Row, Col } from "@/shared/ui/legacy-ui";', 'import { Col, Row } from "@/shared/ui/layout";']]],
+            ['features/recipes/AddRecipe.jsx', [['import { Button, Col, Form, Row } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";\nimport { Col, Row } from "@/shared/ui/layout";']]],
+            ['features/wishlist/Wishlist.jsx', [['import { Container } from "@/shared/ui/legacy-ui";', 'import { Container } from "@/shared/ui/layout";']]],
           ]);
 
           for (const [relativeFile, pairs] of replacements) {
