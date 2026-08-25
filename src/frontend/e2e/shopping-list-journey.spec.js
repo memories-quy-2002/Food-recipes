@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { bootstrapTestAuth } from "./auth-fixtures";
 
 const recipe = {
 	recipe_id: 7,
@@ -46,17 +47,7 @@ async function stubRecipeApi(page) {
 }
 
 async function authenticateAsTestUser(page) {
-	await page.addInitScript(() => {
-		localStorage.setItem("isAuthenticated", "true");
-		localStorage.setItem(
-			"user",
-			JSON.stringify({ user_id: 7, full_name: "Smoke User" })
-		);
-		localStorage.setItem("jwt", "test-scoped-shopping-token");
-	});
-	await page.route("**/auth/token", (route) =>
-		route.fulfill(json({ user: { user_id: 7, full_name: "Smoke User" } }))
-	);
+	await bootstrapTestAuth(page, undefined, "test-memory-shopping-token");
 	await page.route("**/users/me/wishlist", (route) =>
 		route.fulfill(json({ wishlist: [] }))
 	);

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { bootstrapTestAuth } from "./auth-fixtures";
 
 const recipeId = 42;
 const testUser = { user_id: 7, full_name: "Smoke User" };
@@ -40,11 +41,7 @@ const json = (body, status = 200) => ({
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 async function authenticateAsTestUser(page) {
-	await page.addInitScript((user) => {
-		localStorage.setItem("isAuthenticated", "true");
-		localStorage.setItem("user", JSON.stringify(user));
-		localStorage.setItem("jwt", "test-scoped-recipe-edit-token");
-	}, testUser);
+	await bootstrapTestAuth(page, testUser, "test-memory-recipe-edit-token");
 }
 
 async function stubRecipeEditingApi(page, {

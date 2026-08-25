@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { authActions } from "@/features/auth/state/authSlice";
+import { getAccessToken } from "@/features/auth/state/authTokenStore";
 
 export const AuthContext = createContext({});
 
@@ -20,11 +21,7 @@ const AuthProvider = ({ children }) => {
 			? local?.user
 			: session?.user
 		: null;
-	const token = isAuthenticated
-		? local?.isAuthenticated
-			? local?.token
-			: session?.token
-		: null;
+	const token = isAuthenticated ? getAccessToken() : null;
 
 	useEffect(() => {
 		const handleExpiredAuth = () => {

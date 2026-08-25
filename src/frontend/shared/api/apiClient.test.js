@@ -4,7 +4,7 @@ import {
 	getAccessToken,
 	setAccessToken,
 } from "@/features/auth/state/authTokenStore";
-import { getApiConfig } from "./config";
+import { getApiConfig, getAuthToken, setAuthToken } from "./config";
 import { createApiClient } from "./axios";
 import { apiRoutes } from "./routes";
 
@@ -46,6 +46,12 @@ describe("API target configuration", () => {
 });
 
 describe("Nest API authentication and expiry", () => {
+	it("exposes memory-token adapters without storage semantics", () => {
+		setAuthToken("adapter-token");
+
+		expect(getAuthToken()).toBe("adapter-token");
+	});
+
 	it("forwards the memory access token and ignores stored JWT values", () => {
 		globalThis.localStorage = createStorage({ isAuthenticated: "false", jwt: "stale-token" });
 		globalThis.sessionStorage = createStorage({ isAuthenticated: "true", jwt: "session-token" });

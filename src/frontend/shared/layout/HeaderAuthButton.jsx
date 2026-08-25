@@ -5,13 +5,17 @@ import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
+import {
+	getAccessToken,
+	setAccessToken,
+} from "@/features/auth/state/authTokenStore";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
 
 const menuLink = "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const HeaderAuthButton = ({ auth }) => {
 	const { local, session } = auth;
-	const token = local.token || session.token;
+	const token = getAccessToken();
 	const [user, setUser] = useState({});
 	const [clicked, setClicked] = useState(false);
 	const menuRef = useRef(null);
@@ -23,13 +27,30 @@ const HeaderAuthButton = ({ auth }) => {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			if (token) {
-				try { const response = await axios.post(apiRoutes.authToken, { token }); setUser(response.data.user ?? response.data); }
-				catch (error) { if (error.response?.status === 401) { dispatch(authActions.logout()); navigate("/"); } }
-			} else if (session.user) setUser(session.user);
+			try {
+				let currentToken = token;
+				let refreshedUser = null;
+				if (!currentToken && isAuthenticated) {
+					const refreshResponse = await axios.post(apiRoutes.authRefresh, {});
+					currentToken = refreshResponse.data?.token;
+					refreshedUser = refreshResponse.data?.user;
+					if (currentToken) setAccessToken(currentToken);
+				}
+				if (currentToken) {
+					const response = await axios.post(apiRoutes.authToken, { token: currentToken });
+					setUser(response.data.user ?? response.data);
+				} else if (refreshedUser || local.user || session.user) {
+					setUser(refreshedUser ?? local.user ?? session.user);
+				}
+			} catch (error) {
+				if (error.response?.status === 401) {
+					dispatch(authActions.logout());
+					navigate("/");
+				}
+			}
 		};
 		fetchData();
-	}, [token, session.user, dispatch, navigate]);
+	}, [isAuthenticated, local.user, session.user, token, dispatch, navigate]);
 
 	useEffect(() => {
 		if (!clicked || typeof document === "undefined") return undefined;

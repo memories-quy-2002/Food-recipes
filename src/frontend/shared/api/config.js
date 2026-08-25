@@ -22,6 +22,6 @@ export const getApiConfig = (env = import.meta.env) => {
 	};
 };
 
-export const getStoredAuthToken = () => getAccessToken();
+export const getAuthToken = () => getAccessToken();
 
-export const storeAuthToken = (token) => setAccessToken(token);
+export const setAuthToken = (token) => setAccessToken(token);
