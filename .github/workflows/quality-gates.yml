@@ -5,96 +5,28 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: quality-gates-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  add-recipe-tailwind-codemod:
-    name: One-time Add Recipe Tailwind codemod
-    if: github.event_name == 'pull_request' && github.head_ref == 'refactor/frontend-tailwind-shadcn' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
-      - name: Migrate Add Recipe presentation
-        run: |
-          node <<'NODE'
-          const fs = require('node:fs');
-          const file = 'src/frontend/features/recipes/AddRecipe.jsx';
-          let source = fs.readFileSync(file, 'utf8');
-          source = source
-            .replace('import { Button, Col, Form, Row } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";\nimport { Col, Row } from "@/shared/ui/layout";')
-            .replace('import "./AddRecipe.scss";\n', '');
-
-          const classes = new Map([
-            ['fr-page fr-add add', 'min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10'],
-            ['add__surface', 'mx-auto w-full max-w-6xl'],
-            ['add__container', 'overflow-hidden rounded-3xl border border-border bg-card shadow-sm'],
-            ['add__container__header', 'border-b border-border bg-secondary/45 p-5 sm:p-7 lg:p-9'],
-            ['add__container__header__meta', 'mb-4 flex flex-wrap items-center gap-2'],
-            ['add__container__header__status', 'rounded-full bg-primary px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-primary-foreground'],
-            ['add__container__header__autosave', 'text-sm font-semibold text-muted-foreground'],
-            ['add__container__header__title', 'text-4xl font-black tracking-[-0.035em] text-foreground sm:text-5xl'],
-            ['add__container__header__declaration', 'mt-3 max-w-2xl text-base leading-7 text-muted-foreground'],
-            ['add__container__form', 'p-4 sm:p-6 lg:p-8'],
-            ['add__container__notice add__container__notice--restore', 'mb-4 rounded-2xl border border-primary/20 bg-secondary p-4 text-secondary-foreground'],
-            ['add__container__notice add__container__notice--error', 'mb-4 rounded-2xl border border-destructive/25 bg-destructive/10 p-4 text-destructive'],
-            ['add__container__notice add__container__notice--warning', 'mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900'],
-            ['add__container__notice', 'mb-4 rounded-2xl border border-border bg-muted p-4 text-foreground'],
-            ['add__container__notice__actions', 'mt-3 flex flex-wrap gap-2'],
-            ['add__container__form__field', 'mb-6 grid gap-4'],
-            ['add__container__form__imgContainer', 'grid gap-2'],
-            ['add__container__form__imgContainer__img', 'aspect-[4/3] w-full rounded-2xl border border-border bg-muted object-cover'],
-            ['add__container__form__hint', 'mt-2 text-sm leading-6 text-muted-foreground'],
-            ['add__container__form__time', 'mb-5 grid grid-cols-[minmax(0,1fr)_150px] gap-3'],
-            ['add__container__form__time__input', 'w-full'],
-            ['add__container__form__time__select', 'w-full'],
-            ['add__container__form__actions', 'sticky bottom-3 z-10 mt-8 grid gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur sm:grid-cols-[auto_auto_minmax(140px,1fr)] sm:items-center'],
-            ['add__container__form__reset btn btn-light', 'w-full sm:w-auto'],
-            ['add__container__form__save btn btn-light', 'w-full sm:w-auto'],
-            ['add__container__form__submit', 'w-full sm:justify-self-end'],
-            ['add__container__form__field__button', 'inline-flex min-h-11 items-center justify-center rounded-xl border border-input bg-background px-4 py-2 text-sm font-bold transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'],
-            ['d-flex gap-2 mb-3 flex-wrap', 'mb-3 grid gap-2 sm:grid-cols-[auto_0.7fr_0.8fr_1.5fr_1.2fr_auto] sm:items-center'],
-            ['d-flex gap-2 mb-2', 'mb-2 flex flex-col gap-2 sm:flex-row'],
-            ['d-flex gap-2 mb-3', 'mb-3 flex flex-col gap-2 sm:flex-row sm:items-start'],
-            ['d-flex gap-2 flex-wrap mb-3', 'mb-3 flex flex-wrap gap-2'],
-            ['d-flex gap-2 flex-wrap', 'flex flex-wrap gap-2'],
-            ['text-capitalize', 'capitalize'],
-            ['mt-3', 'mt-3'],
-          ]);
-          for (const [from, to] of classes) source = source.replaceAll(`className="${from}"`, `className="${to}"`);
-
-          source = source
-            .replaceAll('variant="light"', 'variant="outline"')
-            .replaceAll('variant="danger"', 'variant="destructive"')
-            .replaceAll('variant="primary"', 'variant="default"')
-            .replaceAll('className="btn btn-danger"', 'className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-destructive text-destructive-foreground transition hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"')
-            .replaceAll('style={{ marginTop: "10px" }}', 'className="mt-2"');
-
-          fs.writeFileSync(file, source);
-          fs.rmSync('src/frontend/features/recipes/AddRecipe.scss', { force: true });
-          NODE
-      - name: Commit transformed Add Recipe
-        run: |
-          if git diff --quiet; then exit 0; fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/frontend/features/recipes/AddRecipe.jsx src/frontend/features/recipes/AddRecipe.scss
-          git commit -m 'refactor(recipe): migrate authoring form to Tailwind shadcn'
-          git push
-
   static:
     name: Static validators
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Run DB-free static validators
+
+      - name: Run repository validators
         run: |
           node src/backend/test/ci-workflow.validation.mjs
           node src/backend/test/prisma-baseline.validation.mjs
@@ -103,118 +35,93 @@ jobs:
           node src/backend/test/backend-product-security.validation.mjs
 
   backend:
-    name: Backend quality
-    needs: static
+    name: Backend
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         with:
           version: 11.18.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
           cache-dependency-path: src/backend/pnpm-lock.yaml
+
       - name: Install locked dependencies
         working-directory: src/backend
         run: pnpm install --frozen-lockfile
+
       - name: Validate Prisma schema
         working-directory: src/backend
         run: pnpm prisma:validate
+
       - name: Generate Prisma client
         working-directory: src/backend
         run: pnpm prisma:generate
-      - name: Typecheck and unit tests
+
+      - name: Run backend checks
         working-directory: src/backend
         run: pnpm check
+
       - name: Run API contract E2E tests
         working-directory: src/backend
         run: pnpm test:e2e
+
       - name: Build API
         working-directory: src/backend
         run: pnpm build
-      - name: Audit backend dependencies
-        working-directory: src/backend
-        run: pnpm audit --audit-level high --ignore GHSA-ggr8-5vv4-36mx
+
+      - name: Build production API image
+        run: docker build --target runtime --tag food-recipes-api:ci --file src/backend/Dockerfile src/backend
 
   frontend:
-    name: Frontend quality
-    needs: backend
+    name: Frontend
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         with:
           version: 11.18.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
           cache-dependency-path: src/frontend/pnpm-lock.yaml
+
       - name: Install locked dependencies
         working-directory: src/frontend
         run: pnpm install --frozen-lockfile
-      - name: Lint, typecheck, and unit tests
+
+      - name: Run frontend checks
         working-directory: src/frontend
         run: pnpm check
+
       - name: Build frontend
         working-directory: src/frontend
         run: pnpm build
 
-  frontend-e2e:
-    name: Frontend Playwright E2E
-    needs: frontend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: src/frontend/pnpm-lock.yaml
-      - name: Install locked dependencies
-        working-directory: src/frontend
-        run: pnpm install --frozen-lockfile
       - name: Install Chromium
         working-directory: src/frontend
         run: pnpm exec playwright install --with-deps chromium
-      - name: Run frontend Playwright E2E
+
+      - name: Run frontend Playwright journeys
         working-directory: src/frontend
         run: pnpm test:e2e:ci
 
-  docker-runtime-build:
-    name: Docker runtime build
-    needs: frontend-e2e
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build API runtime image
-        run: docker build --target runtime --tag food-recipes-api:ci --file src/backend/Dockerfile src/backend
-
-  migration-release-handoff:
-    name: One-shot migration gate / release handoff
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: docker-runtime-build
-    runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Upload Playwright artifacts on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
         with:
-          version: 11.18.0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: src/backend/pnpm-lock.yaml
-      - name: Install locked dependencies
-        working-directory: src/backend
-        run: pnpm install --frozen-lockfile
-      - name: Deploy Prisma migrations once per release
-        working-directory: src/backend
-        run: pnpm prisma:migrate:deploy
+          name: playwright-results-${{ github.run_id }}
+          path: |
+            src/frontend/test-results
+            src/frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7

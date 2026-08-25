@@ -26,14 +26,7 @@ const jobs = Object.fromEntries(
   ]),
 );
 
-const expectedJobs = [
-  'static',
-  'backend',
-  'frontend',
-  'frontend-e2e',
-  'docker-runtime-build',
-  'migration-release-handoff',
-];
+const expectedJobs = ['static', 'backend', 'frontend'];
 
 assert.deepEqual(Object.keys(jobs), expectedJobs, 'quality gates must stay minimal and ordered');
 assert.match(workflow, /^  pull_request:\s*$/m, 'workflow must run for pull requests');
@@ -47,21 +40,6 @@ assert.match(workflow, /^permissions:\r?\n  contents: read\s*$/m, 'workflow must
 const assertJobContains = (jobName, pattern, message) => {
   assert.match(jobs[jobName], pattern, message ?? `${jobName} must contain ${pattern}`);
 };
-const assertJobNeeds = (jobName, dependency) => {
-  assert.match(jobs[jobName], new RegExp(`^    needs: ${dependency}\\s*$`, 'm'), `${jobName} must depend on ${dependency}`);
-};
-
-assert.doesNotMatch(jobs.static, /^    needs:/m, 'static validators must be the root quality gate');
-for (const [jobName, dependency] of [
-  ['backend', 'static'],
-  ['frontend', 'backend'],
-  ['frontend-e2e', 'frontend'],
-  ['docker-runtime-build', 'frontend-e2e'],
-  ['migration-release-handoff', 'docker-runtime-build'],
-]) {
-  assertJobNeeds(jobName, dependency);
-}
-
 assertJobContains('static', /actions\/setup-node@v4[\s\S]*node-version: 24/, 'static validators must use Node 24');
 for (const validator of [
   'ci-workflow.validation.mjs',
@@ -73,7 +51,7 @@ for (const validator of [
   assertJobContains('static', new RegExp(validator.replace('.', '\\.')));
 }
 
-for (const jobName of ['backend', 'frontend', 'frontend-e2e', 'migration-release-handoff']) {
+for (const jobName of ['backend', 'frontend']) {
   assertJobContains(jobName, /pnpm\/action-setup@v4[\s\S]*version: 11\.18\.0/);
   assertJobContains(jobName, /actions\/setup-node@v4[\s\S]*node-version: 24/);
   assertJobContains(jobName, /pnpm install --frozen-lockfile/);
@@ -86,25 +64,13 @@ assertJobContains('backend', /pnpm test:e2e/);
 assertJobContains('backend', /pnpm build/);
 assertJobContains('frontend', /pnpm check/);
 assertJobContains('frontend', /pnpm build/);
-assertJobContains('frontend-e2e', /pnpm test:e2e:ci/);
-assertJobContains('docker-runtime-build', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
-
-assert.match(
-  jobs['migration-release-handoff'],
-  /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/master'/,
-  'migration handoff must only run after pushes to master',
-);
-assertJobContains(
-  'migration-release-handoff',
-  /DATABASE_URL:\s*\$\{\{ secrets\.PRODUCTION_DATABASE_URL \}\}/,
-  'migration handoff must map PRODUCTION_DATABASE_URL into Prisma DATABASE_URL',
-);
-assertJobContains('migration-release-handoff', /pnpm prisma:migrate:deploy/);
-assert.equal(
-  workflow.split(/\r?\n/).filter((line) => line.includes('DATABASE_URL')).length,
-  1,
-  'DATABASE_URL must only be referenced by the release migration job',
-);
+assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
+assertJobContains('frontend', /pnpm exec playwright install --with-deps chromium/);
+assertJobContains('frontend', /pnpm test:e2e:ci/);
+assertJobContains('frontend', /actions\/upload-artifact@v4[\s\S]*retention-days: 7/);
+assert.doesNotMatch(workflow, /contents:\s*write/i, 'quality gates must never request write permissions');
+assert.doesNotMatch(workflow, /git push/i, 'quality gates must never push generated changes');
+assert.doesNotMatch(workflow, /prisma:migrate:deploy/i, 'quality gates must not mutate a deployment database');
 assert.doesNotMatch(workflow, /prisma migrate reset/i, 'CI must never reset a data-bearing database');
 
 assert.match(

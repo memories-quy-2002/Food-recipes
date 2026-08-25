@@ -1,14 +1,20 @@
-name: Visual audit PR 124
+name: Manual visual audit
 
 on:
-  push:
-    branches:
-      - refactor/frontend-tailwind-shadcn
-    paths:
-      - .github/workflows/visual-audit-pr124.yml
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Public base URL to audit, without a trailing slash
+        required: true
+        type: string
+      entry_url:
+        description: Optional authenticated or shared entry URL
+        required: false
+        default: ""
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   audit:
@@ -18,19 +24,23 @@ jobs:
         working-directory: src/frontend
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
         with:
-          fetch-depth: 0
+          version: 11.18.0
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
-      - run: corepack enable
-      - run: corepack pnpm@11.18.0 install --frozen-lockfile
-      - run: corepack pnpm@11.18.0 exec playwright install --with-deps chromium
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
       - name: Capture responsive screenshots and migration inventory
         continue-on-error: true
         env:
-          BASE_URL: https://food-recipes-awlm2n4ny-memories-projects-2002.vercel.app
-          ENTRY_URL: https://food-recipes-awlm2n4ny-memories-projects-2002.vercel.app/?_vercel_share=oX63PI1BgkKknAfqyx6U63SLIGHYIzth
+          BASE_URL: ${{ inputs.base_url }}
+          ENTRY_URL: ${{ inputs.entry_url }}
         run: |
           node <<'NODE'
           const { chromium } = require('playwright');
@@ -38,7 +48,7 @@ jobs:
           const path = require('node:path');
 
           const baseUrl = process.env.BASE_URL;
-          const entryUrl = process.env.ENTRY_URL;
+          const entryUrl = process.env.ENTRY_URL || baseUrl;
           const outputDir = path.join('public', 'visual-audit-pr124');
           const viewports = [
             { name: 'mobile-390', width: 390, height: 844 },
@@ -161,16 +171,3 @@ jobs:
           name: pr124-visual-audit
           path: src/frontend/public/visual-audit-pr124
           if-no-files-found: error
-      - name: Commit audit captures
-        if: always()
-        working-directory: .
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/frontend/public/visual-audit-pr124
-          if git diff --cached --quiet; then
-            echo 'No audit changes.'
-            exit 0
-          fi
-          git commit -m 'test(frontend): publish temporary visual audit captures'
-          git push

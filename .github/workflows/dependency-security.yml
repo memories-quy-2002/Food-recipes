@@ -1,0 +1,56 @@
+name: Dependency Security
+
+on:
+  pull_request:
+    paths:
+      - src/frontend/package.json
+      - src/frontend/pnpm-lock.yaml
+      - src/backend/package.json
+      - src/backend/pnpm-lock.yaml
+      - .github/dependabot.yml
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  audit:
+    name: Audit ${{ matrix.package }}
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - src/frontend
+          - src/backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.package }}/pnpm-lock.yaml
+
+      - name: Audit locked dependencies
+        working-directory: ${{ matrix.package }}
+        run: pnpm audit --audit-level high

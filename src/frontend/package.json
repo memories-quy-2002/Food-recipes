@@ -49,7 +49,7 @@
     "preview": "vite preview",
     "lint": "eslint --config eslint.config.mjs .",
     "lint:fix": "eslint --config eslint.config.mjs . --fix",
-    "check": "corepack pnpm@11.18.0 run lint && corepack pnpm@11.18.0 run typecheck && corepack pnpm@11.18.0 run test:ci",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test:ci",
     "test": "vitest",
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",

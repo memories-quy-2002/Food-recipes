@@ -202,6 +202,21 @@ Use `corepack pnpm@11.18.0 infra:down` from `src/backend` to stop the developmen
 stack. All backend commands run directly from the single package at
 `src/backend`.
 
+## GitHub CI/CD
+
+Pull requests and pushes to `master` run the required quality gates in
+`.github/workflows/quality-gates.yml`. Backend and frontend checks run in
+parallel, and failed Playwright runs retain short-lived test artifacts for
+diagnosis. The workflow is read-only and never commits or pushes changes.
+
+`.github/workflows/dependency-security.yml` reviews dependency changes in pull
+requests and runs a weekly audit for both packages. Dependabot watches the
+frontend, backend, and GitHub Actions dependency sources separately.
+
+Vercel handles frontend preview and production deployments from the connected
+GitHub repository. Production Prisma migrations remain a deliberate manual
+operation through `.github/workflows/production-prisma-baseline.yml`.
+
 ## Database and migrations
 
 Prisma schema and migrations live under `src/backend/prisma/`.

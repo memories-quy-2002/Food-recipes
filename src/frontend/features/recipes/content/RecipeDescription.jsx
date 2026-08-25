@@ -90,7 +90,6 @@ const RecipeDescription = ({ recipe }) => {
 	useEffect(() => {
 		setServings(normalizeServings(getServings(recipe)));
 		// Reset only when the displayed recipe changes; do not clobber a user's serving adjustment on re-render.
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [recipeIdentity]);
 
 	const adjustServings = (amount) => setServings((current) => {
