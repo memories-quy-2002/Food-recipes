@@ -1,0 +1,113 @@
+name: Production Demo Reset
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type RESET_FOOD_RECIPES_PRODUCTION to confirm the destructive reset
+        required: true
+        type: string
+      backup_confirm:
+        description: Type BACKUP_VERIFIED after confirming a recoverable backup/PITR point
+        required: true
+        type: string
+      project_ref:
+        description: Supabase project ref configured for the production demo environment
+        required: true
+        type: string
+      clear_storage:
+        description: Delete all objects from the configured recipe-images Storage bucket
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: production-demo-reset
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Validate CI and manual confirmation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Require the master branch
+        run: |
+          if [ "$GITHUB_REF_NAME" != "master" ]; then
+            echo "Production demo reset must be dispatched from master; got $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+
+      - name: Validate manual confirmation inputs
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          BACKUP_CONFIRM: ${{ inputs.backup_confirm }}
+        run: |
+          test "$CONFIRM" = "RESET_FOOD_RECIPES_PRODUCTION"
+          test "$BACKUP_CONFIRM" = "BACKUP_VERIFIED"
+
+      - name: Require successful Quality Gates for this commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          successful_runs="$(gh run list --workflow quality-gates.yml --commit "$GITHUB_SHA" --json conclusion --jq '[.[] | select(.conclusion == "success")] | length')"
+          if [ "$successful_runs" -lt 1 ]; then
+            echo "No successful Quality Gates run found for $GITHUB_SHA" >&2
+            exit 1
+          fi
+
+  reset-production-demo:
+    name: Reset and seed production demo
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production-demo-reset
+    env:
+      NODE_ENV: production
+      DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+      PRODUCTION_DEMO_RESET_ENABLED: ${{ secrets.PRODUCTION_DEMO_RESET_ENABLED }}
+      PRODUCTION_DEMO_PROJECT_REF: ${{ secrets.PRODUCTION_DEMO_PROJECT_REF }}
+      PRODUCTION_DEMO_DB_HOST: ${{ secrets.PRODUCTION_DEMO_DB_HOST }}
+      DEMO_RESET_PROJECT_REF: ${{ inputs.project_ref }}
+      DEMO_RESET_CONFIRM: ${{ inputs.confirm }}
+      DEMO_RESET_BACKUP_CONFIRMED: ${{ inputs.backup_confirm }}
+      DEMO_RESET_STORAGE: ${{ inputs.clear_storage }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_RECIPE_BUCKET: ${{ secrets.SUPABASE_RECIPE_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
+
+      - name: Install locked backend dependencies
+        working-directory: src/backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        working-directory: src/backend
+        run: pnpm prisma:generate
+
+      - name: Deploy pending migrations
+        working-directory: src/backend
+        run: pnpm prisma:migrate:deploy
+
+      - name: Reset application data, seed demo data, and clear Storage
+        working-directory: src/backend
+        run: pnpm demo:reset:production
+
+      - name: Verify demo graph
+        working-directory: src/backend
+        run: pnpm demo:verify

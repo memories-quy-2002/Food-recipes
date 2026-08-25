@@ -27,6 +27,8 @@
     "prisma:migrate:deploy": "prisma migrate deploy --config prisma.config.ts",
     "prisma:seed": "prisma db seed --config prisma.config.ts",
     "prisma:studio": "prisma studio --config prisma.config.ts",
+    "demo:reset:production": "ts-node --transpile-only scripts/production-demo-reset.ts",
+    "demo:verify": "ts-node --transpile-only scripts/verify-demo-seed.ts",
     "infra:up": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build",
     "infra:down": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml down",
     "prepare": "cd ../.. && husky .husky"
