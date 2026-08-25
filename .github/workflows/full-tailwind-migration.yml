@@ -1,0 +1,271 @@
+name: One-time full Tailwind migration
+
+on:
+  push:
+    branches:
+      - refactor/frontend-tailwind-shadcn
+    paths:
+      - .github/workflows/full-tailwind-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - run: corepack enable
+      - name: Install frontend dependencies
+        working-directory: src/frontend
+        run: corepack pnpm@11.18.0 install --frozen-lockfile
+      - name: Consolidate styles and split legacy primitives
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const { execFileSync } = require('node:child_process');
+
+          const root = path.resolve('src/frontend');
+          const indexCssPath = path.join(root, 'app/index.css');
+          let indexCss = fs.readFileSync(indexCssPath, 'utf8');
+          const marker = '/* migrated feature styles */';
+          if (indexCss.includes(marker)) {
+            indexCss = indexCss.slice(0, indexCss.indexOf(marker)).trimEnd() + '\n';
+          }
+
+          const styleBlocks = [];
+          const styleFiles = new Set();
+          const sourceExtensions = new Set(['.js', '.jsx', '.ts', '.tsx']);
+
+          function walk(dir, files = []) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              if (['node_modules', 'dist', 'public', '.git'].includes(entry.name)) continue;
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(full, files);
+              else files.push(full);
+            }
+            return files;
+          }
+
+          const sourceFiles = walk(root).filter((file) => sourceExtensions.has(path.extname(file)));
+          const styleImportPattern = /^\s*import\s+["']([^"']+\.(?:scss|css))["'];?\s*$/gm;
+
+          for (const file of sourceFiles) {
+            let source = fs.readFileSync(file, 'utf8');
+            let changed = false;
+            source = source.replace(styleImportPattern, (full, specifier) => {
+              if (specifier === '@/app/index.css') return full;
+              let resolved;
+              if (specifier === '@/app/food-recipes-design.css') {
+                resolved = path.join(root, 'app/food-recipes-design.css');
+              } else if (specifier.startsWith('./') || specifier.startsWith('../')) {
+                resolved = path.resolve(path.dirname(file), specifier);
+              } else {
+                return full;
+              }
+              if (!fs.existsSync(resolved)) return full;
+              const ext = path.extname(resolved);
+              const rel = path.relative(root, resolved).replaceAll('\\', '/');
+              let css;
+              if (ext === '.scss') {
+                css = execFileSync(
+                  path.join(root, 'node_modules/.bin/sass'),
+                  [resolved, '--style=expanded', '--no-source-map'],
+                  { encoding: 'utf8' },
+                );
+              } else {
+                css = fs.readFileSync(resolved, 'utf8');
+              }
+              styleBlocks.push(`/* ${rel} */\n${css.trim()}\n`);
+              styleFiles.add(resolved);
+              changed = true;
+              return '';
+            });
+            if (changed) fs.writeFileSync(file, source.replace(/\n{3,}/g, '\n\n'));
+          }
+
+          if (styleBlocks.length) {
+            indexCss += `\n${marker}\n@layer components {\n${styleBlocks.join('\n')}\n}\n`;
+            fs.writeFileSync(indexCssPath, indexCss);
+          }
+          for (const file of styleFiles) fs.rmSync(file, { force: true });
+
+          const formSource = `import React, { createContext, useContext, useId } from "react";
+import { cn } from "@/shared/lib/utils";
+
+const FormGroupContext = createContext(null);
+
+const FormRoot = React.forwardRef(({ className, ...props }, ref) => (
+  <form ref={ref} className={className} {...props} />
+));
+FormRoot.displayName = "Form";
+
+const FormGroup = React.forwardRef(({ as: Component = "div", controlId, className, ...props }, ref) => {
+  const generatedId = useId();
+  const id = controlId || generatedId;
+  return (
+    <FormGroupContext.Provider value={id}>
+      <Component ref={ref} className={cn("min-w-0 space-y-1.5", className)} {...props} />
+    </FormGroupContext.Provider>
+  );
+});
+FormGroup.displayName = "Form.Group";
+
+const FormLabel = React.forwardRef(({ htmlFor, className, ...props }, ref) => {
+  const groupId = useContext(FormGroupContext);
+  return <label ref={ref} htmlFor={htmlFor || groupId || undefined} className={cn("block text-sm font-semibold text-foreground", className)} {...props} />;
+});
+FormLabel.displayName = "Form.Label";
+
+const FormControl = React.forwardRef(({ as: Component = "input", id, isInvalid = false, isValid = false, plaintext = false, className, ...props }, ref) => {
+  const groupId = useContext(FormGroupContext);
+  return (
+    <Component
+      ref={ref}
+      id={id || groupId || undefined}
+      aria-invalid={isInvalid || undefined}
+      className={cn(
+        "flex min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50",
+        plaintext && "border-transparent bg-transparent px-0 shadow-none",
+        isInvalid && "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/25",
+        isValid && "border-emerald-600 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
+FormControl.displayName = "Form.Control";
+
+const FormSelect = React.forwardRef(({ id, className, ...props }, ref) => {
+  const groupId = useContext(FormGroupContext);
+  return <select ref={ref} id={id || groupId || undefined} className={cn("min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50", className)} {...props} />;
+});
+FormSelect.displayName = "Form.Select";
+
+const FormCheck = React.forwardRef(({ id, label, className, type = "checkbox", ...props }, ref) => {
+  const generatedId = useId();
+  const inputId = id || generatedId;
+  return (
+    <label htmlFor={inputId} className={cn("inline-flex min-h-11 items-center gap-2 text-sm text-foreground", className)}>
+      <input ref={ref} id={inputId} type={type} className="size-4 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30" {...props} />
+      {label != null && <span>{label}</span>}
+    </label>
+  );
+});
+FormCheck.displayName = "Form.Check";
+
+const FormText = React.forwardRef(({ className, ...props }, ref) => <small ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />);
+FormText.displayName = "Form.Text";
+
+const FormFeedback = React.forwardRef(({ type = "invalid", className, ...props }, ref) => (
+  <div ref={ref} role={type === "invalid" ? "alert" : undefined} className={cn("text-sm font-medium", type === "valid" ? "text-emerald-700" : "text-destructive", className)} {...props} />
+));
+FormFeedback.displayName = "Form.Control.Feedback";
+FormControl.Feedback = FormFeedback;
+
+export const Form = Object.assign(FormRoot, { Group: FormGroup, Label: FormLabel, Control: FormControl, Select: FormSelect, Check: FormCheck, Text: FormText });
+`;
+          fs.writeFileSync(path.join(root, 'shared/ui/Form.jsx'), formSource);
+
+          const alertSource = `import React from "react";
+import { cn } from "@/shared/lib/utils";
+
+const Alert = React.forwardRef(({ variant = "default", className, ...props }, ref) => (
+  <div
+    ref={ref}
+    role="alert"
+    className={cn(
+      "rounded-xl border px-4 py-3 text-sm",
+      variant === "destructive" || variant === "danger"
+        ? "border-destructive/30 bg-destructive/10 text-destructive"
+        : "border-border bg-muted text-foreground",
+      className,
+    )}
+    {...props}
+  />
+));
+Alert.displayName = "Alert";
+export default Alert;
+`;
+          fs.writeFileSync(path.join(root, 'shared/ui/Alert.jsx'), alertSource);
+
+          const replacements = new Map([
+            ['features/food/Food.jsx', [
+              ['import { Col, Container, Row } from "@/shared/ui/legacy-ui";', 'import { Col, Container, Row } from "@/shared/ui/layout";'],
+            ]],
+            ['features/profile/ChangePassword.jsx', [
+              ['import { Button, Form } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";'],
+            ]],
+            ['features/profile/PersonalInfo.jsx', [
+              ['import { Button, Form } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";'],
+            ]],
+            ['features/profile/PersonalRecipes.jsx', [
+              ['import { Row, Col } from "@/shared/ui/legacy-ui";', 'import { Col, Row } from "@/shared/ui/layout";'],
+            ]],
+            ['features/profile/Profile.jsx', [
+              ['import { Container } from "@/shared/ui/legacy-ui";', 'import { Container } from "@/shared/ui/layout";'],
+            ]],
+            ['features/profile/Reviews.jsx', [
+              ['import { Row, Col } from "@/shared/ui/legacy-ui";', 'import { Col, Row } from "@/shared/ui/layout";'],
+            ]],
+            ['features/recipes/AddRecipe.jsx', [
+              ['import { Button, Col, Form, Row } from "@/shared/ui/legacy-ui";', 'import Button from "@/shared/ui/Button";\nimport { Form } from "@/shared/ui/Form";\nimport { Col, Row } from "@/shared/ui/layout";'],
+            ]],
+            ['features/wishlist/Wishlist.jsx', [
+              ['import { Container } from "@/shared/ui/legacy-ui";', 'import { Container } from "@/shared/ui/layout";'],
+            ]],
+          ]);
+
+          for (const [relativeFile, pairs] of replacements) {
+            const file = path.join(root, relativeFile);
+            if (!fs.existsSync(file)) continue;
+            let source = fs.readFileSync(file, 'utf8');
+            for (const [from, to] of pairs) source = source.replace(from, to);
+            fs.writeFileSync(file, source);
+          }
+
+          const legacyUi = path.join(root, 'shared/ui/legacy-ui.jsx');
+          if (fs.existsSync(legacyUi)) fs.rmSync(legacyUi);
+
+          const pkgPath = path.join(root, 'package.json');
+          const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+          delete pkg.dependencies?.sass;
+          delete pkg.devDependencies?.sass;
+          fs.writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+          const violations = [];
+          for (const file of walk(root)) {
+            if (!/\.(jsx?|tsx?|html|scss)$/.test(file)) continue;
+            const source = fs.readFileSync(file, 'utf8');
+            const rel = path.relative(root, file).replaceAll('\\', '/');
+            if (source.includes('@/shared/ui/legacy-ui')) violations.push(`legacy-ui: ${rel}`);
+            if (/^\s*import\s+["'][^"']+\.(?:scss|css)["'];?\s*$/m.test(source) && rel !== 'main.jsx') violations.push(`style import: ${rel}`);
+            if (path.extname(file) === '.scss') violations.push(`scss file: ${rel}`);
+          }
+          if (violations.length) throw new Error(`Migration incomplete:\n${violations.join('\n')}`);
+          NODE
+      - name: Refresh lockfile
+        working-directory: src/frontend
+        run: corepack pnpm@11.18.0 install --lockfile-only
+      - name: Verify frontend gates
+        working-directory: src/frontend
+        run: |
+          corepack pnpm@11.18.0 install --frozen-lockfile
+          corepack pnpm@11.18.0 run typecheck
+          corepack pnpm@11.18.0 run test:ci
+          corepack pnpm@11.18.0 run build
+      - name: Commit migration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/frontend
+          git commit -m 'refactor(frontend): complete Tailwind style migration'
+          git push
