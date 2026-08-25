@@ -446,6 +446,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 	};
 
 	const handleSaveDraft = async () => {
+		if (!isCreateMode) return;
 		const recipe = getValues();
 		const savedLocally = saveDraftLocally(recipe);
 		try {
@@ -500,6 +501,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 	};
 
 	const handleSubmit = async (values) => {
+		if (!isCreateMode) return;
 		const cleanedRecipe = {
 			...values,
 			recipeName: values.recipeName.trim(),
@@ -941,22 +943,24 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 								>
 									Discard draft
 								</Button>
-								<Button
-									type="button"
-									variant="secondary"
-									className="w-full sm:w-auto"
-									onClick={handleSaveDraft}
-									disabled={isSubmitting || !isDraftHydrated}
-								>
-									Save draft
-								</Button>
-								<Button
-									type="submit"
-									className="w-full sm:justify-self-end"
-									disabled={disabled || isSubmitting}
-								>
-									{isSubmitting ? "Publishing…" : "Publish"}
-								</Button>
+				{isCreateMode && <>
+					<Button
+						type="button"
+						variant="secondary"
+						className="w-full sm:w-auto"
+						onClick={handleSaveDraft}
+						disabled={isSubmitting || !isDraftHydrated}
+					>
+						Save draft
+					</Button>
+					<Button
+						type="submit"
+						className="w-full sm:justify-self-end"
+						disabled={disabled || isSubmitting}
+					>
+						{isSubmitting ? "Publishing…" : "Publish"}
+					</Button>
+				</>}
 							</div>
 						</Form>
 					</div>

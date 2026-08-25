@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
+import axios from "@/shared/api/axios";
 import RecipeEditor from "./RecipeEditor";
 
 vi.mock("@/shared/api/axios", () => ({
@@ -47,6 +48,7 @@ describe("RecipeEditor", () => {
 	beforeEach(() => {
 		cleanup();
 		localStorage.clear();
+		vi.clearAllMocks();
 	});
 
 	it("renders create mode without an edit identifier", () => {
@@ -82,5 +84,10 @@ describe("RecipeEditor", () => {
 		});
 		expect(screen.queryByText("Restore your saved draft?")).not.toBeInTheDocument();
 		expect(localStorage.getItem("food-recipes:recipe-draft:user:editor-user")).toContain("Unrelated create draft");
+		expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
+		expect(axios.post).not.toHaveBeenCalled();
+		expect(axios.patch).not.toHaveBeenCalled();
+		expect(axios.put).not.toHaveBeenCalled();
 	});
 });
