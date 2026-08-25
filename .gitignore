@@ -6,6 +6,7 @@ yarn-error.log*
 .pnpm-debug.log*
 .pnpm-store/
 .npm/
+.agents/
 
 # Generated package-manager metadata
 package-lock.json
