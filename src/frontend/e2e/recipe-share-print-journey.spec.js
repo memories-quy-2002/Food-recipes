@@ -30,12 +30,16 @@ const json = (body) => ({
 });
 
 async function stubRecipeApi(page) {
+	await page.route("**/recipes", (route) => route.fulfill(json({
+		recipes: [recipe],
+		pagination: { page: 1, limit: 100, total: 1, totalPages: 1, hasNext: false },
+	})));
 	await page.route("**/recipes/42", (route) => route.fulfill(json({ recipe })));
 	await page.route("**/recipes/42/reviews", (route) => route.fulfill(json({ reviews: [] })));
 }
 
-async function stubBrowserApis(page, { supportsShare }) {
-	await page.addInitScript(({ supportsNativeShare }) => {
+async function stubBrowserApis(page, { supportsShare, supportsClipboard = true }) {
+	await page.addInitScript(({ supportsNativeShare, supportsClipboardApi }) => {
 		Object.defineProperty(navigator, "share", {
 			configurable: true,
 			value: supportsNativeShare
@@ -46,16 +50,18 @@ async function stubBrowserApis(page, { supportsShare }) {
 		});
 		Object.defineProperty(navigator, "clipboard", {
 			configurable: true,
-			value: {
-				writeText: async (text) => {
-					window.__recipeClipboardText = text;
-				},
-			},
+			value: supportsClipboardApi
+				? {
+					writeText: async (text) => {
+						window.__recipeClipboardText = text;
+					},
+				}
+				: undefined,
 		});
 		window.print = () => {
 			window.__recipePrintCalls = (window.__recipePrintCalls || 0) + 1;
 		};
-	}, { supportsNativeShare: supportsShare });
+	}, { supportsNativeShare: supportsShare, supportsClipboardApi: supportsClipboard });
 }
 
 async function visitRecipe(page) {
@@ -101,15 +107,33 @@ test("copies the public recipe URL when native sharing is unavailable", async ({
 	await expect(page.getByRole("status").filter({ hasText: "Recipe link copied to clipboard." })).toHaveText("Recipe link copied to clipboard.");
 });
 
-test("invokes print and keeps recipe content printable without mobile overflow", async ({ page }) => {
+test("shows an actionable status when sharing and clipboard are unavailable", async ({ page }) => {
+	await stubBrowserApis(page, { supportsShare: false, supportsClipboard: false });
+	await visitRecipe(page);
+
+	await page.getByRole("button", { name: "Share recipe" }).click();
+	await expect(page.getByRole("status").filter({ hasText: "Sharing isn't available in this browser." })).toHaveText("Sharing isn't available in this browser.");
+	await expect(page.getByRole("alert").filter({ hasText: "Sharing isn't available in this browser." })).toBeVisible();
+});
+
+test("invokes print and keeps recipe content printable at the mobile breakpoint", async ({ page }) => {
 	await stubBrowserApis(page, { supportsShare: true });
 	await page.setViewportSize({ width: 390, height: 844 });
 	await visitRecipe(page);
+	await expect(page).toHaveURL(/\/recipe\?id=42$/);
+	await expect(page.getByRole("heading", { name: "Ingredients" })).toBeVisible();
+
+	const screenLayout = await page.evaluate(() => ({
+		viewportWidth: window.innerWidth,
+		documentWidth: document.documentElement.scrollWidth,
+	}));
+	expect(screenLayout.documentWidth).toBeLessThanOrEqual(screenLayout.viewportWidth);
 
 	await page.getByRole("button", { name: "Print recipe" }).click();
 	await expect.poll(() => page.evaluate(() => window.__recipePrintCalls || 0)).toBe(1);
 	await expect(page.getByRole("status").filter({ hasText: "Print dialog opened." })).toHaveText("Print dialog opened.");
 
+	// Keep print-media assertions separate from the normal mobile layout check above.
 	await page.emulateMedia({ media: "print" });
 	const actionsAreHidden = await page.locator(".recipe-print__summary button, .recipe-print__summary a").evaluateAll(
 		(controls) => controls.length > 0 && controls.every((control) => getComputedStyle(control).display === "none")
@@ -119,10 +143,4 @@ test("invokes print and keeps recipe content printable without mobile overflow",
 	await expect(page.getByRole("heading", { name: "Ingredients" })).toBeVisible();
 	await expect(page.getByRole("heading", { name: "Nutrition per serving" })).toBeVisible();
 	await expect(page.getByRole("heading", { name: "Instructions" })).toBeVisible();
-
-	const layout = await page.evaluate(() => ({
-		viewportWidth: window.innerWidth,
-		documentWidth: document.documentElement.scrollWidth,
-	}));
-	expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
 });
