@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const recipeId = 42;
 const testUser = { user_id: 7, full_name: "Smoke User" };
+const appOrigin = "http://127.0.0.1:4173";
 
 const publishedRecipe = {
 	recipe_id: recipeId,
@@ -54,11 +55,14 @@ async function stubRecipeEditingApi(page, {
 	const state = {
 		recipe: clone(initialRecipe),
 		saveRequests: [],
+		savedRecipeStatus: null,
+		publishRequests: [],
 	};
 
 	await page.route("**/*", async (route) => {
 		const request = route.request();
-		const path = new URL(request.url()).pathname;
+		const requestUrl = new URL(request.url());
+		const path = requestUrl.pathname;
 		const method = request.method();
 
 		if (path.endsWith("/auth/token")) {
@@ -66,7 +70,8 @@ async function stubRecipeEditingApi(page, {
 		}
 
 		if (path.endsWith("/users/me/recipes")) {
-			if (method !== "GET") return route.fallback();
+			expect(method).toBe("GET");
+			expect(requestUrl.searchParams.get("status")).toBe("all");
 			if (ownedRecipesStatus !== 200) {
 				return route.fulfill(json({ message: "Recipe access denied." }, ownedRecipesStatus));
 			}
@@ -105,9 +110,16 @@ async function stubRecipeEditingApi(page, {
 					recipe_name: payload.name ?? state.recipe.recipe_name,
 					recipe_description: payload.description ?? state.recipe.recipe_description,
 				};
+				state.savedRecipeStatus = state.recipe.status;
 				state.saveRequests.push({ method, path, payload });
 				return route.fulfill(json({ recipe: state.recipe }));
 			}
+		}
+
+		if (path.endsWith(`/recipes/${recipeId}/publish`)) {
+			expect(method).toBe("POST");
+			state.publishRequests.push({ method, path });
+			return route.fulfill(json({ recipe: { ...state.recipe, status: "published" } }));
 		}
 
 		for (const section of ["ingredients", "nutrition", "dietary-tags"]) {
@@ -119,6 +131,13 @@ async function stubRecipeEditingApi(page, {
 
 		if (path.endsWith(`/recipes/${recipeId}/reviews`)) {
 			return route.fulfill(json({ reviews: [] }));
+		}
+
+		if (path.startsWith("/api/") || requestUrl.port === "3000") {
+			throw new Error(`Unexpected API request: ${method} ${path}${requestUrl.search}`);
+		}
+		if (requestUrl.origin !== appOrigin) {
+			throw new Error(`Unexpected external request: ${method} ${requestUrl.href}`);
 		}
 
 		return route.fallback();
@@ -168,6 +187,8 @@ test("owner can open and save a draft without publishing it", async ({ page }) =
 	await expect(page).toHaveURL(/\/profile$/);
 	await expect.poll(() => api.saveRequests.some(({ method }) => method === "PATCH")).toBe(true);
 	await expect(api.saveRequests.some(({ method, path }) => method === "PUT" && path.endsWith("/dietary-tags"))).toBe(true);
+	await expect.poll(() => api.savedRecipeStatus).toBe("draft");
+	expect(api.publishRequests).toHaveLength(0);
 });
 
 test("guest access redirects to login with the edit destination preserved", async ({ page }) => {
@@ -177,7 +198,9 @@ test("guest access redirects to login with the edit destination preserved", asyn
 
 	await expect(page).toHaveURL(/\/account\?signup=false$/);
 	await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
-	await expect(page.getByPlaceholder("you@example.com")).toBeVisible();
+	await expect(page.getByLabel("Email address")).toBeVisible();
+	const authIntent = await page.evaluate(() => JSON.parse(sessionStorage.getItem("food-recipes:auth-intent") || "null"));
+	expect(authIntent).toMatchObject({ returnTo: "/food/edit?id=42" });
 	await expect(page).not.toHaveURL(/\/food\/edit/);
 });
 
