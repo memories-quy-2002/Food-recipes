@@ -27,9 +27,10 @@ jobs:
       - run: corepack pnpm@11.18.0 install --frozen-lockfile
       - run: corepack pnpm@11.18.0 exec playwright install --with-deps chromium
       - name: Capture responsive screenshots and migration inventory
+        continue-on-error: true
         env:
           BASE_URL: https://food-recipes-awlm2n4ny-memories-projects-2002.vercel.app
-          ENTRY_URL: https://food-recipes-awlm2n4ny-memories-projects-2002.vercel.app/?_vercel_share=t5a1BbnVIwlIXAea8oY5FwfTAESuUVQH
+          ENTRY_URL: https://food-recipes-awlm2n4ny-memories-projects-2002.vercel.app/?_vercel_share=oX63PI1BgkKknAfqyx6U63SLIGHYIzth
         run: |
           node <<'NODE'
           const { chromium } = require('playwright');
@@ -51,6 +52,9 @@ jobs:
             { name: 'food', path: '/food' },
           ];
 
+          fs.rmSync(outputDir, { recursive: true, force: true });
+          fs.mkdirSync(outputDir, { recursive: true });
+
           const scanExtensions = new Set(['.js', '.jsx', '.ts', '.tsx', '.css', '.scss', '.html']);
           const migration = { legacyUiImports: [], styleImports: [], bootstrapReferences: [] };
           function scan(dir) {
@@ -62,78 +66,103 @@ jobs:
               const source = fs.readFileSync(full, 'utf8');
               const relative = path.relative(process.cwd(), full);
               if (source.includes('@/shared/ui/legacy-ui')) migration.legacyUiImports.push(relative);
-              if (/import\s+["'][^"']+\.(?:scss|css)["']/.test(source) && !relative.endsWith('app/index.css')) migration.styleImports.push(relative);
-              if (/bootstrap/i.test(source)) migration.bootstrapReferences.push(relative);
+              if (/import\s+["'][^"']+\.(?:scss|css)["']/.test(source) && relative !== 'app/index.css') migration.styleImports.push(relative);
+              if (/bootstrap/i.test(source) && !relative.includes('no-bootstrap.test')) migration.bootstrapReferences.push(relative);
             }
           }
           scan(process.cwd());
-
-          fs.rmSync(outputDir, { recursive: true, force: true });
-          fs.mkdirSync(outputDir, { recursive: true });
-          const browser = await chromium.launch();
-          const report = [];
-
-          for (const viewport of viewports) {
-            const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
-            const page = await context.newPage();
-            const consoleErrors = [];
-            const pageErrors = [];
-            page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
-            page.on('pageerror', (err) => pageErrors.push(err.message));
-
-            await page.goto(entryUrl, { waitUntil: 'networkidle', timeout: 60000 });
-            await page.waitForTimeout(500);
-
-            for (const route of routes) {
-              const response = await page.goto(`${baseUrl}${route.path}`, { waitUntil: 'networkidle', timeout: 60000 });
-              await page.waitForTimeout(1200);
-              const file = `${route.name}-${viewport.name}.png`;
-              await page.screenshot({ path: path.join(outputDir, file), fullPage: true });
-              report.push({
-                route: route.name,
-                viewport: viewport.name,
-                url: page.url(),
-                status: response?.status(),
-                title: await page.title(),
-                bodyText: (await page.locator('body').innerText()).slice(0, 4000),
-                consoleErrors: [...consoleErrors],
-                pageErrors: [...pageErrors],
-                horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
-              });
-              consoleErrors.length = 0;
-              pageErrors.length = 0;
-            }
-
-            await page.goto(`${baseUrl}/food`, { waitUntil: 'networkidle', timeout: 60000 });
-            const recipeHref = await page.locator('a[href*="/recipe?id="]').first().getAttribute('href').catch(() => null);
-            if (recipeHref) {
-              const response = await page.goto(new URL(recipeHref, baseUrl).toString(), { waitUntil: 'networkidle', timeout: 60000 });
-              await page.waitForTimeout(1200);
-              const file = `recipe-${viewport.name}.png`;
-              await page.screenshot({ path: path.join(outputDir, file), fullPage: true });
-              report.push({
-                route: 'recipe',
-                viewport: viewport.name,
-                url: page.url(),
-                status: response?.status(),
-                title: await page.title(),
-                bodyText: (await page.locator('body').innerText()).slice(0, 4000),
-                consoleErrors: [...consoleErrors],
-                pageErrors: [...pageErrors],
-                horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
-              });
-            } else {
-              report.push({ route: 'recipe', viewport: viewport.name, skipped: 'No recipe link found on /food' });
-            }
-
-            await context.close();
-          }
-
-          await browser.close();
-          fs.writeFileSync(path.join(outputDir, 'report.json'), JSON.stringify(report, null, 2));
           fs.writeFileSync(path.join(outputDir, 'migration-inventory.json'), JSON.stringify(migration, null, 2));
+
+          const report = [];
+          let browser;
+          try {
+            browser = await chromium.launch();
+            for (const viewport of viewports) {
+              const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+              const page = await context.newPage();
+              const consoleErrors = [];
+              const pageErrors = [];
+              page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+              page.on('pageerror', (err) => pageErrors.push(err.message));
+
+              try {
+                await page.goto(entryUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.waitForTimeout(1500);
+              } catch (error) {
+                report.push({ route: 'preview-auth', viewport: viewport.name, error: String(error) });
+              }
+
+              for (const route of routes) {
+                try {
+                  const response = await page.goto(`${baseUrl}${route.path}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                  await page.waitForTimeout(2500);
+                  const file = `${route.name}-${viewport.name}.png`;
+                  await page.screenshot({ path: path.join(outputDir, file), fullPage: true });
+                  report.push({
+                    route: route.name,
+                    viewport: viewport.name,
+                    url: page.url(),
+                    status: response?.status(),
+                    title: await page.title(),
+                    bodyText: (await page.locator('body').innerText()).slice(0, 5000),
+                    consoleErrors: [...consoleErrors],
+                    pageErrors: [...pageErrors],
+                    horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
+                  });
+                } catch (error) {
+                  report.push({ route: route.name, viewport: viewport.name, error: String(error), url: page.url() });
+                }
+                consoleErrors.length = 0;
+                pageErrors.length = 0;
+              }
+
+              try {
+                await page.goto(`${baseUrl}/food`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+                await page.waitForTimeout(2500);
+                const recipeHref = await page.locator('a[href*="/recipe?id="]').first().getAttribute('href').catch(() => null);
+                if (recipeHref) {
+                  const response = await page.goto(new URL(recipeHref, baseUrl).toString(), { waitUntil: 'domcontentloaded', timeout: 45000 });
+                  await page.waitForTimeout(2500);
+                  const file = `recipe-${viewport.name}.png`;
+                  await page.screenshot({ path: path.join(outputDir, file), fullPage: true });
+                  report.push({
+                    route: 'recipe',
+                    viewport: viewport.name,
+                    url: page.url(),
+                    status: response?.status(),
+                    title: await page.title(),
+                    bodyText: (await page.locator('body').innerText()).slice(0, 5000),
+                    consoleErrors: [...consoleErrors],
+                    pageErrors: [...pageErrors],
+                    horizontalOverflow: await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth),
+                  });
+                } else {
+                  report.push({ route: 'recipe', viewport: viewport.name, skipped: 'No recipe link found on /food' });
+                }
+              } catch (error) {
+                report.push({ route: 'recipe', viewport: viewport.name, error: String(error), url: page.url() });
+              }
+              await context.close();
+            }
+          } catch (error) {
+            report.push({ route: 'browser', error: String(error) });
+          } finally {
+            if (browser) await browser.close().catch(() => {});
+            fs.writeFileSync(path.join(outputDir, 'report.json'), JSON.stringify(report, null, 2));
+          }
           NODE
+      - name: Show audit files
+        if: always()
+        run: find public/visual-audit-pr124 -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+      - name: Upload audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr124-visual-audit
+          path: src/frontend/public/visual-audit-pr124
+          if-no-files-found: error
       - name: Commit audit captures
+        if: always()
         working-directory: .
         run: |
           git config user.name 'github-actions[bot]'
