@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import { loadOwnedRecipe } from "./editRecipeApi";
 
 vi.mock("@/shared/api/axios", () => ({
@@ -19,6 +20,7 @@ describe("loadOwnedRecipe", () => {
 		mockAxiosGet.mockResolvedValue({ data: { recipes: [{ recipe_id: 42, recipe_name: "Tomato pasta" }] } });
 
 		await expect(loadOwnedRecipe(42)).resolves.toMatchObject({ recipe_id: 42 });
+		expect(mockAxiosGet).toHaveBeenCalledWith(apiRoutes.userRecipes, { params: { status: "all" } });
 	});
 
 	it("rejects a recipe absent from the owner response", async () => {
