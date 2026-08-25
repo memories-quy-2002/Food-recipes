@@ -2,55 +2,22 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
-import axios from "@/shared/api/axios";
-import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
-import {
-	getAccessToken,
-	setAccessToken,
-} from "@/features/auth/state/authTokenStore";
+import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
 
 const menuLink = "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const HeaderAuthButton = ({ auth }) => {
 	const { local, session } = auth;
-	const token = getAccessToken();
-	const [user, setUser] = useState({});
 	const [clicked, setClicked] = useState(false);
 	const menuRef = useRef(null);
 	const toggleRef = useRef(null);
 	const closeMenu = useCallback(() => { setClicked(false); toggleRef.current?.focus(); }, []);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
+	const user = local.isAuthenticated ? local.user : session.user;
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				let currentToken = token;
-				let refreshedUser = null;
-				if (!currentToken && isAuthenticated) {
-					const refreshResponse = await axios.post(apiRoutes.authRefresh, {});
-					currentToken = refreshResponse.data?.token;
-					refreshedUser = refreshResponse.data?.user;
-					if (currentToken) setAccessToken(currentToken);
-				}
-				if (currentToken) {
-					const response = await axios.post(apiRoutes.authToken, { token: currentToken });
-					setUser(response.data.user ?? response.data);
-				} else if (refreshedUser || local.user || session.user) {
-					setUser(refreshedUser ?? local.user ?? session.user);
-				}
-			} catch (error) {
-				if (error.response?.status === 401) {
-					dispatch(authActions.logout());
-					navigate("/");
-				}
-			}
-		};
-		fetchData();
-	}, [isAuthenticated, local.user, session.user, token, dispatch, navigate]);
 
 	useEffect(() => {
 		if (!clicked || typeof document === "undefined") return undefined;
@@ -61,7 +28,17 @@ const HeaderAuthButton = ({ auth }) => {
 		return () => { document.removeEventListener("pointerdown", handlePointerDown); document.removeEventListener("keydown", handleKeyDown); };
 	}, [clicked, closeMenu]);
 
-	const handleSignOut = () => { dispatch(authActions.logout()); closeMenu(); };
+	const handleSignOut = async () => {
+		try {
+			await authSessionApi.logout();
+		} catch {
+			// Local auth must still clear when the server is unavailable.
+		} finally {
+			dispatch(authActions.logout());
+			closeMenu();
+			navigate("/");
+		}
+	};
 	return (
 		<div className="relative ml-auto hidden lg:block">
 			{isAuthenticated ? <>

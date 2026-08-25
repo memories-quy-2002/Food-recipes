@@ -2,75 +2,76 @@
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 import { MemoryRouter } from "react-router-dom";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import axios from "@/shared/api/axios";
-import { apiRoutes } from "@/shared/api/routes";
-import {
-	clearAccessToken,
-	setAccessToken,
-} from "@/features/auth/state/authTokenStore";
+import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import HeaderAuthButton from "./HeaderAuthButton";
 
-vi.mock("@/shared/api/axios", () => ({
-	default: { post: vi.fn() },
+vi.mock("@/features/auth/api/authSessionApi", () => ({
+	authSessionApi: { logout: vi.fn() },
 }));
 
 vi.mock("@/shared/utils/convertImage", () => ({
 	default: () => <span data-testid="avatar" />,
 }));
 
+const dispatch = vi.fn();
 vi.mock("react-redux", () => ({
-	useDispatch: () => vi.fn(),
+	useDispatch: () => dispatch,
 }));
 
 vi.mock("@/features/auth/state/authSlice", () => ({
 	authActions: { logout: () => ({ type: "auth/logout" }) },
 }));
 
-const renderHeader = (auth) =>
-	render(
-		<MemoryRouter>
-			<HeaderAuthButton auth={auth} />
-		</MemoryRouter>
-	);
+const renderHeader = (auth) => render(
+	<MemoryRouter>
+		<HeaderAuthButton auth={auth} />
+	</MemoryRouter>
+);
 
 afterEach(() => {
 	cleanup();
-	clearAccessToken();
-	vi.clearAllMocks();
+	dispatch.mockReset();
+	authSessionApi.logout.mockReset();
 	vi.restoreAllMocks();
 });
 
-describe("HeaderAuthButton memory-token boundary", () => {
-	it("bootstraps a local user through refresh and validates it without storage tokens", async () => {
-		const localUser = { user_id: 7, full_name: "Stored User" };
-		const refreshedUser = { user_id: 7, full_name: "Validated User" };
-		axios.post
-			.mockResolvedValueOnce({ data: { token: "refreshed-token" } })
-			.mockResolvedValueOnce({ data: { user: refreshedUser } });
-
+describe("HeaderAuthButton", () => {
+	it("renders the restored user metadata without reading a browser token", () => {
 		renderHeader({
-			local: { isAuthenticated: true, user: localUser },
+			local: { isAuthenticated: true, user: { full_name: "Restored User" } },
 			session: { isAuthenticated: false, user: null },
 		});
 
-		await waitFor(() => expect(screen.getByText("Validated User")).toBeInTheDocument());
-		expect(axios.post).toHaveBeenNthCalledWith(1, apiRoutes.authRefresh, {});
-		expect(axios.post).toHaveBeenNthCalledWith(2, apiRoutes.authToken, { token: "refreshed-token" });
+		expect(screen.getByText("Restored User")).toBeInTheDocument();
 	});
 
-	it("uses the existing memory token without falling back to browser storage", async () => {
-		setAccessToken("memory-token");
-		axios.post.mockResolvedValue({ data: { user: { full_name: "Memory User" } } });
-
+	it("logs out on the server before clearing local auth state", async () => {
+		authSessionApi.logout.mockResolvedValue(undefined);
 		renderHeader({
-			local: { isAuthenticated: true, user: { full_name: "Stored User" } },
+			local: { isAuthenticated: true, user: { full_name: "Restored User" } },
 			session: { isAuthenticated: false, user: null },
 		});
 
-		await waitFor(() => expect(screen.getByText("Memory User")).toBeInTheDocument());
-		expect(axios.post).toHaveBeenCalledWith(apiRoutes.authToken, { token: "memory-token" });
-		expect(axios.post).not.toHaveBeenCalledWith(apiRoutes.authRefresh, {});
+		fireEvent.click(screen.getByRole("button", { name: /restored user/i }));
+		fireEvent.click(screen.getByRole("menuitem", { name: /sign out/i }));
+
+		expect(authSessionApi.logout).toHaveBeenCalledOnce();
+		expect(dispatch).not.toHaveBeenCalled();
+		await vi.waitFor(() => expect(dispatch).toHaveBeenCalledWith({ type: "auth/logout" }));
+	});
+
+	it("clears local auth even when server logout fails", async () => {
+		authSessionApi.logout.mockRejectedValue(new Error("offline"));
+		renderHeader({
+			local: { isAuthenticated: true, user: { full_name: "Restored User" } },
+			session: { isAuthenticated: false, user: null },
+		});
+
+		fireEvent.click(screen.getByRole("button", { name: /restored user/i }));
+		fireEvent.click(screen.getByRole("menuitem", { name: /sign out/i }));
+
+		await vi.waitFor(() => expect(dispatch).toHaveBeenCalledWith({ type: "auth/logout" }));
 	});
 });

@@ -23,7 +23,8 @@ const LocationProbe = () => {
 
 const renderEditRoute = (isAuthenticated) => {
 	mocks.useSelector.mockImplementation((selector) => selector({
-		auth: {
+		 auth: {
+			hydrated: true,
 			local: { isAuthenticated },
 			session: { isAuthenticated: false },
 		},

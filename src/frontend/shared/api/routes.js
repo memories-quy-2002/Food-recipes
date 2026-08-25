@@ -33,6 +33,7 @@ const apiRoutes = {
 	authLogin: "/auth/login",
 	authSignup: "/auth/signup",
 	authRefresh: "/auth/refresh",
+	authLogout: "/auth/logout",
 	userProfile: "/users/me/profile",
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",

@@ -5,6 +5,7 @@ import ProfileAside from "@/features/profile/ProfileAside";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { authActions } from "@/features/auth/state/authSlice";
+import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -27,6 +28,15 @@ const Profile = () => {
 	const [ratings, setRatings] = useState([]);
 	const [isLoadingRatings, setIsLoadingRatings] = useState(true);
 	const [ratingsError, setRatingsError] = useState(null);
+	const handleLogOut = async () => {
+		try {
+			await authSessionApi.logout();
+		} catch {
+			// Local auth must still clear when the server is unavailable.
+		} finally {
+			dispatch(authActions.logout());
+		}
+	};
 
 	useEffect(() => setPage(getProfilePageFromHash(location.hash)), [location.hash]);
 	useEffect(() => {
@@ -51,7 +61,7 @@ const Profile = () => {
 		<div className="min-h-screen bg-background">
 			<PageHelmet title="Profile" description="Manage your Food Recipes profile, password, personal recipes, and reviews." path="/profile" noIndex />
 			<main className="mx-auto grid w-full max-w-[96rem] gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-7 lg:px-8 lg:py-10">
-				<ProfileAside name={user?.full_name} page={page} handleLogOut={() => dispatch(authActions.logout())} handleChangePage={setPage} profilePageList={profilePageList} />
+				<ProfileAside name={user?.full_name} page={page} handleLogOut={handleLogOut} handleChangePage={setPage} profilePageList={profilePageList} />
 				<Suspense fallback={<PageState title="Loading profile" message="Preparing your account tools." />}>
 					{page === "reviews" && isLoadingRatings ? (
 						<PageState title="Loading reviews" message="Fetching your recipe reviews." />

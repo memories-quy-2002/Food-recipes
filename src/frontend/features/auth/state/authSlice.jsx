@@ -25,10 +25,29 @@ const getStoredAuth = (storage) => {
 const authSlice = createSlice({
 	name: "auth",
 	initialState: {
+		hydrated: false,
 		local: getStoredAuth(localStorage),
 		session: getStoredAuth(sessionStorage),
 	},
 	reducers: {
+		setHydrated(state, action) {
+			state.hydrated = Boolean(action.payload);
+		},
+		restoreSession(state, action) {
+			const { user } = action.payload;
+			if (state.local.isAuthenticated) {
+				state.local = { ...state.local, user };
+				localStorage.setItem("user", JSON.stringify(user));
+				return;
+			}
+			state.session = {
+				...state.session,
+				isAuthenticated: true,
+				user,
+			};
+			sessionStorage.setItem("isAuthenticated", true);
+			sessionStorage.setItem("user", JSON.stringify(user));
+		},
 		updateUser(state, action) {
 			const { user } = action.payload;
 			if (state.local.isAuthenticated) {

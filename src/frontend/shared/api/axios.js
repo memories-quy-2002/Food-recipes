@@ -39,9 +39,10 @@ export const createApiClient = (env = import.meta.env) => {
 			const originalRequest = error.config;
 			const isUnauthorized = error.response?.status === 401;
 			const isRefreshRequest = originalRequest?.url === apiRoutes.authRefresh;
+			const isLogoutRequest = originalRequest?.url === apiRoutes.authLogout;
 
-			if (!isUnauthorized || !originalRequest || originalRequest.__retried || isRefreshRequest) {
-				if (isUnauthorized) dispatchAuthExpired();
+			if (!isUnauthorized || !originalRequest || originalRequest.__retried || isRefreshRequest || isLogoutRequest) {
+				if (isUnauthorized && !isLogoutRequest) dispatchAuthExpired();
 				return Promise.reject(error);
 			}
 

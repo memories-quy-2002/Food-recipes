@@ -87,6 +87,26 @@ describe("Nest API authentication and expiry", () => {
 		expect(original.__retried).toBe(true);
 	});
 
+	it("shares one refresh request across concurrent unauthorized requests", async () => {
+		setAccessToken("expired-token");
+		const client = createApiClient({ DEV: false, PROD: true, VITE_KONG_BASE_URL: "https://kong.example.test" });
+		const refresh = vi.spyOn(client, "post").mockResolvedValue({ data: { token: "fresh-token" } });
+		client.defaults.adapter = async (config) => ({ data: { ok: true }, config });
+		const responseErrorHandler = client.interceptors.response.handlers[0].rejected;
+		const first = { url: "/first", method: "get", headers: {} };
+		const second = { url: "/second", method: "get", headers: {} };
+
+		await Promise.all([
+			responseErrorHandler({ response: { status: 401 }, config: first }),
+			responseErrorHandler({ response: { status: 401 }, config: second }),
+		]);
+
+		expect(refresh).toHaveBeenCalledTimes(1);
+		expect(first.__retried).toBe(true);
+		expect(second.__retried).toBe(true);
+		expect(getAccessToken()).toBe("fresh-token");
+	});
+
 	it("publishes auth:expired when refresh fails", async () => {
 		const dispatchEvent = vi.fn();
 		globalThis.window = { dispatchEvent };
@@ -96,6 +116,17 @@ describe("Nest API authentication and expiry", () => {
 		const error = { response: { status: 401 }, config: { url: "/recipes", headers: {} } };
 		await expect(responseErrorHandler(error)).rejects.toBe(error);
 		expect(dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ type: "auth:expired" }));
+	});
+
+	it("does not refresh or emit expiry while logout is being finalized", async () => {
+		const dispatchEvent = vi.fn();
+		globalThis.window = { dispatchEvent };
+		const client = createApiClient({ DEV: false, PROD: true, VITE_KONG_BASE_URL: "https://kong.example.test" });
+		const responseErrorHandler = client.interceptors.response.handlers[0].rejected;
+		const error = { response: { status: 401 }, config: { url: apiRoutes.authLogout, headers: {} } };
+
+		await expect(responseErrorHandler(error)).rejects.toBe(error);
+		expect(dispatchEvent).not.toHaveBeenCalled();
 	});
 });
 
