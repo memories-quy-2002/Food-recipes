@@ -1,99 +1,20 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
-import { Row, Col } from "@/shared/ui/legacy-ui";
-import { useNavigate } from "react-router-dom";
 import PageState from "@/shared/ui/PageState";
+import Button from "@/shared/ui/Button";
+import { Card } from "@/shared/ui/Card";
+
 const Reviews = ({ reviewsData = [] }) => {
 	const navigate = useNavigate();
-	const handleClickEdit = (recipeId) => {
-		navigate(`/recipe?id=${recipeId}`);
-	};
+	const comments = reviewsData.filter((review) => review.review !== "").length;
 	return (
-		<div className="profile__container__main__reviews">
-			<div>
-				<h4 className="profile__container__main__reviews__title">
-					My reviews
-				</h4>
-
-				<Row className="profile__container__main__reviews__summary">
-					<Col md={6}>
-						<div className="profile__container__main__reviews__summary__item">
-							<strong>{reviewsData.length}</strong>
-							<p>Rating(s)</p>
-						</div>{" "}
-					</Col>
-					<Col md={6}>
-						<div className="profile__container__main__reviews__summary__item">
-							<strong>
-								{
-									reviewsData.filter(
-										(review) => review.review !== ""
-									).length
-								}
-							</strong>
-							<p>Comment(s)</p>
-						</div>{" "}
-					</Col>
-				</Row>
-				{reviewsData.length === 0 ? (
-					<PageState
-						type="empty"
-						title="You have not reviewed any recipes yet"
-						message="Open a recipe, choose a rating, and leave a note for your future self."
-						actionLabel="Browse recipes"
-						onAction={() => navigate("/food")}
-					/>
-				) : (
-					<ul className="profile__container__main__reviews__list">
-						{reviewsData.map((review) => (
-							<li
-								key={review.rating_id}
-								className="profile__container__main__reviews__list__item"
-							>
-								<div>
-									<div
-										className="d-flex gap-4 align-items-center mb-3 border border-1 p-2"
-										style={{ borderRadius: "1rem" }}
-									>
-										<div>
-											{convertImage(
-												review.recipe_name,
-												"profile__container__main__reviews__list__item__img",
-												review.image_url
-											)}
-										</div>
-										{review.recipe_name}
-									</div>
-									<div>
-										<div className="d-flex gap-3 mb-3">
-											<div className="d-flex gap-2">
-												{ratingStar(review.score, "orange")}
-											</div>
-											<div>{parseInt(review.score)}</div>
-										</div>
-
-										<p>{review.review || "No written review yet."}</p>
-									</div>
-									<div className="w-100 d-flex justify-content-end">
-										<button
-											className="btn btn-primary"
-											type="button"
-											onClick={() =>
-												handleClickEdit(review.recipe_id)
-											}
-										>
-											Edit review
-										</button>
-									</div>
-								</div>
-							</li>
-						))}
-					</ul>
-				)}
-			</div>
+		<div>
+			<header className="mb-6"><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your feedback</p><h1 className="text-3xl font-black tracking-tight sm:text-4xl">My reviews</h1><p className="mt-3 text-muted-foreground">Revisit ratings and notes you have left on recipes.</p></header>
+			<div className="mb-6 grid grid-cols-2 gap-3"><Card className="p-4 text-center"><strong className="block text-2xl font-black">{reviewsData.length}</strong><span className="text-sm text-muted-foreground">Ratings</span></Card><Card className="p-4 text-center"><strong className="block text-2xl font-black">{comments}</strong><span className="text-sm text-muted-foreground">Comments</span></Card></div>
+			{reviewsData.length === 0 ? <PageState type="empty" title="You have not reviewed any recipes yet" message="Open a recipe, choose a rating, and leave a note for your future self." actionLabel="Browse recipes" onAction={() => navigate("/food")} /> : <ul className="grid gap-4">{reviewsData.map((review) => <li key={review.rating_id}><Card className="p-4 sm:p-5"><div className="flex items-center gap-4"><div className="size-20 shrink-0 overflow-hidden rounded-xl bg-muted sm:h-24 sm:w-32">{convertImage(review.recipe_name, "h-full w-full object-cover", review.image_url)}</div><div className="min-w-0"><h2 className="truncate font-bold">{review.recipe_name}</h2><div className="mt-2 flex items-center gap-2" aria-label={`${parseInt(review.score)} out of 5 stars`}><span className="flex gap-1">{ratingStar(review.score, "orange")}</span><span className="text-sm font-bold">{parseInt(review.score)}/5</span></div></div></div><p className="mt-4 leading-7 text-muted-foreground">{review.review || "No written review yet."}</p><div className="mt-4 flex justify-end"><Button variant="outline" onClick={() => navigate(`/recipe?id=${review.recipe_id}`)}>Edit review</Button></div></Card></li>)}</ul>}
 		</div>
 	);
 };
-
 export default Reviews;
