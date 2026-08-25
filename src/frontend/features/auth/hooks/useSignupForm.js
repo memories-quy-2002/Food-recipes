@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
+import { setAccessToken } from "@/features/auth/state/authTokenStore";
 import { useDispatch } from "react-redux";
 import {
 	consumeAuthIntent,
@@ -106,7 +107,8 @@ const useSignupForm = () => {
 						dispatch({ type: "SET_VALIDATED", payload: true });
 
 						const { user, token } = response.data;
-						loginDispatch(authActions.login({ user, token }));
+						setAccessToken(token);
+						loginDispatch(authActions.login({ user }));
 						const pendingIntent = consumeAuthIntent();
 						const redirectPath = getAuthReturnPath(location);
 						navigate(redirectPath, {

@@ -4,6 +4,7 @@ import * as Yup from "yup";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
+import { setAccessToken } from "@/features/auth/state/authTokenStore";
 import { useDispatch } from "react-redux";
 import {
 	consumeAuthIntent,
@@ -82,7 +83,7 @@ const useLoginForm = () => {
 					const { email, password } = state.formData;
 					const response = await axios.post(
 						apiRoutes.authLogin,
-						JSON.stringify({ email, password }),
+						JSON.stringify({ email, password, remember: state.remember }),
 						{
 							headers: { "Content-Type": "application/json" },
 							withCredentials: true,
@@ -91,14 +92,11 @@ const useLoginForm = () => {
 					if (response.status === 200) {
 						dispatch({ type: "SET_VALIDATED", payload: true });
 						const user = response.data.user;
+						setAccessToken(response.data.token);
 						if (state.remember) {
-							const token = response.data.token;
-							const payload = { user, token };
-							loginDispatch(authActions.login(payload));
+							loginDispatch(authActions.login({ user }));
 						} else {
-							const token = response.data.token;
-							const payload = { user, token };
-							loginDispatch(authActions.loginSession(payload));
+							loginDispatch(authActions.loginSession({ user }));
 						}
 
 						const pendingIntent = consumeAuthIntent();

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getApiConfig, getStoredAuthToken } from "./config";
+import {
+	clearAccessToken,
+	getAccessToken,
+	setAccessToken,
+} from "@/features/auth/state/authTokenStore";
+import { getApiConfig } from "./config";
 import { createApiClient } from "./axios";
 import { apiRoutes } from "./routes";
 
@@ -19,6 +24,7 @@ afterEach(() => {
 	else globalThis.localStorage = originalLocalStorage;
 	if (originalSessionStorage === undefined) delete globalThis.sessionStorage;
 	else globalThis.sessionStorage = originalSessionStorage;
+	clearAccessToken();
 	vi.restoreAllMocks();
 });
 
@@ -40,13 +46,16 @@ describe("API target configuration", () => {
 });
 
 describe("Nest API authentication and expiry", () => {
-	it("forwards the persisted local or session JWT as a Bearer token", () => {
+	it("forwards the memory access token and ignores stored JWT values", () => {
 		globalThis.localStorage = createStorage({ isAuthenticated: "false", jwt: "stale-token" });
 		globalThis.sessionStorage = createStorage({ isAuthenticated: "true", jwt: "session-token" });
+		setAccessToken("memory-token");
 		const client = createApiClient({ DEV: false, PROD: true, VITE_KONG_BASE_URL: "https://kong.example.test" });
 		const requestHandler = client.interceptors.request.handlers[0].fulfilled;
-		expect(requestHandler({ headers: {} }).headers.Authorization).toBe("Bearer session-token");
-		expect(getStoredAuthToken()).toBe("session-token");
+		expect(requestHandler({ headers: {} }).headers.Authorization).toBe("Bearer memory-token");
+
+		setAccessToken(null);
+		expect(requestHandler({ headers: {} }).headers.Authorization).toBeUndefined();
 	});
 
 	it("enables credentials so the HttpOnly refresh cookie is sent", () => {
@@ -54,9 +63,10 @@ describe("Nest API authentication and expiry", () => {
 		expect(client.defaults.withCredentials).toBe(true);
 	});
 
-	it("refreshes once after a 401, stores the new token, and retries the request", async () => {
-		const values = { isAuthenticated: "true", jwt: "expired-token" };
-		globalThis.localStorage = createStorage(values);
+	it("refreshes once after a 401, stores the new token in memory, and retries the request", async () => {
+		setAccessToken("expired-token");
+		const localStorage = createStorage({ isAuthenticated: "true", jwt: "expired-token" });
+		globalThis.localStorage = localStorage;
 		globalThis.sessionStorage = createStorage({});
 		const client = createApiClient({ DEV: false, PROD: true, VITE_KONG_BASE_URL: "https://kong.example.test" });
 		vi.spyOn(client, "post").mockResolvedValue({ data: { token: "fresh-token" } });
@@ -66,7 +76,8 @@ describe("Nest API authentication and expiry", () => {
 		const original = { url: "/recipes", method: "get", headers: {}, __retried: false };
 		await responseErrorHandler({ response: { status: 401 }, config: original });
 		expect(client.post).toHaveBeenCalledWith(apiRoutes.authRefresh, {});
-		expect(values.jwt).toBe("fresh-token");
+		expect(getAccessToken()).toBe("fresh-token");
+		expect(localStorage.setItem).not.toHaveBeenCalled();
 		expect(original.__retried).toBe(true);
 	});
 
