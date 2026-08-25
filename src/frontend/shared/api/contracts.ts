@@ -16,6 +16,8 @@ type RecipeSummaryBase = {
 	category_name?: string;
 	overall_score?: number;
 	num_ratings?: number;
+	dietary_tags?: string[];
+	nutrition?: RecipeNutrition | null;
 };
 
 export type NestRecipeSummary = RecipeSummaryBase & {
@@ -132,6 +134,26 @@ export type RecipePagination = {
 export type RecipeListResponse = {
 	recipes: RecipeSummary[];
 	pagination?: RecipePagination;
+};
+
+export type HomeFeedSectionKey =
+	| "continue"
+	| "pantry"
+	| "recommended"
+	| "saved"
+	| "quick"
+	| "popular";
+
+export type HomeFeedSection = {
+	key: HomeFeedSectionKey;
+	title: string;
+	description: string;
+	recipes: RecipeSummary[];
+};
+
+export type HomeFeedResponse = {
+	personalized: boolean;
+	sections: HomeFeedSection[];
 };
 
 export type ApiErrorResponse = {

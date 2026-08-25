@@ -5,16 +5,20 @@ import type { RecipeListResponse, RecipePagination, RecipeSummary } from "@/shar
 import type { QueryFunctionContext } from "@tanstack/react-query";
 
 export const RECIPE_DISCOVERY_ENDPOINT = (apiRoutes as { recipes: string }).recipes;
-export const DEFAULT_RECIPE_LIMIT = 6;
+export const DEFAULT_RECIPE_LIMIT = 12;
 export const MAX_RECIPE_PAGE = 1_000_000;
 export const MAX_RECIPE_LIMIT = 100;
-const supportedSorts = new Set(["popular", "rating", "name"]);
+export const RECIPE_FILTERS = ["quick", "vegetarian", "high-protein", "under-30", "one-pan", "beginner"] as const;
+export type RecipeFilter = (typeof RECIPE_FILTERS)[number];
+const supportedSorts = new Set(["popular", "rating", "newest", "quickest", "name"]);
+const supportedFilters = new Set<RecipeFilter>(RECIPE_FILTERS);
 
 export type RecipeDiscoveryState = {
 	q: string;
 	categoryId: string;
 	mealId: string;
-	sort: "popular" | "rating" | "name";
+	sort: "popular" | "rating" | "newest" | "quickest" | "name";
+	filter: RecipeFilter | "";
 	page: number;
 	limit: number;
 };
@@ -39,12 +43,14 @@ export const parseRecipeDiscoveryState = (
 ): RecipeDiscoveryState => {
 	const params = typeof search === "string" ? new URLSearchParams(search) : search;
 	const sort = params.get("sort");
+	const filter = params.get("filter");
 
 	return {
 		q: params.get("q") || "",
 		categoryId: params.get("categoryId") || params.get("categories") || "",
 		mealId: params.get("mealId") || params.get("meals") || "",
 		sort: supportedSorts.has(sort || "") ? (sort as RecipeDiscoveryState["sort"]) : "popular",
+		filter: supportedFilters.has(filter as RecipeFilter) ? (filter as RecipeFilter) : "",
 		page: positiveInteger(params.get("page"), 1, MAX_RECIPE_PAGE),
 		limit: positiveInteger(params.get("limit"), DEFAULT_RECIPE_LIMIT, MAX_RECIPE_LIMIT),
 	};
@@ -66,6 +72,7 @@ export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
 	}
 	if (/^\d+$/.test(state.categoryId)) params.categoryId = Number(state.categoryId);
 	if (/^\d+$/.test(state.mealId)) params.mealId = Number(state.mealId);
+	if (state.filter) params.filter = state.filter;
 	return params;
 };
 

@@ -8,12 +8,16 @@ import { RecipeMetadataService } from './recipe-metadata.service';
 describe('RecipeMetadataService', () => {
   const repository: jest.Mocked<RecipeMetadataRepositoryPort> = {
     recipeOwnerId: jest.fn(),
+    recipeStatus: jest.fn(),
     findByRecipeId: jest.fn(),
     replace: jest.fn(),
   };
   const emptyMetadata: RecipeMetadataRecord = { nutrition: null, allergens: [] };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    repository.recipeStatus.mockResolvedValue('draft');
+  });
 
   it('returns explicitly stored metadata without inferring missing values', async () => {
     repository.recipeOwnerId.mockResolvedValue(7);
@@ -41,6 +45,19 @@ describe('RecipeMetadataService', () => {
     await expect(
       service.replace(404, 7, { nutrition: null, allergens: [] }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejects metadata writes for an archived recipe', async () => {
+    repository.recipeOwnerId.mockResolvedValue(7);
+    repository.recipeStatus.mockResolvedValue('archived');
+    const service = new RecipeMetadataService(repository);
+
+    await expect(
+      service.replace(15, 7, { nutrition: null, allergens: [] }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RECIPE_ARCHIVED_READ_ONLY' }),
+    });
+    expect(repository.replace).not.toHaveBeenCalled();
   });
 
   it('requires an external reference for verified metadata', async () => {

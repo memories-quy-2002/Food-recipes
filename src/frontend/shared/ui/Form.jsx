@@ -21,15 +21,15 @@ FormGroup.displayName = "Form.Group";
 
 const FormLabel = React.forwardRef(({ htmlFor, className, ...props }, ref) => {
 	const groupId = useContext(FormGroupContext);
-	return <label ref={ref} htmlFor={htmlFor || groupId || undefined} className={cn("mb-2 block text-sm font-bold text-foreground", className)} {...props} />;
+	return <label ref={ref} htmlFor={htmlFor || groupId || undefined} className={cn("mb-2 block text-sm font-extrabold leading-5 text-foreground", className)} {...props} />;
 });
 FormLabel.displayName = "Form.Label";
 
-const controlClass = "flex min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-50";
+const controlClass = "flex min-h-12 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-base leading-6 text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm";
 
 const FormControl = React.forwardRef(({ as: Component = "input", id, isInvalid = false, className, ...props }, ref) => {
 	const groupId = useContext(FormGroupContext);
-	return <Component ref={ref} id={id || groupId || undefined} aria-invalid={isInvalid || undefined} className={cn(controlClass, Component === "textarea" && "min-h-28 resize-y", isInvalid && "border-destructive ring-destructive/20", className)} {...props} />;
+	return <Component ref={ref} id={id || groupId || undefined} aria-invalid={isInvalid || undefined} className={cn(controlClass, Component === "textarea" && "min-h-36 resize-y py-3.5", isInvalid && "border-destructive ring-destructive/20", className)} {...props} />;
 });
 FormControl.displayName = "Form.Control";
 
@@ -49,7 +49,7 @@ FormCheck.displayName = "Form.Check";
 const FormText = React.forwardRef(({ className, ...props }, ref) => <small ref={ref} className={cn("text-sm leading-6 text-muted-foreground", className)} {...props} />);
 FormText.displayName = "Form.Text";
 
-const FormFeedback = React.forwardRef(({ type = "invalid", className, ...props }, ref) => <div ref={ref} role={type === "invalid" ? "alert" : undefined} className={cn("mt-1 text-sm font-semibold", type === "valid" ? "text-emerald-700" : "text-destructive", className)} {...props} />);
+const FormFeedback = React.forwardRef(({ type = "invalid", className, ...props }, ref) => <div ref={ref} role={type === "invalid" ? "alert" : undefined} className={cn("mt-2 text-sm font-semibold leading-6", type === "valid" ? "text-foreground" : "text-destructive", className)} {...props} />);
 FormFeedback.displayName = "Form.Control.Feedback";
 FormControl.Feedback = FormFeedback;
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -6,12 +6,8 @@ import Carousel from "@/features/home/Carousel";
 import HomeMain from "@/features/home/HomeMain";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
-import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
-import { AuthContext } from "@/app/AuthProvider";
 
 const Home = () => {
-	const { auth } = useContext(AuthContext);
-	const isAuthenticated = Boolean(auth?.current?.isAuthenticated);
 	const [meals, setMeals] = useState([]);
 	const [isLoadingMeals, setIsLoadingMeals] = useState(true);
 	const [mealsError, setMealsError] = useState(null);
@@ -56,7 +52,6 @@ const Home = () => {
 				<Carousel items={meals} />
 			)}
 			<HomeMain />
-			<SuggestionPanel allowPersonalized isAuthenticated={isAuthenticated} />
 		</main>
 	);
 };

@@ -33,7 +33,7 @@ describe("FoodContent", () => {
 				/>
 		);
 		});
-		expect(renderer.root.findByProps({ className: "food__content__loading" })).toBeTruthy();
+		expect(renderer.root.findByProps({ "aria-label": "Loading recipes" })).toBeTruthy();
 
 		act(() => {
 			renderer.update(
@@ -44,7 +44,7 @@ describe("FoodContent", () => {
 				/>
 			);
 		});
-		expect(renderer.root.findByProps({ className: "food__content__error" })).toBeTruthy();
+		expect(renderer.root.findByType("h3").children).toContain("Recipe library could not load");
 
 		act(() => {
 			renderer.update(
@@ -54,7 +54,7 @@ describe("FoodContent", () => {
 				/>
 			);
 		});
-		expect(renderer.root.findByProps({ className: "food__content__empty" })).toBeTruthy();
+		expect(renderer.root.findByType("h3").children).toContain("No recipes found");
 	});
 
 	it("keeps previous recipes visible and exposes an accessible updating state during a query transition", () => {
@@ -80,10 +80,10 @@ describe("FoodContent", () => {
 			);
 		});
 
-		const content = renderer.root.findByProps({ className: "food__content" });
+		const content = renderer.root.findByProps({ "aria-busy": true });
 		expect(content.props["aria-busy"]).toBe(true);
-		expect(renderer.root.findByProps({ className: "food__content__updating" })).toBeTruthy();
-		expect(renderer.root.findByProps({ className: "food__content__section__list food__content__section__list--grid" })).toBeTruthy();
+		expect(renderer.root.findByProps({ role: "status" })).toBeTruthy();
+		expect(renderer.root.find((node) => typeof node.props?.className === "string" && node.props.className.includes("sm:grid-cols-2"))).toBeTruthy();
 		expect(renderer.root.findByProps({ "aria-label": "Open Pasta" })).toBeTruthy();
 
 		act(() => {
@@ -96,8 +96,8 @@ describe("FoodContent", () => {
 		});
 
 		expect(renderer.root.findByProps({ "aria-label": "Open Soup" })).toBeTruthy();
-		expect(renderer.root.findAllByProps({ className: "food__content__updating" })).toHaveLength(0);
-		expect(renderer.root.findByProps({ className: "food__content" }).props["aria-busy"]).toBe(false);
+		expect(renderer.root.findAllByProps({ role: "status" })).toHaveLength(0);
+		expect(renderer.root.findByProps({ "aria-busy": false }).props["aria-busy"]).toBe(false);
 	});
 
 	it("identifies pagination when the compatibility response has more local rows", () => {
@@ -139,7 +139,7 @@ describe("FoodContent", () => {
 			);
 		});
 
-		const activeItems = renderer.root.findAll((node) => node.props?.active === true);
+		const activeItems = renderer.root.findAll((node) => node.type === "button" && node.props?.["aria-current"] === "page");
 		expect(activeItems).toHaveLength(1);
 		expect(activeItems[0].props.children).toBe(2);
 	});

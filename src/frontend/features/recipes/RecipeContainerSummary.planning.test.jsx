@@ -32,9 +32,9 @@ describe("RecipeContainerSummary planning action", () => {
 		});
 
 		const button = renderer.root.findAllByType("button").find(
-			(node) => node.props.className === "recipe__container__summary__plan",
+			(node) => node.props["aria-label"] === "Add recipe to meal plan",
 		);
-		expect(button.findByType("strong").children).toEqual(["Add to plan"]);
+		expect(button.children).toContain("Add to meal plan");
 		act(() => button.props.onClick());
 		expect(onAddToPlan).toHaveBeenCalledOnce();
 	});
@@ -56,11 +56,11 @@ describe("RecipeContainerSummary planning action", () => {
 		});
 
 		const button = renderer.root.findAllByType("button").find(
-			(node) => node.props.className === "recipe__container__summary__plan",
+			(node) => node.props["aria-label"] === "Adding recipe to meal plan",
 		);
 		expect(button.props.disabled).toBe(true);
 		expect(button.props["aria-busy"]).toBe(true);
-		expect(button.findByType("strong").children).toEqual(["Adding to plan..."]);
+		expect(button.children).toContain("Adding…");
 	});
 
 	it("exposes Save to collection without replacing the default save action", () => {
@@ -80,9 +80,9 @@ describe("RecipeContainerSummary planning action", () => {
 		});
 
 		const button = renderer.root.findAllByType("button").find(
-			(node) => node.props.className === "recipe__container__summary__collection",
+			(node) => node.props["aria-label"] === "Save recipe to collection",
 		);
-		expect(button.findByType("strong").children).toEqual(["Save to..."]);
+		expect(button.children).toContain("Save to collection");
 		act(() => button.props.onClick());
 		expect(onSaveToCollection).toHaveBeenCalledOnce();
 	});

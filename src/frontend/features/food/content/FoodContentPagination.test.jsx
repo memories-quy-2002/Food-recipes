@@ -29,7 +29,7 @@ describe("FoodContentPagination", () => {
 		);
 		});
 
-		expect(renderer.root.findAll((node) => node.props?.active === true)).toHaveLength(1);
-		expect(renderer.root.findAllByType("a")).toHaveLength(8);
+		expect(renderer.root.findAll((node) => node.type === "button" && node.props?.["aria-current"] === "page")).toHaveLength(1);
+		expect(renderer.root.findAllByType("button")).toHaveLength(9);
 	});
 });

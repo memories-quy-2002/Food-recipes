@@ -78,7 +78,7 @@ const LoginForm = ({ onSignup }) => {
 						type="button"
 						variant="ghost"
 						size="icon"
-						className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+						className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
 						onClick={() => setShowPassword((value) => !value)}
 						aria-label={showPassword ? "Hide password" : "Show password"}
 					>

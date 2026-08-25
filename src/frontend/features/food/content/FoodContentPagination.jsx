@@ -26,8 +26,8 @@ const FoodContentPagination = ({
 		<nav className="mt-8 flex flex-wrap items-center justify-center gap-1" aria-label="Recipe pages">
 			{totalPages > 5 ? (
 				<>
-					<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(1)} disabled={normalizedCurrentPage === 1} aria-label="First recipe page"><ChevronFirst className="size-4" /></Button>
-					<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(normalizedCurrentPage - 1)} disabled={normalizedCurrentPage === 1} aria-label="Previous recipe page"><ChevronLeft className="size-4" /></Button>
+					<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(1)} disabled={normalizedCurrentPage === 1} aria-label="First recipe page"><ChevronFirst className="size-4" /></Button>
+					<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(normalizedCurrentPage - 1)} disabled={normalizedCurrentPage === 1} aria-label="Previous recipe page"><ChevronLeft className="size-4" /></Button>
 				</>
 			) : null}
 
@@ -36,7 +36,7 @@ const FoodContentPagination = ({
 					key={number}
 					variant={number === normalizedCurrentPage ? "default" : "ghost"}
 					size="icon"
-					className="size-10 rounded-full"
+					className="size-11 rounded-full"
 					onClick={() => goTo(number)}
 					aria-current={number === normalizedCurrentPage ? "page" : undefined}
 					aria-label={`Recipe page ${number}`}
@@ -47,8 +47,8 @@ const FoodContentPagination = ({
 
 			{totalPages > 5 ? (
 				<>
-					<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(normalizedCurrentPage + 1)} disabled={normalizedCurrentPage === totalPages} aria-label="Next recipe page"><ChevronRight className="size-4" /></Button>
-					<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(totalPages)} disabled={normalizedCurrentPage === totalPages} aria-label="Last recipe page"><ChevronLast className="size-4" /></Button>
+					<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(normalizedCurrentPage + 1)} disabled={normalizedCurrentPage === totalPages} aria-label="Next recipe page"><ChevronRight className="size-4" /></Button>
+					<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(totalPages)} disabled={normalizedCurrentPage === totalPages} aria-label="Last recipe page"><ChevronLast className="size-4" /></Button>
 				</>
 			) : null}
 		</nav>

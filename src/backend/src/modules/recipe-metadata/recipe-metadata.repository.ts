@@ -36,6 +36,7 @@ export type RecipeMetadataRecord = {
 
 export interface RecipeMetadataRepositoryPort {
   recipeOwnerId(recipeId: number): Promise<number | null>;
+  recipeStatus(recipeId: number): Promise<string | null>;
   findByRecipeId(recipeId: number): Promise<RecipeMetadataRecord>;
   replace(
     recipeId: number,
@@ -73,6 +74,13 @@ export class RecipeMetadataRepository implements RecipeMetadataRepositoryPort {
       SELECT user_id FROM recipes WHERE recipe_id = ${recipeId}
     `);
     return rows[0] ? Number(rows[0].user_id) : null;
+  }
+
+  async recipeStatus(recipeId: number): Promise<string | null> {
+    const rows = await this.prisma.$queryRaw<{ status: string }[]>(Prisma.sql`
+      SELECT status FROM recipes WHERE recipe_id = ${recipeId}
+    `);
+    return rows[0]?.status ?? null;
   }
 
   async findByRecipeId(recipeId: number): Promise<RecipeMetadataRecord> {

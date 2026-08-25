@@ -9,6 +9,7 @@ import Health from "@/features/diagnostics/Health";
 import Food from "@/features/food/Food";
 import Home from "@/features/home/Home";
 import AddRecipe from "@/features/recipes/AddRecipe";
+import EditRecipe from "@/features/recipes/EditRecipe";
 import Profile from "@/features/profile/Profile";
 import Wishlist from "@/features/wishlist/Wishlist";
 import PlanningPage from "@/features/planning/PlanningPage";
@@ -109,6 +110,14 @@ const AppRoutes = () => (
 			element={
 				<ProtectedRoute>
 					<AddRecipe />
+				</ProtectedRoute>
+			}
+		/>
+		<Route
+			path="/food/edit"
+			element={
+				<ProtectedRoute>
+					<EditRecipe />
 				</ProtectedRoute>
 			}
 		/>

@@ -23,11 +23,8 @@ const renderCookingMode = (props = {}) => {
 	return renderer;
 };
 
-const findButton = (renderer, name) =>
-	renderer.root.findAllByType("button").find((button) => button.children.join("") === name);
-
-const findByRole = (renderer, role) =>
-	renderer.root.findAll((node) => node.props.role === role)[0];
+const getNodeText = (node) => node.children?.map((child) => typeof child === "string" ? child : getNodeText(child)).join("") || "";
+const findButton = (renderer, name) => renderer.root.findAllByType("button").find((button) => button.props["aria-label"] === name || getNodeText(button) === name);
 
 const findText = (renderer, text) =>
 	renderer.root.findAll((node) => node.children.join("") === text)[0];
@@ -113,9 +110,7 @@ describe("cooking mode guided flow", () => {
 			);
 		});
 
-		expect(findByRole(renderer, "status").children).toEqual([
-			"This recipe does not have any cooking steps yet.",
-		]);
+		expect(findText(renderer, "This recipe does not have any instructions to guide you through.")).toBeTruthy();
 		act(() => findButton(renderer, "Exit cooking").props.onClick());
 		expect(onExit).toHaveBeenCalledTimes(1);
 	});

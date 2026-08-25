@@ -69,7 +69,7 @@ const PrivateRecipeNotes = ({ recipeId, isAuthenticated }) => {
 							rows={6}
 							placeholder="E.g. use less salt, bake 5 minutes longer, try basil next time…"
 							onChange={(event) => setDraft(event.target.value)}
-							className="mt-2 min-h-36 w-full resize-y rounded-xl border border-input bg-background px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-ring/40"
+							className="mt-2 min-h-40 w-full resize-y rounded-xl border border-input bg-background px-4 py-3.5 text-base leading-6 text-foreground outline-none transition placeholder:text-muted-foreground/80 focus:border-ring focus:ring-4 focus:ring-ring/20 sm:text-sm"
 						/>
 						<div className="mt-1 flex justify-end text-xs text-muted-foreground">{draft.length}/{NOTE_MAX_LENGTH}</div>
 						<div className="mt-4 flex flex-col gap-2 sm:flex-row">

@@ -32,10 +32,10 @@ describe("RecipeContainerSummary shopping action", () => {
 		});
 
 			const button = renderer.root.findAllByType("button").find(
-				(node) => node.props.className === "recipe__container__summary__shopping",
+				(node) => node.props["aria-label"] === "Add ingredients to shopping list",
 			);
 			expect(button.props["aria-busy"]).toBe(false);
-			expect(button.findByType("strong").children).toEqual(["Add ingredients to shopping list"]);
+			expect(button.children).toContain("Add ingredients to shopping list");
 
 		act(() => button.props.onClick());
 		expect(onAddIngredients).toHaveBeenCalledTimes(1);
@@ -59,10 +59,10 @@ describe("RecipeContainerSummary shopping action", () => {
 		});
 
 			const button = renderer.root.findAllByType("button").find(
-				(node) => node.props.className === "recipe__container__summary__shopping",
+				(node) => node.props["aria-label"] === "Adding ingredients to shopping list",
 			);
 			expect(button.props.disabled).toBe(true);
 			expect(button.props["aria-busy"]).toBe(true);
-			expect(button.findByType("strong").children).toEqual(["Adding ingredients..."]);
+			expect(button.children).toContain("Adding ingredients…");
 	});
 });

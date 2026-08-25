@@ -1,5 +1,7 @@
 const apiRoutes = {
 	recipes: "/recipes",
+	homeFeed: "/home-feed",
+	userHomeFeed: "/users/me/home-feed",
 	recipe: (recipeId) => `/recipes/${recipeId}`,
 	recipeMetadata: (recipeId) => `/recipes/${recipeId}/metadata`,
 	suggestions: "/suggestions",

@@ -8,7 +8,7 @@ import { authActions } from "@/features/auth/state/authSlice";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
 
-const menuLink = "flex min-h-10 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const menuLink = "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const HeaderAuthButton = ({ auth }) => {
 	const { local, session } = auth;
 	const token = local.token || session.token;

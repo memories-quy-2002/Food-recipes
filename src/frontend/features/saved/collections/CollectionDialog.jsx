@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Input from "@/shared/ui/Input";
 
 const CollectionDialog = ({
 	open,
@@ -49,7 +50,8 @@ const CollectionDialog = ({
 				</header>
 				<form onSubmit={submit}>
 					<label htmlFor="collection-name">Collection name</label>
-					<input id="collection-name" value={name} maxLength={80} autoFocus onChange={(event) => setName(event.target.value)} />
+					<Input id="collection-name" name="name" type="text" value={name} maxLength={80} autoFocus autoComplete="off" onChange={(event) => setName(event.target.value)} aria-describedby="collection-name-help" />
+					<p id="collection-name-help" className="mt-2 text-sm leading-6 text-muted-foreground">Use a short name you will recognize when saving recipes.</p>
 					{(validationError || errorMessage) && <p role="alert">{validationError || errorMessage}</p>}
 					<div className="wishlist__collection-dialog__actions">
 						<button type="button" onClick={onClose} disabled={isSubmitting}>Cancel</button>

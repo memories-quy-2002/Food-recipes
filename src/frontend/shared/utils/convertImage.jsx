@@ -9,6 +9,8 @@ const images = import.meta.glob(`../assets/images/*.{png,jpg,jpeg,webp,svg}`, {
 
 const imageAliases = {
 	cajun_seafood_pasta: "quick_shrimp_scampi",
+	lunch_dinner: "lunch",
+	lunch_and_dinner: "lunch",
 	molten_chocolate_mug_cake: "desserts",
 	vanilla_no_bake_cheesecake: "desserts",
 };

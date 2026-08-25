@@ -23,7 +23,7 @@ const RecipeRating = ({
 			<p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">Share what worked for you and help the next cook decide.</p>
 			<div className="mt-6">
 				{isRecipeAuthor ? (
-					<Notice>You cannot review your own recipe. Other cooks can rate and review it here.</Notice>
+					<Notice><strong className="font-black">You cannot review your own recipe.</strong> Other cooks can rate and review it here.</Notice>
 				) : !canMutateReview ? (
 					<Notice>Community review updates are temporarily unavailable.</Notice>
 				) : !isAuthenticated ? (
@@ -43,14 +43,14 @@ const RecipeRating = ({
 							<p className="mt-2 text-sm leading-6 text-muted-foreground">{hasExistingRating ? "Saving will update your existing rating and review." : "A written review is optional."}</p>
 						</div>
 
-						{reviewMessage ? <div className={cn("rounded-xl border px-4 py-3 text-sm font-semibold", reviewMessage.type === "error" ? "border-red-200 bg-red-50 text-red-900" : "border-emerald-200 bg-emerald-50 text-emerald-900")} role={reviewMessage.type === "error" ? "alert" : "status"} aria-live="polite">{reviewMessage.text}</div> : null}
+						{reviewMessage ? <div className={cn("rounded-xl border px-4 py-3 text-sm font-semibold", reviewMessage.type === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-secondary/60 bg-secondary/30 text-foreground")} role={reviewMessage.type === "error" ? "alert" : "status"} aria-live="polite">{reviewMessage.text}</div> : null}
 
 						<div>
 							<Button type="button" variant="outline" className="rounded-full" onClick={onToggleReview}>{showReview ? "Hide written review" : hasExistingRating ? "Edit written review" : "Add a written review"}</Button>
 							{showReview ? (
 								<div className="mt-4">
 									<label className="text-sm font-black text-foreground" htmlFor="recipe-review">Your review</label>
-									<textarea id="recipe-review" rows={5} placeholder="What did you like? Any tips for the next cook?" value={review} maxLength={500} onChange={onReviewChange} className="mt-2 min-h-32 w-full resize-y rounded-xl border border-input bg-background px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-4 focus:ring-ring/40" />
+									<textarea id="recipe-review" rows={5} placeholder="What did you like? Any tips for the next cook?" value={review} maxLength={500} onChange={onReviewChange} className="mt-2 min-h-36 w-full resize-y rounded-xl border border-input bg-background px-4 py-3.5 text-base leading-6 text-foreground outline-none transition placeholder:text-muted-foreground/80 focus:border-ring focus:ring-4 focus:ring-ring/20 sm:text-sm" />
 									<p className="mt-1 text-right text-xs text-muted-foreground">{review.length}/500</p>
 								</div>
 							) : null}
@@ -65,7 +65,7 @@ const RecipeRating = ({
 			</div>
 		</div>
 
-		{isLoadingReviews ? <div className="rounded-2xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">Loading reviews…</div> : reviewsError ? <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-5 text-sm text-red-900" role="alert">{reviewsError}</div> : <RecipeReviewList reviewList={reviewList} />}
+		{isLoadingReviews ? <div className="rounded-2xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">Loading reviews…</div> : reviewsError ? <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-5 text-sm text-destructive" role="alert">{reviewsError}</div> : <RecipeReviewList reviewList={reviewList} />}
 	</section>
 );
 

@@ -32,11 +32,11 @@ const renderCarousel = () => {
 };
 
 const getRegion = (renderer) =>
-	renderer.root.find((node) => node.props.className === "home__carousel");
+	renderer.root.find((node) => node.props.role === "region" && node.props["aria-roledescription"] === "carousel");
 
 const getSlides = (renderer) =>
 	renderer.root.findAll(
-		(node) => node.props.className === "home__carousel__item"
+		(node) => node.props.role === "group" && node.props["aria-roledescription"] === "slide"
 	);
 
 afterEach(() => {

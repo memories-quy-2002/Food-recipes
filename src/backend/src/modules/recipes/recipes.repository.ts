@@ -121,6 +121,10 @@ export const recipeOrderBySql = (sort: RecipeSort = 'popular'): string => {
   switch (sort) {
     case 'rating':
       return 'overall_score DESC, num_ratings DESC, r.recipe_id ASC';
+    case 'newest':
+      return 'r.date_added DESC NULLS LAST, r.recipe_id DESC';
+    case 'quickest':
+      return 'total_time_minutes ASC NULLS LAST, r.recipe_id ASC';
     case 'name':
       return 'LOWER(r.recipe_name) ASC, r.recipe_name ASC, r.recipe_id ASC';
     case 'popular':
@@ -161,7 +165,7 @@ const toJsonSafeRecipe = (recipe: RecipeRecord): RecipeRecord => {
 
 const recipeMetadataSql = Prisma.sql`
   (SELECT COALESCE(jsonb_agg(jsonb_build_object(
-    'recipe_ingredient_id', ri.recipe_ingredient_id,
+    'recipe_ingredient_id', ri.ingredient_id,
     'ingredient_id', ri.ingredient_id,
     'recipe_id', ri.recipe_id,
     'position', ri.position,
@@ -253,6 +257,43 @@ export class RecipesRepository implements RecipesRepositoryPort {
     }
     if (query.categoryId) conditions.push(Prisma.sql`r.category_id = ${query.categoryId}`);
     if (query.mealId) conditions.push(Prisma.sql`r.meal_id = ${query.mealId}`);
+    if (query.filter === 'quick') {
+      conditions.push(Prisma.sql`(r.prep_time_minutes + r.cook_time_minutes) <= 45`);
+    }
+    if (query.filter === 'under-30') {
+      conditions.push(Prisma.sql`(r.prep_time_minutes + r.cook_time_minutes) <= 30`);
+    }
+    if (query.filter === 'vegetarian') {
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1 FROM recipe_dietary_tags rdt
+        WHERE rdt.recipe_id = r.recipe_id
+        AND LOWER(rdt.tag) IN ('vegetarian', 'vegan')
+      )`);
+    }
+    if (query.filter === 'high-protein') {
+      conditions.push(Prisma.sql`EXISTS (
+        SELECT 1 FROM recipe_nutrition rn
+        WHERE rn.recipe_id = r.recipe_id
+        AND rn.protein_grams >= 20
+      )`);
+    }
+    if (query.filter === 'one-pan') {
+      conditions.push(Prisma.sql`(
+        LOWER(r.recipe_name) LIKE '%one pan%'
+        OR LOWER(r.recipe_description) LIKE '%one pan%'
+        OR EXISTS (
+          SELECT 1 FROM unnest(r.instructions) instruction
+          WHERE LOWER(instruction) LIKE '%one pan%'
+        )
+      )`);
+    }
+    if (query.filter === 'beginner') {
+      conditions.push(Prisma.sql`(
+        LOWER(r.recipe_name) LIKE '%easy%'
+        OR LOWER(r.recipe_description) LIKE '%beginner%'
+        OR LOWER(r.recipe_description) LIKE '%simple%'
+      )`);
+    }
 
     const requestedPage = normalizePage(query.page);
     const limit = normalizeLimit(query.limit);

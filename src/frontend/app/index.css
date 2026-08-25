@@ -1,28 +1,32 @@
 @import "tailwindcss";
 
 :root {
-	--background: #f7f7f3;
-	--foreground: #211813;
-	--card: #ffffff;
-	--card-foreground: #211813;
-	--primary: #a94e00;
+	--background: #e5f0ec;
+	--foreground: #123631;
+	--card: #fffdf7;
+	--card-foreground: #123631;
+	--primary: #b43e2d;
 	--primary-foreground: #ffffff;
-	--secondary: #f6eadc;
-	--secondary-foreground: #211813;
-	--muted: #f6f1e8;
-	--muted-foreground: #746b63;
-	--accent: #f6eadc;
-	--accent-foreground: #a94e00;
-	--destructive: #c83220;
+	--secondary: #d9ed67;
+	--secondary-foreground: #123631;
+	--muted: #d7e6e1;
+	--muted-foreground: #405a54;
+	--accent: #f2c94c;
+	--accent-foreground: #123631;
+	--destructive: #b42318;
 	--destructive-foreground: #ffffff;
-	--border: #e7e1d9;
-	--input: #e7e1d9;
-	--ring: rgba(213, 107, 0, 0.35);
-	--radius: 1.25rem;
+	--border: #66877e;
+	--input: #66877e;
+	--ring: #123631;
+	--radius: 0.875rem;
+	--font-body: "DM Sans", ui-sans-serif, system-ui, -apple-system,
+		BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--font-display-family: "Fraunces", Georgia, "Times New Roman", serif;
 }
 
 @theme inline {
-	--font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+	--font-sans: var(--font-body);
+	--font-display: var(--font-display-family);
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
 	--color-card: var(--card);
@@ -47,8 +51,6 @@
 }
 
 * {
-	margin: 0;
-	padding: 0;
 	box-sizing: border-box;
 }
 
@@ -56,10 +58,54 @@ body {
 	margin: 0;
 	background: var(--background);
 	color: var(--foreground);
-	font-family: "Nunito", sans-serif;
+	font-family: var(--font-body);
+	font-optical-sizing: auto;
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: var(--font-display-family);
+	font-optical-sizing: auto;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+	font: inherit;
+}
+
+:focus-visible {
+	outline: 3px solid var(--ring);
+	outline-offset: 3px;
+}
+
+/* Keep native selects aligned with the shared Input and Form controls. */
+select.min-h-11.rounded-xl.border-input.bg-background {
+	min-height: 3rem;
+	padding: 0.625rem 1rem;
+	border-color: var(--input);
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
 }
 
 #root {

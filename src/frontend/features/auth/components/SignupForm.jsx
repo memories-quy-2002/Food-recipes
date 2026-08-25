@@ -93,7 +93,7 @@ const SignupForm = ({ onLogin }) => {
 			<div>
 				<Field id="signup-password" label="Password" icon={BsLock}>
 					<input id="signup-password" className={fieldClass} type={showPassword ? "text" : "password"} name="password" required aria-required="true" placeholder="Password" autoComplete="new-password" value={formData.password} onChange={handleChange} />
-					<Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>
+					<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>
 						{showPassword ? <BsEyeSlash aria-hidden="true" /> : <BsEye aria-hidden="true" />}
 					</Button>
 				</Field>
@@ -123,7 +123,7 @@ const SignupForm = ({ onLogin }) => {
 
 			<Field id="signup-confirm-password" label="Confirm password" icon={BsLock}>
 				<input id="signup-confirm-password" className={fieldClass} type={showConfirmPassword ? "text" : "password"} name="confirmPassword" required aria-required="true" placeholder="Confirm password" autoComplete="new-password" value={formData.confirmPassword} onChange={handleChange} />
-				<Button type="button" variant="ghost" size="icon" className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-foreground" onClick={() => setShowConfirmPassword((value) => !value)} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}>
+				<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" onClick={() => setShowConfirmPassword((value) => !value)} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}>
 					{showConfirmPassword ? <BsEyeSlash aria-hidden="true" /> : <BsEye aria-hidden="true" />}
 				</Button>
 			</Field>

@@ -18,6 +18,7 @@ import { MediaModule } from './modules/media/media.module';
 import { NotesModule } from './modules/notes/notes.module';
 import { PantryModule } from './modules/pantry/pantry.module';
 import { SuggestionsModule } from './modules/suggestions/suggestions.module';
+import { HomeFeedModule } from './modules/home-feed/home-feed.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { SuggestionsModule } from './modules/suggestions/suggestions.module';
     NotesModule,
     PantryModule,
     SuggestionsModule,
+    HomeFeedModule,
   ],
 })
 export class AppModule {}

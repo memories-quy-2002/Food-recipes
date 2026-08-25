@@ -20,14 +20,14 @@ const CarouselNavBar = ({
 }) => {
 	return (
 		<div
-			className="absolute bottom-4 left-4 right-4 z-10 flex items-center gap-2 sm:bottom-6 sm:left-8 sm:right-auto lg:bottom-10 lg:left-14 xl:left-20 2xl:left-24"
+			className="absolute bottom-2 left-4 right-4 z-10 flex items-center gap-2 sm:bottom-6 sm:left-8 sm:right-auto lg:bottom-10 lg:left-14 xl:left-20 2xl:left-24"
 			aria-label="Featured meal controls"
 		>
 			<Button
 				type="button"
 				variant="outline"
 				size="icon"
-				className="size-11 shrink-0 rounded-full border-white/25 bg-black/20 text-white backdrop-blur-md hover:border-white/50 hover:bg-white/15 hover:text-white"
+				className="size-11 shrink-0 rounded-full border-background/30 bg-foreground/20 text-background backdrop-blur-md hover:border-background/60 hover:bg-background/10 hover:text-background"
 				onClick={onPrevSlide}
 				aria-label="Previous featured slide"
 			>
@@ -39,10 +39,10 @@ const CarouselNavBar = ({
 					<button
 						type="button"
 						className={cn(
-							"size-8 shrink-0 rounded-full border border-transparent transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffd18b] focus-visible:ring-offset-2 focus-visible:ring-offset-[#211813]",
+							"size-11 shrink-0 rounded-full border border-transparent transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary focus-visible:ring-offset-2 focus-visible:ring-offset-foreground",
 							currIndex === index
-								? "bg-[#fff8ef] shadow-sm"
-								: "bg-white/15 hover:bg-white/30"
+								? "bg-background shadow-sm"
+								: "bg-background/15 hover:bg-background/30"
 						)}
 						key={id || index}
 						aria-label={`Show slide ${index + 1}: ${name}`}
@@ -56,7 +56,7 @@ const CarouselNavBar = ({
 				type="button"
 				variant="outline"
 				size="icon"
-				className="size-11 shrink-0 rounded-full border-white/25 bg-black/20 text-white backdrop-blur-md hover:border-white/50 hover:bg-white/15 hover:text-white"
+				className="size-11 shrink-0 rounded-full border-background/30 bg-foreground/20 text-background backdrop-blur-md hover:border-background/60 hover:bg-background/10 hover:text-background"
 				onClick={onNextSlide}
 				aria-label="Next featured slide"
 			>
@@ -68,7 +68,7 @@ const CarouselNavBar = ({
 					type="button"
 					variant="outline"
 					size="icon"
-					className="hidden size-11 shrink-0 rounded-full border-white/25 bg-black/20 text-white backdrop-blur-md hover:border-white/50 hover:bg-white/15 hover:text-white sm:inline-flex"
+					className="hidden size-11 shrink-0 rounded-full border-background/30 bg-foreground/20 text-background backdrop-blur-md hover:border-background/60 hover:bg-background/10 hover:text-background sm:inline-flex"
 					onClick={onTogglePause}
 					aria-label={isPaused ? "Resume featured carousel" : "Pause featured carousel"}
 					aria-pressed={isPaused}

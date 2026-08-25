@@ -3,6 +3,24 @@ export type Environment = Record<string, unknown>;
 const asString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
+const asOptionalHttpUrl = (value: unknown, name: string): string | undefined => {
+  const candidate = asString(value);
+  if (!candidate) return undefined;
+
+  let url: URL;
+  try {
+    url = new URL(candidate);
+  } catch {
+    throw new Error(`${name} must be a valid URL`);
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error(`${name} must use HTTP or HTTPS`);
+  }
+
+  return candidate;
+};
+
 const JWT_PLACEHOLDER_PREFIX_PATTERN =
   /^(?:replace[-_\s]?with|change[-_\s]?me|generate|dev|development|test|testing|local|localhost|default|example|sample|dummy|fake|placeholder|secret|password)/i;
 const JWT_PREDICTABLE_SHAPE_PATTERN = /^[a-z0-9_-]+$/i;
@@ -14,6 +32,14 @@ const isJwtPlaceholder = (jwtSecret: string): boolean =>
 export function validateEnvironment(environment: Environment): Environment {
   const databaseUrl = asString(environment.DATABASE_URL);
   const jwtSecret = asString(environment.JWT_SECRET);
+  const authMailWebhookUrl = asOptionalHttpUrl(
+    environment.AUTH_MAIL_WEBHOOK_URL,
+    'AUTH_MAIL_WEBHOOK_URL',
+  );
+  const authPublicWebUrl = asOptionalHttpUrl(
+    environment.AUTH_PUBLIC_WEB_URL,
+    'AUTH_PUBLIC_WEB_URL',
+  );
 
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is required');
@@ -42,5 +68,7 @@ export function validateEnvironment(environment: Environment): Environment {
     DATABASE_URL: databaseUrl,
     JWT_SECRET: jwtSecret,
     CORS_ORIGINS: asString(environment.CORS_ORIGINS) ?? 'http://localhost:5173',
+    ...(authMailWebhookUrl ? { AUTH_MAIL_WEBHOOK_URL: authMailWebhookUrl } : {}),
+    ...(authPublicWebUrl ? { AUTH_PUBLIC_WEB_URL: authPublicWebUrl } : {}),
   };
 }

@@ -32,6 +32,6 @@ describe("Button", () => {
 		const link = renderer.root.findByType("a");
 		expect(link.props.href).toBe("/remove");
 		expect(link.props.className).toContain("bg-destructive");
-		expect(link.props.className).toContain("h-9");
+		expect(link.props.className).toContain("h-11");
 	});
 });

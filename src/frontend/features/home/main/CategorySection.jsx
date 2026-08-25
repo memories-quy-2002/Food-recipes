@@ -76,10 +76,10 @@ const CategorySection = ({ categories, selectedCategoryId, onCategorySelect }) =
 							aria-pressed={active}
 						>
 							{convertImage(name, "absolute inset-0 size-full object-cover transition duration-300 group-hover:scale-[1.03]")}
-							<span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" aria-hidden="true" />
-							<span className="absolute inset-x-0 bottom-0 p-4 text-white">
+							<span className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/25 to-transparent" aria-hidden="true" />
+							<span className="absolute inset-x-0 bottom-0 p-4 text-background">
 								<strong className="block text-base font-black">{name}</strong>
-								<span className="mt-0.5 block text-xs text-white/75">Filter featured recipes</span>
+								<span className="mt-0.5 block text-xs text-background/75">Filter featured recipes</span>
 							</span>
 						</button>
 					);

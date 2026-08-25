@@ -98,8 +98,10 @@ describe("recipe draft account isolation", () => {
 		await userEvent.click(await screen.findByRole("button", { name: "Restore draft" }));
 
 		expect(screen.getByDisplayValue("Private soup draft")).toBeInTheDocument();
-		expect(screen.getByDisplayValue("water")).toBeInTheDocument();
 		expect(screen.getByDisplayValue("Boil")).toBeInTheDocument();
+		expect(screen.getByText("Older draft notes preserved")).toBeInTheDocument();
+		await userEvent.click(screen.getByRole("button", { name: "Save draft" }));
+		expect(JSON.parse(localStorage.getItem("food-recipes:recipe-draft:user:restore-user")).form.recipeIngredients).toEqual(["water"]);
 		expect(screen.queryByText("Restore your saved draft?")).not.toBeInTheDocument();
 	});
 
@@ -108,7 +110,7 @@ describe("recipe draft account isolation", () => {
 		const view = render(<div />);
 		renderForUser("duration-user", view.rerender);
 
-		const preparationTime = await screen.findByLabelText("Preparation Time");
+		const preparationTime = await screen.findByLabelText("Amount", { selector: "#formRecipePrepTimeNumber" });
 		await user.clear(preparationTime);
 		await user.type(preparationTime, "45");
 		await user.click(screen.getByRole("button", { name: "Save draft" }));

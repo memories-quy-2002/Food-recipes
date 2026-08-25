@@ -23,7 +23,7 @@ describe("Account surface", () => {
 			);
 		});
 
-		expect(renderer.root.findByProps({ className: "account__surface" })).toBeTruthy();
-		expect(renderer.root.findAllByProps({ className: "blur" })).toHaveLength(0);
+		expect(renderer.root.findByType("main")).toBeTruthy();
+		expect(renderer.root.findAll((node) => typeof node.props?.className === "string" && node.props.className.split(" ").includes("blur"))).toHaveLength(0);
 	});
 });

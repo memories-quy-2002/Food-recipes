@@ -1,0 +1,68 @@
+@media print {
+	@page {
+		margin: 12mm;
+	}
+
+	html,
+	body {
+		background: #fff !important;
+		color: #000 !important;
+	}
+
+	body:has(.recipe-print) :is(header, footer, nav),
+	body:has(.recipe-print) [role="dialog"],
+	.recipe-print [data-print-hidden],
+	.recipe-print [aria-labelledby="suggestion-panel-title"],
+	.recipe-print [aria-labelledby="recipe-reviews-title"],
+	.recipe-print .carousel,
+	.recipe-print [data-carousel] {
+		display: none !important;
+	}
+
+	.recipe-print {
+		background: #fff !important;
+		color: #000 !important;
+	}
+
+	.recipe-print__summary :is(button, a),
+	.recipe-print [aria-label="Secondary recipe actions"],
+	.recipe-print [aria-label="Adjust servings"] button {
+		display: none !important;
+	}
+
+	.recipe-print :is(section, div, li, p, span, strong, dt, dd, h1, h2, h3) {
+		background: transparent !important;
+		box-shadow: none !important;
+		color: #000 !important;
+		text-shadow: none !important;
+	}
+
+	.recipe-print :is(section, li) {
+		border-color: #999 !important;
+	}
+
+	.recipe-print [aria-label="Recipe timing and servings"] {
+		grid-template-columns: 1fr !important;
+	}
+
+	.recipe-print img {
+		display: block;
+		max-height: 72mm;
+		max-width: 100%;
+		object-fit: contain;
+		break-inside: avoid;
+	}
+
+	.recipe-print h1,
+	.recipe-print h2,
+	.recipe-print h3 {
+		break-after: avoid-page;
+		page-break-after: avoid;
+	}
+
+	.recipe-print #ingredients li,
+	.recipe-print ol > li {
+		break-inside: avoid;
+		page-break-inside: avoid;
+	}
+}

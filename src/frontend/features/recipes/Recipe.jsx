@@ -30,6 +30,7 @@ import {
 	useCollectionsQuery,
 } from "@/features/saved/api/collectionsQueries";
 import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
+import "./Recipe.print.scss";
 
 const Recipe = () => {
 	const { auth } = useContext(AuthContext);
@@ -486,43 +487,47 @@ const Recipe = () => {
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (
-				<main className="min-h-screen bg-background text-foreground">
-					<RecipeContainerSummary
-						recipe={recipe}
-						favorite={favorite}
-						onClickFavorite={handleClickFavorite}
-						onSaveToCollection={handleSaveToCollection}
-						onAddToPlan={handleAddToPlan}
-						onAddIngredients={handleAddIngredientsToShoppingList}
-						isAddingIngredients={addIngredientsMutation.isPending}
-					/>
-					<AddToPlanDialog
-						open={isAddToPlanOpen}
-						recipe={recipe}
-						onClose={() => setIsAddToPlanOpen(false)}
-						onAdded={handleRecipeAddedToPlan}
-					/>
-					<CollectionRecipeDialog
-						open={isCollectionDialogOpen}
-						recipeName={recipe.recipe_name}
-						collections={collectionsQuery.data?.collections ?? []}
-						isLoading={collectionsQuery.isLoading}
-						isSubmitting={addRecipeToCollectionMutation.isPending}
-						pendingCollectionId={pendingCollectionId}
-						errorMessage={
-							collectionDialogError ||
-							(collectionsQuery.isError
-								? "Unable to load your collections. Try again from Saved Recipes."
-								: null)
-						}
-						onAdd={handleAddRecipeToCollection}
-						onClose={() => {
-							if (!addRecipeToCollectionMutation.isPending) {
-								setIsCollectionDialogOpen(false);
-								setCollectionDialogError(null);
+				<main className="recipe-print min-h-screen bg-background text-foreground">
+					<div className="recipe-print__summary">
+						<RecipeContainerSummary
+							recipe={recipe}
+							favorite={favorite}
+							onClickFavorite={handleClickFavorite}
+							onSaveToCollection={handleSaveToCollection}
+							onAddToPlan={handleAddToPlan}
+							onAddIngredients={handleAddIngredientsToShoppingList}
+							isAddingIngredients={addIngredientsMutation.isPending}
+						/>
+					</div>
+					<div className="recipe-print__dialogs" data-print-hidden>
+						<AddToPlanDialog
+							open={isAddToPlanOpen}
+							recipe={recipe}
+							onClose={() => setIsAddToPlanOpen(false)}
+							onAdded={handleRecipeAddedToPlan}
+						/>
+						<CollectionRecipeDialog
+							open={isCollectionDialogOpen}
+							recipeName={recipe.recipe_name}
+							collections={collectionsQuery.data?.collections ?? []}
+							isLoading={collectionsQuery.isLoading}
+							isSubmitting={addRecipeToCollectionMutation.isPending}
+							pendingCollectionId={pendingCollectionId}
+							errorMessage={
+								collectionDialogError ||
+								(collectionsQuery.isError
+									? "Unable to load your collections. Try again from Saved Recipes."
+									: null)
 							}
-						}}
-					/>
+							onAdd={handleAddRecipeToCollection}
+							onClose={() => {
+								if (!addRecipeToCollectionMutation.isPending) {
+									setIsCollectionDialogOpen(false);
+									setCollectionDialogError(null);
+								}
+							}}
+						/>
+					</div>
 					<RecipeContent
 						recipe={recipe}
 						ratingScore={ratingScore}
@@ -548,8 +553,12 @@ const Recipe = () => {
 						onToggleReview={handleToggleReview}
 						onReviewChange={handleReviewChange}
 					/>
-					<PrivateRecipeNotes recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
-					<RecipeOtherList recipeId={recipe.recipe_id} />
+					<div className="recipe-print__private-notes" data-print-hidden>
+						<PrivateRecipeNotes recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
+					</div>
+					<div className="recipe-print__related" data-print-hidden>
+						<RecipeOtherList recipeId={recipe.recipe_id} />
+					</div>
 				</main>
 			)}
 		</>

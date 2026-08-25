@@ -41,7 +41,7 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite, featuredMode, onFeat
 								aria-selected={featuredMode === mode.id}
 								variant={featuredMode === mode.id ? "default" : "ghost"}
 								size="sm"
-								className="min-h-10 shrink-0 rounded-lg px-3 font-bold"
+								className="min-h-11 shrink-0 rounded-lg px-3 font-bold"
 								onClick={() => onFeaturedModeChange(mode.id)}
 							>
 								{mode.label}
@@ -55,8 +55,8 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite, featuredMode, onFeat
 			</div>
 
 			{recipes.length > 0 ? (
-				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:gap-5">
-					{recipes.map(({ recipe_id, recipe_name, category_name, meal_name, num_ratings, overall_score, image_url }) => (
+				<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:gap-5">
+					{recipes.map(({ recipe_id, recipe_name, category_name, meal_name, num_ratings, overall_score, image_url, total_time_minutes, dietary_tags }) => (
 						<FoodCard
 							key={recipe_id}
 							id={recipe_id}
@@ -66,6 +66,8 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite, featuredMode, onFeat
 							ratings={num_ratings}
 							score={overall_score}
 							imageUrl={image_url}
+							totalTimeMinutes={total_time_minutes}
+							dietaryTags={dietary_tags}
 							favorite={isRecipeFavorite({ recipe_id }, wishlist)}
 							onClickFavorite={() => onClickFavorite(recipe_id)}
 						/>
