@@ -33,7 +33,9 @@ describe("ShareRecipeButton", () => {
 
 	it("exposes an accessible share recipe button", () => {
 		renderButton();
-		expect(screen.getByRole("button", { name: "Share recipe" })).toBeEnabled();
+		const button = screen.getByRole("button", { name: "Share recipe" });
+		expect(button).toBeEnabled();
+		expect(button).toHaveClass("h-11");
 	});
 
 	it("shows a pending state and prevents repeated requests", async () => {

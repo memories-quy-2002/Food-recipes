@@ -43,7 +43,7 @@ const ShareRecipeButton = ({ recipeId, recipeName, description, className }) => 
 
 	return (
 		<>
-			<Button type="button" variant="outline" className={className} onClick={handleShare} disabled={isPending} aria-busy={isPending} aria-label="Share recipe">
+			<Button type="button" size="lg" variant="outline" className={className} onClick={handleShare} disabled={isPending} aria-busy={isPending} aria-label="Share recipe">
 				<Share2 className="size-4" aria-hidden="true" />
 				{isPending ? "Sharing…" : "Share"}
 			</Button>

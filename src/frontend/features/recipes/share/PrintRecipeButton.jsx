@@ -15,7 +15,7 @@ const PrintRecipeButton = ({ className }) => {
 
 	return (
 		<>
-			<Button type="button" variant="outline" className={className} onClick={handlePrint} aria-label="Print recipe">
+			<Button type="button" size="lg" variant="outline" className={className} onClick={handlePrint} aria-label="Print recipe">
 				<Printer className="size-4" aria-hidden="true" />
 				Print
 			</Button>

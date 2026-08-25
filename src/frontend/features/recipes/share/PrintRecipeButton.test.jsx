@@ -19,7 +19,9 @@ describe("PrintRecipeButton", () => {
 
 	it("exposes an accessible print recipe button", () => {
 		render(<PrintRecipeButton />);
-		expect(screen.getByRole("button", { name: "Print recipe" })).toBeEnabled();
+		const button = screen.getByRole("button", { name: "Print recipe" });
+		expect(button).toBeEnabled();
+		expect(button).toHaveClass("h-11");
 	});
 
 	it("opens the print dialog only after activation", () => {
