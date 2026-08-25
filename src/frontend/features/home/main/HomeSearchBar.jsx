@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Search, Sparkles } from "lucide-react";
 import convertImage from "@/shared/utils/convertImage";
+import Button from "@/shared/ui/Button";
 
 const QUICK_FILTER_LIMIT = 4;
 const SEARCH_RESULTS_ID = "recipe-search-results";
@@ -15,7 +17,6 @@ export const getQuickFilters = (recipes = []) => {
 		[recipe?.category_name, recipe?.meal_name].forEach((value) => {
 			const label = normalizeLabel(value);
 			if (!label) return;
-
 			const key = label.toLocaleLowerCase();
 			const current = labels.get(key);
 			labels.set(key, {
@@ -39,47 +40,41 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 	const quickFilters = getQuickFilters(recipes);
 	const [activeIndex, setActiveIndex] = useState(-1);
 	const [isResultListOpen, setIsResultListOpen] = useState(Boolean(searchTerm));
+
 	const updateSearchTerm = (value) => {
-		setSearchParams(
-			(currentParams) => {
-				const nextParams = new URLSearchParams(currentParams);
-				if (value.trim()) {
-					nextParams.set("q", value);
-				} else {
-					nextParams.delete("q");
-				}
-				return nextParams;
-			},
-			{ replace: true }
-		);
+		setSearchParams((currentParams) => {
+			const nextParams = new URLSearchParams(currentParams);
+			if (value.trim()) nextParams.set("q", value);
+			else nextParams.delete("q");
+			return nextParams;
+		}, { replace: true });
 	};
-	const handleChange = (e) => {
+
+	const handleChange = (event) => {
 		setActiveIndex(-1);
-		setIsResultListOpen(Boolean(e.target.value.trim()));
-		updateSearchTerm(e.target.value);
+		setIsResultListOpen(Boolean(event.target.value.trim()));
+		updateSearchTerm(event.target.value);
 	};
+
 	const handleQuickFilter = (label) => {
 		setActiveIndex(-1);
 		setIsResultListOpen(true);
 		updateSearchTerm(label);
 	};
+
 	const filteredRecipes = Array.isArray(searchResults)
 		? searchResults
 		: recipes.filter((recipe) =>
-				[
-					recipe.recipe_name,
-					recipe.category_name,
-					recipe.meal_name,
-				].some((value) =>
-					normalizeLabel(value)
-						.toLocaleLowerCase()
-						.includes(searchTerm.trim().toLocaleLowerCase())
-				)
-			);
+			[recipe.recipe_name, recipe.category_name, recipe.meal_name].some((value) =>
+				normalizeLabel(value).toLocaleLowerCase().includes(searchTerm.trim().toLocaleLowerCase())
+			)
+		);
+
 	useEffect(() => {
 		setActiveIndex(-1);
 		setIsResultListOpen(Boolean(searchTerm.trim()));
 	}, [searchTerm]);
+
 	const handleKeyDown = (event) => {
 		if (event.key === "Escape") {
 			event.preventDefault();
@@ -87,128 +82,123 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 			setIsResultListOpen(false);
 			return;
 		}
-
 		if (event.key === "ArrowDown" && filteredRecipes.length > 0) {
 			event.preventDefault();
 			setIsResultListOpen(true);
-			setActiveIndex((currentIndex) =>
-				currentIndex < filteredRecipes.length - 1 ? currentIndex + 1 : 0
-			);
+			setActiveIndex((currentIndex) => currentIndex < filteredRecipes.length - 1 ? currentIndex + 1 : 0);
 			return;
 		}
-
 		if (event.key === "ArrowUp" && filteredRecipes.length > 0) {
 			event.preventDefault();
 			setIsResultListOpen(true);
-			setActiveIndex((currentIndex) =>
-				currentIndex > 0 ? currentIndex - 1 : filteredRecipes.length - 1
-			);
+			setActiveIndex((currentIndex) => currentIndex > 0 ? currentIndex - 1 : filteredRecipes.length - 1);
 			return;
 		}
-
-		if (
-			event.key === "Enter" &&
-			isResultListOpen &&
-			filteredRecipes[activeIndex]
-		) {
+		if (event.key === "Enter" && isResultListOpen && filteredRecipes[activeIndex]) {
 			event.preventDefault();
 			navigate(`/recipe?id=${filteredRecipes[activeIndex].recipe_id}`);
 		}
 	};
+
 	const activeDescendant =
-		isResultListOpen && activeIndex >= 0
-			? `recipe-search-option-${activeIndex}`
-			: undefined;
+		isResultListOpen && activeIndex >= 0 ? `recipe-search-option-${activeIndex}` : undefined;
+
 	return (
-		<div className="home__main__title">
-			<span className="home__main__title__eyebrow">Start with a craving</span>
-			<h1>What do you want to cook?</h1>
-			<p>
-				Search recipes by name, category, or meal type and get cooking.
+		<section className="relative mx-auto w-full max-w-5xl overflow-visible rounded-[2rem] border border-border/80 bg-card px-5 py-8 text-center shadow-[0_24px_70px_rgba(55,35,20,0.08)] sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+			<div className="mx-auto flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
+				<Sparkles className="size-5" aria-hidden="true" />
+			</div>
+			<p className="mt-4 text-xs font-extrabold uppercase tracking-[0.18em] text-primary sm:text-sm">
+				Start with a craving
 			</p>
-			<div className="home__main__search">
+			<h1 className="mx-auto mt-3 max-w-3xl text-balance text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl lg:text-5xl">
+				What do you want to cook?
+			</h1>
+			<p className="mx-auto mt-4 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
+				Search by recipe, category, or meal type. Pick an idea and get to cooking faster.
+			</p>
+
+			<div className="relative mx-auto mt-7 w-full max-w-2xl text-left">
+				<Search className="pointer-events-none absolute left-4 top-[14px] z-10 size-5 text-muted-foreground" aria-hidden="true" />
 				<input
-					type="text"
-					placeholder="Search recipes…"
+					type="search"
+					placeholder="Search recipes, cuisines, or meal types…"
 					aria-label="Search recipes"
 					role="combobox"
 					aria-autocomplete="list"
 					aria-controls={SEARCH_RESULTS_ID}
 					aria-expanded={Boolean(searchTerm) && isResultListOpen}
 					aria-activedescendant={activeDescendant}
-					className="home__main__search__input"
+					className="h-12 w-full rounded-full border border-input bg-background pl-12 pr-5 text-base text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/80 focus:border-primary focus:ring-4 focus:ring-ring/40"
 					value={searchTerm}
 					onChange={handleChange}
+					onFocus={() => searchTerm.trim() && setIsResultListOpen(true)}
 					onKeyDown={handleKeyDown}
-				></input>
-				{quickFilters.length > 0 && (
-					<div
-						className="home__main__search__filters"
-						aria-label="Popular recipe filters"
-					>
+				/>
+
+				{quickFilters.length > 0 ? (
+					<div className="mt-3 flex flex-wrap justify-center gap-2" aria-label="Popular recipe filters">
 						{quickFilters.map((label) => (
-							<button
+							<Button
 								key={label}
 								type="button"
-								className="home__main__search__filter"
+								variant="outline"
+								size="sm"
+								className="min-h-11 rounded-full px-4 text-sm font-bold"
 								onClick={() => handleQuickFilter(label)}
 							>
 								{label}
-							</button>
+							</Button>
 						))}
 					</div>
-				)}
-				{searchTerm && isResultListOpen && (
+				) : null}
+
+				{searchTerm && isResultListOpen ? (
 					<ul
 						id={SEARCH_RESULTS_ID}
 						role="listbox"
 						aria-label="Recipe search results"
 						aria-live="polite"
-						className="home__main__search__result"
+						className="absolute inset-x-0 top-[calc(100%+0.75rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-2xl shadow-black/10"
 					>
 						{isSearchLoading ? (
-							<li role="option" aria-disabled="true">Searching recipes...</li>
+							<li className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">Searching recipes…</li>
 						) : searchError ? (
-							<li role="option" aria-disabled="true">Search suggestions are unavailable.</li>
+							<li className="px-4 py-4 text-sm text-destructive" role="option" aria-disabled="true">Search suggestions are unavailable.</li>
 						) : filteredRecipes.length > 0 ? (
-							filteredRecipes.map((recipe) => (
+							filteredRecipes.map((recipe, index) => (
 								<li
 									key={recipe.recipe_id}
-									id={`recipe-search-option-${filteredRecipes.indexOf(recipe)}`}
+									id={`recipe-search-option-${index}`}
 									role="option"
 									tabIndex={-1}
-									aria-selected={
-										filteredRecipes.indexOf(recipe) === activeIndex
-									}
-									onClick={() =>
-										navigate(
-											`/recipe?id=${recipe.recipe_id}`
-										)
-									}
+									aria-selected={index === activeIndex}
+									className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-accent aria-selected:bg-accent"
+									onMouseEnter={() => setActiveIndex(index)}
+									onClick={() => navigate(`/recipe?id=${recipe.recipe_id}`)}
 								>
-									{convertImage(
-										recipe.recipe_name,
-										"home__main__search__result__img",
-										recipe.image_url
-									)}
-									<p>{recipe.recipe_name}</p>
+									{convertImage(recipe.recipe_name, "size-12 shrink-0 rounded-xl object-cover sm:size-14", recipe.image_url)}
+									<div className="min-w-0">
+										<p className="truncate font-bold text-foreground">{recipe.recipe_name}</p>
+										<p className="mt-0.5 truncate text-xs text-muted-foreground">{recipe.category_name || recipe.meal_name || "Recipe"}</p>
+									</div>
 								</li>
 							))
 						) : (
-							<li role="option" aria-disabled="true">
-								No recipe found
-							</li>
+							<li className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">No recipe found. Try a broader term.</li>
 						)}
-						{filteredRecipes.length === 0 && !isSearchLoading && !searchError && (
-							<li className="home__main__search__result__hint">Try a different search.</li>
-						)}
-						<li className="home__main__search__result__all">
-							<Link to={`/food?q=${encodeURIComponent(searchTerm.trim())}`}>View all results for “{searchTerm.trim()}”</Link>
+						<li className="mt-1 border-t border-border p-1 pt-2">
+							<Link
+								className="flex min-h-11 items-center justify-center rounded-xl px-3 text-sm font-bold text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+								to={`/food?q=${encodeURIComponent(searchTerm.trim())}`}
+							>
+								View all results for “{searchTerm.trim()}”
+							</Link>
 						</li>
 					</ul>
-				)}
+				) : null}
 			</div>
-		</div>
+		</section>
 	);
 };
 

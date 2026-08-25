@@ -1,6 +1,8 @@
 import cameraPreview from "@/shared/assets/images/cameraPreview.png";
 import React, { useContext, useEffect, useMemo, useState } from "react";
-import { Button, Col, Form, Row } from "react-bootstrap";
+import Button from "@/shared/ui/Button";
+import { Form } from "@/shared/ui/Form";
+import { Col, Row } from "@/shared/ui/layout";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
@@ -12,7 +14,6 @@ import {
 	uploadRecipeImage,
 } from "@/shared/api/supabaseStorage";
 import PageHelmet from "@/shared/seo/PageHelmet";
-import "./AddRecipe.scss";
 import convertTime from "@/shared/utils/convertTime";
 import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
@@ -517,19 +518,19 @@ const AddRecipe = () => {
 		}
 	};
 	return (
-		<main className="fr-page fr-add add">
+		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
 			<PageHelmet
 				title="Add Recipe"
 				description="Create and share a new recipe with ingredients, cooking steps, images, and preparation time."
 				path="/food/add"
 				noIndex
 			/>
-			<div className="add__surface">
-				<div className="add__container">
-					<div className="add__container__header">
-						<div className="add__container__header__meta" aria-label="Recipe status">
-							<span className="add__container__header__status">Draft</span>
-							<span className="add__container__header__autosave" aria-live="polite">
+			<div className="mx-auto w-full max-w-6xl">
+				<div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+					<div className="border-b border-border bg-secondary/45 p-5 sm:p-7 lg:p-9">
+						<div className="mb-4 flex flex-wrap items-center gap-2" aria-label="Recipe status">
+							<span className="rounded-full bg-primary px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-primary-foreground">Draft</span>
+							<span className="text-sm font-semibold text-muted-foreground" aria-live="polite">
 								{draftStatus === "saving"
 									? "Saving draft…"
 									: draftStatus === "saved"
@@ -539,28 +540,28 @@ const AddRecipe = () => {
 											: "Local draft only"}
 							</span>
 						</div>
-						<h1 className="add__container__header__title">
+						<h1 className="text-4xl font-black tracking-[-0.035em] text-foreground sm:text-5xl">
 							Create a new recipe
 						</h1>
-						<p className="add__container__header__declaration">
+						<p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
 							Uploading personal recipes is easy! Add yours to
 							your favorites, share with friends, family, or the
 							community.
 						</p>
 					</div>
-					<div className="add__container__form">
+					<div className="p-4 sm:p-6 lg:p-8">
 						{currentRestoreCandidate && (
-							<div className="add__container__notice add__container__notice--restore" role="status">
+							<div className="mb-4 rounded-2xl border border-primary/20 bg-secondary p-4 text-secondary-foreground" role="status">
 								<strong>Restore your saved draft?</strong>
 								<p>This draft is stored only in this browser for your account. Your current form will stay unchanged until you choose.</p>
-								<div className="add__container__notice__actions">
+								<div className="mt-3 flex flex-wrap gap-2">
 									<Button type="button" onClick={handleRestoreDraft}>Restore draft</Button>
-									<Button type="button" variant="light" onClick={handleStartFresh}>Start fresh</Button>
+									<Button type="button" variant="outline" onClick={handleStartFresh}>Start fresh</Button>
 								</div>
 							</div>
 						)}
 						{!storageConfigured && (
-							<div className="add__container__notice add__container__notice--error">
+							<div className="mb-4 rounded-2xl border border-destructive/25 bg-destructive/10 p-4 text-destructive">
 								<strong>Supabase Storage setup needed</strong>
 								<p>
 									Add VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY,
@@ -571,7 +572,7 @@ const AddRecipe = () => {
 						)}
 						{submitError && (
 							<div
-								className="add__container__notice add__container__notice--error"
+								className="mb-4 rounded-2xl border border-destructive/25 bg-destructive/10 p-4 text-destructive"
 								role="alert"
 							>
 								<strong>Recipe was not published</strong>
@@ -579,7 +580,7 @@ const AddRecipe = () => {
 							</div>
 						)}
 						{listError && (
-							<div className="add__container__notice add__container__notice--warning">
+							<div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900">
 								<strong>Lists could not load</strong>
 								<p>
 									{listError} Publishing requires a category and meal from
@@ -588,7 +589,7 @@ const AddRecipe = () => {
 							</div>
 						)}
 						{uploadStatus !== "idle" && (
-							<div className="add__container__notice" aria-live="polite">
+							<div className="mb-4 rounded-2xl border border-border bg-muted p-4 text-foreground" aria-live="polite">
 								<strong>
 									{uploadStatus === "uploading"
 										? "Uploading image"
@@ -602,11 +603,11 @@ const AddRecipe = () => {
 							</div>
 						)}
 						<Form onSubmit={handleRecipeSubmit(handleSubmit, handleInvalidSubmit)}>
-							<Row className="add__container__form__field">
+							<Row className="mb-6 grid gap-4">
 								<Col md={6}>
 									<Form.Group
 										controlId="formRecipeName"
-										className="add__container__form__field"
+										className="mb-6 grid gap-4"
 									>
 										<Form.Label>Recipe Name</Form.Label>
 										<Form.Control
@@ -619,7 +620,7 @@ const AddRecipe = () => {
 									</Form.Group>
 									<Form.Group
 										controlId="formRecipeDescription"
-										className="add__container__form__field"
+										className="mb-6 grid gap-4"
 										style={{ height: "fit-content" }}
 									>
 										<Form.Label>Description</Form.Label>
@@ -635,7 +636,7 @@ const AddRecipe = () => {
 								<Col md={6}>
 									<Form.Group
 										controlId="formRecipeImage"
-										className="add__container__form__imgContainer"
+										className="grid gap-2"
 									>
 										<Form.Label>Image</Form.Label>
 										{preview ? (
@@ -644,7 +645,7 @@ const AddRecipe = () => {
 												alt="This is a preview"
 												width="800"
 												height="600"
-												className="add__container__form__imgContainer__img"
+												className="aspect-[4/3] w-full rounded-2xl border border-border bg-muted object-cover"
 											/>
 										) : (
 											<img
@@ -652,7 +653,7 @@ const AddRecipe = () => {
 												alt="Camera preview"
 												width="800"
 												height="600"
-												className="add__container__form__imgContainer__img"
+												className="aspect-[4/3] w-full rounded-2xl border border-border bg-muted object-cover"
 											/>
 										)}
 										<Form.Control
@@ -660,20 +661,20 @@ const AddRecipe = () => {
 											{...register("recipeImage")}
 											accept="image/*"
 											onChange={handleFileChange}
-											style={{ marginTop: "10px" }}
+											className="mt-2"
 										/>
-										<p className="add__container__form__hint">
+										<p className="mt-2 text-sm leading-6 text-muted-foreground">
 											Optional for drafts. Publishing uploads the image to
 											Supabase Storage and stores its public URL.
 										</p>
 									</Form.Group>
 								</Col>
 							</Row>
-							<Row className="add__container__form__field">
+							<Row className="mb-6 grid gap-4">
 								<Col md={6}>
 									<Form.Group
 										controlId="formRecipeCategoryName"
-										className="add__container__form__field"
+										className="mb-6 grid gap-4"
 									>
 										<Form.Label>Category</Form.Label>
 										<Form.Select
@@ -696,7 +697,7 @@ const AddRecipe = () => {
 								<Col md={6}>
 									<Form.Group
 										controlId="formRecipeMealName"
-										className="add__container__form__field"
+										className="mb-6 grid gap-4"
 									>
 										<Form.Label>Meal</Form.Label>
 										<Form.Select
@@ -720,21 +721,21 @@ const AddRecipe = () => {
 
 							<Form.Group
 								controlId="formRecipePrepTime"
-								className="add__container__form__time"
+								className="mb-5 grid grid-cols-[minmax(0,1fr)_150px] gap-3"
 							>
 								<Form.Label>Preparation Time</Form.Label>
 								<Form.Control
 									type="number"
 									{...register("recipePrepTime.number", { onChange: handleTimeNumberChange })}
 									value={formRecipe.recipePrepTime.number}
-									className="add__container__form__time__input"
+									className="w-full"
 									min="1"
 									step="any"
 								/>
 								<Form.Select
 									value={formRecipe.recipePrepTime.unit}
 									{...register("recipePrepTime.unit", { onChange: handleSelectChange })}
-									className="add__container__form__time__select"
+									className="w-full"
 								>
 									<option value="seconds">seconds</option>
 									<option value="minutes">minutes</option>
@@ -744,21 +745,21 @@ const AddRecipe = () => {
 							</Form.Group>
 							<Form.Group
 								controlId="formRecipeCookTime"
-								className="add__container__form__time"
+								className="mb-5 grid grid-cols-[minmax(0,1fr)_150px] gap-3"
 							>
 								<Form.Label>Cooking Time</Form.Label>
 								<Form.Control
 									type="number"
 									{...register("recipeCookTime.number", { onChange: handleTimeNumberChange })}
 									value={formRecipe.recipeCookTime.number}
-									className="add__container__form__time__input"
+									className="w-full"
 									min="1"
 									step="any"
 								/>
 								<Form.Select
 									value={formRecipe.recipeCookTime.unit}
 									{...register("recipeCookTime.unit", { onChange: handleSelectChange })}
-									className="add__container__form__time__select"
+									className="w-full"
 								>
 									<option value="seconds">seconds</option>
 									<option value="minutes">minutes</option>
@@ -780,69 +781,69 @@ const AddRecipe = () => {
 							</div>
 							<Form.Group
 								controlId="formRecipeIngredients"
-								className="add__container__form__field"
+								className="mb-6 grid gap-4"
 							>
 								<Form.Label>Structured ingredients</Form.Label>
-								<p className="add__container__form__hint">Add quantities and units when known. Nutrition is entered manually below.</p>
+								<p className="mt-2 text-sm leading-6 text-muted-foreground">Add quantities and units when known. Nutrition is entered manually below.</p>
 								{(formRecipe.structuredIngredients || []).map((ingredient, index) => (
-									<div key={index} className="d-flex gap-2 mb-3 flex-wrap">
+									<div key={index} className="mb-3 grid gap-2 sm:grid-cols-[auto_0.7fr_0.8fr_1.5fr_1.2fr_auto] sm:items-center">
 										<span aria-hidden="true">{index + 1}.</span>
 										<Form.Control aria-label={`Ingredient ${index + 1} quantity`} placeholder="Qty" value={ingredient.quantityText || ""} onChange={(event) => handleStructuredChange(index, "quantityText", event.target.value)} />
 										<Form.Control aria-label={`Ingredient ${index + 1} unit`} placeholder="Unit" value={ingredient.unit || ""} onChange={(event) => handleStructuredChange(index, "unit", event.target.value)} />
 										<Form.Control aria-label={`Ingredient ${index + 1} name`} placeholder="Ingredient name" value={ingredient.name || ""} onChange={(event) => handleStructuredChange(index, "name", event.target.value)} />
 										<Form.Control aria-label={`Ingredient ${index + 1} preparation`} placeholder="Preparation (optional)" value={ingredient.preparation || ""} onChange={(event) => handleStructuredChange(index, "preparation", event.target.value)} />
-										<Button variant="danger" type="button" onClick={() => handleDeleteStructuredIngredient(index)} disabled={(formRecipe.structuredIngredients || []).length <= 1}>Remove</Button>
+										<Button variant="destructive" type="button" onClick={() => handleDeleteStructuredIngredient(index)} disabled={(formRecipe.structuredIngredients || []).length <= 1}>Remove</Button>
 									</div>
 								))}
-								<Button variant="light" type="button" onClick={handleAddStructuredIngredient}>+ Add ingredient</Button>
+								<Button variant="outline" type="button" onClick={handleAddStructuredIngredient}>+ Add ingredient</Button>
 								{formRecipe.recipeIngredients.some((ingredient) => ingredient.trim()) && (
-									<p className="add__container__form__hint">A legacy free-text ingredient list was restored and will be preserved.</p>
+									<p className="mt-2 text-sm leading-6 text-muted-foreground">A legacy free-text ingredient list was restored and will be preserved.</p>
 								)}
 								<details className="mt-3">
 									<summary>Legacy free-text ingredient notes</summary>
 									{formRecipe.recipeIngredients.map((ingredient, index) => (
-										<div key={index} className="d-flex gap-2 mb-2">
+										<div key={index} className="mb-2 flex flex-col gap-2 sm:flex-row">
 											<Form.Control aria-label={`Legacy ingredient ${index + 1}`} type="text" {...register(`recipeIngredients.${index}`)} value={ingredient} onChange={(event) => handleArrayChange("recipeIngredients", index, event.target.value)} onPaste={(event) => handleArrayPaste("recipeIngredients", event, index)} />
-											<Button variant="danger" type="button" name="recipeIngredients" disabled={formRecipe.recipeIngredients.length <= 1} onClick={(event) => handleDeleteField(event, index)}>Remove</Button>
+											<Button variant="destructive" type="button" name="recipeIngredients" disabled={formRecipe.recipeIngredients.length <= 1} onClick={(event) => handleDeleteField(event, index)}>Remove</Button>
 										</div>
 									))}
-									<Button variant="light" type="button" name="recipeIngredients" onClick={handleAddField}>+ Add legacy note</Button>
+									<Button variant="outline" type="button" name="recipeIngredients" onClick={handleAddField}>+ Add legacy note</Button>
 								</details>
 							</Form.Group>
 
-							<Form.Group className="add__container__form__field" controlId="formRecipeNutrition">
+							<Form.Group className="mb-6 grid gap-4" controlId="formRecipeNutrition">
 								<Form.Label>Nutrition per serving</Form.Label>
-								<p className="add__container__form__hint">Manual MVP input; values are not calculated or medically verified.</p>
+								<p className="mt-2 text-sm leading-6 text-muted-foreground">Manual MVP input; values are not calculated or medically verified.</p>
 								<Row>
 									{NUTRITION_FIELDS.map((field) => (
 										<Col xs={6} md={3} key={field}>
-											<Form.Label className="text-capitalize">{field}</Form.Label>
+											<Form.Label className="capitalize">{field}</Form.Label>
 											<Form.Control type="number" min="0" step="any" placeholder="Optional" {...register(`nutrition.${field}`, { onChange: handleInputChange })} value={formRecipe.nutrition?.[field] || ""} />
 										</Col>
 									))}
 								</Row>
 							</Form.Group>
 
-							<Form.Group className="add__container__form__field" controlId="formRecipeDietary">
+							<Form.Group className="mb-6 grid gap-4" controlId="formRecipeDietary">
 								<Form.Label>Dietary preferences</Form.Label>
-								<div className="d-flex gap-2 flex-wrap mb-3">
+								<div className="mb-3 flex flex-wrap gap-2">
 									{DIETARY_OPTIONS.map((tag) => <Button key={tag} type="button" variant={(formRecipe.dietaryTags || []).includes(tag) ? "primary" : "light"} aria-pressed={(formRecipe.dietaryTags || []).includes(tag)} onClick={() => handleToggleTag("dietaryTags", tag)}>{tag}</Button>)}
 								</div>
 								<Form.Label>Allergen tags</Form.Label>
-								<div className="d-flex gap-2 flex-wrap">
+								<div className="flex flex-wrap gap-2">
 									{ALLERGEN_OPTIONS.map((tag) => <Button key={tag} type="button" variant={(formRecipe.allergenTags || []).includes(tag) ? "primary" : "light"} aria-pressed={(formRecipe.allergenTags || []).includes(tag)} onClick={() => handleToggleTag("allergenTags", tag)}>{tag}</Button>)}
 								</div>
 							</Form.Group>
 							<Form.Group
 								controlId="formRecipeInstructions"
-								className="add__container__form__field"
+								className="mb-6 grid gap-4"
 							>
 								<Form.Label>Instructions</Form.Label>
 								{formRecipe.recipeInstructions.map(
 									(instruction, index) => (
 										<div
 											key={index}
-											className="d-flex gap-2 mb-3"
+											className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-start"
 										>
 											<span>{index + 1}. </span>
 													<Form.Control
@@ -855,7 +856,7 @@ const AddRecipe = () => {
 
 													<button
 														name="recipeInstructions"
-														className="btn btn-danger"
+														className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-destructive text-destructive-foreground transition hover:bg-destructive/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
 														type="button"
 														disabled={
 															formRecipe.recipeInstructions.length <= 1
@@ -874,7 +875,7 @@ const AddRecipe = () => {
 								)}
 								<button
 									name="recipeInstructions"
-									className="add__container__form__field__button"
+									className="inline-flex min-h-11 items-center justify-center rounded-xl border border-input bg-background px-4 py-2 text-sm font-bold transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 									type="button"
 									onClick={handleAddField}
 								>
@@ -882,17 +883,17 @@ const AddRecipe = () => {
 								</button>
 							</Form.Group>
 
-							<div className="add__container__form__actions">
+							<div className="sticky bottom-3 z-10 mt-8 grid gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-xl backdrop-blur sm:grid-cols-[auto_auto_minmax(140px,1fr)] sm:items-center">
 								<Button
 									type="button"
-									className="add__container__form__reset btn btn-light"
+									className="w-full sm:w-auto"
 									onClick={handleReset}
 								>
 									Discard draft
 								</Button>
 								<Button
 									type="button"
-									className="add__container__form__save btn btn-light"
+									className="w-full sm:w-auto"
 									onClick={handleSaveDraft}
 									disabled={isSubmitting || !isDraftHydrated}
 								>
@@ -900,7 +901,7 @@ const AddRecipe = () => {
 								</Button>
 								<Button
 									type="submit"
-									className="add__container__form__submit"
+									className="w-full sm:justify-self-end"
 									disabled={disabled || isSubmitting}
 								>
 									{isSubmitting ? "Publishing…" : "Publish"}

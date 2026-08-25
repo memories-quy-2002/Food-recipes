@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import { formatStructuredIngredient } from "../structuredIngredients";
+import { cn } from "@/shared/lib/utils";
 
 const toIngredientText = (ingredient) => (
 	typeof ingredient === "string" ? ingredient : formatStructuredIngredient(ingredient)
@@ -21,14 +23,16 @@ const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }) => {
 		setCheckedIngredients(new Set());
 	}, [recipeIdentity, ingredientSignature]);
 
-	if (!ingredientList.length) return "No information";
+	if (!ingredientList.length) {
+		return <p className="text-sm text-muted-foreground">No ingredient information is available.</p>;
+	}
 
 	return (
-		<>
-			<p className="recipe__ingredient-checklist__hint">
-				Check off ingredients as you gather them. This checklist is local to this page.
+		<div className="mt-5">
+			<p className="text-sm leading-6 text-muted-foreground">
+				Check ingredients as you gather them. Progress stays local to this page.
 			</p>
-			<ul className="recipe__ingredient-checklist" aria-label="Ingredients checklist">
+			<ul className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="Ingredients checklist">
 				{ingredientList.map((ingredient, index) => {
 					const text = toIngredientText(ingredient);
 					const ingredientId = `${recipeScope}-ingredient-${index}`;
@@ -36,10 +40,23 @@ const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }) => {
 
 					return (
 						<li key={ingredientId}>
-							<label className={`recipe__ingredient-checklist__item${isChecked ? " is-checked" : ""}`} htmlFor={ingredientId}>
+							<label
+								className={cn(
+									"group flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border border-border bg-background px-3 py-3 text-sm leading-5 transition hover:border-primary/35 hover:bg-accent/50",
+									isChecked && "border-primary/20 bg-muted text-muted-foreground"
+								)}
+								htmlFor={ingredientId}
+							>
+								<span className={cn(
+									"mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border border-input bg-card transition",
+									isChecked && "border-primary bg-primary text-primary-foreground"
+								)}>
+									{isChecked ? <Check className="size-3.5" aria-hidden="true" /> : null}
+								</span>
 								<input
 									id={ingredientId}
 									type="checkbox"
+									className="sr-only"
 									checked={isChecked}
 									aria-label={`Mark ${text} as complete`}
 									onChange={(event) => setCheckedIngredients((current) => {
@@ -49,13 +66,13 @@ const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }) => {
 										return next;
 									})}
 								/>
-								<span>{text}</span>
+								<span className={cn("min-w-0", isChecked && "line-through decoration-primary/50")}>{text}</span>
 							</label>
 						</li>
 					);
 				})}
 			</ul>
-		</>
+		</div>
 	);
 };
 

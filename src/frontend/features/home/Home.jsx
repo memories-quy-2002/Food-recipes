@@ -6,7 +6,6 @@ import Carousel from "@/features/home/Carousel";
 import HomeMain from "@/features/home/HomeMain";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
-import "./Home.scss";
 import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
 import { AuthContext } from "@/app/AuthProvider";
 
@@ -28,17 +27,13 @@ const Home = () => {
 					mealList
 						.filter(
 							(meal, index, self) =>
-								index ===
-								self.findIndex((c) => c.id === meal.id)
+								index === self.findIndex((candidate) => candidate.id === meal.id)
 						)
 						.sort((a, b) => a.id - b.id)
 				);
 			} catch (err) {
 				console.error(err);
-				setMealsError(
-					err.response?.data?.message ||
-						"Unable to load featured meals."
-				);
+				setMealsError(err.response?.data?.message || "Unable to load featured meals.");
 			} finally {
 				setIsLoadingMeals(false);
 			}
@@ -47,23 +42,16 @@ const Home = () => {
 	}, []);
 
 	return (
-		<main className="fr-page home">
+		<main className="min-h-screen bg-background text-foreground">
 			<PageHelmet
 				title="Home"
 				description="Explore featured meals, browse recipe categories, and find your next favorite dish."
 				path="/"
 			/>
 			{isLoadingMeals ? (
-				<PageState
-					title="Loading featured meals"
-					message="Preparing the recipe carousel."
-				/>
+				<PageState title="Loading featured meals" message="Preparing the recipe carousel." />
 			) : mealsError ? (
-				<PageState
-					type="error"
-					title="Featured meals could not load"
-					message={mealsError}
-				/>
+				<PageState type="error" title="Featured meals could not load" message={mealsError} />
 			) : (
 				<Carousel items={meals} />
 			)}

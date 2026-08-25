@@ -1,79 +1,22 @@
 import React, { useMemo, useState } from "react";
 import { BsGrid3X3Gap, BsListUl, BsPlusLg } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
+import Button from "@/shared/ui/Button";
+import { cn } from "@/shared/lib/utils";
 import FoodContentPagination from "./content/FoodContentPagination";
 import FoodContentSection from "./content/FoodContentSection";
 import FoodContentSectionItem from "./content/FoodContentSectionItem";
 
-export const sortRecipes = (recipes, sortBy) => {
-	const sortedRecipes = [...recipes];
-	if (sortBy === "name") return sortedRecipes.sort((a, b) => a.recipe_name.localeCompare(b.recipe_name));
-	if (sortBy === "rating") return sortedRecipes.sort((a, b) => Number(b.overall_score || 0) - Number(a.overall_score || 0));
-	return sortedRecipes.sort((a, b) => Number(b.num_ratings || 0) - Number(a.num_ratings || 0));
-};
-
+export const sortRecipes = (recipes, sortBy) => { const sortedRecipes = [...recipes]; if (sortBy === "name") return sortedRecipes.sort((a, b) => a.recipe_name.localeCompare(b.recipe_name)); if (sortBy === "rating") return sortedRecipes.sort((a, b) => Number(b.overall_score || 0) - Number(a.overall_score || 0)); return sortedRecipes.sort((a, b) => Number(b.num_ratings || 0) - Number(a.num_ratings || 0)); };
 export const getVisibleRecipes = (recipes, { page, limit }) => recipes.slice((page - 1) * limit, page * limit);
-
-export const getRecipeContentState = (recipes, { page, limit }) => ({
-	isEmpty: recipes.length === 0,
-	totalPages: Math.max(1, Math.ceil(recipes.length / limit)),
-});
-
-const LoadingSkeleton = () => (
-	<div className="food__content__loading" aria-busy="true" aria-label="Loading recipes">
-		{Array.from({ length: 6 }, (_, index) => <div className="food__content__skeleton" key={index} />)}
-	</div>
-);
+export const getRecipeContentState = (recipes, { page, limit }) => ({ isEmpty: recipes.length === 0, totalPages: Math.max(1, Math.ceil(recipes.length / limit)) });
+const LoadingSkeleton = () => <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Loading recipes">{Array.from({ length: 6 }, (_, index) => <div className="h-80 animate-pulse rounded-2xl border border-border bg-muted" key={index} />)}</div>;
 
 const FoodContent = ({ recipes = [], pagination, queryState, onQueryStateChange, isLoading = false, isFetching = false, error = null }) => {
-	const navigate = useNavigate();
-	const [viewMode, setViewMode] = useState("grid");
-	const isServerPaginated = Boolean(pagination);
-	const sortedRecipes = useMemo(
-		() => (isServerPaginated ? recipes : sortRecipes(recipes, queryState.sort)),
-		[isServerPaginated, recipes, queryState.sort]
-	);
-	const visibleRecipes = isServerPaginated ? sortedRecipes : getVisibleRecipes(sortedRecipes, queryState);
-	const totalRecipes = pagination?.total ?? sortedRecipes.length;
-	const totalPages = pagination?.totalPages ?? getRecipeContentState(sortedRecipes, queryState).totalPages;
-	const currentPage = pagination?.page ?? queryState.page;
-	const categories = useMemo(() => Array.from(new Map(visibleRecipes.map(({ category_id: id, category_name: name }) => [id, { id, name }])).values()).sort((a, b) => a.id - b.id), [visibleRecipes]);
-	const shouldGroupByCategory = Boolean(queryState.categoryId || queryState.mealId);
-	const listClassName = `food__content__section__list food__content__section__list--${viewMode}`;
-
-	return (
-		<div className="food__content" aria-busy={isFetching}>
-			<div className="food__content__toolbar">
-				<div>
-					<span className="food__content__toolbar__eyebrow">Results</span>
-					<h2 aria-live="polite">{isLoading ? "Loading recipes…" : `${totalRecipes} recipes found`}</h2>
-				</div>
-				<div className="food__content__toolbar__actions">
-					<label>Sort<select value={queryState.sort} onChange={(event) => onQueryStateChange({ sort: event.target.value, page: 1 })}>
-						<option value="popular">Most rated</option><option value="rating">Highest score</option><option value="name">Name A-Z</option>
-					</select></label>
-					<div className="food__content__view" aria-label="Recipe view mode">
-						<button type="button" className={viewMode === "grid" ? "active" : ""} onClick={() => setViewMode("grid")} aria-label="Grid view"><BsGrid3X3Gap /></button>
-						<button type="button" className={viewMode === "list" ? "active" : ""} onClick={() => setViewMode("list")} aria-label="List view"><BsListUl /></button>
-					</div>
-					<button type="button" className="food__content__add" onClick={() => navigate("/food/add")}><BsPlusLg />Add recipe</button>
-				</div>
-			</div>
-			{isFetching && !isLoading && <div className="food__content__updating" role="status" aria-live="polite">Updating recipes…</div>}
-
-			{isLoading ? <LoadingSkeleton /> : error ? (
-				<div className="food__content__error"><h3>Recipe library could not load</h3><p>{error}</p></div>
-			) : sortedRecipes.length === 0 ? (
-				<div className="food__content__empty"><h3>No recipes found</h3><p>Try another search term or clear one of the filters.</p></div>
-			) : shouldGroupByCategory ? (
-				categories.map(({ id, name }) => <FoodContentSection key={id} id={id} name={name} recipes={visibleRecipes} viewMode={viewMode} />)
-			) : (
-				<div className={listClassName}>{visibleRecipes.map((recipe) => <FoodContentSectionItem key={recipe.recipe_id} recipe={recipe} />)}</div>
-			)}
-
-			{!isLoading && !error && totalPages > 1 && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={totalRecipes} totalPages={totalPages} onPagination={(page) => onQueryStateChange({ page })} currentPage={currentPage} />}
-		</div>
-	);
+	const navigate = useNavigate(); const [viewMode, setViewMode] = useState("grid"); const isServerPaginated = Boolean(pagination);
+	const sortedRecipes = useMemo(() => (isServerPaginated ? recipes : sortRecipes(recipes, queryState.sort)), [isServerPaginated, recipes, queryState.sort]);
+	const visibleRecipes = isServerPaginated ? sortedRecipes : getVisibleRecipes(sortedRecipes, queryState); const totalRecipes = pagination?.total ?? sortedRecipes.length; const totalPages = pagination?.totalPages ?? getRecipeContentState(sortedRecipes, queryState).totalPages; const currentPage = pagination?.page ?? queryState.page;
+	const categories = useMemo(() => Array.from(new Map(visibleRecipes.map(({ category_id: id, category_name: name }) => [id, { id, name }])).values()).sort((a, b) => a.id - b.id), [visibleRecipes]); const shouldGroupByCategory = Boolean(queryState.categoryId || queryState.mealId);
+	return <div className="min-w-0" aria-busy={isFetching}><div className="mb-5 flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Results</p><h2 className="mt-1 text-2xl font-black" aria-live="polite">{isLoading ? "Loading recipes…" : `${totalRecipes} recipes found`}</h2></div><div className="flex flex-wrap items-center gap-2"><label className="flex min-h-10 items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm font-semibold">Sort<span className="sr-only">recipes by</span><select className="bg-transparent text-sm outline-none" value={queryState.sort} onChange={(event) => onQueryStateChange({ sort: event.target.value, page: 1 })}><option value="popular">Most rated</option><option value="rating">Highest score</option><option value="name">Name A-Z</option></select></label><div className="flex rounded-xl border border-border p-1" aria-label="Recipe view mode"><Button variant={viewMode === "grid" ? "secondary" : "ghost"} size="icon" className="size-9" onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"} aria-label="Grid view"><BsGrid3X3Gap /></Button><Button variant={viewMode === "list" ? "secondary" : "ghost"} size="icon" className="size-9" onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"} aria-label="List view"><BsListUl /></Button></div><Button className="hidden sm:inline-flex" onClick={() => navigate("/food/add")}><BsPlusLg />Add recipe</Button></div></div>{isFetching && !isLoading && <div className="mb-4 rounded-xl bg-secondary px-3 py-2 text-sm font-semibold text-secondary-foreground" role="status" aria-live="polite">Updating recipes…</div>}{isLoading ? <LoadingSkeleton /> : error ? <div className="rounded-2xl border border-destructive/25 bg-destructive/10 p-6"><h3 className="font-bold text-destructive">Recipe library could not load</h3><p className="mt-2 text-sm text-destructive">{error}</p></div> : sortedRecipes.length === 0 ? <div className="rounded-2xl border border-dashed border-border bg-card p-8 text-center"><h3 className="text-xl font-bold">No recipes found</h3><p className="mt-2 text-muted-foreground">Try another search term or clear one of the filters.</p></div> : shouldGroupByCategory ? categories.map(({ id, name }) => <FoodContentSection key={id} id={id} name={name} recipes={visibleRecipes} viewMode={viewMode} />) : <div className={cn("grid gap-4", viewMode === "grid" ? "sm:grid-cols-2 xl:grid-cols-3" : "grid-cols-1")}>{visibleRecipes.map((recipe) => <FoodContentSectionItem key={recipe.recipe_id} recipe={recipe} viewMode={viewMode} />)}</div>}{!isLoading && !error && totalPages > 1 && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={totalRecipes} totalPages={totalPages} onPagination={(page) => onQueryStateChange({ page })} currentPage={currentPage} />}<Button className="mt-5 w-full sm:hidden" onClick={() => navigate("/food/add")}><BsPlusLg />Add recipe</Button></div>;
 };
-
 export default FoodContent;

@@ -1,85 +1,13 @@
 import { Link } from "react-router-dom";
+import { Plus, Trash2 } from "lucide-react";
+import Button from "@/shared/ui/Button";
 import type { MealPlanItem, MealSlot as MealSlotName } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
 
-type MealSlotProps = {
-	day: PlanningDay;
-	slot: MealSlotName;
-	item?: MealPlanItem;
-	onAdd: (date: string, slot: MealSlotName) => void;
-	onEdit: (item: MealPlanItem) => void;
-	onRemove: (item: MealPlanItem) => void;
-	onOpenRecipe?: (item: MealPlanItem) => void;
-	isRemoving?: boolean;
+type MealSlotProps = { day: PlanningDay; slot: MealSlotName; item?: MealPlanItem; onAdd: (date: string, slot: MealSlotName) => void; onEdit: (item: MealPlanItem) => void; onRemove: (item: MealPlanItem) => void; onOpenRecipe?: (item: MealPlanItem) => void; isRemoving?: boolean };
+const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1); const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
+const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false }: MealSlotProps) => {
+	if (!item) return <div className="rounded-xl border border-dashed border-border bg-muted/25 p-3"><span className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">{slotLabel(slot)}</span><button type="button" className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onAdd(day.date, slot)}><Plus className="size-4" />Add recipe<span className="sr-only"> to {fullWeekday(day)} {slot}</span></button></div>;
+	return <article className="rounded-xl border border-primary/15 bg-secondary/45 p-3"><div className="flex items-center justify-between gap-2"><span className="text-xs font-black uppercase tracking-[0.12em] text-primary">{slotLabel(slot)}</span><span className="text-xs font-semibold text-muted-foreground">{item.servings} servings</span></div><Link className="mt-2 block line-clamp-2 font-black leading-snug text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" to={`/recipe?id=${item.recipe_id}`} aria-label={`Open ${item.recipe_name}`} onClick={() => onOpenRecipe?.(item)}>{item.recipe_name}</Link><Link className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-primary px-3 text-xs font-black text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" to={`/recipe/cooking?id=${item.recipe_id}&planItemId=${item.item_id}&date=${encodeURIComponent(item.planned_date.slice(0, 10))}&slot=${item.slot}&servings=${item.servings}&returnTo=%2Fplanning`} aria-label={`Start cooking ${item.recipe_name}`}>Start cooking</Link><div className="mt-3 flex items-center justify-end gap-1"><Button variant="ghost" size="sm" onClick={() => onEdit(item)} aria-label={`Change ${item.recipe_name}`}>Change</Button><Button variant="ghost" size="icon" className="size-9 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onRemove(item)} aria-label={`Remove ${item.recipe_name} from ${slot}`} disabled={isRemoving} aria-busy={isRemoving}><Trash2 className="size-4" /></Button></div></article>;
 };
-
-	const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1);
-const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
-
-const MealSlot = ({
-	day,
-	slot,
-	item,
-	onAdd,
-	onEdit,
-	onRemove,
-	onOpenRecipe,
-	isRemoving = false,
-}: MealSlotProps) => {
-	if (!item) {
-		return (
-			<div className="planning-meal-slot planning-meal-slot--empty">
-				<span className="planning-meal-slot__label">{slotLabel(slot)}</span>
-				<button
-					type="button"
-					className="planning-meal-slot__add"
-					onClick={() => onAdd(day.date, slot)}
-				>
-					<span aria-hidden="true">+</span>
-					<span>Add recipe to {fullWeekday(day)} {slot}</span>
-				</button>
-			</div>
-		);
-	}
-
-	return (
-		<article className="planning-meal-slot planning-meal-slot--filled">
-			<div className="planning-meal-slot__header">
-				<span className="planning-meal-slot__label">{slotLabel(slot)}</span>
-				<span className="planning-meal-slot__servings">{item.servings} servings</span>
-			</div>
-			<Link
-				className="planning-meal-slot__recipe"
-				to={`/recipe?id=${item.recipe_id}`}
-				aria-label={`Open ${item.recipe_name}`}
-				onClick={() => onOpenRecipe?.(item)}
-			>
-				{item.recipe_name}
-			</Link>
-			<Link
-				className="planning-meal-slot__cook"
-				to={`/recipe/cooking?id=${item.recipe_id}&planItemId=${item.item_id}&date=${encodeURIComponent(item.planned_date.slice(0, 10))}&slot=${item.slot}&servings=${item.servings}&returnTo=%2Fplanning`}
-				aria-label={`Start cooking ${item.recipe_name}`}
-			>
-				Start cooking
-			</Link>
-			<div className="planning-meal-slot__actions">
-				<button type="button" onClick={() => onEdit(item)} aria-label={`Change ${item.recipe_name}`}>
-					Change
-				</button>
-				<button
-					type="button"
-					className="planning-meal-slot__remove"
-					onClick={() => onRemove(item)}
-					aria-label={`Remove ${item.recipe_name} from ${slot}`}
-					disabled={isRemoving}
-					aria-busy={isRemoving}
-				>
-					{isRemoving ? "Removing..." : "Remove"}
-				</button>
-			</div>
-		</article>
-	);
-};
-
 export default MealSlot;

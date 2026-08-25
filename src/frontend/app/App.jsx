@@ -1,7 +1,6 @@
 import React from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import "./App.scss";
 import AppRoutes from "./AppRoutes";
 import AuthProvider from "./AuthProvider";
 import RecipeProvider from "./RecipeProvider";
