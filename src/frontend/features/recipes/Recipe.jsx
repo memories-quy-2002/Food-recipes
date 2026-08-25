@@ -1,5 +1,4 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Container } from "@/shared/ui/legacy-ui";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { apiRoutes, getUserRecipeRatingRoute } from "@/shared/api/routes";
@@ -31,7 +30,6 @@ import {
 	useCollectionsQuery,
 } from "@/features/saved/api/collectionsQueries";
 import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
-import "./Recipe.scss";
 
 const Recipe = () => {
 	const { auth } = useContext(AuthContext);
@@ -488,7 +486,7 @@ const Recipe = () => {
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
 			) : recipe && (
-				<Container as="main" fluid className="fr-recipe" style={{ padding: 0 }}>
+				<main className="min-h-screen bg-background text-foreground">
 					<RecipeContainerSummary
 						recipe={recipe}
 						favorite={favorite}
@@ -552,7 +550,7 @@ const Recipe = () => {
 					/>
 					<PrivateRecipeNotes recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
 					<RecipeOtherList recipeId={recipe.recipe_id} />
-				</Container>
+				</main>
 			)}
 		</>
 	);
