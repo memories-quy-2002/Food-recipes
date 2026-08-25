@@ -1,0 +1,1 @@
+ALTER TABLE auth_sessions ADD COLUMN persistent BOOLEAN NOT NULL DEFAULT TRUE;

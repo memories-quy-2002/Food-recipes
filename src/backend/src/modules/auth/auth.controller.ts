@@ -56,7 +56,7 @@ export class AuthController {
   async signup(@Body() dto: SignupDto, @Req() request: Request, @Res({ passthrough: true }) response: Response) {
     try {
       const result = await this.authService.signup(dto);
-      this.setRefreshCookie(response, result.refreshToken);
+      this.setRefreshCookie(response, result.refreshToken, result.persistent);
       return this.publicAuthResponse(result);
     } catch (error) {
       this.throttle.recordFailure(this.clientIp(request), dto.email);
@@ -75,7 +75,7 @@ export class AuthController {
     try {
       const result = await this.authService.login(dto);
       this.throttle.recordSuccess(this.clientIp(request), dto.email);
-      this.setRefreshCookie(response, result.refreshToken);
+      this.setRefreshCookie(response, result.refreshToken, result.persistent);
       return this.publicAuthResponse(result);
     } catch (error) {
       this.throttle.recordFailure(this.clientIp(request), dto.email);
@@ -94,7 +94,7 @@ export class AuthController {
     try {
       const result = await this.authService.refresh(refreshToken);
       this.throttle.recordSuccess(this.clientIp(request));
-      this.setRefreshCookie(response, result.refreshToken);
+      this.setRefreshCookie(response, result.refreshToken, result.persistent);
       return this.publicAuthResponse(result);
     } catch (error) {
       this.throttle.recordFailure(this.clientIp(request));
@@ -196,14 +196,14 @@ export class AuthController {
     return { user: result.user, token: result.token, message: result.message };
   }
 
-  private setRefreshCookie(response: Response, refreshToken?: string): void {
+  private setRefreshCookie(response: Response, refreshToken?: string, persistent = false): void {
     if (!refreshToken) return;
     response.cookie('food_refresh', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/api/v1/auth',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      ...(persistent ? { maxAge: 30 * 24 * 60 * 60 * 1000 } : {}),
     });
   }
 

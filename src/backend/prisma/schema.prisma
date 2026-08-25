@@ -241,6 +241,7 @@ model AuthSession {
   familyId   String    @map("family_id") @db.VarChar(64)
   tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
   expiresAt  DateTime  @map("expires_at") @db.Timestamp(6)
+  persistent Boolean   @default(true) @map("persistent")
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
   revokedAt  DateTime? @map("revoked_at") @db.Timestamp(6)
   replacedBy Int?      @map("replaced_by")
