@@ -63,8 +63,8 @@ export const normalizeServings = (value) => {
 	return Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, Math.round(numericValue)));
 };
 
-const SectionCard = ({ title, description, descriptionRole, children, id }) => (
-	<section id={id} className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8">
+const SectionCard = ({ title, description, descriptionRole, children, id, className = "" }) => (
+	<section id={id} className={`rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8 ${className}`}>
 		<div className="max-w-3xl">
 			<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{title}</h2>
 			{description ? <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base" role={descriptionRole}>{description}</p> : null}
@@ -106,10 +106,12 @@ const RecipeDescription = ({ recipe }) => {
 		: [];
 	const dietaryTags = recipe.dietaryTags || recipe.dietary_tags || [];
 	const allergenTags = recipe.allergenTags || recipe.allergen_tags || [];
+	const hasManualNutrition = Boolean(recipe.nutrition && !recipe.metadata && nutritionItems.length > 0);
+	const hasDietaryInformation = dietaryTags.length > 0 || allergenTags.length > 0;
 
 	return (
 		<div className="space-y-6">
-			<section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Recipe timing and servings">
+			<section data-recipe-section="decision-strip" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Recipe timing and servings">
 				{timing.map(([label, value]) => (
 					<div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
 						<div className="flex items-center gap-2 text-muted-foreground"><Clock3 className="size-4" aria-hidden="true" /><span className="text-xs font-extrabold uppercase tracking-[0.14em]">{label}</span></div>
@@ -132,50 +134,59 @@ const RecipeDescription = ({ recipe }) => {
 				</p>
 			</SectionCard>
 
-			<SectionCard
-				id="ingredients"
-				title="Ingredients"
-				descriptionRole="note"
-				description={structuredIngredients.length > 0
-					? "Quantities are scaled with your serving count. Free-text notes stay exactly as written."
-					: "Ingredients are shown as written because this recipe has unsupported ingredient data for automatic scaling."}
-			>
-				<RecipeIngredientChecklist
-					key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(displayedIngredients)}`}
-					recipeIdentity={recipeIdentity}
-					ingredients={displayedIngredients}
-				/>
-			</SectionCard>
-
-			{recipe.nutrition && !recipe.metadata && nutritionItems.length > 0 ? (
-				<SectionCard title="Nutrition per serving" description="Manual values provided by the recipe author.">
-					<ul className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3" aria-label="Nutrition facts">
-						{nutritionItems.map(([label, key, suffix]) => (
-							<li key={key} className="rounded-xl bg-muted px-4 py-3 text-sm"><strong className="font-black">{label}</strong><span className="ml-2 text-muted-foreground">{recipe.nutrition[key]} {key === "calories" ? "calories" : suffix}</span></li>
-						))}
-					</ul>
+			<div data-recipe-section="cooking-core" className="grid gap-6 lg:grid-cols-2 lg:items-start">
+				<SectionCard
+					id="ingredients"
+					title="Ingredients"
+					descriptionRole="note"
+					description={structuredIngredients.length > 0
+						? "Quantities are scaled with your serving count. Free-text notes stay exactly as written."
+						: "Ingredients are shown as written because this recipe has unsupported ingredient data for automatic scaling."}
+				>
+					<RecipeIngredientChecklist
+						key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(displayedIngredients)}`}
+						recipeIdentity={recipeIdentity}
+						ingredients={displayedIngredients}
+					/>
 				</SectionCard>
-			) : null}
 
-			{dietaryTags.length > 0 || allergenTags.length > 0 ? (
-				<SectionCard title="Dietary preferences">
-					{dietaryTags.length > 0 ? <div className="mt-4 flex flex-wrap gap-2">{dietaryTags.map((tag) => <span key={`dietary-${tag}`} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">{tag}</span>)}</div> : null}
-					{allergenTags.length > 0 ? <p className="mt-4 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm font-semibold text-foreground"><strong>Contains:</strong> {allergenTags.join(", ")}</p> : null}
-				</SectionCard>
-			) : null}
-
-			<SectionCard title="Instructions" description="Work through one step at a time. You can switch to Cooking Mode from the recipe hero for a focused view.">
-				{instructions.length > 0 ? (
-					<ol className="mt-6 space-y-3">
-						{instructions.map((instruction, index) => (
+				<SectionCard id="instructions" title="Instructions" description="Work through one step at a time. You can switch to Cooking Mode from the recipe hero for a focused view.">
+					{instructions.length > 0 ? (
+						<ol className="mt-6 space-y-3">
+							{instructions.map((instruction, index) => (
 									<li className="grid grid-cols-[2.75rem_1fr] gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-[3rem_1fr] sm:p-5" key={`${index}-${instruction}`}>
 										<span className="flex size-11 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground sm:size-12">{index + 1}</span>
-								<p className="self-center text-base leading-7 text-foreground sm:text-lg">{instruction}</p>
-							</li>
-						))}
-					</ol>
-				) : <p className="mt-4 text-sm text-muted-foreground" role="status">No instructions are available yet.</p>}
-			</SectionCard>
+									<p className="self-center text-base leading-7 text-foreground sm:text-lg">{instruction}</p>
+									</li>
+							))}
+						</ol>
+					) : <p className="mt-4 text-sm text-muted-foreground" role="status">No instructions are available yet.</p>}
+				</SectionCard>
+			</div>
+
+			{hasManualNutrition || hasDietaryInformation ? (
+				<section id="nutrition" data-recipe-section="nutrition-dietary" className="grid gap-6 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:grid-cols-2 lg:p-8" aria-label="Nutrition and dietary information">
+					{hasManualNutrition ? (
+						<div>
+							<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Nutrition per serving</h2>
+							<p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">Manual values provided by the recipe author.</p>
+							<ul className="mt-5 grid gap-2 sm:grid-cols-2" aria-label="Nutrition facts">
+								{nutritionItems.map(([label, key, suffix]) => (
+									<li key={key} className="rounded-xl bg-muted px-4 py-3 text-sm"><strong className="font-black">{label}</strong><span className="ml-2 text-muted-foreground">{recipe.nutrition[key]} {key === "calories" ? "calories" : suffix}</span></li>
+								))}
+							</ul>
+						</div>
+					) : null}
+
+					{hasDietaryInformation ? (
+						<div>
+							<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Dietary preferences</h2>
+							{dietaryTags.length > 0 ? <div className="mt-4 flex flex-wrap gap-2">{dietaryTags.map((tag) => <span key={`dietary-${tag}`} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">{tag}</span>)}</div> : null}
+							{allergenTags.length > 0 ? <p className="mt-4 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm font-semibold text-foreground"><strong>Contains:</strong> {allergenTags.join(", ")}</p> : null}
+						</div>
+					) : null}
+				</section>
+			) : null}
 		</div>
 	);
 };

@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "@/app/AuthProvider";
+import { useToast } from "@/app/ToastProvider";
 import { authActions } from "@/features/auth/state/authSlice";
 import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import { cn } from "@/shared/lib/utils";
@@ -12,6 +13,7 @@ import Button from "@/shared/ui/Button";
 const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 	const dispatch = useDispatch(); const navigate = useNavigate(); const { pathname } = useLocation(); const { auth } = useContext(AuthContext); const { user, isAuthenticated } = auth.current;
 	const drawerRef = useRef(null); const closeButtonRef = useRef(null); const restoreFocusRef = useRef(null);
+	const { showToast } = useToast();
 	useEffect(() => {
 		if (!show || typeof document === "undefined") return undefined;
 		restoreFocusRef.current = document.activeElement; const previousOverflow = document.body.style.overflow; document.body.style.overflow = "hidden";
@@ -28,6 +30,7 @@ const HeaderToggle = ({ show, handleClose, handleShow, items }) => {
 			// Local auth must still clear when the server is unavailable.
 		} finally {
 			dispatch(authActions.logout());
+			showToast({ title: "Signed out" });
 			handleNavigate("/");
 		}
 	};

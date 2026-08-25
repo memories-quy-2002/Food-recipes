@@ -9,9 +9,11 @@ import Button from "@/shared/ui/Button";
 import Badge from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import convertImage from "@/shared/utils/convertImage";
+import { useToast } from "@/app/ToastProvider";
 
 const STATUS_FILTERS = ["all", "draft", "published", "archived"];
 const statusLabel = (status) => status ? status[0].toUpperCase() + status.slice(1) : "Unknown";
+const actionPastTense = { publish: "published", archive: "archived", restore: "restored" };
 
 const PersonalRecipes = ({ user }) => {
 	const [personalRecipes, setPersonalRecipes] = useState([]);
@@ -22,6 +24,7 @@ const PersonalRecipes = ({ user }) => {
 	const [statusFilter, setStatusFilter] = useState("all");
 	const [actionId, setActionId] = useState(null);
 	const navigate = useNavigate();
+	const { showToast } = useToast();
 
 	const fetchPersonalRecipes = useCallback(async () => {
 		if (!user?.user_id) {
@@ -70,9 +73,11 @@ const PersonalRecipes = ({ user }) => {
 			const routeName = `recipe${action[0].toUpperCase()}${action.slice(1)}`;
 			await axios.post(apiRoutes[routeName](recipe.recipe_id));
 			await fetchPersonalRecipes();
+			showToast({ title: `Recipe ${actionPastTense[action] || action} successfully` });
 		} catch (err) {
 			console.error(err);
 			setError(err.response?.data?.message || `Unable to ${action} this recipe.`);
+			showToast({ title: `Couldn’t ${action} this recipe`, message: "Please try again.", type: "error" });
 		} finally {
 			setActionId(null);
 		}
@@ -85,10 +90,12 @@ const PersonalRecipes = ({ user }) => {
 				setShowModal(false);
 				setRecipeId(0);
 				await fetchPersonalRecipes();
+				showToast({ title: "Recipe deleted" });
 			}
 		} catch (err) {
 			console.error(err);
 			setError(err.response?.data?.message || "Unable to delete this recipe.");
+			showToast({ title: "Couldn’t delete this recipe", message: "Please try again.", type: "error" });
 		}
 	};
 

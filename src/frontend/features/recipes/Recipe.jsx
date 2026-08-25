@@ -192,12 +192,14 @@ const Recipe = () => {
 					? "Your review has been updated."
 					: "Your rating and review have been saved.",
 			});
+			showToast({ title: hasExistingRating ? "Review updated" : "Review saved" });
 		} catch (err) {
 			console.error(err);
 			setReviewMessage({
 				type: "error",
 				text: "We could not save your review. Please try again.",
 			});
+			showToast({ title: "Couldn’t save your review", message: "Please try again.", type: "error" });
 		} finally {
 			setIsSubmittingReview(false);
 		}
@@ -230,12 +232,14 @@ const Recipe = () => {
 				type: "success",
 				text: "Your review has been deleted.",
 			});
+			showToast({ title: "Review deleted" });
 		} catch (err) {
 			console.error(err);
 			setReviewMessage({
 				type: "error",
 				text: "We could not delete your review. Please try again.",
 			});
+			showToast({ title: "Couldn’t delete your review", message: "Please try again.", type: "error" });
 		} finally {
 			setIsDeletingReview(false);
 		}
@@ -295,20 +299,7 @@ const Recipe = () => {
 		}
 		if (!recipe || addIngredientsMutation.isPending) return;
 
-		addIngredientsMutation.mutate(recipe.recipe_id, {
-			onSuccess: (response) => {
-				const count = response?.items?.length ?? 0;
-				showToast({
-					title: `${count} ingredient${count === 1 ? "" : "s"} added to Shopping List`,
-				});
-			},
-			onError: () => {
-				showToast({
-					title: "We could not add those ingredients. Try again.",
-					type: "error",
-				});
-			},
-		});
+		addIngredientsMutation.mutate(recipe.recipe_id);
 	};
 
 	const handleCookingComplete = async () => {
@@ -318,7 +309,6 @@ const Recipe = () => {
 			...(planningContext?.planItemId ? { mealPlanItemId: planningContext.planItemId } : {}),
 			...(planningContext?.servings ? { servings: planningContext.servings } : {}),
 		});
-		showToast({ title: "Cooking history saved" });
 	};
 
 	const handleAddToPlan = () => {
@@ -350,9 +340,6 @@ const Recipe = () => {
 		addRecipeToCollectionMutation.mutate(
 			{ collectionId, recipeId: Number(recipe.recipe_id) },
 			{
-				onSuccess: () => {
-					showToast({ title: "Saved to collection" });
-				},
 				onError: (error) => {
 					setCollectionDialogError(
 						error.response?.data?.message ||

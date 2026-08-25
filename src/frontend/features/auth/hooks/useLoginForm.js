@@ -10,6 +10,7 @@ import {
 	consumeAuthIntent,
 	getAuthReturnPath,
 } from "@/features/auth/returnIntent";
+import { useToast } from "@/app/ToastProvider";
 
 const initialState = {
 	formData: {
@@ -44,6 +45,7 @@ const useLoginForm = () => {
 	const [state, dispatch] = useReducer(reducer, initialState);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { showToast } = useToast();
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -90,6 +92,7 @@ const useLoginForm = () => {
 						}
 					);
 					if (response.status === 200) {
+						showToast({ title: "Welcome back" });
 						dispatch({ type: "SET_VALIDATED", payload: true });
 						const user = response.data.user;
 						setAccessToken(response.data.token);
@@ -114,6 +117,7 @@ const useLoginForm = () => {
 						type: "SET_ERRORS",
 						payload: [message],
 					});
+					showToast({ title: "Couldn’t sign you in", message, type: "error" });
 				} finally {
 					dispatch({ type: "SET_SUBMITTING", payload: false });
 				}

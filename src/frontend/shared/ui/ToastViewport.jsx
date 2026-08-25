@@ -17,6 +17,11 @@ const toastTone = {
 		className: "border-border bg-card text-card-foreground",
 		iconClassName: "text-primary",
 	},
+	warning: {
+		icon: CircleAlert,
+		className: "toast-warning border-amber-500/35 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100",
+		iconClassName: "text-amber-600 dark:text-amber-300",
+	},
 };
 
 const ToastViewport = ({ toasts, onDismiss }) => {
@@ -24,7 +29,7 @@ const ToastViewport = ({ toasts, onDismiss }) => {
 
 	return (
 		<div
-			className="pointer-events-none fixed inset-x-4 top-4 z-[100] flex flex-col items-stretch gap-3 sm:inset-x-auto sm:right-5 sm:top-5 sm:w-[min(26rem,calc(100vw-2.5rem))]"
+			className="pointer-events-none fixed inset-x-4 top-20 z-[100] flex flex-col items-stretch gap-3 sm:inset-x-auto sm:right-5 sm:top-[5.5rem] sm:w-[min(26rem,calc(100vw-2.5rem))] lg:top-[6.5rem]"
 			aria-label="Notifications"
 			aria-live="polite"
 			aria-atomic="false"

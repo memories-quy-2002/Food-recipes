@@ -6,6 +6,7 @@ import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import RecipeEditor from "./RecipeEditor";
 import { OWNED_RECIPE_NOT_FOUND, loadOwnedRecipe } from "./editRecipeApi";
+import { useToast } from "@/app/ToastProvider";
 
 const parseRecipeId = (value) => {
 	if (!/^[1-9]\d*$/.test(value || "")) return null;
@@ -26,6 +27,7 @@ const EditRecipe = () => {
 	const recipeId = useMemo(() => parseRecipeId(searchParams.get("id")), [searchParams]);
 	const [state, setState] = useState({ kind: recipeId ? "loading" : "invalid", recipe: null, error: null });
 	const [restoreError, setRestoreError] = useState("");
+	const { showToast } = useToast();
 
 	const loadRecipe = useCallback(async () => {
 		if (!recipeId) {
@@ -53,8 +55,10 @@ const EditRecipe = () => {
 			setRestoreError("");
 			await axios.post(apiRoutes.recipeRestore(recipeId));
 			await loadRecipe();
+			showToast({ title: "Recipe restored" });
 		} catch (error) {
 			setRestoreError(error?.response?.data?.message || "This recipe could not be restored. Please try again.");
+			showToast({ title: "Couldn’t restore this recipe", message: "Please try again.", type: "error" });
 		}
 	};
 

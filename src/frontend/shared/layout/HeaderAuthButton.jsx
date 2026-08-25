@@ -6,6 +6,7 @@ import { authActions } from "@/features/auth/state/authSlice";
 import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
+import { useToast } from "@/app/ToastProvider";
 
 const menuLink = "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const HeaderAuthButton = ({ auth }) => {
@@ -18,6 +19,7 @@ const HeaderAuthButton = ({ auth }) => {
 	const user = local.isAuthenticated ? local.user : session.user;
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
+	const { showToast } = useToast();
 
 	useEffect(() => {
 		if (!clicked || typeof document === "undefined") return undefined;
@@ -35,6 +37,7 @@ const HeaderAuthButton = ({ auth }) => {
 			// Local auth must still clear when the server is unavailable.
 		} finally {
 			dispatch(authActions.logout());
+			showToast({ title: "Signed out" });
 			closeMenu();
 			navigate("/");
 		}

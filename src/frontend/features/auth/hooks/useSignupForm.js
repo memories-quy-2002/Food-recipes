@@ -10,6 +10,7 @@ import {
 	consumeAuthIntent,
 	getAuthReturnPath,
 } from "@/features/auth/returnIntent";
+import { useToast } from "@/app/ToastProvider";
 
 const initialState = {
 	formData: {
@@ -43,6 +44,7 @@ const useSignupForm = () => {
 	const [state, dispatch] = useReducer(reducer, initialState);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { showToast } = useToast();
 	const handleName = (e) => {
 		const { name, value } = e.target;
 		dispatch({
@@ -104,6 +106,7 @@ const useSignupForm = () => {
 						}
 					);
 					if ([200, 201].includes(response.status)) {
+						showToast({ title: "Account created" });
 						dispatch({ type: "SET_VALIDATED", payload: true });
 
 						const { user, token } = response.data;
@@ -121,6 +124,7 @@ const useSignupForm = () => {
 						err.response?.data?.message ||
 						"Unable to create your account. Please try again.";
 					dispatch({ type: "SET_ERRORS", payload: [message] });
+					showToast({ title: "Couldn’t create your account", message, type: "error" });
 				} finally {
 					dispatch({ type: "SET_SUBMITTING", payload: false });
 				}

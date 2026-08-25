@@ -10,6 +10,7 @@ import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
 import { CancelToken } from "axios";
+import { useToast } from "@/app/ToastProvider";
 
 const ProfileMain = lazy(() => import("@/features/profile/ProfileMain"));
 const profilePageList = [
@@ -28,6 +29,7 @@ const Profile = () => {
 	const [ratings, setRatings] = useState([]);
 	const [isLoadingRatings, setIsLoadingRatings] = useState(true);
 	const [ratingsError, setRatingsError] = useState(null);
+	const { showToast } = useToast();
 	const handleLogOut = async () => {
 		try {
 			await authSessionApi.logout();
@@ -35,6 +37,7 @@ const Profile = () => {
 			// Local auth must still clear when the server is unavailable.
 		} finally {
 			dispatch(authActions.logout());
+			showToast({ title: "Signed out" });
 		}
 	};
 

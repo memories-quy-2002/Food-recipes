@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -49,11 +50,21 @@ describe("MealPlanGrid", () => {
 		);
 
 		expect(screen.getByRole("link", { name: "Open Chicken Curry" })).toBeTruthy();
-		expect(screen.getByRole("link", { name: "Start cooking Chicken Curry" }).getAttribute("href")).toBe(
+		 expect(screen.getByRole("link", { name: "Start cooking Chicken Curry" }).getAttribute("href")).toBe(
 			"/recipe/cooking?id=7&planItemId=4&date=2026-08-24&slot=dinner&servings=4&returnTo=%2Fplanning",
 		);
+		expect(screen.getByRole("link", { name: "Start cooking Chicken Curry" }).querySelector("svg")).toBeTruthy();
 		expect(screen.getByRole("button", { name: "Change Chicken Curry" })).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Change Chicken Curry" }).querySelector("svg")).toBeTruthy();
+		expect(screen.queryByRole("button", { name: "Move Chicken Curry" })).toBeNull();
+		expect(screen.getByTestId("draggable-meal-4").getAttribute("aria-label")).toBe(
+			"Drag Chicken Curry to another empty meal slot",
+		);
+		expect(screen.getByTestId("draggable-meal-4").parentElement).toHaveClass("min-w-0");
 		expect(screen.getByRole("button", { name: "Remove Chicken Curry from dinner" })).toBeTruthy();
-		expect(screen.getByText("4 servings")).toBeTruthy();
+		expect(screen.getByRole("button", { name: "Remove Chicken Curry from dinner" }).querySelector("svg")).toBeTruthy();
+		expect(screen.getByText("4×")).toBeTruthy();
+		expect(screen.queryByText("Add recipe")).toBeNull();
+		expect(screen.getAllByRole("button", { name: "Add recipe to Monday lunch" }).every((button) => button.querySelector("svg"))).toBe(true);
 	});
 });
