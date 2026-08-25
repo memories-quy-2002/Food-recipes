@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { Col, Container, Row } from "@/shared/ui/legacy-ui";
+import { SlidersHorizontal } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
@@ -9,8 +9,9 @@ import FilterSheet from "@/features/food/FilterSheet";
 import ActiveFilterChips from "@/features/food/ActiveFilterChips";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
+import Button from "@/shared/ui/Button";
+import { Card } from "@/shared/ui/Card";
 import { parseRecipeDiscoveryState, useRecipesQuery } from "@/features/food/api/useRecipesQuery";
-import "./Food.scss";
 
 const FoodContent = lazy(() => import("@/features/food/FoodContent"));
 
@@ -58,29 +59,37 @@ const Food = () => {
 
 	const filtersReady = !isLoadingFilters && !filtersError;
 	return (
-		<Container as="main" fluid className="fr-page food">
+		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
 			<PageHelmet title="Recipes" description="Search, filter, and compare recipes by category, meal type, name, and rating." path="/food" />
-			<div className="food__intro">
-				<div className="food__intro__content"><span>Recipe finder</span><h1>Explore delicious recipes</h1><p>Filter by category, meal type, or search by name to find the right dish faster.</p></div>
-				<div className="food__summary" aria-label="Recipe library summary"><div><strong>{recipesQuery.data?.pagination?.total ?? recipesQuery.data?.recipes.length ?? 0}</strong><span>Recipes found</span></div><div><strong>{categories.length}</strong><span>Categories</span></div><div><strong>{meals.length}</strong><span>Meal types</span></div></div>
+			<div className="mx-auto w-full max-w-[96rem]">
+				<section className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+					<div className="max-w-3xl">
+						<p className="mb-2 text-xs font-black uppercase tracking-[0.2em] text-primary">Recipe finder</p>
+						<h1 className="text-4xl font-black tracking-[-0.035em] text-foreground sm:text-5xl lg:text-6xl">Find something worth cooking</h1>
+						<p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Search by name, narrow by category or meal, then compare recipes without losing your place.</p>
+					</div>
+					<div className="grid grid-cols-3 gap-2 sm:gap-3" aria-label="Recipe library summary">
+						{[[recipesQuery.data?.pagination?.total ?? recipesQuery.data?.recipes.length ?? 0, "Recipes"], [categories.length, "Categories"], [meals.length, "Meals"]].map(([value, label]) => (
+							<Card key={label} className="min-w-0 p-3 text-center sm:min-w-28 sm:p-4"><strong className="block text-xl font-black text-foreground sm:text-2xl">{value}</strong><span className="text-xs font-medium text-muted-foreground sm:text-sm">{label}</span></Card>
+						))}
+					</div>
+				</section>
+
+				{!filtersReady ? <PageState type={filtersError ? "error" : undefined} title={filtersError ? "Recipe filters could not load" : "Loading recipe filters"} message={filtersError || "Fetching categories and meal filters."} /> : (
+					<div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[304px_minmax(0,1fr)]">
+						<div className="hidden lg:block"><FoodMenuBar categoryId={queryState.categoryId} mealId={queryState.mealId} searchTerm={queryState.q} categories={categories} meals={meals} onCategoryClick={(categoryId) => updateQueryState({ categoryId, page: 1 })} onMealClick={(mealId) => updateQueryState({ mealId, page: 1 })} onMenuAllClick={(name) => updateQueryState({ [name]: "", page: 1 })} onChangeSearchTerm={(event) => updateQueryState({ q: event.target.value, page: 1 })} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} /></div>
+						<section className="min-w-0">
+							<div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+								<Button variant="outline" className="w-full justify-center sm:w-auto" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-controls="food-filter-sheet"><SlidersHorizontal className="size-4" />Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</Button>
+							</div>
+							<ActiveFilterChips queryState={queryState} categories={categories} meals={meals} onQueryStateChange={updateQueryState} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} />
+							<Suspense fallback={<PageState title="Loading recipes" message="Preparing the recipe list." />}><FoodContent recipes={recipesQuery.data?.recipes || []} pagination={recipesQuery.data?.pagination} queryState={queryState} onQueryStateChange={updateQueryState} isLoading={recipesQuery.isPending} isFetching={recipesQuery.isFetching} error={recipesQuery.error?.response?.data?.message || recipesQuery.error?.message} /></Suspense>
+						</section>
+					</div>
+				)}
 			</div>
-			{!filtersReady ? <PageState type={filtersError ? "error" : undefined} title={filtersError ? "Recipe filters could not load" : "Loading recipe filters"} message={filtersError || "Fetching categories and meal filters."} /> : (
-				<Row className="food__layout">
-					<Col lg={3} md={4} className="food__layout__aside"><FoodMenuBar categoryId={queryState.categoryId} mealId={queryState.mealId} searchTerm={queryState.q} categories={categories} meals={meals} onCategoryClick={(categoryId) => updateQueryState({ categoryId, page: 1 })} onMealClick={(mealId) => updateQueryState({ mealId, page: 1 })} onMenuAllClick={(name) => updateQueryState({ [name]: "", page: 1 })} onChangeSearchTerm={(event) => updateQueryState({ q: event.target.value, page: 1 })} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} /></Col>
-					<Col lg={9} md={8} className="food__layout__content">
-						<div className="food__mobile-toolbar" aria-label="Mobile recipe controls">
-							<button type="button" className="food__mobile-toolbar__filter" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-controls="food-filter-sheet">
-								Filters ({activeFilterCount})
-							</button>
-						</div>
-						<ActiveFilterChips queryState={queryState} categories={categories} meals={meals} onQueryStateChange={updateQueryState} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} />
-						<Suspense fallback={<PageState title="Loading recipes" message="Preparing the recipe list." />}><FoodContent recipes={recipesQuery.data?.recipes || []} pagination={recipesQuery.data?.pagination} queryState={queryState} onQueryStateChange={updateQueryState} isLoading={recipesQuery.isPending} isFetching={recipesQuery.isFetching} error={recipesQuery.error?.response?.data?.message || recipesQuery.error?.message} /></Suspense>
-					</Col>
-				</Row>
-			)}
 			<FilterSheet open={isFilterSheetOpen} queryState={queryState} categories={categories} meals={meals} onQueryStateChange={updateQueryState} onClearFilters={() => updateQueryState({ q: "", categoryId: "", mealId: "", page: 1 })} onClose={() => setIsFilterSheetOpen(false)} />
-		</Container>
+		</main>
 	);
 };
-
 export default Food;

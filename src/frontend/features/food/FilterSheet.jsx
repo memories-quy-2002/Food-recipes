@@ -1,73 +1,15 @@
 import React, { useEffect } from "react";
+import { X } from "lucide-react";
+import Button from "@/shared/ui/Button";
+import Input from "@/shared/ui/Input";
+import { cn } from "@/shared/lib/utils";
 
-const FilterSheet = ({
-	open,
-	queryState,
-	categories = [],
-	meals = [],
-	onQueryStateChange,
-	onClearFilters,
-	onClose,
-}) => {
-	useEffect(() => {
-		if (!open) return undefined;
-		const handleKeyDown = (event) => {
-			if (event.key === "Escape") onClose();
-		};
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [onClose, open]);
-
+const FilterSheet = ({ open, queryState, categories = [], meals = [], onQueryStateChange, onClearFilters, onClose }) => {
+	useEffect(() => { if (!open) return undefined; const handleKeyDown = (event) => { if (event.key === "Escape") onClose(); }; const previousOverflow = document.body.style.overflow; document.body.style.overflow = "hidden"; window.addEventListener("keydown", handleKeyDown); return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", handleKeyDown); }; }, [onClose, open]);
 	if (!open) return null;
-
 	const hasActiveFilters = Boolean(queryState.q || queryState.categoryId || queryState.mealId);
 	const updateFilter = (field, value) => onQueryStateChange({ [field]: value, page: 1 });
-
-	return (
-		<div className="food__filter-sheet-backdrop" role="presentation">
-			<section id="food-filter-sheet" className="food__filter-sheet" role="dialog" aria-modal="true" aria-labelledby="food-filter-sheet-title">
-				<header className="food__filter-sheet__header">
-					<div>
-						<span className="food__filter-sheet__eyebrow">Recipe finder</span>
-						<h2 id="food-filter-sheet-title">Filter recipes</h2>
-					</div>
-					<button type="button" className="food__filter-sheet__close" onClick={onClose} aria-label="Close recipe filters">×</button>
-				</header>
-
-				<div className="food__filter-sheet__body">
-					<label htmlFor="food-filter-search">Search recipes</label>
-					<input
-						id="food-filter-search"
-						type="search"
-						value={queryState.q}
-						placeholder="Search recipes..."
-						onChange={(event) => updateFilter("q", event.target.value)}
-					/>
-
-					<fieldset>
-						<legend>Category</legend>
-						<button type="button" className={!queryState.categoryId ? "is-active" : ""} aria-pressed={!queryState.categoryId} onClick={() => updateFilter("categoryId", "")}>All categories</button>
-						{categories.map(({ id, name }) => (
-							<button key={id} type="button" className={String(id) === queryState.categoryId ? "is-active" : ""} aria-pressed={String(id) === queryState.categoryId} onClick={() => updateFilter("categoryId", String(id))}>{name}</button>
-						))}
-					</fieldset>
-
-					<fieldset>
-						<legend>Meal</legend>
-						<button type="button" className={!queryState.mealId ? "is-active" : ""} aria-pressed={!queryState.mealId} onClick={() => updateFilter("mealId", "")}>All meals</button>
-						{meals.map(({ id, name }) => (
-							<button key={id} type="button" className={String(id) === queryState.mealId ? "is-active" : ""} aria-pressed={String(id) === queryState.mealId} onClick={() => updateFilter("mealId", String(id))}>{name}</button>
-						))}
-					</fieldset>
-				</div>
-
-				<footer className="food__filter-sheet__footer">
-					<button type="button" className="food__filter-sheet__clear" onClick={onClearFilters} disabled={!hasActiveFilters}>Clear all</button>
-					<button type="button" className="food__filter-sheet__done" onClick={onClose}>Done</button>
-				</footer>
-			</section>
-		</div>
-	);
+	const chipClass = (active) => cn("min-h-10 rounded-full border px-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent");
+	return <div className="fixed inset-0 z-50 bg-black/45" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section id="food-filter-sheet" className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-hidden rounded-t-3xl border border-border bg-card shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="food-filter-sheet-title"><header className="flex items-start justify-between border-b border-border p-5"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Recipe finder</p><h2 id="food-filter-sheet-title" className="mt-1 text-2xl font-black">Filter recipes</h2></div><Button variant="ghost" size="icon" onClick={onClose} aria-label="Close recipe filters"><X className="size-5" /></Button></header><div className="max-h-[60dvh] space-y-6 overflow-y-auto p-5"><div className="grid gap-2"><label htmlFor="food-filter-search" className="text-sm font-bold">Search recipes</label><Input id="food-filter-search" type="search" value={queryState.q} placeholder="Search recipes…" onChange={(event) => updateFilter("q", event.target.value)} /></div>{[["Category", "categoryId", categories], ["Meal", "mealId", meals]].map(([label, field, items]) => <fieldset key={field}><legend className="mb-3 text-sm font-black">{label}</legend><div className="flex flex-wrap gap-2"><button type="button" className={chipClass(!queryState[field])} aria-pressed={!queryState[field]} onClick={() => updateFilter(field, "")}>All {label.toLowerCase()}s</button>{items.map(({ id, name }) => <button key={id} type="button" className={chipClass(String(id) === queryState[field])} aria-pressed={String(id) === queryState[field]} onClick={() => updateFilter(field, String(id))}>{name}</button>)}</div></fieldset>)}</div><footer className="grid grid-cols-2 gap-3 border-t border-border bg-card p-5"><Button variant="outline" onClick={onClearFilters} disabled={!hasActiveFilters}>Clear all</Button><Button onClick={onClose}>Show results</Button></footer></section></div>;
 };
-
 export default FilterSheet;
