@@ -1,9 +1,9 @@
 import React from "react";
-import { Row } from "@/shared/ui/legacy-ui";
 import RecipeDescription from "./content/RecipeDescription";
 import RecipeRating from "./content/RecipeRating";
 import RecipeMetadataPanel from "./RecipeMetadataPanel";
 import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
+
 const RecipeContent = ({
 	recipe,
 	isAuthenticated,
@@ -27,7 +27,10 @@ const RecipeContent = ({
 	onReviewChange,
 }) => {
 	return (
-		<Row className="recipe__content" aria-label="Recipe cooking details">
+		<section
+			className="mx-auto w-full max-w-[100rem] space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:space-y-10 lg:px-8 lg:py-12 2xl:max-w-[108rem]"
+			aria-label="Recipe cooking details"
+		>
 			<RecipeDescription recipe={recipe} />
 			<RecipeMetadataPanel metadata={recipe.metadata} />
 			<SuggestionPanel mode="substitution" recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
@@ -52,7 +55,7 @@ const RecipeContent = ({
 				onToggleReview={onToggleReview}
 				onReviewChange={onReviewChange}
 			/>
-		</Row>
+		</section>
 	);
 };
 
