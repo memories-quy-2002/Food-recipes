@@ -89,7 +89,9 @@ const RecipeDescription = ({ recipe }) => {
 
 	useEffect(() => {
 		setServings(normalizeServings(getServings(recipe)));
-	}, [recipeIdentity, recipe]);
+		// Reset only when the displayed recipe changes; do not clobber a user's serving adjustment on re-render.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [recipeIdentity]);
 
 	const adjustServings = (amount) => setServings((current) => {
 		if ((current === MIN_SERVINGS && amount < 0) || (current === MAX_SERVINGS && amount > 0)) return current;
