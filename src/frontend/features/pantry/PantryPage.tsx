@@ -1,6 +1,10 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
+import { ShoppingBasket, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import Button from "@/shared/ui/Button";
+import Input from "@/shared/ui/Input";
+import { Card } from "@/shared/ui/Card";
 import type { PantryItem } from "./api/pantryApi";
 import {
 	useCreatePantryItemMutation,
@@ -8,7 +12,6 @@ import {
 	usePantryQuery,
 	useUpdatePantryItemMutation,
 } from "./api/pantryQueries";
-import "./Pantry.scss";
 
 const PantryPage = () => {
 	const pantryQuery = usePantryQuery();
@@ -29,61 +32,69 @@ const PantryPage = () => {
 			return;
 		}
 		setError(null);
-		createMutation.mutate({ name: nextName, have: true }, { onSuccess: () => setName(""), onError: () => setError("We could not add that pantry item. Try again.") });
+		createMutation.mutate(
+			{ name: nextName, have: true },
+			{
+				onSuccess: () => setName(""),
+				onError: () => setError("We could not add that pantry item. Try again."),
+			},
+		);
 	};
 
 	const renderItem = (item: PantryItem) => (
-		<li key={item.pantry_id} className={`pantry__item${item.have ? "" : " pantry__item--missing"}`}>
-			<label>
+		<li key={item.pantry_id} className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2">
+			<label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
 				<input
 					type="checkbox"
 					checked={item.have}
 					aria-label={`${item.name} available`}
+					className="size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					onChange={() => updateMutation.mutate({ pantryId: item.pantry_id, input: { have: !item.have } })}
 				/>
-				<span>{item.name}</span>
+				<span className={item.have ? "truncate font-semibold text-foreground" : "truncate font-semibold text-muted-foreground line-through"}>{item.name}</span>
 			</label>
-			<button type="button" onClick={() => deleteMutation.mutate(item.pantry_id)} aria-label={`Delete ${item.name}`}>
-				Delete
-			</button>
+			<Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteMutation.mutate(item.pantry_id)} aria-label={`Delete ${item.name}`}>
+				<Trash2 className="size-4" />
+			</Button>
 		</li>
 	);
 
 	return (
-		<div className="fr-page pantry">
+		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="pantry-title">
 			<PageHelmet title="My Pantry" description="Keep a simple list of ingredients you have on hand." path="/pantry" noIndex />
-			<main className="pantry__main" aria-labelledby="pantry-title">
-				<header className="pantry__header">
-					<div>
-						<p className="pantry__eyebrow">Kitchen inventory</p>
-						<h1 id="pantry-title">My Pantry</h1>
-						<p>Track what you have without guessing quantities. Use it as a quick reference while you shop and plan.</p>
+			<div className="mx-auto w-full max-w-6xl">
+				<header className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+					<div className="max-w-2xl">
+						<p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-primary">Kitchen inventory</p>
+						<h1 id="pantry-title" className="text-4xl font-black tracking-tight sm:text-5xl">Know what you already have</h1>
+						<p className="mt-3 text-base leading-7 text-muted-foreground">Keep a lightweight inventory so shopping and meal planning start with what is already in your kitchen.</p>
 					</div>
-					<Link to="/shopping-list">Open shopping list</Link>
+					<Button asChild variant="outline" className="w-full sm:w-auto"><Link to="/shopping-list"><ShoppingBasket className="size-4" />Open shopping list</Link></Button>
 				</header>
-				<section className="pantry__add" aria-labelledby="pantry-add-title">
-					<h2 id="pantry-add-title">Add an ingredient</h2>
-					<form onSubmit={submit}>
-						<label htmlFor="pantry-item">Pantry item</label>
-						<input id="pantry-item" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. olive oil" />
-						<button type="submit" disabled={createMutation.isPending}>{createMutation.isPending ? "Adding…" : "Add pantry item"}</button>
+
+				<Card className="mb-6 p-4 sm:p-5">
+					<div className="mb-4"><h2 className="text-xl font-black">Add an ingredient</h2><p className="mt-1 text-sm text-muted-foreground">Quantities are optional here — this list is about availability.</p></div>
+					<form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+						<div className="grid flex-1 gap-2"><label htmlFor="pantry-item" className="text-sm font-bold">Pantry item</label><Input id="pantry-item" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. olive oil" /></div>
+						<Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending}>{createMutation.isPending ? "Adding…" : "Add pantry item"}</Button>
 					</form>
-					{error && <p role="alert">{error}</p>}
-				</section>
+					{error && <p className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive" role="alert">{error}</p>}
+				</Card>
+
 				{pantryQuery.isPending ? (
-					<p className="pantry__state" role="status">Loading your pantry…</p>
+					<Card className="p-8 text-center" role="status">Loading your pantry…</Card>
 				) : pantryQuery.isError ? (
-					<section className="pantry__state" role="alert"><h2>Pantry could not load</h2><p>We could not fetch your pantry. Try again.</p><button type="button" onClick={() => pantryQuery.refetch()}>Try again</button></section>
+					<Card className="p-6 text-center" role="alert"><h2 className="text-xl font-bold">Pantry could not load</h2><p className="mt-2 text-muted-foreground">We could not fetch your pantry. Try again.</p><Button className="mt-4" onClick={() => pantryQuery.refetch()}>Try again</Button></Card>
 				) : items.length === 0 ? (
-					<section className="pantry__state"><h2>Your pantry is empty</h2><p>Add ingredients you already have so you can compare them with your shopping list.</p></section>
+					<Card className="p-8 text-center"><h2 className="text-xl font-bold">Your pantry is empty</h2><p className="mt-2 text-muted-foreground">Add ingredients you already have so you can compare them with your shopping list.</p></Card>
 				) : (
-					<section className="pantry__lists" aria-label="Pantry ingredients">
-						<div><h2>Already have <span>{availableItems.length}</span></h2><ul>{availableItems.length ? availableItems.map(renderItem) : <li className="pantry__empty-line">Nothing marked as available.</li>}</ul></div>
-						<div><h2>Need to get <span>{missingItems.length}</span></h2><ul>{missingItems.length ? missingItems.map(renderItem) : <li className="pantry__empty-line">Nothing waiting here.</li>}</ul></div>
+					<section className="grid gap-5 md:grid-cols-2" aria-label="Pantry ingredients">
+						<Card className="p-4 sm:p-5"><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-black">Already have</h2><span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-800">{availableItems.length}</span></div><ul className="grid gap-2">{availableItems.length ? availableItems.map(renderItem) : <li className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">Nothing marked as available.</li>}</ul></Card>
+						<Card className="p-4 sm:p-5"><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-black">Need to get</h2><span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-black text-amber-900">{missingItems.length}</span></div><ul className="grid gap-2">{missingItems.length ? missingItems.map(renderItem) : <li className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">Nothing waiting here.</li>}</ul></Card>
 					</section>
 				)}
-			</main>
-		</div>
+			</div>
+		</main>
 	);
 };
 
