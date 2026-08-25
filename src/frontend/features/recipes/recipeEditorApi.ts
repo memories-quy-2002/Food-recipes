@@ -28,13 +28,57 @@ export type RecipeEditPayload = {
 
 export type RecipeEditSection = "base" | "ingredients" | "nutrition" | "tags" | "refresh";
 
+type ApiErrorResponse = {
+	code?: string;
+	message?: string;
+	[key: string]: unknown;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const getResponseData = (error: unknown): ApiErrorResponse | undefined => {
+	if (!isRecord(error) || !isRecord(error.response) || !isRecord(error.response.data)) return undefined;
+	return error.response.data as ApiErrorResponse;
+};
+
+const normalizeStructuredIngredient = (ingredient: Record<string, unknown>) => ({
+	...ingredient,
+	quantityText: ingredient.quantityText ?? ingredient.quantity_text ?? null,
+	originalText: ingredient.originalText ?? ingredient.original_text ?? null,
+	unit: ingredient.unit ?? ingredient.unit_text ?? null,
+});
+
+export const normalizeRecipeEditorValue = <T extends Record<string, unknown>>(recipe: T): T => {
+	const structuredIngredients = recipe.structuredIngredients ?? recipe.structured_ingredients;
+	if (!Array.isArray(structuredIngredients)) return recipe;
+
+	return {
+		...recipe,
+		structuredIngredients: structuredIngredients.map((ingredient) =>
+			isRecord(ingredient) ? normalizeStructuredIngredient(ingredient) : ingredient
+		),
+	} as T;
+};
+
 export class RecipeEditSaveError extends Error {
 	section: RecipeEditSection;
+	code?: string;
+	status?: number;
+	details?: ApiErrorResponse;
+	originalError: unknown;
 
 	constructor(section: RecipeEditSection, error: unknown) {
-		super(error instanceof Error ? error.message : "Unable to save this recipe.");
+		const responseData = getResponseData(error);
+		super(responseData?.message || (error instanceof Error ? error.message : "Unable to save this recipe."));
 		this.name = "RecipeEditSaveError";
 		this.section = section;
+		this.code = responseData?.code;
+		this.status = isRecord(error) && isRecord(error.response) && typeof error.response.status === "number"
+			? error.response.status
+			: undefined;
+		this.details = responseData;
+		this.originalError = error;
 	}
 }
 
@@ -44,15 +88,19 @@ export async function getRecipeDetail(recipeId: number): Promise<RecipeDetail> {
 }
 
 export async function saveRecipeEdits(recipeId: number, payload: RecipeEditPayload): Promise<RecipeDetail> {
+	let savedRecipe: unknown;
+
 	try {
-		await axios.patch(apiRoutes.recipe(recipeId), payload.base);
+		const response = await axios.patch(apiRoutes.recipe(recipeId), payload.base);
+		savedRecipe = response.data?.recipe ?? response.data;
 	} catch (error) {
 		throw new RecipeEditSaveError("base", error);
 	}
 
 	if (payload.ingredients !== undefined) {
 		try {
-			await axios.put(apiRoutes.recipeIngredients(recipeId), payload.ingredients);
+			const response = await axios.put(apiRoutes.recipeIngredients(recipeId), payload.ingredients);
+			savedRecipe = response.data?.recipe ?? response.data;
 		} catch (error) {
 			throw new RecipeEditSaveError("ingredients", error);
 		}
@@ -60,7 +108,8 @@ export async function saveRecipeEdits(recipeId: number, payload: RecipeEditPaylo
 
 	if (payload.nutrition !== undefined) {
 		try {
-			await axios.put(apiRoutes.recipeNutrition(recipeId), payload.nutrition);
+			const response = await axios.put(apiRoutes.recipeNutrition(recipeId), payload.nutrition);
+			savedRecipe = response.data?.recipe ?? response.data;
 		} catch (error) {
 			throw new RecipeEditSaveError("nutrition", error);
 		}
@@ -68,15 +117,16 @@ export async function saveRecipeEdits(recipeId: number, payload: RecipeEditPaylo
 
 	if (payload.tags !== undefined) {
 		try {
-			await axios.put(apiRoutes.recipeDietaryTags(recipeId), payload.tags);
+			const response = await axios.put(apiRoutes.recipeDietaryTags(recipeId), payload.tags);
+			savedRecipe = response.data?.recipe ?? response.data;
 		} catch (error) {
 			throw new RecipeEditSaveError("tags", error);
 		}
 	}
 
-	try {
-		return await getRecipeDetail(recipeId);
-	} catch (error) {
-		throw new RecipeEditSaveError("refresh", error);
+	if (!isRecord(savedRecipe)) {
+		throw new RecipeEditSaveError("refresh", new Error("The server did not return the saved recipe."));
 	}
+
+	return normalizeRecipeEditorValue(savedRecipe) as RecipeDetail;
 }

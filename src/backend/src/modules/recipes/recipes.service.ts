@@ -81,6 +81,7 @@ export class RecipesService {
     const existing = ownerLookup ?? (ownerLookup === undefined ? await this.repository.findById(id) : null);
     if (!existing) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
     if (existing.user_id !== userId) throw new ForbiddenException({ code: 'RECIPE_FORBIDDEN', message: 'You do not own this recipe' });
+    this.assertEditable(existing);
     if (dto.metadata) validateRecipeMetadata(dto.metadata);
     const recipe = await this.repository.update(id, dto);
     if (dto.metadata) {
@@ -103,7 +104,7 @@ export class RecipesService {
     userId: number,
     dto: ReplaceRecipeIngredientsDto,
   ): Promise<{ recipe: RecipeRecord }> {
-    await this.requireOwner(id, userId);
+    await this.requireEditableOwner(id, userId);
     if (!Array.isArray(dto.ingredients) || dto.ingredients.length > MAX_RECIPE_INGREDIENTS) {
       throw new BadRequestException({
         code: 'RECIPE_INGREDIENTS_INVALID',
@@ -136,7 +137,7 @@ export class RecipesService {
     userId: number,
     dto: ReplaceRecipeNutritionDto,
   ): Promise<{ recipe: RecipeRecord }> {
-    await this.requireOwner(id, userId);
+    await this.requireEditableOwner(id, userId);
     const values = [
       dto.calories,
       dto.protein,
@@ -168,7 +169,7 @@ export class RecipesService {
     userId: number,
     dto: ReplaceRecipeTagsDto,
   ): Promise<{ recipe: RecipeRecord }> {
-    await this.requireOwner(id, userId);
+    await this.requireEditableOwner(id, userId);
     const dietaryTags = this.normalizeTags(dto.dietaryTags, 'dietary');
     const allergenTags = this.normalizeTags(dto.allergenTags, 'allergen').map((tag) => tag === 'tree nuts' ? 'tree_nuts' : tag);
     const unsupportedAllergen = allergenTags.find((tag) => !(RECIPE_ALLERGENS as readonly string[]).includes(tag));
@@ -252,6 +253,21 @@ export class RecipesService {
       });
     }
     return recipe;
+  }
+
+  private async requireEditableOwner(id: number, userId: number): Promise<RecipeRecord> {
+    const recipe = await this.requireOwner(id, userId);
+    this.assertEditable(recipe);
+    return recipe;
+  }
+
+  private assertEditable(recipe: RecipeRecord): void {
+    if (recipe.status === 'archived') {
+      throw new BadRequestException({
+        code: 'RECIPE_ARCHIVED_READ_ONLY',
+        message: 'Archived recipes are read-only; restore the recipe before editing',
+      });
+    }
   }
 
   private normalizeTags(tags: string[] | undefined, kind: string): string[] {

@@ -48,6 +48,12 @@ export class RecipeMetadataService {
     if (ownerId !== userId) {
       throw new ForbiddenException({ code: 'RECIPE_METADATA_FORBIDDEN', message: 'You do not own this recipe' });
     }
+    if ((await this.repository.recipeStatus(recipeId)) === 'archived') {
+      throw new BadRequestException({
+        code: 'RECIPE_ARCHIVED_READ_ONLY',
+        message: 'Archived recipes are read-only; restore the recipe before editing',
+      });
+    }
 
     const nutrition = dto.nutrition === undefined || dto.nutrition === null
       ? null

@@ -34,10 +34,22 @@ const fixtureRecipe = {
 	instructions: ["Simmer and serve."],
 };
 
-const renderEditor = (props) => render(
+const savedRecipe = {
+	...fixtureRecipe,
+	status: "draft",
+	structured_ingredients: [{
+		quantity: null,
+		quantity_text: "1/2",
+		unit: "CUP",
+		original_text: "1/2 cup tomatoes",
+		name: "Tomatoes",
+	}],
+};
+
+const renderEditor = (props, { refreshRecipes = vi.fn() } = {}) => render(
 	<MemoryRouter>
 		<AuthContext.Provider value={{ auth: { current: { userId: "editor-user" } } }}>
-			<RecipeContext.Provider value={{ refreshRecipes: vi.fn() }}>
+			<RecipeContext.Provider value={{ refreshRecipes }}>
 				<RecipeEditor onSaved={vi.fn()} {...props} />
 			</RecipeContext.Provider>
 		</AuthContext.Provider>
@@ -54,8 +66,9 @@ describe("RecipeEditor", () => {
 			if (route === "/meals") return Promise.resolve({ data: { meals: [{ id: 2, name: "Main course" }] } });
 			return Promise.resolve({ data: { recipe: { ...fixtureRecipe, status: "published" } } });
 		});
-		axios.patch.mockResolvedValue({ data: {} });
-		axios.put.mockResolvedValue({ data: {} });
+		axios.patch.mockResolvedValue({ data: { recipe: savedRecipe } });
+		axios.put.mockResolvedValue({ data: { recipe: savedRecipe } });
+		axios.post.mockResolvedValue({ data: { recipe: { ...savedRecipe, status: "published" } } });
 	});
 
 	it("renders create mode without an edit identifier", () => {
@@ -131,9 +144,9 @@ describe("RecipeEditor", () => {
 	it("keeps the form available for retry and identifies a failed metadata section", async () => {
 		const onSaved = vi.fn();
 		axios.put
-			.mockResolvedValueOnce({ data: {} })
+			.mockResolvedValueOnce({ data: { recipe: savedRecipe } })
 			.mockRejectedValueOnce(new Error("nutrition unavailable"))
-			.mockResolvedValue({ data: {} });
+			.mockResolvedValue({ data: { recipe: savedRecipe } });
 		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved });
 
 		const name = await screen.findByLabelText(/recipe name/i);
@@ -145,5 +158,62 @@ describe("RecipeEditor", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 		await waitFor(() => expect(onSaved).toHaveBeenCalled());
+	});
+
+	it("saves an edited draft without publishing it", async () => {
+		const onSaved = vi.fn();
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "draft" }, onSaved });
+
+		fireEvent.click(await screen.findByRole("button", { name: "Save draft" }));
+
+		await waitFor(() => expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({
+			recipe: expect.objectContaining({ status: "draft" }),
+		})));
+		expect(axios.post).not.toHaveBeenCalled();
+		expect(axios.patch).toHaveBeenCalledWith("/recipes/42", expect.any(Object));
+	});
+
+	it("saves a draft before publishing and navigates with the published response", async () => {
+		const onSaved = vi.fn();
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "draft" }, onSaved });
+
+		fireEvent.click(await screen.findByRole("button", { name: "Publish" }));
+
+		await waitFor(() => expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({
+			recipe: expect.objectContaining({ status: "published" }),
+		})));
+		expect(axios.patch).toHaveBeenCalledWith("/recipes/42", expect.any(Object));
+		expect(axios.post).toHaveBeenCalledWith("/recipes/42/publish");
+		expect(axios.patch.mock.invocationCallOrder[0]).toBeLessThan(axios.post.mock.invocationCallOrder[0]);
+	});
+
+	it("prevents a double submit while an edit save is in flight", async () => {
+		const onSaved = vi.fn();
+		let resolvePatch;
+		axios.patch.mockImplementationOnce(() => new Promise((resolve) => {
+			resolvePatch = resolve;
+		}));
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved });
+
+		const saveButton = await screen.findByRole("button", { name: "Save changes" });
+		fireEvent.change(screen.getByLabelText(/recipe name/i), { target: { value: "Better tomato pasta" } });
+		fireEvent.click(saveButton);
+		fireEvent.click(saveButton);
+		await waitFor(() => expect(axios.patch).toHaveBeenCalledTimes(1));
+
+		resolvePatch({ data: { recipe: { ...savedRecipe, status: "published" } } });
+		await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+	});
+
+	it("refreshes owner and detail queries before reporting an edit save", async () => {
+		const refreshRecipes = vi.fn();
+		const onSaved = vi.fn();
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved }, { refreshRecipes });
+
+		fireEvent.change(await screen.findByLabelText(/recipe name/i), { target: { value: "Better tomato pasta" } });
+		fireEvent.click(await screen.findByRole("button", { name: "Save changes" }));
+
+		await waitFor(() => expect(onSaved).toHaveBeenCalled());
+		expect(refreshRecipes).toHaveBeenCalledTimes(1);
 	});
 });

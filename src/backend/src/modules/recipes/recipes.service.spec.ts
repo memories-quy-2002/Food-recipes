@@ -152,6 +152,61 @@ describe('RecipesService', () => {
     expect(repository.replaceIngredients).not.toHaveBeenCalled();
   });
 
+  it('rejects archived recipe base edits', async () => {
+    repository.findByIdForOwner.mockResolvedValue({
+      recipe_id: 4,
+      user_id: 12,
+      status: 'archived',
+    });
+    const service = new RecipesService(repository, metadataService);
+
+    await expect(service.update(4, 12, { name: 'Changed title' })).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RECIPE_ARCHIVED_READ_ONLY' }),
+    });
+    expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('rejects archived structured metadata edits', async () => {
+    repository.findByIdForOwner.mockResolvedValue({
+      recipe_id: 4,
+      user_id: 12,
+      status: 'archived',
+    });
+    const service = new RecipesService(repository, metadataService);
+    const lifecycle = service as unknown as {
+      replaceIngredients: (id: number, userId: number, dto: unknown) => Promise<unknown>;
+      replaceNutrition: (id: number, userId: number, dto: unknown) => Promise<unknown>;
+      replaceTags: (id: number, userId: number, dto: unknown) => Promise<unknown>;
+    };
+
+    await expect(lifecycle.replaceIngredients(4, 12, { ingredients: [] })).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RECIPE_ARCHIVED_READ_ONLY' }),
+    });
+    await expect(lifecycle.replaceNutrition(4, 12, {})).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RECIPE_ARCHIVED_READ_ONLY' }),
+    });
+    await expect(lifecycle.replaceTags(4, 12, { dietaryTags: [], allergenTags: [] })).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RECIPE_ARCHIVED_READ_ONLY' }),
+    });
+    expect(repository.replaceIngredients).not.toHaveBeenCalled();
+    expect(repository.replaceNutrition).not.toHaveBeenCalled();
+    expect(repository.replaceTags).not.toHaveBeenCalled();
+  });
+
+  it('allows an owner to restore an archived recipe', async () => {
+    const archived = { recipe_id: 4, user_id: 12, status: 'archived' };
+    const restored = { ...archived, status: 'draft' };
+    repository.findByIdForOwner.mockResolvedValue(archived);
+    repository.restore.mockResolvedValue(restored);
+    const service = new RecipesService(repository, metadataService);
+    const lifecycle = service as unknown as {
+      restore: (id: number, userId: number) => Promise<unknown>;
+    };
+
+    await expect(lifecycle.restore(4, 12)).resolves.toEqual({ recipe: restored });
+    expect(repository.restore).toHaveBeenCalledWith(4);
+  });
+
   it('forbids lifecycle changes to another users recipe', async () => {
     repository.findByIdForOwner.mockResolvedValue({
       recipe_id: 4,

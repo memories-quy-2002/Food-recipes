@@ -1,5 +1,5 @@
 import cameraPreview from "@/shared/assets/images/cameraPreview.png";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import Button from "@/shared/ui/Button";
 import { Form } from "@/shared/ui/Form";
 import { Col, Row } from "@/shared/ui/layout";
@@ -72,7 +72,13 @@ const createInitialEditorState = ({ recipeId, initialRecipe }) => {
 	if (!initialRecipe) return initialState;
 	const structuredSource = initialRecipe.structuredIngredients ?? initialRecipe.structured_ingredients;
 	const structuredIngredients = Array.isArray(structuredSource)
-		? structuredSource
+		? structuredSource.map((ingredient, position) => ({
+			...ingredient,
+			position,
+			quantityText: ingredient.quantityText ?? ingredient.quantity_text ?? "",
+			originalText: ingredient.originalText ?? ingredient.original_text ?? "",
+			unit: ingredient.unit ?? ingredient.unit_text ?? "",
+		}))
 		: Array.isArray(initialRecipe.recipeIngredients ?? initialRecipe.ingredients)
 			? (initialRecipe.recipeIngredients ?? initialRecipe.ingredients).map((name, position) => ({
 				position,
@@ -201,6 +207,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 	const [preview, setPreview] = useState(null);
 	const [disabled, setDisabled] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const submitLockRef = useRef(false);
 	const [submitError, setSubmitError] = useState("");
 	const [uploadStatus, setUploadStatus] = useState("idle");
 	const [categories, setCategories] = useState([]);
@@ -477,7 +484,9 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 	};
 
 	const handleSaveDraft = async () => {
-		if (!isCreateMode) return;
+		if (!isCreateMode || submitLockRef.current) return;
+		submitLockRef.current = true;
+		setIsSubmitting(true);
 		const recipe = getValues();
 		const savedLocally = saveDraftLocally(recipe);
 		try {
@@ -493,6 +502,9 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			} else {
 				setSubmitError(error.response?.data?.message || error.message || "Unable to save this draft.");
 			}
+		} finally {
+			submitLockRef.current = false;
+			setIsSubmitting(false);
 		}
 	};
 
@@ -582,7 +594,11 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		return savedRecipe;
 	};
 
-	const handleSaveEditedRecipe = async (values, { publish = false } = {}) => {
+	const handleSaveEditedRecipe = async (values, { publish = false, lockAlreadyAcquired = false } = {}) => {
+		if (!lockAlreadyAcquired) {
+			if (submitLockRef.current) return;
+			submitLockRef.current = true;
+		}
 		try {
 			setIsSubmitting(true);
 			setSubmitError("");
@@ -602,6 +618,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			setSubmitError(section ? `${section} could not be saved: ${message}` : message);
 			showToast({ title: publish ? "Couldnâ€™t publish recipe" : "Couldnâ€™t save recipe", message, type: "error" });
 		} finally {
+			submitLockRef.current = false;
 			setUploadStatus("idle");
 			setIsSubmitting(false);
 		}
@@ -609,7 +626,14 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 
 	const handleSaveEditedDraft = () => handleSaveEditedRecipe(getValues());
 
-	const handleEditSubmit = (values) => handleSaveEditedRecipe(values, { publish: recipeStatus === "draft" });
+	const handleEditSubmit = (values) => {
+		if (submitLockRef.current) return;
+		submitLockRef.current = true;
+		return handleSaveEditedRecipe(values, {
+			publish: recipeStatus === "draft",
+			lockAlreadyAcquired: true,
+		});
+	};
 
 	const handleSubmit = async (values) => {
 		if (!isCreateMode) return;

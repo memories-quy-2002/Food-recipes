@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import { RecipeEditSaveError, saveRecipeEdits, type RecipeEditPayload } from "./recipeEditorApi";
+import { normalizeRecipeEditorValue, RecipeEditSaveError, saveRecipeEdits, type RecipeEditPayload } from "./recipeEditorApi";
 
 vi.mock("@/shared/api/axios", () => ({
 	default: {
@@ -26,12 +26,26 @@ const fixturePayload: RecipeEditPayload = {
 	tags: { dietaryTags: [], allergenTags: [] },
 };
 
+const savedRecipe = {
+	recipe_id: 42,
+	status: "draft",
+	structured_ingredients: [{
+		quantity: null,
+		quantity_text: "1/2",
+		unit: "CUP",
+		original_text: "1/2 cup tomatoes",
+		name: "tomatoes",
+	}],
+};
+
 describe("saveRecipeEdits", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(axios.patch).mockResolvedValue({ data: {} });
 		vi.mocked(axios.put).mockResolvedValue({ data: {} });
-		vi.mocked(axios.get).mockResolvedValue({ data: { recipe: { recipe_id: 42, recipe_name: "Tomato pasta" } } });
+		vi.mocked(axios.get).mockResolvedValue({ data: { recipe: savedRecipe } });
+		vi.mocked(axios.patch).mockResolvedValue({ data: { recipe: savedRecipe } });
+		vi.mocked(axios.put).mockResolvedValue({ data: { recipe: savedRecipe } });
 	});
 
 	it("updates base data before replacing structured metadata", async () => {
@@ -66,5 +80,29 @@ describe("saveRecipeEdits", () => {
 		vi.mocked(axios.patch).mockRejectedValueOnce(new Error("title is required"));
 
 		await expect(saveRecipeEdits(42, fixturePayload)).rejects.toBeInstanceOf(RecipeEditSaveError);
+	});
+
+	it("preserves API validation details on save errors", async () => {
+		vi.mocked(axios.patch).mockRejectedValueOnce({
+			response: { status: 400, data: { code: "RECIPE_ARCHIVED_READ_ONLY", message: "Archived recipes are read-only" } },
+		});
+
+		await expect(saveRecipeEdits(42, fixturePayload)).rejects.toMatchObject({
+			section: "base",
+			code: "RECIPE_ARCHIVED_READ_ONLY",
+			status: 400,
+			details: { code: "RECIPE_ARCHIVED_READ_ONLY" },
+			message: "Archived recipes are read-only",
+		});
+	});
+
+	it("normalizes snake_case ingredient fields for the editor", () => {
+		expect(normalizeRecipeEditorValue(savedRecipe)).toMatchObject({
+			structuredIngredients: [{
+				quantityText: "1/2",
+				originalText: "1/2 cup tomatoes",
+				unit: "CUP",
+			}],
+		});
 	});
 });

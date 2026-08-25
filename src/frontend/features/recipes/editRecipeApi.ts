@@ -2,6 +2,7 @@ import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
 import type { RecipeDetail } from "@/shared/api/contracts";
+import { normalizeRecipeEditorValue } from "./recipeEditorApi";
 
 export type RecipeEditorValue = RecipeDetail;
 
@@ -22,5 +23,5 @@ export async function loadOwnedRecipe(recipeId: number): Promise<RecipeEditorVal
 
 	if (!recipe) throw new OwnedRecipeNotFoundError();
 
-	return recipe;
+	return normalizeRecipeEditorValue(recipe as unknown as Record<string, unknown>) as RecipeEditorValue;
 }
