@@ -1,33 +1,17 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/shared/lib/utils";
 import { isNavigationItemActive } from "./navigation";
 
 const HeaderMenu = ({ items }) => {
 	const { pathname } = useLocation();
-
 	return (
-		<nav className="fr-nav" aria-label="Primary navigation">
-			{items.map(({ title, href }, index) => (
-				<Link
-					key={index}
-					className={
-						"fr-nav__link" +
-						(isNavigationItemActive(pathname, href, items)
-							? " fr-nav__link--active"
-							: "")
-					}
-					aria-current={
-						isNavigationItemActive(pathname, href, items)
-							? "page"
-							: undefined
-					}
-					to={href}
-				>
-					{title}
-				</Link>
-			))}
+		<nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+			{items.map(({ title, href }) => {
+				const active = isNavigationItemActive(pathname, href, items);
+				return <Link key={href} className={cn("min-h-10 rounded-xl px-3 py-2 text-sm font-bold text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active && "bg-accent text-accent-foreground")} aria-current={active ? "page" : undefined} to={href}>{title}</Link>;
+			})}
 		</nav>
 	);
 };
-
 export default HeaderMenu;

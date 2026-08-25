@@ -6,75 +6,8 @@ import { siteContent } from "@/shared/utils/siteContent";
 
 const Footer = () => {
 	const d = new Date();
-	const {
-		about,
-		contact,
-		primaryNavigation,
-		secondaryNavigation,
-		follow,
-		bottom,
-	} = siteContent;
-
-	return (
-		<footer className="fr-footer">
-			<div className="fr-footer__inner">
-				<div className="fr-footer__brand">
-					<Link to="/" className="fr-brand">
-						<span className="fr-brand__mark" aria-hidden="true" />
-						<span>food / recipes</span>
-					</Link>
-					<h2>About us</h2>
-					<p>{about}</p>
-				</div>
-				<div>
-					<h2>Contact</h2>
-					<ul className="fr-footer__list">
-						<li><BsMailbox aria-hidden="true" /> {contact.email}</li>
-						<li><FaPhone aria-hidden="true" /> {contact.phone}</li>
-						<li><FaHouse aria-hidden="true" /> {contact.address}</li>
-					</ul>
-				</div>
-				<div>
-					<h2>Explore</h2>
-					<ul className="fr-footer__list">
-						{primaryNavigation.map((item) => (
-							<li key={item.href}>
-								<Link to={item.href}>{item.title}</Link>
-							</li>
-						))}
-					</ul>
-					<h2>More</h2>
-					<ul className="fr-footer__list">
-						{secondaryNavigation.map((item) => (
-							<li key={item.href}>
-								<Link to={item.href}>{item.title}</Link>
-							</li>
-						))}
-					</ul>
-				</div>
-				<div className="fr-footer__social">
-					<h2>Follow us</h2>
-					<ul>
-						{follow.map(({ href, Icon, label }) => (
-							<li key={href}>
-								<a
-									href={href}
-									target="_blank"
-									rel="noopener noreferrer"
-									aria-label={`Visit Food Recipes on ${label}`}
-								>
-									<Icon size={20} />
-								</a>
-							</li>
-						))}
-					</ul>
-				</div>
-				<div className="fr-footer__bottom">
-					<p>&copy; {d.getFullYear()} {bottom}</p>
-				</div>
-			</div>
-		</footer>
-	);
+	const { about, contact, primaryNavigation, secondaryNavigation, follow, bottom } = siteContent;
+	const linkClass = "text-sm text-muted-foreground transition hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+	return <footer className="mt-16 border-t border-border bg-card/40 px-4 py-10 sm:px-6 lg:mt-24 lg:px-8"><div className="mx-auto grid w-full max-w-[96rem] gap-8 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]"><div className="sm:col-span-2 lg:col-span-1"><Link to="/" className="inline-flex items-center gap-2.5 rounded-xl text-xl font-black tracking-[-0.04em] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><span className="grid size-8 place-items-center rounded-xl bg-primary" aria-hidden="true"><span className="h-4 w-2 rounded-sm bg-primary-foreground" /></span>food / recipes</Link><h2 className="mt-5 text-sm font-black">About us</h2><p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">{about}</p></div><div><h2 className="mb-3 text-sm font-black">Contact</h2><ul className="grid gap-3 text-sm text-muted-foreground"><li className="flex gap-2"><BsMailbox className="mt-0.5 shrink-0" aria-hidden="true" />{contact.email}</li><li className="flex gap-2"><FaPhone className="mt-0.5 shrink-0" aria-hidden="true" />{contact.phone}</li><li className="flex gap-2"><FaHouse className="mt-0.5 shrink-0" aria-hidden="true" />{contact.address}</li></ul></div><div><h2 className="mb-3 text-sm font-black">Explore</h2><ul className="grid gap-2">{primaryNavigation.map((item) => <li key={item.href}><Link className={linkClass} to={item.href}>{item.title}</Link></li>)}</ul><h2 className="mb-3 mt-6 text-sm font-black">More</h2><ul className="grid gap-2">{secondaryNavigation.map((item) => <li key={item.href}><Link className={linkClass} to={item.href}>{item.title}</Link></li>)}</ul></div><div><h2 className="mb-3 text-sm font-black">Follow us</h2><ul className="flex flex-wrap gap-2">{follow.map(({ href, Icon, label }) => <li key={href}><a className="grid size-11 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition hover:border-primary/30 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" href={href} target="_blank" rel="noopener noreferrer" aria-label={`Visit Food Recipes on ${label}`}><Icon size={20} /></a></li>)}</ul></div><div className="border-t border-border pt-5 sm:col-span-2 lg:col-span-4"><p className="text-sm text-muted-foreground">&copy; {d.getFullYear()} {bottom}</p></div></div></footer>;
 };
-
 export default Footer;
