@@ -30,7 +30,7 @@ const json = (body) => ({
 });
 
 async function stubRecipeApi(page) {
-	await page.route("**/recipes", (route) => route.fulfill(json({
+	await page.route("**/recipes**", (route) => route.fulfill(json({
 		recipes: [recipe],
 		pagination: { page: 1, limit: 100, total: 1, totalPages: 1, hasNext: false },
 	})));
