@@ -27,12 +27,8 @@ const normalizeMinutes = (value) => {
 };
 
 export const normalizeRecipeSummary = (recipe) => {
-	const prepTimeMinutes = normalizeMinutes(
-		recipe.prepTimeMinutes ?? recipe.prep_time_minutes
-	);
-	const cookTimeMinutes = normalizeMinutes(
-		recipe.cookTimeMinutes ?? recipe.cook_time_minutes
-	);
+	const prepTimeMinutes = normalizeMinutes(recipe.prepTimeMinutes ?? recipe.prep_time_minutes);
+	const cookTimeMinutes = normalizeMinutes(recipe.cookTimeMinutes ?? recipe.cook_time_minutes);
 
 	return {
 		...recipe,
@@ -45,8 +41,7 @@ export const normalizeRecipeSummary = (recipe) => {
 	};
 };
 
-export const byQuickest = (a, b) =>
-	a.totalTimeMinutes - b.totalTimeMinutes;
+export const byQuickest = (a, b) => a.totalTimeMinutes - b.totalTimeMinutes;
 
 export const getQuickMeals = (recipes) =>
 	recipes.map(normalizeRecipeSummary).sort(byQuickest).slice(0, 8);
@@ -86,10 +81,7 @@ const HomeMain = () => {
 	const featuredRecipes = useMemo(() => {
 		const nextRecipes = [...filteredRecipes];
 
-		if (featuredMode === "quick-meals") {
-			return getQuickMeals(nextRecipes);
-		}
-
+		if (featuredMode === "quick-meals") return getQuickMeals(nextRecipes);
 		if (featuredMode === "most-reviewed") {
 			return nextRecipes
 				.sort((a, b) => Number(b.num_ratings || 0) - Number(a.num_ratings || 0))
@@ -103,38 +95,24 @@ const HomeMain = () => {
 
 	const handleClickFavorite = async (recipeId) => {
 		if (!isAuthenticated) {
-			beginAuthIntent({
-				returnTo: currentPath,
-				action: "saveRecipe",
-				recipeId,
-			});
-			navigate("/account?signup=false", {
-				state: { from: currentPath },
-			});
+			beginAuthIntent({ returnTo: currentPath, action: "saveRecipe", recipeId });
+			navigate("/account?signup=false", { state: { from: currentPath } });
 			return;
 		}
-
 		if (pendingFavoriteIds.includes(recipeId)) return;
 
 		const isFavorite = wishlist.some(
-			(recipe) =>
-				Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) ===
-				Number(recipeId)
+			(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) === Number(recipeId)
 		);
-
 		setPendingFavoriteIds((currentIds) => [...currentIds, recipeId]);
 
 		try {
 			if (isFavorite) {
-				const response = await axios.delete(
-					apiRoutes.userWishlistItem(recipeId)
-				);
+				const response = await axios.delete(apiRoutes.userWishlistItem(recipeId));
 				if (response.status === 200) {
 					setWishlist((currentWishlist) =>
 						currentWishlist.filter(
-							(recipe) =>
-								Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) !==
-								Number(recipeId)
+							(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) !== Number(recipeId)
 						)
 					);
 					showToast({ title: "Removed from Saved" });
@@ -147,10 +125,7 @@ const HomeMain = () => {
 				serializeWishlistPayload(recipeId)
 			);
 			if (isWishlistAddSuccess(response.status)) {
-				setWishlist((currentWishlist) => [
-					...currentWishlist,
-					{ recipe_id: recipeId },
-				]);
+				setWishlist((currentWishlist) => [...currentWishlist, { recipe_id: recipeId }]);
 				showToast({ title: "Saved recipe" });
 			}
 		} catch (err) {
@@ -166,6 +141,7 @@ const HomeMain = () => {
 			);
 		}
 	};
+
 	useEffect(() => {
 		const intent = location.state?.pendingAuthIntent;
 		if (
@@ -174,19 +150,16 @@ const HomeMain = () => {
 			!isMatchingSaveRecipeIntent(intent, currentPath, intent?.recipeId) ||
 			!recipes.some((recipe) => Number(recipe.recipe_id) === Number(intent.recipeId)) ||
 			processedAuthIntent.current === intent
-		) {
-			return;
-		}
+		) return;
 
 		processedAuthIntent.current = intent;
 		navigate(currentPath, { replace: true, state: null });
 		const isFavorite = wishlist.some(
-			(recipe) =>
-				Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) ===
-				Number(intent.recipeId)
+			(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) === Number(intent.recipeId)
 		);
 		if (!isFavorite) handleClickFavorite(Number(intent.recipeId));
-	}, [currentPath, handleClickFavorite, isAuthenticated, isWishlistLoaded, location.state, navigate, wishlist]);
+	}, [currentPath, handleClickFavorite, isAuthenticated, isWishlistLoaded, location.state, navigate, recipes, wishlist]);
+
 	useEffect(() => {
 		const fetchCategories = async () => {
 			try {
@@ -195,14 +168,12 @@ const HomeMain = () => {
 				setCategories(getArrayPayload(response.data, "categories"));
 			} catch (err) {
 				console.error(err);
-				setCategoryError(
-					err.response?.data?.message ||
-						"Unable to load recipe categories."
-				);
+				setCategoryError(err.response?.data?.message || "Unable to load recipe categories.");
 			}
 		};
 		fetchCategories();
 	}, [userId]);
+
 	useEffect(() => {
 		const fetchWishlists = async () => {
 			setWishlistLoadedKey(null);
@@ -214,9 +185,7 @@ const HomeMain = () => {
 
 			try {
 				const response = await axios.get(apiRoutes.userWishlist);
-				if (response.status === 200) {
-					setWishlist(getArrayPayload(response.data, "wishlist"));
-				}
+				if (response.status === 200) setWishlist(getArrayPayload(response.data, "wishlist"));
 			} catch (err) {
 				console.error(err);
 			} finally {
@@ -225,19 +194,13 @@ const HomeMain = () => {
 		};
 		fetchWishlists();
 	}, [isAuthenticated, userId]);
+
 	return (
-		<div className="home__main">
+		<div className="mx-auto w-full max-w-[112rem] space-y-12 px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:space-y-16 lg:px-10 lg:pb-24">
 			{isLoadingRecipes ? (
-				<PageState
-					title="Loading recipes"
-					message="Fetching recipes for search and featured cards."
-				/>
+				<PageState title="Loading recipes" message="Fetching recipes for search and featured cards." />
 			) : recipesError ? (
-				<PageState
-					type="error"
-					title="Recipes could not load"
-					message={recipesError}
-				/>
+				<PageState type="error" title="Recipes could not load" message={recipesError} />
 			) : (
 				<>
 					<HomeSearchBar
@@ -247,11 +210,7 @@ const HomeMain = () => {
 						searchError={searchQuery.error}
 					/>
 					{categoryError ? (
-						<PageState
-							type="error"
-							title="Categories could not load"
-							message={categoryError}
-						/>
+						<PageState type="error" title="Categories could not load" message={categoryError} />
 					) : (
 						<CategorySection
 							categories={categories}
