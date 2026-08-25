@@ -1,140 +1,19 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import Button from "@/shared/ui/Button";
+import Input from "@/shared/ui/Input";
 import type { RecipeSummary } from "@/shared/api/contracts";
-import {
-	MEAL_SLOTS,
-	type AddMealPlanItemInput,
-	type MealPlanItem,
-	type MealSlot,
-} from "../api/planningApi";
+import { MEAL_SLOTS, type AddMealPlanItemInput, type MealPlanItem, type MealSlot } from "../api/planningApi";
 import RecipePicker from "./RecipePicker";
 
-type AddMealDialogProps = {
-	open: boolean;
-	initialDate: string;
-	initialSlot: MealSlot;
-	item?: MealPlanItem | null;
-	onClose: () => void;
-	onSubmit: (input: AddMealPlanItemInput, itemId?: number) => void;
-	isSubmitting: boolean;
-	error?: string | null;
-};
-
-type SelectedRecipe = Pick<RecipeSummary, "recipe_id" | "recipe_name">;
-
-const slotLabel = (slot: MealSlot) => slot[0].toUpperCase() + slot.slice(1);
-
-const AddMealDialog = ({
-	open,
-	initialDate,
-	initialSlot,
-	item,
-	onClose,
-	onSubmit,
-	isSubmitting,
-	error,
-}: AddMealDialogProps) => {
-	const [date, setDate] = useState(initialDate);
-	const [slot, setSlot] = useState<MealSlot>(initialSlot);
-	const [servings, setServings] = useState(item?.servings ?? 4);
-	const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe | null>(null);
-	const [validationError, setValidationError] = useState<string | null>(null);
-
-	useEffect(() => {
-		if (!open) return;
-		setDate(item?.planned_date.slice(0, 10) ?? initialDate);
-		setSlot(item?.slot ?? initialSlot);
-		setServings(item?.servings ?? 4);
-		setSelectedRecipe(item ? { recipe_id: item.recipe_id, recipe_name: item.recipe_name } : null);
-		setValidationError(null);
-	}, [initialDate, initialSlot, item, open]);
-
-	useEffect(() => {
-		if (!open) return;
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape" && !isSubmitting) onClose();
-		};
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [isSubmitting, onClose, open]);
-
+type AddMealDialogProps = { open: boolean; initialDate: string; initialSlot: MealSlot; item?: MealPlanItem | null; onClose: () => void; onSubmit: (input: AddMealPlanItemInput, itemId?: number) => void; isSubmitting: boolean; error?: string | null };
+type SelectedRecipe = Pick<RecipeSummary, "recipe_id" | "recipe_name">; const slotLabel = (slot: MealSlot) => slot[0].toUpperCase() + slot.slice(1);
+const AddMealDialog = ({ open, initialDate, initialSlot, item, onClose, onSubmit, isSubmitting, error }: AddMealDialogProps) => {
+	const [date, setDate] = useState(initialDate); const [slot, setSlot] = useState<MealSlot>(initialSlot); const [servings, setServings] = useState(item?.servings ?? 4); const [selectedRecipe, setSelectedRecipe] = useState<SelectedRecipe | null>(null); const [validationError, setValidationError] = useState<string | null>(null);
+	useEffect(() => { if (!open) return; setDate(item?.planned_date.slice(0, 10) ?? initialDate); setSlot(item?.slot ?? initialSlot); setServings(item?.servings ?? 4); setSelectedRecipe(item ? { recipe_id: item.recipe_id, recipe_name: item.recipe_name } : null); setValidationError(null); }, [initialDate, initialSlot, item, open]);
+	useEffect(() => { if (!open) return; const previousOverflow = document.body.style.overflow; document.body.style.overflow = "hidden"; const handleKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !isSubmitting) onClose(); }; window.addEventListener("keydown", handleKeyDown); return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", handleKeyDown); }; }, [isSubmitting, onClose, open]);
 	if (!open) return null;
-
-	const handleSubmit = () => {
-		if (!selectedRecipe) {
-			setValidationError("Choose a recipe first.");
-			return;
-		}
-		if (!date) {
-			setValidationError("Choose a date for this meal.");
-			return;
-		}
-		if (!Number.isInteger(servings) || servings < 1 || servings > 24) {
-			setValidationError("Servings must be between 1 and 24.");
-			return;
-		}
-
-		onSubmit({ recipeId: selectedRecipe.recipe_id, date, slot, servings }, item?.item_id);
-	};
-
-	return (
-		<div className="planning-dialog-backdrop" role="presentation">
-			<section
-				className="planning-dialog"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="planning-dialog-title"
-			>
-				<header className="planning-dialog__header">
-					<div>
-						<p className="planning-page__eyebrow">Meal plan</p>
-						<h2 id="planning-dialog-title">{item ? "Change planned meal" : "Add a meal to your plan"}</h2>
-					</div>
-					<button className="planning-dialog__close" type="button" onClick={onClose} disabled={isSubmitting}>
-						<span aria-hidden="true">×</span>
-						<span className="sr-only">Close meal dialog</span>
-					</button>
-				</header>
-
-				<div className="planning-dialog__fields">
-					<label>
-						Date
-						<input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
-					</label>
-					<label>
-						Meal
-						<select value={slot} onChange={(event) => setSlot(event.target.value as MealSlot)}>
-							{MEAL_SLOTS.map((mealSlot) => <option key={mealSlot} value={mealSlot}>{slotLabel(mealSlot)}</option>)}
-						</select>
-					</label>
-					<label>
-						Servings
-						<input
-							type="number"
-							inputMode="numeric"
-							min="1"
-							max="24"
-							value={servings}
-							onChange={(event) => setServings(Number(event.target.value))}
-						/>
-					</label>
-				</div>
-
-				<RecipePicker
-					selectedRecipeId={selectedRecipe?.recipe_id ?? null}
-					onSelect={setSelectedRecipe}
-					autoFocus
-				/>
-
-				{(validationError || error) && <p className="planning-dialog__error" role="alert">{validationError || error}</p>}
-				<footer className="planning-dialog__footer">
-					<button type="button" className="planning-dialog__secondary" onClick={onClose} disabled={isSubmitting}>Cancel</button>
-					<button type="button" className="planning-dialog__primary" onClick={handleSubmit} disabled={isSubmitting} aria-busy={isSubmitting}>
-						{isSubmitting ? "Saving…" : item ? "Save changes" : "Add to plan"}
-					</button>
-				</footer>
-			</section>
-		</div>
-	);
+	const handleSubmit = () => { if (!selectedRecipe) return setValidationError("Choose a recipe first."); if (!date) return setValidationError("Choose a date for this meal."); if (!Number.isInteger(servings) || servings < 1 || servings > 24) return setValidationError("Servings must be between 1 and 24."); onSubmit({ recipeId: selectedRecipe.recipe_id, date, slot, servings }, item?.item_id); };
+	return <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 p-0 sm:place-items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }}><section className="max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border border-border bg-card p-5 shadow-2xl sm:max-w-2xl sm:rounded-3xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="planning-dialog-title"><header className="mb-5 flex items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Meal plan</p><h2 id="planning-dialog-title" className="mt-1 text-2xl font-black">{item ? "Change planned meal" : "Add a meal to your plan"}</h2></div><Button variant="ghost" size="icon" onClick={onClose} disabled={isSubmitting} aria-label="Close meal dialog"><X className="size-5" /></Button></header><div className="grid gap-3 sm:grid-cols-3">{[["Date", "date"], ["Servings", "servings"]].map(([label, key]) => <label key={key} className="grid gap-2 text-sm font-bold">{label}<Input type={key === "date" ? "date" : "number"} inputMode={key === "servings" ? "numeric" : undefined} min={key === "servings" ? 1 : undefined} max={key === "servings" ? 24 : undefined} value={key === "date" ? date : servings} onChange={(event) => key === "date" ? setDate(event.target.value) : setServings(Number(event.target.value))} /></label>)}<label className="grid gap-2 text-sm font-bold">Meal<select className="min-h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" value={slot} onChange={(event) => setSlot(event.target.value as MealSlot)}>{MEAL_SLOTS.map((mealSlot) => <option key={mealSlot} value={mealSlot}>{slotLabel(mealSlot)}</option>)}</select></label></div><div className="my-6 border-t border-border pt-6"><RecipePicker selectedRecipeId={selectedRecipe?.recipe_id ?? null} onSelect={setSelectedRecipe} autoFocus /></div>{(validationError || error) && <p className="mb-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive" role="alert">{validationError || error}</p>}<footer className="grid grid-cols-2 gap-3 border-t border-border pt-5"><Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button><Button onClick={handleSubmit} disabled={isSubmitting} aria-busy={isSubmitting}>{isSubmitting ? "Saving…" : item ? "Save changes" : "Add to plan"}</Button></footer></section></div>;
 };
-
 export default AddMealDialog;

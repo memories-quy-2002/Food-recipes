@@ -1,168 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
+import Button from "@/shared/ui/Button";
+import Input from "@/shared/ui/Input";
 import { MEAL_SLOTS, type MealSlot } from "../api/planningApi";
-import {
-	useAddMealPlanItemMutation,
-	useCreateMealPlanMutation,
-	useMealPlanForWeekQuery,
-} from "../api/planningQueries";
+import { useAddMealPlanItemMutation, useCreateMealPlanMutation, useMealPlanForWeekQuery } from "../api/planningQueries";
 import { getWeekRange, toIsoDate } from "../api/planningDates";
 
-type RecipeForPlan = {
-	recipe_id: number;
-	recipe_name: string;
-};
-
-type AddToPlanDialogProps = {
-	open: boolean;
-	recipe?: RecipeForPlan | null;
-	onClose: () => void;
-	onAdded: () => void;
-};
-
-const slotLabel = (slot: MealSlot) => slot[0].toUpperCase() + slot.slice(1);
-
+type RecipeForPlan = { recipe_id: number; recipe_name: string }; type AddToPlanDialogProps = { open: boolean; recipe?: RecipeForPlan | null; onClose: () => void; onAdded: () => void }; const slotLabel = (slot: MealSlot) => slot[0].toUpperCase() + slot.slice(1);
 const AddToPlanDialog = ({ open, recipe, onClose, onAdded }: AddToPlanDialogProps) => {
-	const [date, setDate] = useState(() => toIsoDate(new Date()));
-	const [slot, setSlot] = useState<MealSlot>("dinner");
-	const [servings, setServings] = useState(4);
-	const [validationError, setValidationError] = useState<string | null>(null);
-	const [actionError, setActionError] = useState<string | null>(null);
-	const selectedWeek = useMemo(() => {
-		const parsedDate = new Date(`${date}T00:00:00`);
-		return Number.isNaN(parsedDate.getTime()) ? getWeekRange(new Date()) : getWeekRange(parsedDate);
-	}, [date]);
-	const weekQuery = useMealPlanForWeekQuery(selectedWeek, { enabled: open, selectedDate: date });
-	const createPlanMutation = useCreateMealPlanMutation();
-	const addMealMutation = useAddMealPlanItemMutation();
-	const isSubmitting = createPlanMutation.isPending || addMealMutation.isPending;
-	const isCheckingPlan = weekQuery.isPending || weekQuery.isFetching;
-
-	useEffect(() => {
-		if (!open) return;
-		setDate(toIsoDate(new Date()));
-		setSlot("dinner");
-		setServings(4);
-		setValidationError(null);
-		setActionError(null);
-	}, [open]);
-
-	useEffect(() => {
-		if (!open) return;
-		const handleKeyDown = (event: KeyboardEvent) => {
-			if (event.key === "Escape" && !isSubmitting) onClose();
-		};
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [isSubmitting, onClose, open]);
-
+	const [date, setDate] = useState(() => toIsoDate(new Date())); const [slot, setSlot] = useState<MealSlot>("dinner"); const [servings, setServings] = useState(4); const [validationError, setValidationError] = useState<string | null>(null); const [actionError, setActionError] = useState<string | null>(null);
+	const selectedWeek = useMemo(() => { const parsedDate = new Date(`${date}T00:00:00`); return Number.isNaN(parsedDate.getTime()) ? getWeekRange(new Date()) : getWeekRange(parsedDate); }, [date]);
+	const weekQuery = useMealPlanForWeekQuery(selectedWeek, { enabled: open, selectedDate: date }); const createPlanMutation = useCreateMealPlanMutation(); const addMealMutation = useAddMealPlanItemMutation(); const isSubmitting = createPlanMutation.isPending || addMealMutation.isPending; const isCheckingPlan = weekQuery.isPending || weekQuery.isFetching;
+	useEffect(() => { if (!open) return; setDate(toIsoDate(new Date())); setSlot("dinner"); setServings(4); setValidationError(null); setActionError(null); }, [open]);
+	useEffect(() => { if (!open) return; const previousOverflow = document.body.style.overflow; document.body.style.overflow = "hidden"; const handleKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !isSubmitting) onClose(); }; window.addEventListener("keydown", handleKeyDown); return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", handleKeyDown); }; }, [isSubmitting, onClose, open]);
 	if (!open) return null;
-
-	const handleAddToPlan = () => {
-		if (!recipe) {
-			setValidationError("Choose a recipe first.");
-			return;
-		}
-		if (!date) {
-			setValidationError("Choose a date for this meal.");
-			return;
-		}
-		if (!Number.isInteger(servings) || servings < 1 || servings > 24) {
-			setValidationError("Servings must be between 1 and 24.");
-			return;
-		}
-		if (isCheckingPlan) return;
-
-		setValidationError(null);
-		setActionError(null);
-		const input = { recipeId: recipe.recipe_id, date, slot, servings };
-		const addToPlan = (planId: number) => {
-			addMealMutation.mutate(
-				{ planId, input },
-				{
-					onSuccess: onAdded,
-					onError: () => setActionError("We could not add this recipe to your plan. Try again."),
-				},
-			);
-		};
-
-		if (weekQuery.data?.plan) {
-			addToPlan(weekQuery.data.plan.plan_id);
-			return;
-		}
-
-		createPlanMutation.mutate(
-			{ name: "This week", from: selectedWeek.from, to: selectedWeek.to },
-			{
-				onSuccess: (response) => {
-					if (!response?.plan?.plan_id) {
-						setActionError("Your plan was created, but the recipe could not be added. Try again.");
-						return;
-					}
-					addToPlan(response.plan.plan_id);
-				},
-				onError: () => setActionError("We could not create this plan. Try again."),
-			},
-		);
-	};
-
-	const queryError = weekQuery.isError
-		? "We could not load plan details. Try again before adding this recipe."
-		: null;
-	const errorMessage = validationError || actionError || queryError;
-
-	return (
-		<div className="planning-dialog-backdrop" role="presentation">
-			<section className="planning-dialog planning-dialog--recipe" role="dialog" aria-modal="true" aria-labelledby="add-to-plan-dialog-title">
-				<header className="planning-dialog__header">
-					<div>
-						<p className="planning-page__eyebrow">Meal plan</p>
-						<h2 id="add-to-plan-dialog-title">Add {recipe?.recipe_name || "recipe"} to your plan</h2>
-					</div>
-					<button className="planning-dialog__close" type="button" onClick={onClose} disabled={isSubmitting} aria-label="Close add to plan dialog">
-						<span aria-hidden="true">×</span>
-					</button>
-				</header>
-
-				<p className="planning-dialog__recipe-context">
-					Choose when you want to cook it. You can change the meal later from Planning.
-				</p>
-
-				<div className="planning-dialog__fields">
-					<label htmlFor="add-to-plan-date">
-						Date
-						<input id="add-to-plan-date" type="date" value={date} onChange={(event) => setDate(event.target.value)} disabled={isSubmitting} autoFocus />
-					</label>
-					<label htmlFor="add-to-plan-meal">
-						Meal
-						<select id="add-to-plan-meal" value={slot} onChange={(event) => setSlot(event.target.value as MealSlot)} disabled={isSubmitting}>
-							{MEAL_SLOTS.map((mealSlot) => <option key={mealSlot} value={mealSlot}>{slotLabel(mealSlot)}</option>)}
-						</select>
-					</label>
-					<label htmlFor="add-to-plan-servings">
-						Servings
-						<input id="add-to-plan-servings" type="number" inputMode="numeric" min="1" max="24" value={servings} onChange={(event) => setServings(Number(event.target.value))} disabled={isSubmitting} />
-					</label>
-				</div>
-
-				{isCheckingPlan && <p className="planning-dialog__hint" role="status">Checking your plan...</p>}
-				{queryError && (
-					<div className="planning-dialog__error-state" role="alert">
-						<p>{queryError}</p>
-						<button type="button" className="planning-dialog__secondary" onClick={() => weekQuery.refetch()}>Try again</button>
-					</div>
-				)}
-				{!isCheckingPlan && !weekQuery.isError && !weekQuery.data?.plan && <p className="planning-dialog__hint">No plan covers this week yet. We will create one when you add this recipe.</p>}
-				{errorMessage && !queryError && <p className="planning-dialog__error" role="alert">{errorMessage}</p>}
-
-				<footer className="planning-dialog__footer">
-					<button type="button" className="planning-dialog__secondary" onClick={onClose} disabled={isSubmitting}>Cancel</button>
-					<button type="button" className="planning-dialog__primary" onClick={handleAddToPlan} disabled={isSubmitting || isCheckingPlan || weekQuery.isError} aria-busy={isSubmitting}>
-						{isSubmitting ? "Adding to plan..." : "Add to plan"}
-					</button>
-				</footer>
-			</section>
-		</div>
-	);
+	const handleAddToPlan = () => { if (!recipe) return setValidationError("Choose a recipe first."); if (!date) return setValidationError("Choose a date for this meal."); if (!Number.isInteger(servings) || servings < 1 || servings > 24) return setValidationError("Servings must be between 1 and 24."); if (isCheckingPlan) return; setValidationError(null); setActionError(null); const input = { recipeId: recipe.recipe_id, date, slot, servings }; const addToPlan = (planId: number) => addMealMutation.mutate({ planId, input }, { onSuccess: onAdded, onError: () => setActionError("We could not add this recipe to your plan. Try again.") }); if (weekQuery.data?.plan) return addToPlan(weekQuery.data.plan.plan_id); createPlanMutation.mutate({ name: "This week", from: selectedWeek.from, to: selectedWeek.to }, { onSuccess: (response) => response?.plan?.plan_id ? addToPlan(response.plan.plan_id) : setActionError("Your plan was created, but the recipe could not be added. Try again."), onError: () => setActionError("We could not create this plan. Try again.") }); };
+	const queryError = weekQuery.isError ? "We could not load plan details. Try again before adding this recipe." : null; const errorMessage = validationError || actionError || queryError;
+	return <div className="fixed inset-0 z-50 grid place-items-end bg-black/45 sm:place-items-center sm:p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !isSubmitting) onClose(); }}><section className="max-h-[92dvh] w-full overflow-y-auto rounded-t-3xl border border-border bg-card p-5 shadow-2xl sm:max-w-xl sm:rounded-3xl sm:p-6" role="dialog" aria-modal="true" aria-labelledby="add-to-plan-dialog-title"><header className="flex items-start justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Meal plan</p><h2 id="add-to-plan-dialog-title" className="mt-1 text-2xl font-black">Add {recipe?.recipe_name || "recipe"} to your plan</h2></div><Button variant="ghost" size="icon" onClick={onClose} disabled={isSubmitting} aria-label="Close add to plan dialog"><X className="size-5" /></Button></header><p className="mt-3 text-sm leading-6 text-muted-foreground">Choose when you want to cook it. You can change the meal later from Planning.</p><div className="mt-5 grid gap-3 sm:grid-cols-3"><label className="grid gap-2 text-sm font-bold">Date<Input type="date" value={date} onChange={(event) => setDate(event.target.value)} disabled={isSubmitting} autoFocus /></label><label className="grid gap-2 text-sm font-bold">Meal<select className="min-h-11 rounded-xl border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" value={slot} onChange={(event) => setSlot(event.target.value as MealSlot)} disabled={isSubmitting}>{MEAL_SLOTS.map((mealSlot) => <option key={mealSlot} value={mealSlot}>{slotLabel(mealSlot)}</option>)}</select></label><label className="grid gap-2 text-sm font-bold">Servings<Input type="number" inputMode="numeric" min="1" max="24" value={servings} onChange={(event) => setServings(Number(event.target.value))} disabled={isSubmitting} /></label></div>{isCheckingPlan && <p className="mt-4 text-sm text-muted-foreground" role="status">Checking your plan…</p>}{queryError && <div className="mt-4 rounded-xl bg-destructive/10 p-3" role="alert"><p className="text-sm font-semibold text-destructive">{queryError}</p><Button className="mt-2" variant="outline" size="sm" onClick={() => weekQuery.refetch()}>Try again</Button></div>}{!isCheckingPlan && !weekQuery.isError && !weekQuery.data?.plan && <p className="mt-4 rounded-xl bg-secondary p-3 text-sm text-secondary-foreground">No plan covers this week yet. We will create one when you add this recipe.</p>}{errorMessage && !queryError && <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive" role="alert">{errorMessage}</p>}<footer className="mt-6 grid grid-cols-2 gap-3 border-t border-border pt-5"><Button variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button><Button onClick={handleAddToPlan} disabled={isSubmitting || isCheckingPlan || weekQuery.isError} aria-busy={isSubmitting}>{isSubmitting ? "Adding…" : "Add to plan"}</Button></footer></section></div>;
 };
-
 export default AddToPlanDialog;
