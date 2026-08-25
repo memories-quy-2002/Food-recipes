@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
@@ -49,6 +49,13 @@ describe("RecipeEditor", () => {
 		cleanup();
 		localStorage.clear();
 		vi.clearAllMocks();
+		axios.get.mockImplementation((route) => {
+			if (route === "/categories") return Promise.resolve({ data: { categories: [{ id: 1, name: "Dinner" }] } });
+			if (route === "/meals") return Promise.resolve({ data: { meals: [{ id: 2, name: "Main course" }] } });
+			return Promise.resolve({ data: { recipe: { ...fixtureRecipe, status: "published" } } });
+		});
+		axios.patch.mockResolvedValue({ data: {} });
+		axios.put.mockResolvedValue({ data: {} });
 	});
 
 	it("renders create mode without an edit identifier", () => {
@@ -89,5 +96,54 @@ describe("RecipeEditor", () => {
 		expect(axios.post).not.toHaveBeenCalled();
 		expect(axios.patch).not.toHaveBeenCalled();
 		expect(axios.put).not.toHaveBeenCalled();
+	});
+
+	it("uses lifecycle-aware edit actions", async () => {
+		const { rerender } = renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" } });
+
+		expect(await screen.findByRole("button", { name: "Save changes" })).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
+
+		rerender(
+			<MemoryRouter>
+				<AuthContext.Provider value={{ auth: { current: { userId: "editor-user" } } }}>
+					<RecipeContext.Provider value={{ refreshRecipes: vi.fn() }}>
+						<RecipeEditor mode="edit" recipeId={42} initialRecipe={{ ...fixtureRecipe, status: "draft" }} onSaved={vi.fn()} />
+					</RecipeContext.Provider>
+				</AuthContext.Provider>
+			</MemoryRouter>
+		);
+
+		expect(await screen.findByRole("button", { name: "Save draft" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Publish" })).toBeInTheDocument();
+	});
+
+	it("keeps field validation in front of an edit save", async () => {
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" } });
+
+		fireEvent.change(await screen.findByLabelText(/recipe name/i), { target: { value: "" } });
+		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+		await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Recipe name is required."));
+		expect(axios.patch).not.toHaveBeenCalled();
+	});
+
+	it("keeps the form available for retry and identifies a failed metadata section", async () => {
+		const onSaved = vi.fn();
+		axios.put
+			.mockResolvedValueOnce({ data: {} })
+			.mockRejectedValueOnce(new Error("nutrition unavailable"))
+			.mockResolvedValue({ data: {} });
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved });
+
+		const name = await screen.findByLabelText(/recipe name/i);
+		fireEvent.change(name, { target: { value: "Better tomato pasta" } });
+		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+		await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent(/Nutrition could not be saved: nutrition unavailable/i));
+		expect(name).toHaveValue("Better tomato pasta");
+
+		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+		await waitFor(() => expect(onSaved).toHaveBeenCalled());
 	});
 });

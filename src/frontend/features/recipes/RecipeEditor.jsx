@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { serializeCreateRecipeDraftPayload } from "@/shared/api/mutations";
+import { recipeQueryKeys } from "@/features/recipes/api/useRecipeQueries";
+import { queryClient } from "@/shared/api/queryClient";
 import { getArrayPayload } from "@/shared/api/payload";
 import {
 	isSupabaseStorageConfigured,
@@ -23,6 +25,7 @@ import {
 	saveRecipeDraft,
 } from "./recipeDraftStorage";
 import { createRecipeFormSchema } from "./recipeForm.schema";
+import { RecipeEditSaveError, saveRecipeEdits } from "./recipeEditorApi";
 
 const DIETARY_OPTIONS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "low-carb"];
 const ALLERGEN_OPTIONS = ["wheat", "peanuts", "tree nuts", "milk", "eggs", "soy", "fish", "shellfish"];
@@ -67,6 +70,18 @@ const toDuration = (value, fallback) => {
 const createInitialEditorState = ({ recipeId, initialRecipe }) => {
 	const initialState = createInitialRecipeState();
 	if (!initialRecipe) return initialState;
+	const structuredSource = initialRecipe.structuredIngredients ?? initialRecipe.structured_ingredients;
+	const structuredIngredients = Array.isArray(structuredSource)
+		? structuredSource
+		: Array.isArray(initialRecipe.recipeIngredients ?? initialRecipe.ingredients)
+			? (initialRecipe.recipeIngredients ?? initialRecipe.ingredients).map((name, position) => ({
+				position,
+				quantityText: "",
+				unit: "",
+				name: String(name || ""),
+				preparation: "",
+			}))
+			: initialState.structuredIngredients;
 
 	return {
 		...initialState,
@@ -78,7 +93,7 @@ const createInitialEditorState = ({ recipeId, initialRecipe }) => {
 		recipeInstructions: initialRecipe.recipeInstructions ?? initialRecipe.instructions ?? initialState.recipeInstructions,
 		recipePrepTime: toDuration(initialRecipe.recipePrepTime ?? initialRecipe.prep_time_minutes ?? initialRecipe.prepTimeMinutes, initialState.recipePrepTime.number),
 		recipeCookTime: toDuration(initialRecipe.recipeCookTime ?? initialRecipe.cook_time_minutes ?? initialRecipe.cookTimeMinutes, initialState.recipeCookTime.number),
-		structuredIngredients: initialRecipe.structuredIngredients ?? initialRecipe.structured_ingredients ?? initialState.structuredIngredients,
+		structuredIngredients,
 		nutrition: { ...initialState.nutrition, ...(initialRecipe.nutrition || {}) },
 		dietaryTags: initialRecipe.dietaryTags ?? initialRecipe.dietary_tags ?? initialState.dietaryTags,
 		allergenTags: initialRecipe.allergenTags ?? initialRecipe.allergen_tags ?? initialState.allergenTags,
@@ -161,12 +176,28 @@ const normalizeNutritionPayload = (nutrition = {}) => Object.fromEntries(
 
 const normalizeAllergenTag = (tag) => String(tag || "").trim().toLowerCase() === "tree nuts" ? "tree_nuts" : String(tag || "").trim().toLowerCase();
 
+const getRecipeImageUrl = (recipe) => recipe?.imageUrl ?? recipe?.image_url ?? null;
+
+const getEditErrorMessage = (error) => error?.response?.data?.message || error?.message || "Unable to save this recipe. Please try again.";
+
+const getEditErrorSection = (error) => {
+	if (!(error instanceof RecipeEditSaveError)) return "";
+	return {
+		base: "Recipe details",
+		ingredients: "Structured ingredients",
+		nutrition: "Nutrition",
+		tags: "Dietary preferences",
+		refresh: "Recipe refresh",
+	}[error.section];
+};
+
 const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) => {
 	const { auth } = useContext(AuthContext);
 	const { userId } = auth.current;
 	const { refreshRecipes } = useContext(RecipeContext);
 	const { showToast } = useToast();
 	const isCreateMode = mode === "create";
+	const recipeStatus = initialRecipe?.status || "published";
 	const [preview, setPreview] = useState(null);
 	const [disabled, setDisabled] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,8 +212,8 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 	const [draftStatus, setDraftStatus] = useState("idle");
 	const storageConfigured = isSupabaseStorageConfigured();
 	const recipeSchema = useMemo(
-		() => createRecipeFormSchema({ categories, meals, isPublishing: true }),
-		[categories, meals]
+		() => createRecipeFormSchema({ categories, meals, isPublishing: isCreateMode }),
+		[categories, isCreateMode, meals]
 	);
 	const {
 		register,
@@ -500,6 +531,86 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		setSubmitError(messages.join(" ") || "Please review the recipe form.");
 	};
 
+	const buildEditPayload = (values, imageUrl) => {
+		const base = serializeCreateRecipeDraftPayload({
+			recipe: values,
+			categories,
+			meals,
+			imageUrl,
+		});
+
+		return {
+			base: {
+				...base,
+				description: values.recipeDescription.trim(),
+				ingredients: (values.recipeIngredients || []).map((ingredient) => ingredient.trim()).filter(Boolean),
+				instructions: (values.recipeInstructions || []).map((instruction) => instruction.trim()).filter(Boolean),
+			},
+			ingredients: {
+				ingredients: normalizeStructuredIngredients(values.structuredIngredients),
+			},
+			nutrition: normalizeNutritionPayload(values.nutrition),
+			tags: {
+				dietaryTags: values.dietaryTags || [],
+				allergenTags: (values.allergenTags || []).map(normalizeAllergenTag),
+			},
+		};
+	};
+
+	const invalidateEditedRecipe = async (savedRecipeId) => {
+		await Promise.all([
+			refreshRecipes(),
+			queryClient.invalidateQueries({ queryKey: recipeQueryKeys.detail(savedRecipeId) }),
+			queryClient.invalidateQueries({ queryKey: ["users", "me", "recipes"] }),
+		]);
+	};
+
+	const saveEditedRecipe = async (values) => {
+		const resolvedRecipeId = Number(recipeId ?? initialRecipe?.recipe_id);
+		if (!Number.isSafeInteger(resolvedRecipeId) || resolvedRecipeId < 1) {
+			throw new Error("This recipe cannot be saved because its ID is invalid.");
+		}
+
+		let imageUrl = getRecipeImageUrl(initialRecipe);
+		if (values.recipeImage) {
+			imageUrl = (await uploadRecipeImage({ file: values.recipeImage, recipeName: values.recipeName.trim() })).url;
+			setUploadStatus("saving");
+		}
+		const savedRecipe = await saveRecipeEdits(resolvedRecipeId, buildEditPayload(values, imageUrl));
+		await invalidateEditedRecipe(resolvedRecipeId);
+		setDisabled(true);
+		return savedRecipe;
+	};
+
+	const handleSaveEditedRecipe = async (values, { publish = false } = {}) => {
+		try {
+			setIsSubmitting(true);
+			setSubmitError("");
+			setUploadStatus(values.recipeImage ? "uploading" : "saving");
+			const savedRecipe = await saveEditedRecipe(values);
+			const publishResponse = publish
+				? await axios.post(apiRoutes.recipePublish(savedRecipe.recipe_id ?? recipeId))
+				: null;
+			const recipe = publishResponse?.data?.recipe || savedRecipe;
+			if (publish) await invalidateEditedRecipe(recipe.recipe_id ?? recipeId);
+			showToast({ title: publish ? "Recipe published successfully" : recipeStatus === "draft" ? "Draft saved" : "Recipe changes saved" });
+			onSaved?.({ recipe, mode });
+		} catch (error) {
+			console.error("Unable to save recipe edits:", error);
+			const section = getEditErrorSection(error);
+			const message = getEditErrorMessage(error);
+			setSubmitError(section ? `${section} could not be saved: ${message}` : message);
+			showToast({ title: publish ? "Couldnâ€™t publish recipe" : "Couldnâ€™t save recipe", message, type: "error" });
+		} finally {
+			setUploadStatus("idle");
+			setIsSubmitting(false);
+		}
+	};
+
+	const handleSaveEditedDraft = () => handleSaveEditedRecipe(getValues());
+
+	const handleEditSubmit = (values) => handleSaveEditedRecipe(values, { publish: recipeStatus === "draft" });
+
 	const handleSubmit = async (values) => {
 		if (!isCreateMode) return;
 		const cleanedRecipe = {
@@ -610,7 +721,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 								className="mb-4 rounded-2xl border border-destructive/25 bg-destructive/10 p-4 text-destructive"
 								role="alert"
 							>
-								<strong>Recipe was not published</strong>
+							<strong>{isCreateMode ? "Recipe was not published" : "Recipe could not be saved"}</strong>
 								<p>{submitError}</p>
 							</div>
 						)}
@@ -637,7 +748,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 								</p>
 							</div>
 						)}
-						<Form className="space-y-1" onSubmit={handleRecipeSubmit(handleSubmit, handleInvalidSubmit)}>
+						<Form noValidate className="space-y-1" onSubmit={handleRecipeSubmit(isCreateMode ? handleSubmit : handleEditSubmit, handleInvalidSubmit)}>
 							<Row className="mb-8 grid gap-6 md:grid-cols-2">
 								<Col className="w-full">
 									<Form.Group
@@ -941,7 +1052,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 									className="w-full sm:w-auto"
 									onClick={handleReset}
 								>
-									Discard draft
+									{isCreateMode ? "Discard draft" : "Discard changes"}
 								</Button>
 				{isCreateMode && <>
 					<Button
@@ -961,6 +1072,31 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 						{isSubmitting ? "Publishing…" : "Publish"}
 					</Button>
 				</>}
+				{!isCreateMode && recipeStatus === "draft" && <>
+					<Button
+						type="button"
+						variant="secondary"
+						className="w-full sm:w-auto"
+						onClick={handleSaveEditedDraft}
+						disabled={isSubmitting}
+					>
+						{isSubmitting ? "Savingâ€¦" : "Save draft"}
+					</Button>
+					<Button
+						type="submit"
+						className="w-full sm:justify-self-end"
+						disabled={isSubmitting}
+					>
+						{isSubmitting ? "Publishingâ€¦" : "Publish"}
+					</Button>
+				</>}
+				{!isCreateMode && recipeStatus === "published" && <Button
+					type="submit"
+					className="w-full sm:justify-self-end"
+					disabled={disabled || isSubmitting}
+				>
+					{isSubmitting ? "Saving changesâ€¦" : "Save changes"}
+				</Button>}
 							</div>
 						</Form>
 					</div>

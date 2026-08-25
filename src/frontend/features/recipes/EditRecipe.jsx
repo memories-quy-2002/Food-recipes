@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import axios from "@/shared/api/axios";
+import { apiRoutes } from "@/shared/api/routes";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import RecipeEditor from "./RecipeEditor";
@@ -23,6 +25,7 @@ const EditRecipe = () => {
 	const [searchParams] = useSearchParams();
 	const recipeId = useMemo(() => parseRecipeId(searchParams.get("id")), [searchParams]);
 	const [state, setState] = useState({ kind: recipeId ? "loading" : "invalid", recipe: null, error: null });
+	const [restoreError, setRestoreError] = useState("");
 
 	const loadRecipe = useCallback(async () => {
 		if (!recipeId) {
@@ -44,6 +47,16 @@ const EditRecipe = () => {
 	}, [loadRecipe]);
 
 	const returnToProfile = () => navigate("/profile");
+	const restoreRecipe = async () => {
+		if (!recipeId) return;
+		try {
+			setRestoreError("");
+			await axios.post(apiRoutes.recipeRestore(recipeId));
+			await loadRecipe();
+		} catch (error) {
+			setRestoreError(error?.response?.data?.message || "This recipe could not be restored. Please try again.");
+		}
+	};
 
 	let content;
 	if (state.kind === "loading") {
@@ -54,8 +67,10 @@ const EditRecipe = () => {
 		content = <PageState type="error" title="You cannot edit this recipe" message="Your account does not have permission to edit this recipe." actionLabel="Back to profile" onAction={returnToProfile} />;
 	} else if (state.kind === "error") {
 		content = <PageState type="error" title="Recipe could not load" message={state.error?.response?.data?.message || "Please try again."} actionLabel="Try again" onAction={loadRecipe} />;
+	} else if (state.recipe?.status === "archived") {
+		content = <PageState type="empty" title="Restore this recipe before editing" message={restoreError || "Archived recipes are read-only. Restore this recipe to a draft, then continue editing."} actionLabel="Restore recipe" onAction={restoreRecipe} />;
 	} else {
-		content = <RecipeEditor mode="edit" recipeId={recipeId} initialRecipe={state.recipe} onSaved={({ recipe }) => navigate(`/recipe?id=${recipe.recipe_id}`)} />;
+		content = <RecipeEditor mode="edit" recipeId={recipeId} initialRecipe={state.recipe} onSaved={({ recipe }) => navigate((recipe.status || state.recipe.status) === "draft" ? "/profile" : `/recipe?id=${recipe.recipe_id}`)} />;
 	}
 
 	return (
