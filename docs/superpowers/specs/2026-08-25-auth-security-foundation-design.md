@@ -26,6 +26,7 @@ Improve the core security boundary without breaking the existing recipe, wishlis
 - On application boot, the frontend attempts one refresh session call and restores the current user when the cookie is valid.
 - A `401` request retries once after a shared refresh promise resolves. Refresh requests themselves are never recursively retried.
 - Logout revokes the current refresh session on the backend, clears the cookie, clears the in-memory token, and resets the Redux auth state.
+- The existing login `remember` choice remains meaningful: a remembered login receives a persistent refresh cookie, while an unremembered login receives a session cookie. Rotation preserves that choice through the server-side auth-session record.
 
 ### 2. Recovery and verification flows
 
