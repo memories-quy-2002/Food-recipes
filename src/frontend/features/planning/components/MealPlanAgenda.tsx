@@ -1,7 +1,12 @@
+import { closestCenter, DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useToast } from "@/app/ToastProvider";
 import Button from "@/shared/ui/Button";
 import { MEAL_SLOTS, type MealPlanItem, type MealSlot } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
+import { getMealDropAnnouncement, parseMealItemId, resolveMealDrop, resolveMealDropTarget, type MealDropTarget } from "../planningDnD";
 import MealSlotComponent from "./MealSlot";
 
 type MealPlanAgendaProps = {
@@ -11,13 +16,31 @@ type MealPlanAgendaProps = {
 	onEdit: (item: MealPlanItem) => void;
 	onRemove: (item: MealPlanItem) => void;
 	onOpenRecipe?: (item: MealPlanItem) => void;
+	onMove?: (item: MealPlanItem, input: MealDropTarget) => void;
 	isRemoving?: boolean;
 };
 
-const MealPlanAgenda = ({ days, items, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false }: MealPlanAgendaProps) => {
+const MealPlanAgenda = ({ days, items, onAdd, onEdit, onRemove, onOpenRecipe, onMove, isRemoving = false }: MealPlanAgendaProps) => {
+	const [activeId, setActiveId] = useState<number | null>(null);
+	const { showToast } = useToast();
+	const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 	const itemsByKey = new Map(items.map((item) => [`${item.planned_date.slice(0, 10)}:${item.slot}`, item]));
+	const handleDragEnd = ({ active, over }: DragEndEvent) => {
+		const activeItemId = parseMealItemId(active.id);
+		const target = resolveMealDropTarget(over?.id, items);
+		setActiveId(null);
+		if (activeItemId === null || !target) return;
+		const result = resolveMealDrop(items, activeItemId, target);
+		if (result.status === "occupied") { showToast({ title: "Slot already filled", message: result.message, type: "warning" }); return; }
+		if (result.status === "move") {
+			const item = items.find((candidate) => candidate.item_id === activeItemId);
+			if (item) onMove?.(item, result.input);
+		}
+	};
+	const activeItem = activeId === null ? undefined : items.find((item) => item.item_id === activeId);
 
 	return (
+		<DndContext sensors={sensors} collisionDetection={closestCenter} accessibility={{ announcements: { onDragStart: ({ active }) => { const item = items.find((candidate) => candidate.item_id === parseMealItemId(active.id)); return item ? `${item.recipe_name} picked up. Choose an empty meal slot.` : ""; }, onDragOver: ({ active, over }) => getMealDropAnnouncement(items, active.id, over?.id, "over"), onDragEnd: ({ active, over }) => getMealDropAnnouncement(items, active.id, over?.id, "end"), onDragCancel: () => "Move cancelled." } }} onDragStart={({ active }) => { setActiveId(parseMealItemId(active.id)); }} onDragCancel={() => { setActiveId(null); }} onDragEnd={handleDragEnd}>
 		<section className="space-y-3" aria-label="Meal plan agenda">
 			{days.map((day) => {
 				const plannedSlots = MEAL_SLOTS.filter((slot) => itemsByKey.has(`${day.date}:${slot}`));
@@ -30,12 +53,12 @@ const MealPlanAgenda = ({ days, items, onAdd, onEdit, onRemove, onOpenRecipe, is
 							</div>
 							<span className="grid size-10 shrink-0 place-items-center rounded-xl bg-secondary text-sm font-black text-secondary-foreground" aria-hidden="true">{day.dayNumber}</span>
 						</header>
-						{plannedSlots.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">{plannedSlots.map((slot) => <MealSlotComponent key={`${day.date}-${slot}`} day={day} slot={slot} item={itemsByKey.get(`${day.date}:${slot}`)} onAdd={onAdd} onEdit={onEdit} onRemove={onRemove} onOpenRecipe={onOpenRecipe} isRemoving={isRemoving} />)}</div> : <div className="mt-3 rounded-xl border border-dashed border-border bg-muted/25 p-4 text-center"><p className="text-sm leading-6 text-muted-foreground">Keep this day open or add the first recipe.</p><Button type="button" variant="outline" className="mt-3 w-full sm:w-auto" onClick={() => onAdd(day.date, "dinner")}><Plus className="size-4" />Add a meal</Button></div>}
+						<div className="mt-3 grid gap-3 sm:grid-cols-2">{MEAL_SLOTS.map((slot) => <MealSlotComponent key={`${day.date}-${slot}`} day={day} slot={slot} item={itemsByKey.get(`${day.date}:${slot}`)} onAdd={onAdd} onEdit={onEdit} onRemove={onRemove} onOpenRecipe={onOpenRecipe} isRemoving={isRemoving} />)}</div>
 						{plannedSlots.length ? <Button type="button" variant="ghost" className="mt-3 min-h-11 w-full text-primary hover:bg-accent" onClick={() => onAdd(day.date, "dinner")}><Plus className="size-4" />Add another meal</Button> : null}
 					</article>
 				);
 			})}
-		</section>
+				</section><DragOverlay>{activeItem ? <div className="rounded-xl border border-primary/20 bg-background p-3 font-black shadow-lg">{activeItem.recipe_name}</div> : null}</DragOverlay></DndContext>
 	);
 };
 

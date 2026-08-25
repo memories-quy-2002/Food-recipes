@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { getApiConfig, getStoredAuthToken, storeAuthToken } from "./config";
+import { getApiConfig, getAuthToken, setAuthToken } from "./config";
 import { apiRoutes } from "./routes";
 
 export const dispatchAuthExpired = () => {
@@ -22,7 +22,7 @@ export const createApiClient = (env = import.meta.env) => {
 	let refreshPromise = null;
 
 	client.interceptors.request.use((config) => {
-		const token = getStoredAuthToken();
+		const token = getAuthToken();
 		if (!token) return config;
 		config.headers = config.headers || {};
 		if (typeof config.headers.set === "function") {
@@ -39,9 +39,10 @@ export const createApiClient = (env = import.meta.env) => {
 			const originalRequest = error.config;
 			const isUnauthorized = error.response?.status === 401;
 			const isRefreshRequest = originalRequest?.url === apiRoutes.authRefresh;
+			const isLogoutRequest = originalRequest?.url === apiRoutes.authLogout;
 
-			if (!isUnauthorized || !originalRequest || originalRequest.__retried || isRefreshRequest) {
-				if (isUnauthorized) dispatchAuthExpired();
+			if (!isUnauthorized || !originalRequest || originalRequest.__retried || isRefreshRequest || isLogoutRequest) {
+				if (isUnauthorized && !isLogoutRequest) dispatchAuthExpired();
 				return Promise.reject(error);
 			}
 
@@ -52,7 +53,7 @@ export const createApiClient = (env = import.meta.env) => {
 				const response = await refreshPromise;
 				const token = response.data?.token;
 				if (!token) throw error;
-				storeAuthToken(token);
+				setAuthToken(token);
 				originalRequest.__retried = true;
 				originalRequest.headers = originalRequest.headers || {};
 				originalRequest.headers.Authorization = `Bearer ${token}`;

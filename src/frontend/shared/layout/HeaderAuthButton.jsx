@@ -2,34 +2,24 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
-import axios from "@/shared/api/axios";
-import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
+import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
+import { useToast } from "@/app/ToastProvider";
 
 const menuLink = "flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 const HeaderAuthButton = ({ auth }) => {
 	const { local, session } = auth;
-	const token = local.token || session.token;
-	const [user, setUser] = useState({});
 	const [clicked, setClicked] = useState(false);
 	const menuRef = useRef(null);
 	const toggleRef = useRef(null);
 	const closeMenu = useCallback(() => { setClicked(false); toggleRef.current?.focus(); }, []);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
+	const user = local.isAuthenticated ? local.user : session.user;
 	const dispatch = useDispatch();
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		const fetchData = async () => {
-			if (token) {
-				try { const response = await axios.post(apiRoutes.authToken, { token }); setUser(response.data.user ?? response.data); }
-				catch (error) { if (error.response?.status === 401) { dispatch(authActions.logout()); navigate("/"); } }
-			} else if (session.user) setUser(session.user);
-		};
-		fetchData();
-	}, [token, session.user, dispatch, navigate]);
+	const { showToast } = useToast();
 
 	useEffect(() => {
 		if (!clicked || typeof document === "undefined") return undefined;
@@ -40,7 +30,18 @@ const HeaderAuthButton = ({ auth }) => {
 		return () => { document.removeEventListener("pointerdown", handlePointerDown); document.removeEventListener("keydown", handleKeyDown); };
 	}, [clicked, closeMenu]);
 
-	const handleSignOut = () => { dispatch(authActions.logout()); closeMenu(); };
+	const handleSignOut = async () => {
+		try {
+			await authSessionApi.logout();
+		} catch {
+			// Local auth must still clear when the server is unavailable.
+		} finally {
+			dispatch(authActions.logout());
+			showToast({ title: "Signed out" });
+			closeMenu();
+			navigate("/");
+		}
+	};
 	return (
 		<div className="relative ml-auto hidden lg:block">
 			{isAuthenticated ? <>

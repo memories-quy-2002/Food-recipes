@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import { getWeekRange } from "@/features/planning/api/planningDates";
 import { useMealPlanForWeekQuery } from "@/features/planning/api/planningQueries";
+import { usePantryQuery } from "@/features/pantry/api/pantryQueries";
 import type { ShoppingListItem } from "./api/shoppingApi";
 import {
 	useAddRecipeIngredientsFromRecipesMutation,
@@ -12,6 +13,7 @@ import {
 	useShoppingListQuery,
 	useUpdateShoppingItemMutation,
 } from "./api/shoppingQueries";
+import { isShoppingItemInPantry } from "./shoppingAvailability";
 import "./ShoppingList.scss";
 
 const ShoppingListPage = () => {
@@ -22,6 +24,7 @@ const ShoppingListPage = () => {
 	const clearMutation = useClearCompletedShoppingItemsMutation();
 	const plannedIngredientsMutation = useAddRecipeIngredientsFromRecipesMutation();
 	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()));
+	const pantryQuery = usePantryQuery();
 	const [label, setLabel] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [editingItemId, setEditingItemId] = useState<number | null>(null);
@@ -33,6 +36,7 @@ const ShoppingListPage = () => {
 	const items = shoppingQuery.data?.items ?? [];
 	const activeItems = items.filter((item) => !item.checked);
 	const completedItems = items.filter((item) => item.checked);
+	const availablePantryNames = (pantryQuery.data?.items ?? []).filter((item) => item.have).map((item) => item.name);
 	const plannedRecipeIds = [...new Set((mealPlanQuery.data?.items ?? []).map((item) => item.recipe_id))];
 	const actionError =
 		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || plannedIngredientsMutation.isError
@@ -146,6 +150,7 @@ const ShoppingListPage = () => {
 						<div className="shopping-list__item-copy">
 							<strong>{item.label}</strong>
 							{item.quantity && <span>{item.quantity}</span>}
+							{!item.checked && isShoppingItemInPantry(item.label, availablePantryNames) && <span className="shopping-list__availability" aria-label={`${item.label} is already in your pantry`}>In pantry</span>}
 							{item.source_recipe_id && (
 								<Link className="shopping-list__source" to={`/recipe?id=${item.source_recipe_id}`}>
 									From {item.source_recipe_name || "Imported recipe"}

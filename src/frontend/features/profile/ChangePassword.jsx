@@ -5,11 +5,13 @@ import Input from "@/shared/ui/Input";
 import Label from "@/shared/ui/Label";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
+import { useToast } from "@/app/ToastProvider";
 
 const ChangePassword = () => {
 	const [formPassword, setFormPassword] = useState({ current: "", new: "", confirmNew: "" });
 	const [errors, setErrors] = useState([]);
 	const [disabled, setDisabled] = useState(true);
+	const { showToast } = useToast();
 	const handleInputChange = ({ target: { name, value } }) => { setDisabled(false); setErrors([]); setFormPassword((current) => ({ ...current, [name]: value })); };
 	const handleSubmit = async (event) => {
 		event.preventDefault();
@@ -21,11 +23,15 @@ const ChangePassword = () => {
 		try {
 			await schema.validate(formPassword, { abortEarly: false });
 			const response = await axios.put(apiRoutes.userPassword, { currentPassword: formPassword.current, newPassword: formPassword.new });
-			if (response.status === 200) window.location.reload(false);
+			if (response.status === 200) {
+				setDisabled(true);
+				setFormPassword({ current: "", new: "", confirmNew: "" });
+				showToast({ title: "Password updated" });
+			}
 		} catch (err) {
 			if (err?.errors) setErrors(err.errors);
 			else if (err.response?.status === 401) setErrors([err.response.data.message]);
-			else { console.error("An error occurred:", err.message); setErrors(["Unable to update your password right now."]); }
+			else { console.error("An error occurred:", err.message); setErrors(["Unable to update your password right now."]); showToast({ title: "Couldn’t update your password", message: "Please try again.", type: "error" }); }
 		}
 	};
 	return (

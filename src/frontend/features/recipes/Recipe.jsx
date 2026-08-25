@@ -11,6 +11,7 @@ import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
 import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import { useCreateCookingHistoryMutation } from "@/features/history/api/historyQueries";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -58,6 +59,7 @@ const Recipe = () => {
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
+	const cookingHistoryMutation = useCreateCookingHistoryMutation();
 	const collectionsQuery = useCollectionsQuery(isAuthenticated);
 	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
@@ -86,6 +88,7 @@ const Recipe = () => {
 					date: planningDate,
 					slot: planningSlot,
 					servings: Math.min(planningServings, 24),
+					planItemId: Number(planningItemId),
 					returnTo: safeReturnTo,
 			  }
 			: null;
@@ -189,12 +192,14 @@ const Recipe = () => {
 					? "Your review has been updated."
 					: "Your rating and review have been saved.",
 			});
+			showToast({ title: hasExistingRating ? "Review updated" : "Review saved" });
 		} catch (err) {
 			console.error(err);
 			setReviewMessage({
 				type: "error",
 				text: "We could not save your review. Please try again.",
 			});
+			showToast({ title: "Couldn’t save your review", message: "Please try again.", type: "error" });
 		} finally {
 			setIsSubmittingReview(false);
 		}
@@ -227,12 +232,14 @@ const Recipe = () => {
 				type: "success",
 				text: "Your review has been deleted.",
 			});
+			showToast({ title: "Review deleted" });
 		} catch (err) {
 			console.error(err);
 			setReviewMessage({
 				type: "error",
 				text: "We could not delete your review. Please try again.",
 			});
+			showToast({ title: "Couldn’t delete your review", message: "Please try again.", type: "error" });
 		} finally {
 			setIsDeletingReview(false);
 		}
@@ -292,19 +299,15 @@ const Recipe = () => {
 		}
 		if (!recipe || addIngredientsMutation.isPending) return;
 
-		addIngredientsMutation.mutate(recipe.recipe_id, {
-			onSuccess: (response) => {
-				const count = response?.items?.length ?? 0;
-				showToast({
-					title: `${count} ingredient${count === 1 ? "" : "s"} added to Shopping List`,
-				});
-			},
-			onError: () => {
-				showToast({
-					title: "We could not add those ingredients. Try again.",
-					type: "error",
-				});
-			},
+		addIngredientsMutation.mutate(recipe.recipe_id);
+	};
+
+	const handleCookingComplete = async () => {
+		if (!recipe || cookingHistoryMutation.isPending) return;
+		await cookingHistoryMutation.mutateAsync({
+			recipeId: Number(recipe.recipe_id),
+			...(planningContext?.planItemId ? { mealPlanItemId: planningContext.planItemId } : {}),
+			...(planningContext?.servings ? { servings: planningContext.servings } : {}),
 		});
 	};
 
@@ -337,9 +340,6 @@ const Recipe = () => {
 		addRecipeToCollectionMutation.mutate(
 			{ collectionId, recipeId: Number(recipe.recipe_id) },
 			{
-				onSuccess: () => {
-					showToast({ title: "Saved to collection" });
-				},
 				onError: (error) => {
 					setCollectionDialogError(
 						error.response?.data?.message ||
@@ -479,6 +479,7 @@ const Recipe = () => {
 				<CookingMode
 					recipe={recipe}
 					planningContext={planningContext || undefined}
+					onComplete={isAuthenticated ? handleCookingComplete : undefined}
 					onBackToPlan={
 						planningContext
 							? () => navigate(planningContext.returnTo || "/planning")

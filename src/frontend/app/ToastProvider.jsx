@@ -12,8 +12,8 @@ const TOAST_DURATION_MS = 5000;
 const TOAST_TYPES = new Set(["success", "error", "info", "warning"]);
 
 const ToastContext = createContext({
-	showToast: () => {},
-	dismissToast: () => {},
+	showToast: (..._args) => undefined,
+	dismissToast: (..._args) => {},
 });
 
 export const useToast = () => useContext(ToastContext);

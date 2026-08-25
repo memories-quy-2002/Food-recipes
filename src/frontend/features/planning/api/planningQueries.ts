@@ -18,6 +18,7 @@ import {
 	type MealPlanResponse,
 	type UpdateMealPlanItemInput,
 } from "./planningApi";
+import { useToast } from "@/app/ToastProvider";
 
 export const planningQueryKeys = {
 	all: ["planning"] as const,
@@ -70,23 +71,28 @@ const invalidatePlanning = async (queryClient: ReturnType<typeof useQueryClient>
 
 export const useCreateMealPlanMutation = () => {
 	const queryClient = useQueryClient();
+	const { showToast } = useToast();
 	return useMutation({
 		mutationFn: (input: CreateMealPlanInput) => createMealPlan(input),
-		onSuccess: () => invalidatePlanning(queryClient),
+		onSuccess: async () => { await invalidatePlanning(queryClient); showToast({ title: "Meal plan created" }); },
+		onError: () => showToast({ title: "Couldn’t create your meal plan", message: "Please try again.", type: "error" }),
 	});
 };
 
 export const useAddMealPlanItemMutation = () => {
 	const queryClient = useQueryClient();
+	const { showToast } = useToast();
 	return useMutation({
 		mutationFn: ({ planId, input }: { planId: number; input: AddMealPlanItemInput }) =>
 			addMealPlanItem(planId, input),
-		onSuccess: () => invalidatePlanning(queryClient),
+		onSuccess: async () => { await invalidatePlanning(queryClient); showToast({ title: "Meal added to your plan" }); },
+		onError: () => showToast({ title: "Couldn’t add this meal", message: "Choose another recipe or try again.", type: "error" }),
 	});
 };
 
 export const useUpdateMealPlanItemMutation = () => {
 	const queryClient = useQueryClient();
+	const { showToast } = useToast();
 	return useMutation({
 		mutationFn: ({
 			planId,
@@ -94,15 +100,18 @@ export const useUpdateMealPlanItemMutation = () => {
 			input,
 		}: { planId: number; itemId: number; input: UpdateMealPlanItemInput }) =>
 			updateMealPlanItem(planId, itemId, input),
-		onSuccess: () => invalidatePlanning(queryClient),
+		onSuccess: async () => { await invalidatePlanning(queryClient); showToast({ title: "Meal plan updated" }); },
+		onError: () => showToast({ title: "Couldn’t update this meal", message: "Please try again.", type: "error" }),
 	});
 };
 
 export const useDeleteMealPlanItemMutation = () => {
 	const queryClient = useQueryClient();
+	const { showToast } = useToast();
 	return useMutation({
 		mutationFn: ({ planId, itemId }: { planId: number; itemId: number }) =>
 			deleteMealPlanItem(planId, itemId),
-		onSuccess: () => invalidatePlanning(queryClient),
+		onSuccess: async () => { await invalidatePlanning(queryClient); showToast({ title: "Meal removed from your plan" }); },
+		onError: () => showToast({ title: "Couldn’t remove this meal", message: "Please try again.", type: "error" }),
 	});
 };

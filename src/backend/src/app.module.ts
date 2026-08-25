@@ -19,6 +19,7 @@ import { NotesModule } from './modules/notes/notes.module';
 import { PantryModule } from './modules/pantry/pantry.module';
 import { SuggestionsModule } from './modules/suggestions/suggestions.module';
 import { HomeFeedModule } from './modules/home-feed/home-feed.module';
+import { CookingHistoryModule } from './modules/cooking-history/cooking-history.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { HomeFeedModule } from './modules/home-feed/home-feed.module';
     PantryModule,
     SuggestionsModule,
     HomeFeedModule,
+    CookingHistoryModule,
   ],
 })
 export class AppModule {}

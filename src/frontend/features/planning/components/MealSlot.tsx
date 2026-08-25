@@ -1,13 +1,160 @@
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Link } from "react-router-dom";
-import { Plus, Trash2 } from "lucide-react";
+import { Cookie, GripVertical, Moon, Pencil, Play, Plus, Sun, Sunrise, Trash2, type LucideIcon } from "lucide-react";
 import Button from "@/shared/ui/Button";
 import type { MealPlanItem, MealSlot as MealSlotName } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
+import { mealDropTargetId, mealItemId } from "../planningDnD";
 
-type MealSlotProps = { day: PlanningDay; slot: MealSlotName; item?: MealPlanItem; onAdd: (date: string, slot: MealSlotName) => void; onEdit: (item: MealPlanItem) => void; onRemove: (item: MealPlanItem) => void; onOpenRecipe?: (item: MealPlanItem) => void; isRemoving?: boolean };
-const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1); const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
-const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false }: MealSlotProps) => {
-	if (!item) return <div className="rounded-xl border border-dashed border-border bg-muted/25 p-3"><span className="text-xs font-black uppercase tracking-[0.12em] text-muted-foreground">{slotLabel(slot)}</span><button type="button" className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-lg text-sm font-bold text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => onAdd(day.date, slot)}><Plus className="size-4" />Add recipe<span className="sr-only"> to {fullWeekday(day)} {slot}</span></button></div>;
-	return <article className="rounded-xl border border-primary/15 bg-secondary/45 p-3 shadow-sm"><div className="flex items-center justify-between gap-2"><span className="text-xs font-black uppercase tracking-[0.12em] text-primary">{slotLabel(slot)}</span><span className="text-xs font-semibold text-muted-foreground">{item.servings} servings</span></div><Link className="mt-2 flex min-h-11 items-center line-clamp-2 font-black leading-snug text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" to={`/recipe?id=${item.recipe_id}`} aria-label={`Open ${item.recipe_name}`} onClick={() => onOpenRecipe?.(item)}>{item.recipe_name}</Link><Link className="mt-3 inline-flex min-h-11 items-center rounded-lg bg-primary px-3 text-xs font-black text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" to={`/recipe/cooking?id=${item.recipe_id}&planItemId=${item.item_id}&date=${encodeURIComponent(item.planned_date.slice(0, 10))}&slot=${item.slot}&servings=${item.servings}&returnTo=%2Fplanning`} aria-label={`Start cooking ${item.recipe_name}`}>Start cooking</Link><div className="mt-3 flex items-center justify-end gap-1"><Button variant="ghost" size="sm" onClick={() => onEdit(item)} aria-label={`Change ${item.recipe_name}`}>Change</Button><Button variant="ghost" size="icon" className="size-11 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => onRemove(item)} aria-label={`Remove ${item.recipe_name} from ${slot}`} disabled={isRemoving} aria-busy={isRemoving}><Trash2 className="size-4" /></Button></div></article>;
+type MealSlotProps = {
+	day: PlanningDay;
+	slot: MealSlotName;
+	item?: MealPlanItem;
+	onAdd: (date: string, slot: MealSlotName) => void;
+	onEdit: (item: MealPlanItem) => void;
+	onRemove: (item: MealPlanItem) => void;
+	onOpenRecipe?: (item: MealPlanItem) => void;
+	isRemoving?: boolean;
 };
+
+const SLOT_META: Record<MealSlotName, { shortLabel: string; Icon: LucideIcon }> = {
+	breakfast: { shortLabel: "B", Icon: Sunrise },
+	lunch: { shortLabel: "L", Icon: Sun },
+	dinner: { shortLabel: "D", Icon: Moon },
+	snack: { shortLabel: "S", Icon: Cookie },
+};
+
+const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1);
+const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
+
+const SlotBadge = ({ slot }: { slot: MealSlotName }) => {
+	const { shortLabel, Icon } = SLOT_META[slot];
+
+	return (
+		<span
+			className="inline-flex items-center gap-1 text-[0.68rem] font-black uppercase tracking-[0.14em] text-muted-foreground"
+			title={slotLabel(slot)}
+		>
+			<GripVertical className="size-3 text-muted-foreground/60" aria-hidden="true" />
+			<Icon className="size-3.5 text-primary" aria-hidden="true" />
+			<span aria-hidden="true">{shortLabel}</span>
+			<span className="sr-only">{slotLabel(slot)}</span>
+		</span>
+	);
+};
+
+const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false }: MealSlotProps) => {
+	const targetId = mealDropTargetId({ date: day.date, slot });
+	const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({ id: targetId });
+	const { attributes, listeners, setNodeRef: setDraggableNodeRef, isDragging } = useDraggable({
+		id: item ? mealItemId(item.item_id) : targetId,
+		disabled: !item,
+	});
+	const style = { opacity: isDragging ? 0.45 : undefined };
+	const addLabel = `Add recipe to ${fullWeekday(day)} ${slot}`;
+
+	if (!item) {
+		return (
+			<div
+				ref={setDroppableNodeRef}
+				className={`min-w-0 rounded-lg border border-dashed border-border/70 bg-background/35 p-2.5 transition ${isOver ? "ring-2 ring-primary" : "hover:border-primary/45"}`}
+			>
+				<div className="flex items-center justify-between gap-2">
+					<SlotBadge slot={slot} />
+					<button
+						type="button"
+						className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						onClick={() => onAdd(day.date, slot)}
+						aria-label={addLabel}
+						title={addLabel}
+					>
+						<Plus className="size-4" aria-hidden="true" />
+					</button>
+				</div>
+			</div>
+		);
+	}
+
+	const dragAttributes = { ...attributes, role: undefined };
+	const stopDragStart = (event: { stopPropagation: () => void }) => event.stopPropagation();
+
+	return (
+		<div ref={setDroppableNodeRef} className={`min-w-0 rounded-lg ${isOver ? "ring-2 ring-primary" : ""}`}>
+			<article
+				ref={setDraggableNodeRef}
+				{...dragAttributes}
+				{...listeners}
+				role="group"
+				tabIndex={0}
+				aria-label={`Drag ${item.recipe_name} to another empty meal slot`}
+				aria-roledescription="draggable meal"
+				data-testid={`draggable-meal-${item.item_id}`}
+				style={style}
+				className="touch-manipulation cursor-grab rounded-lg border border-primary/15 bg-secondary/55 p-2.5 shadow-sm transition active:cursor-grabbing hover:border-primary/35 hover:shadow-md"
+			>
+				<div className="flex items-center justify-between gap-2">
+					<SlotBadge slot={slot} />
+					<span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground" title={`${item.servings} servings`}>
+						<span aria-hidden="true">{item.servings}×</span>
+						<span className="sr-only">{item.servings} servings</span>
+					</span>
+				</div>
+
+				<Link
+					className="mt-2 flex min-h-11 items-center line-clamp-2 font-black leading-snug text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					to={`/recipe?id=${item.recipe_id}`}
+					aria-label={`Open ${item.recipe_name}`}
+					onClick={() => onOpenRecipe?.(item)}
+					onPointerDown={stopDragStart}
+					onKeyDown={stopDragStart}
+				>
+					{item.recipe_name}
+				</Link>
+
+				<div className="mt-2 flex items-center justify-between gap-2">
+					<Link
+						className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						to={`/recipe/cooking?id=${item.recipe_id}&planItemId=${item.item_id}&date=${encodeURIComponent(item.planned_date.slice(0, 10))}&slot=${item.slot}&servings=${item.servings}&returnTo=%2Fplanning`}
+						aria-label={`Start cooking ${item.recipe_name}`}
+						title={`Start cooking ${item.recipe_name}`}
+						onPointerDown={stopDragStart}
+						onKeyDown={stopDragStart}
+					>
+						<Play className="size-4 fill-current" aria-hidden="true" />
+						<span className="sr-only">Start cooking</span>
+					</Link>
+					<div className="flex items-center gap-1">
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-11"
+							onClick={() => onEdit(item)}
+							onPointerDown={stopDragStart}
+							onKeyDown={stopDragStart}
+							aria-label={`Change ${item.recipe_name}`}
+							title={`Change ${item.recipe_name}`}
+						>
+							<Pencil className="size-4" aria-hidden="true" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							className="size-11 text-destructive hover:bg-destructive/10 hover:text-destructive"
+							onClick={() => onRemove(item)}
+							onPointerDown={stopDragStart}
+							onKeyDown={stopDragStart}
+							aria-label={`Remove ${item.recipe_name} from ${slot}`}
+							title={`Remove ${item.recipe_name} from ${slot}`}
+							disabled={isRemoving}
+							aria-busy={isRemoving}
+						>
+							<Trash2 className="size-4" aria-hidden="true" />
+						</Button>
+					</div>
+				</div>
+			</article>
+		</div>
+	);
+};
+
 export default MealSlot;

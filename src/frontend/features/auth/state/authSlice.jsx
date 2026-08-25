@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { clearAccessToken } from "./authTokenStore";
 
 const parseStoredJson = (storage, key) => {
 	try {
@@ -12,24 +13,41 @@ const parseStoredJson = (storage, key) => {
 
 const getStoredAuth = (storage) => {
 	const user = parseStoredJson(storage, "user");
-	const token = storage.getItem("jwt");
 	const isAuthenticated =
 		storage.getItem("isAuthenticated") === "true" && Boolean(user);
 
 	return {
 		isAuthenticated,
 		user: isAuthenticated ? user : null,
-		token: isAuthenticated ? token : null,
 	};
 };
 
 const authSlice = createSlice({
 	name: "auth",
 	initialState: {
+		hydrated: false,
 		local: getStoredAuth(localStorage),
 		session: getStoredAuth(sessionStorage),
 	},
 	reducers: {
+		setHydrated(state, action) {
+			state.hydrated = Boolean(action.payload);
+		},
+		restoreSession(state, action) {
+			const { user } = action.payload;
+			if (state.local.isAuthenticated) {
+				state.local = { ...state.local, user };
+				localStorage.setItem("user", JSON.stringify(user));
+				return;
+			}
+			state.session = {
+				...state.session,
+				isAuthenticated: true,
+				user,
+			};
+			sessionStorage.setItem("isAuthenticated", true);
+			sessionStorage.setItem("user", JSON.stringify(user));
+		},
 		updateUser(state, action) {
 			const { user } = action.payload;
 			if (state.local.isAuthenticated) {
@@ -41,41 +59,36 @@ const authSlice = createSlice({
 			}
 		},
 		login(state, action) {
-			const { user, token } = action.payload;
+			const { user } = action.payload;
 			state.local = {
 				...state.local,
 				isAuthenticated: true,
 				user: user,
-				token: token,
 			};
 			localStorage.setItem("isAuthenticated", true);
 			localStorage.setItem("user", JSON.stringify(user));
-			localStorage.setItem("jwt", token);
 		},
 		loginSession(state, action) {
-			const { user, token } = action.payload;
+			const { user } = action.payload;
 			state.session = {
 				...state.session,
 				isAuthenticated: true,
 				user: user,
-				token: token,
 			};
 			sessionStorage.setItem("isAuthenticated", true);
 			sessionStorage.setItem("user", JSON.stringify(user));
-			sessionStorage.setItem("jwt", token);
 		},
 		logout(state) {
+			clearAccessToken();
 			state.local = {
 				...state.local,
 				isAuthenticated: false,
 				user: null,
-				token: null,
 			};
 			state.session = {
 				...state.session,
 				isAuthenticated: false,
 				user: null,
-				token: null,
 			};
 			localStorage.setItem("isAuthenticated", false);
 			localStorage.removeItem("user");

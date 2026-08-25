@@ -21,8 +21,20 @@ describe('AuthService', () => {
     })),
   };
   const jwtService = { signAsync: jest.fn(), verifyAsync: jest.fn() };
+  const sessions = {
+    createSession: jest.fn(),
+    rotateSession: jest.fn(),
+  };
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    sessions.createSession.mockResolvedValue('refresh-token');
+    sessions.rotateSession.mockResolvedValue({
+      userId: 10,
+      refreshToken: 'rotated-refresh-token',
+      persistent: true,
+    });
+  });
 
   it('returns a token for valid credentials', async () => {
     usersService.findByEmailWithPassword.mockResolvedValue({
@@ -32,7 +44,7 @@ describe('AuthService', () => {
       fullName: 'Ada Lovelace',
     });
     jwtService.signAsync.mockResolvedValue('signed-token');
-    const service = new AuthService(usersService, jwtService);
+    const service = new AuthService(usersService, jwtService, undefined, sessions as any);
 
     const result = await service.login({
       email: 'ada@example.com',
@@ -46,6 +58,58 @@ describe('AuthService', () => {
         message: 'Logged in!',
       }),
     );
+    expect(sessions.createSession).toHaveBeenCalledWith(10, 30, false);
+  });
+
+  it('creates a persistent session when login explicitly remembers the user', async () => {
+    usersService.findByEmailWithPassword.mockResolvedValue({
+      id: 10,
+      email: 'ada@example.com',
+      password: 'hashed-password',
+      fullName: 'Ada Lovelace',
+    });
+    jwtService.signAsync.mockResolvedValue('signed-token');
+    const service = new AuthService(usersService, jwtService, undefined, sessions as any);
+
+    await service.login({
+      email: 'ada@example.com',
+      password: 'correct horse battery staple',
+      remember: true,
+    } as Parameters<AuthService['login']>[0]);
+
+    expect(sessions.createSession).toHaveBeenCalledWith(10, 30, true);
+  });
+
+  it('creates a persistent session for signup', async () => {
+    usersService.create.mockResolvedValue({
+      user_id: 10,
+      email: 'ada@example.com',
+      email_verified: true,
+    });
+    jwtService.signAsync.mockResolvedValue('signed-token');
+    const service = new AuthService(usersService, jwtService, undefined, sessions as any);
+
+    await service.signup({
+      name: { first: 'Ada', last: 'Lovelace' },
+      email: 'ada@example.com',
+      password: 'correct horse battery staple',
+    } as any);
+
+    expect(sessions.createSession).toHaveBeenCalledWith(10, 30, true);
+  });
+
+  it('keeps session persistence when rotating a refresh token', async () => {
+    usersService.findById.mockResolvedValue({ user_id: 10, email: 'ada@example.com' });
+    jwtService.signAsync.mockResolvedValue('signed-token');
+    const service = new AuthService(usersService, jwtService, undefined, sessions as any);
+
+    const result = await service.refresh('refresh-token');
+
+    expect(sessions.rotateSession).toHaveBeenCalledWith('refresh-token', 30);
+    expect(result).toEqual(expect.objectContaining({
+      refreshToken: 'rotated-refresh-token',
+      persistent: true,
+    }));
   });
 
   it('rejects invalid credentials without revealing which field failed', async () => {

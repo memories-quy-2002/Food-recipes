@@ -33,6 +33,18 @@ const ToastTrigger = () => {
 			>
 				Show error
 			</button>
+			<button
+				type="button"
+				onClick={() =>
+					showToast({
+						title: "Slot unavailable",
+						message: "Choose an empty meal slot.",
+						type: "warning",
+					})
+				}
+			>
+				Show warning
+			</button>
 		</div>
 	);
 };
@@ -80,6 +92,19 @@ describe("ToastProvider", () => {
 		expect(screen.getByRole("alert")).toBeInTheDocument();
 
 		act(() => vi.advanceTimersByTime(1));
-		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		 expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+	});
+
+	it("renders warnings with a distinct warning tone", () => {
+		render(
+			<ToastProvider>
+				<ToastTrigger />
+			</ToastProvider>
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Show warning" }));
+
+		expect(screen.getByRole("status")).toHaveTextContent("Slot unavailable");
+		expect(screen.getByRole("status")).toHaveClass("toast-warning");
 	});
 });

@@ -3,12 +3,12 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
-type ActiveSession = { session_id: number; user_id: number; family_id: string; expires_at: Date };
+type ActiveSession = { session_id: number; user_id: number; family_id: string; expires_at: Date; persistent: boolean };
 
-export type RotatedSession = { userId: number; refreshToken: string };
+export type RotatedSession = { userId: number; refreshToken: string; persistent: boolean };
 
 export interface AuthSessionRepositoryPort {
-  createSession(userId: number, expiresInDays: number): Promise<string>;
+  createSession(userId: number, expiresInDays: number, persistent: boolean): Promise<string>;
   rotateSession(refreshToken: string, expiresInDays: number): Promise<RotatedSession | null>;
   revokeSession(refreshToken: string): Promise<void>;
   revokeAllSessions(userId: number): Promise<void>;
@@ -24,13 +24,13 @@ export const AUTH_SESSION_REPOSITORY = Symbol('AUTH_SESSION_REPOSITORY');
 export class AuthSessionRepository implements AuthSessionRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createSession(userId: number, expiresInDays: number): Promise<string> {
+  async createSession(userId: number, expiresInDays: number, persistent: boolean): Promise<string> {
     const refreshToken = this.newToken();
     const hash = this.hash(refreshToken);
     const familyId = randomUUID();
     await this.prisma.$executeRaw(Prisma.sql`
-      INSERT INTO auth_sessions (user_id, family_id, token_hash, expires_at)
-      VALUES (${userId}, ${familyId}, ${hash}, CURRENT_TIMESTAMP + (${expiresInDays} * INTERVAL '1 day'))
+      INSERT INTO auth_sessions (user_id, family_id, token_hash, expires_at, persistent)
+      VALUES (${userId}, ${familyId}, ${hash}, CURRENT_TIMESTAMP + (${expiresInDays} * INTERVAL '1 day'), ${persistent})
     `);
     return refreshToken;
   }
@@ -41,22 +41,22 @@ export class AuthSessionRepository implements AuthSessionRepositoryPort {
     const nextHash = this.hash(nextToken);
     return this.prisma.$transaction(async (tx) => {
       const active = await tx.$queryRaw<ActiveSession[]>(Prisma.sql`
-        SELECT session_id, user_id, family_id, expires_at FROM auth_sessions
+        SELECT session_id, user_id, family_id, expires_at, persistent FROM auth_sessions
         WHERE token_hash = ${presentedHash} AND revoked_at IS NULL AND expires_at > CURRENT_TIMESTAMP
         FOR UPDATE
       `);
       if (active[0]) {
         const current = active[0];
         const inserted = await tx.$queryRaw<{ session_id: number }[]>(Prisma.sql`
-          INSERT INTO auth_sessions (user_id, family_id, token_hash, expires_at)
-          VALUES (${current.user_id}, ${current.family_id}, ${nextHash}, CURRENT_TIMESTAMP + (${expiresInDays} * INTERVAL '1 day'))
+          INSERT INTO auth_sessions (user_id, family_id, token_hash, expires_at, persistent)
+          VALUES (${current.user_id}, ${current.family_id}, ${nextHash}, CURRENT_TIMESTAMP + (${expiresInDays} * INTERVAL '1 day'), ${current.persistent})
           RETURNING session_id
         `);
         await tx.$executeRaw(Prisma.sql`
           UPDATE auth_sessions SET revoked_at = CURRENT_TIMESTAMP, replaced_by = ${inserted[0].session_id}
           WHERE session_id = ${current.session_id}
         `);
-        return { userId: current.user_id, refreshToken: nextToken };
+        return { userId: current.user_id, refreshToken: nextToken, persistent: current.persistent };
       }
 
       const reused = await tx.$queryRaw<{ family_id: string }[]>(Prisma.sql`

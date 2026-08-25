@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteRecipeNote, getRecipeNote, saveRecipeNote } from "./notesApi";
+import { useToast } from "@/app/ToastProvider";
 
 export const recipeNoteQueryKeys = {
 	all: ["recipe-notes"] as const,
@@ -14,16 +15,20 @@ export const useRecipeNoteQuery = (recipeId: number | null, enabled = true) => u
 
 export const useSaveRecipeNoteMutation = () => {
 	const queryClient = useQueryClient();
+	const { showToast } = useToast();
 	return useMutation({
 		mutationFn: ({ recipeId, note }: { recipeId: number; note: string }) => saveRecipeNote(recipeId, note),
-		onSuccess: (data, variables) => queryClient.setQueryData(recipeNoteQueryKeys.detail(variables.recipeId), data),
+		onSuccess: (data, variables) => { queryClient.setQueryData(recipeNoteQueryKeys.detail(variables.recipeId), data); showToast({ title: "Private note saved" }); },
+		onError: () => showToast({ title: "Couldn’t save your note", message: "Please try again.", type: "error" }),
 	});
 };
 
 export const useDeleteRecipeNoteMutation = () => {
 	const queryClient = useQueryClient();
+	const { showToast } = useToast();
 	return useMutation({
 		mutationFn: (recipeId: number) => deleteRecipeNote(recipeId),
-		onSuccess: (_data, recipeId) => queryClient.setQueryData(recipeNoteQueryKeys.detail(recipeId), { note: null }),
+		onSuccess: (_data, recipeId) => { queryClient.setQueryData(recipeNoteQueryKeys.detail(recipeId), { note: null }); showToast({ title: "Private note removed" }); },
+		onError: () => showToast({ title: "Couldn’t remove your note", message: "Please try again.", type: "error" }),
 	});
 };

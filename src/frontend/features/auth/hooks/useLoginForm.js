@@ -4,11 +4,13 @@ import * as Yup from "yup";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { authActions } from "@/features/auth/state/authSlice";
+import { setAccessToken } from "@/features/auth/state/authTokenStore";
 import { useDispatch } from "react-redux";
 import {
 	consumeAuthIntent,
 	getAuthReturnPath,
 } from "@/features/auth/returnIntent";
+import { useToast } from "@/app/ToastProvider";
 
 const initialState = {
 	formData: {
@@ -43,6 +45,7 @@ const useLoginForm = () => {
 	const [state, dispatch] = useReducer(reducer, initialState);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { showToast } = useToast();
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -82,23 +85,21 @@ const useLoginForm = () => {
 					const { email, password } = state.formData;
 					const response = await axios.post(
 						apiRoutes.authLogin,
-						JSON.stringify({ email, password }),
+						JSON.stringify({ email, password, remember: state.remember }),
 						{
 							headers: { "Content-Type": "application/json" },
 							withCredentials: true,
 						}
 					);
 					if (response.status === 200) {
+						showToast({ title: "Welcome back" });
 						dispatch({ type: "SET_VALIDATED", payload: true });
 						const user = response.data.user;
+						setAccessToken(response.data.token);
 						if (state.remember) {
-							const token = response.data.token;
-							const payload = { user, token };
-							loginDispatch(authActions.login(payload));
+							loginDispatch(authActions.login({ user }));
 						} else {
-							const token = response.data.token;
-							const payload = { user, token };
-							loginDispatch(authActions.loginSession(payload));
+							loginDispatch(authActions.loginSession({ user }));
 						}
 
 						const pendingIntent = consumeAuthIntent();
@@ -116,6 +117,7 @@ const useLoginForm = () => {
 						type: "SET_ERRORS",
 						payload: [message],
 					});
+					showToast({ title: "Couldn’t sign you in", message, type: "error" });
 				} finally {
 					dispatch({ type: "SET_SUBMITTING", payload: false });
 				}

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { bootstrapTestAuth } from "./auth-fixtures";
 
 const recipe = {
 	recipe_id: 1,
@@ -22,17 +23,7 @@ const recipe = {
 
 test("authenticated user saves a recipe to a collection and removes it from Saved", async ({ page }) => {
 	let collectionItems = [];
-	await page.addInitScript(() => {
-		localStorage.setItem("isAuthenticated", "true");
-		localStorage.setItem("user", JSON.stringify({ user_id: 7, full_name: "Smoke User" }));
-		localStorage.setItem("jwt", "test-scoped-collection-token");
-	});
-
-	await page.route("**/auth/token", (route) => route.fulfill({
-		status: 200,
-		contentType: "application/json",
-		body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" } }),
-	}));
+	await bootstrapTestAuth(page, undefined, "test-memory-collection-token");
 	await page.route("**/recipes/1", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ recipe }) }));
 	await page.route("**/recipes/1/reviews", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ reviews: [] }) }));
 	await page.route("**/users/me/wishlist", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ wishlist: [{ recipe_id: 1 }] }) }));

@@ -31,30 +31,45 @@ const RecipeContent = ({
 			className="mx-auto w-full max-w-[100rem] space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:space-y-10 lg:px-8 lg:py-12 2xl:max-w-[108rem]"
 			aria-label="Recipe cooking details"
 		>
-			<RecipeDescription recipe={recipe} />
-			<RecipeMetadataPanel metadata={recipe.metadata} />
-			<SuggestionPanel mode="substitution" recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
-			<RecipeRating
-				ratingScore={ratingScore}
-				review={review}
-				reviewList={reviewList}
-				reviewMessage={reviewMessage}
-				hasExistingRating={hasExistingRating}
-				isRecipeAuthor={isRecipeAuthor}
-				canMutateReview={canMutateReview}
-				canDeleteReview={canDeleteReview}
-				isLoadingReviews={isLoadingReviews}
-				reviewsError={reviewsError}
-				showReview={showReview}
-				isAuthenticated={isAuthenticated}
-				isSubmittingReview={isSubmittingReview}
-				isDeletingReview={isDeletingReview}
-				onSubmit={onSubmit}
-				onDelete={onDelete}
-				onStarClick={onStarClick}
-				onToggleReview={onToggleReview}
-				onReviewChange={onReviewChange}
-			/>
+			<div className="grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.55fr)] lg:items-start lg:gap-10">
+				<div data-testid="recipe-cooking-core" className="min-w-0">
+					<RecipeDescription recipe={recipe} />
+				</div>
+				<aside data-testid="recipe-supporting-details" className="min-w-0 space-y-6 lg:sticky lg:top-24">
+					<p className="px-1 text-xs font-black uppercase tracking-[0.14em] text-primary">More about this recipe</p>
+					<RecipeMetadataPanel metadata={recipe.metadata} />
+					<SuggestionPanel mode="substitution" recipeId={recipe.recipe_id} isAuthenticated={isAuthenticated} />
+				</aside>
+			</div>
+			<section data-testid="recipe-community" className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
+				<div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+					<div>
+						<p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Community</p>
+						<h2 className="mt-1 text-2xl font-black tracking-tight text-foreground sm:text-3xl">Reviews and cooking notes</h2>
+					</div>
+				</div>
+				<RecipeRating
+					ratingScore={ratingScore}
+					review={review}
+					reviewList={reviewList}
+					reviewMessage={reviewMessage}
+					hasExistingRating={hasExistingRating}
+					isRecipeAuthor={isRecipeAuthor}
+					canMutateReview={canMutateReview}
+					canDeleteReview={canDeleteReview}
+					isLoadingReviews={isLoadingReviews}
+					reviewsError={reviewsError}
+					showReview={showReview}
+					isAuthenticated={isAuthenticated}
+					isSubmittingReview={isSubmittingReview}
+					isDeletingReview={isDeletingReview}
+					onSubmit={onSubmit}
+					onDelete={onDelete}
+					onStarClick={onStarClick}
+					onToggleReview={onToggleReview}
+					onReviewChange={onReviewChange}
+				/>
+			</section>
 		</section>
 	);
 };

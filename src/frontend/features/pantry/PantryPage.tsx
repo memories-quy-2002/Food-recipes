@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBasket, Trash2 } from "lucide-react";
+import { Search, ShoppingBasket, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
@@ -54,7 +54,7 @@ const PantryPage = () => {
 				<span className={item.have ? "truncate font-semibold text-foreground" : "truncate font-semibold text-muted-foreground line-through"}>{item.name}</span>
 			</label>
 			<Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteMutation.mutate(item.pantry_id)} aria-label={`Delete ${item.name}`}>
-				<Trash2 className="size-4" />
+				<Trash2 className="size-4" aria-hidden="true" />
 			</Button>
 		</li>
 	);
@@ -69,7 +69,7 @@ const PantryPage = () => {
 						<h1 id="pantry-title" className="text-4xl font-black tracking-tight sm:text-5xl">Know what you already have</h1>
 						<p className="mt-3 text-base leading-7 text-muted-foreground">Keep a lightweight inventory so shopping and meal planning start with what is already in your kitchen.</p>
 					</div>
-					<Button asChild variant="outline" className="w-full sm:w-auto"><Link to="/shopping-list"><ShoppingBasket className="size-4" />Open shopping list</Link></Button>
+					<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button asChild variant="outline" className="flex-1"><Link to="/food"><Search className="size-4" aria-hidden="true" />Find pantry recipes</Link></Button><Button asChild variant="outline" className="flex-1"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Open shopping list</Link></Button></div>
 				</header>
 
 				<Card className="mb-6 p-4 sm:p-5">

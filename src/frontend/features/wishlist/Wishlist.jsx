@@ -22,6 +22,7 @@ import {
 } from "@/features/saved/api/collectionsQueries";
 import { getSavedAtTimestamp } from "./savedRecipe";
 import "./Wishlist.scss";
+import { useToast } from "@/app/ToastProvider";
 
 export const normalizeSavedRecipe = (item) => ({
 	recipe: item?.recipe || item || {},
@@ -113,6 +114,7 @@ const Wishlist = () => {
 	const pendingRecipeIdRef = useRef(null);
 	const isRemovingRef = useRef(false);
 	const navigate = useNavigate();
+	const { showToast } = useToast();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { local, session } = useSelector(({ auth }) => auth);
@@ -285,6 +287,7 @@ const Wishlist = () => {
 				);
 				setShowModal(false);
 				pendingRecipeIdRef.current = null;
+				showToast({ title: "Recipe removed from Saved" });
 				}
 			}
 		} catch (err) {
@@ -293,6 +296,7 @@ const Wishlist = () => {
 					err.response?.data?.message ||
 					"We could not remove this recipe from the collection. Please try again."
 			);
+			showToast({ title: "Couldn’t remove this saved recipe", message: "Please try again.", type: "error" });
 		} finally {
 			isRemovingRef.current = false;
 			setIsRemoving(false);

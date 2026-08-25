@@ -14,6 +14,7 @@ export type AuthResponse = {
   token: string;
   message: string;
   refreshToken?: string;
+  persistent?: boolean;
 };
 
 type AuthUsersPort = Pick<
@@ -38,7 +39,7 @@ export class AuthService {
       email: dto.email,
       password: dto.password,
     });
-    const response = await this.withToken(user, 'Signed up!');
+    const response = await this.withToken(user, 'Signed up!', undefined, true);
     await this.issueVerification(user);
     return response;
   }
@@ -51,7 +52,7 @@ export class AuthService {
         message: 'Invalid email or password',
       });
     }
-    return this.withToken(this.usersService.toPublicUser(user), 'Logged in!');
+    return this.withToken(this.usersService.toPublicUser(user), 'Logged in!', undefined, dto.remember ?? false);
   }
 
   async refresh(refreshToken: string): Promise<AuthResponse> {
@@ -59,7 +60,7 @@ export class AuthService {
     const rotated = await this.sessions.rotateSession(refreshToken, this.refreshDays());
     if (!rotated) throw this.invalidRefreshToken();
     const user = await this.usersService.findById(rotated.userId);
-    return this.withToken(user, 'Token refreshed!', rotated.refreshToken);
+    return this.withToken(user, 'Token refreshed!', rotated.refreshToken, rotated.persistent);
   }
 
   async logout(refreshToken?: string, userId?: number): Promise<void> {
@@ -125,10 +126,15 @@ export class AuthService {
     return this.usersService.findById(userId);
   }
 
-  private async withToken(user: PublicUser, message: string, rotatedRefreshToken?: string): Promise<AuthResponse> {
+  private async withToken(user: PublicUser, message: string, rotatedRefreshToken?: string, persistent = false): Promise<AuthResponse> {
     const token = await this.jwtService.signAsync({ sub: user.user_id, user_id: user.user_id, email: user.email });
-    const refreshToken = rotatedRefreshToken ?? (this.sessions ? await this.sessions.createSession(user.user_id, this.refreshDays()) : undefined);
-    return { user, token, message, ...(refreshToken ? { refreshToken } : {}) };
+    const refreshToken = rotatedRefreshToken ?? (this.sessions ? await this.sessions.createSession(user.user_id, this.refreshDays(), persistent) : undefined);
+    return {
+      user,
+      token,
+      message,
+      ...(refreshToken ? { refreshToken, persistent } : {}),
+    };
   }
 
   private refreshDays(): number {

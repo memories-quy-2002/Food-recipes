@@ -33,6 +33,7 @@ const apiRoutes = {
 	authLogin: "/auth/login",
 	authSignup: "/auth/signup",
 	authRefresh: "/auth/refresh",
+	authLogout: "/auth/logout",
 	userProfile: "/users/me/profile",
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",
@@ -44,6 +45,7 @@ const apiRoutes = {
 	shoppingListItem: (itemId) => `/users/me/shopping-list/items/${itemId}`,
 	shoppingListFromRecipe: "/users/me/shopping-list/from-recipe",
 	shoppingListCompleted: "/users/me/shopping-list/completed",
+	cookingHistory: "/users/me/cooking-history",
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
 };

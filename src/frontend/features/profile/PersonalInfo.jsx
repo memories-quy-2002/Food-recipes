@@ -7,18 +7,27 @@ import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import { getUpdatedProfileUser, serializeProfilePayload } from "@/shared/api/mutations";
 import { authActions } from "@/features/auth/state/authSlice";
+import { useToast } from "@/app/ToastProvider";
 
 const fieldClass = "grid gap-2";
 const PersonalInfo = ({ user }) => {
 	const [formData, setFormData] = useState({ name: user.full_name || "", address: user.address || "", phoneNumber: user.phone || "" });
 	const [disabled, setDisabled] = useState(true);
 	const dispatch = useDispatch();
+	const { showToast } = useToast();
 	const handleInputChange = ({ target: { name, value } }) => { setDisabled(false); setFormData((current) => ({ ...current, [name]: value })); };
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		const response = await axios.put(apiRoutes.userProfile, serializeProfilePayload(formData));
-		if (response.status === 200) dispatch(authActions.updateUser({ user: getUpdatedProfileUser(response.data) }));
-		window.location.reload(false);
+		try {
+			const response = await axios.put(apiRoutes.userProfile, serializeProfilePayload(formData));
+			if (response.status === 200) {
+				dispatch(authActions.updateUser({ user: getUpdatedProfileUser(response.data) }));
+				setDisabled(true);
+				showToast({ title: "Profile updated" });
+			}
+		} catch (error) {
+			showToast({ title: "Couldn’t update your profile", message: error.response?.data?.message || "Please try again.", type: "error" });
+		}
 	};
 	return (
 		<div className="mx-auto max-w-3xl">

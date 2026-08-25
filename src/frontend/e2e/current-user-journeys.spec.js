@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { bootstrapTestAuth } from "./auth-fixtures";
 
 const recipes = [
 	{
@@ -110,21 +111,7 @@ async function authenticateAsTestUser(page) {
 	// This is a frontend smoke fixture, not an authorization bypass: backend
 	// authorization remains covered by the backend contract tests.
 	let saved = false;
-	await page.addInitScript(() => {
-		localStorage.setItem("isAuthenticated", "true");
-		localStorage.setItem(
-			"user",
-			JSON.stringify({ user_id: 7, full_name: "Smoke User" })
-		);
-		localStorage.setItem("jwt", "test-scoped-smoke-token");
-	});
-	await page.route("**/auth/token", (route) =>
-		route.fulfill({
-			status: 200,
-			contentType: "application/json",
-			body: JSON.stringify({ user: { user_id: 7, full_name: "Smoke User" } }),
-		})
-	);
+	await bootstrapTestAuth(page, undefined, "test-memory-current-user-token");
 	await page.route("**/users/me/wishlist", (route) => {
 		if (route.request().method() === "GET") {
 			return route.fulfill({

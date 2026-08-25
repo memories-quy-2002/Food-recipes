@@ -61,15 +61,15 @@ const RecipeContainerSummary = ({
 					{metrics.map(([icon, label, value]) => <div key={label} className="min-w-0"><dt className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.08em] text-muted">{icon}{label}</dt><dd className="mt-1 truncate text-sm font-black text-background">{value}</dd></div>)}
 				</dl>
 
-				<div className="mt-7 grid gap-2.5 sm:grid-cols-3">
-					<Button asChild size="lg" className="h-auto min-h-12 rounded-lg bg-primary px-5 py-3 font-black text-primary-foreground shadow-md hover:bg-primary/90 sm:col-span-3"><Link to={`/recipe/cooking?id=${recipe.recipe_id}`}>Start cooking</Link></Button>
+				<div className="mt-7 grid gap-2.5 sm:grid-cols-2">
+					<Button asChild size="lg" className="h-auto min-h-12 rounded-lg bg-primary px-5 py-3 font-black text-primary-foreground shadow-md hover:bg-primary/90 sm:col-span-2"><Link to={`/recipe/cooking?id=${recipe.recipe_id}`}>Start cooking</Link></Button>
 					<Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-secondary bg-secondary px-5 py-3 font-black text-secondary-foreground hover:bg-secondary/90" onClick={onClickFavorite} aria-label={favorite ? "Remove recipe from saved" : "Save recipe"} aria-pressed={favorite}><span aria-hidden="true"><Heart className="size-4" fill={favorite ? "currentColor" : "none"} /></span>{favorite ? "Saved" : "Save"}</Button>
 					{onAddToPlan ? <Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-muted/60 bg-transparent px-4 py-3 font-black text-background hover:bg-muted/20 hover:text-background" onClick={onAddToPlan} disabled={isAddingToPlan} aria-busy={isAddingToPlan} aria-label={isAddingToPlan ? "Adding recipe to meal plan" : "Add recipe to meal plan"}>{isAddingToPlan ? "Adding…" : "Add to meal plan"}</Button> : null}
-					{onSaveToCollection ? <Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-muted/60 bg-transparent px-4 py-3 font-black text-background hover:bg-muted/20 hover:text-background" onClick={onSaveToCollection} aria-label="Save recipe to collection">Save to collection</Button> : null}
 				</div>
 
-				{onAddIngredients ? <Button type="button" variant="ghost" className="mt-3 w-full justify-center text-muted hover:bg-muted/20 hover:text-background" onClick={onAddIngredients} disabled={isAddingIngredients} aria-busy={isAddingIngredients} aria-label={isAddingIngredients ? "Adding ingredients to shopping list" : "Add ingredients to shopping list"}>{isAddingIngredients ? "Adding ingredients…" : "Add ingredients to shopping list"}</Button> : null}
 				<div className="mt-3 flex flex-wrap gap-2" aria-label="Secondary recipe actions">
+					{onSaveToCollection ? <Button type="button" size="sm" variant="outline" className="border-muted/60 bg-transparent text-background hover:bg-muted/20 hover:text-background" onClick={onSaveToCollection} aria-label="Save recipe to collection">Save to collection</Button> : null}
+					{onAddIngredients ? <Button type="button" size="sm" variant="outline" className="border-muted/60 bg-transparent text-background hover:bg-muted/20 hover:text-background" onClick={onAddIngredients} disabled={isAddingIngredients} aria-busy={isAddingIngredients} aria-label={isAddingIngredients ? "Adding ingredients to shopping list" : "Add ingredients to shopping list"}>{isAddingIngredients ? "Adding ingredients…" : "Add ingredients to shopping list"}</Button> : null}
 					<ShareRecipeButton recipeId={recipe.recipe_id} recipeName={recipe.recipe_name} description={recipe.recipe_description || ""} className="border-muted/60 bg-transparent text-background hover:bg-muted/20 hover:text-background" />
 					<PrintRecipeButton className="border-muted/60 bg-transparent text-background hover:bg-muted/20 hover:text-background" />
 				</div>

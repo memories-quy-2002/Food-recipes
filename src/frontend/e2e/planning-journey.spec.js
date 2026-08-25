@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { bootstrapTestAuth } from "./auth-fixtures";
 
 const recipe = {
 	recipe_id: 7,
@@ -50,23 +51,31 @@ async function stubRecipeApi(page) {
 }
 
 async function authenticateAsTestUser(page) {
-	await page.addInitScript(() => {
-		localStorage.setItem("isAuthenticated", "true");
-		localStorage.setItem(
-			"user",
-			JSON.stringify({ user_id: 7, full_name: "Smoke User" })
-		);
-		localStorage.setItem("jwt", "test-scoped-smoke-token");
-	});
-	await page.route("**/auth/token", (route) =>
-		route.fulfill(json({ user: { user_id: 7, full_name: "Smoke User" } }))
-	);
+	await bootstrapTestAuth(page, undefined, "test-memory-planning-token");
 	await page.route("**/users/me/wishlist", (route) =>
 		route.fulfill(json({ wishlist: [{ recipe_id: recipe.recipe_id }] }))
 	);
 	await page.route("**/users/me/ratings", (route) =>
 		route.fulfill(json({ ratings: [] }))
 	);
+	await page.route("**/users/me/cooking-history", async (route) => {
+		if (route.request().method() === "POST") {
+			const body = JSON.parse(route.request().postData() || "{}");
+			return route.fulfill(json({ item: {
+				history_id: 21,
+				recipe_id: body.recipeId,
+				recipe_name: recipe.recipe_name,
+				meal_plan_item_id: body.mealPlanItemId ?? null,
+				planned_date: "2026-08-24",
+				slot: "dinner",
+				servings: body.servings ?? 1,
+				started_at: "2026-08-24T17:00:00.000Z",
+				completed_at: "2026-08-24T17:35:00.000Z",
+				created_at: "2026-08-24T17:35:00.000Z",
+			} }, 201));
+		}
+		return route.fulfill(json({ items: [] }));
+	});
 }
 
 async function stubPlanningApi(page) {
@@ -135,7 +144,7 @@ test("authenticated user completes the planning-to-cooking journey", async ({ pa
 	await page.getByRole("button", { name: "Start a weekly plan" }).click();
 
 	await expect(page.getByText("Week at a glance", { exact: true })).toBeVisible();
-	const weekday = await page.locator(".planning-grid__day").first().getByRole("heading").innerText();
+	const weekday = await page.locator('[aria-label="Weekly meal plan"] > section').first().getByRole("heading").innerText();
 
 	await page.getByRole("button", { name: `Add recipe to ${weekday} dinner` }).click();
 	await expect(page.getByRole("dialog", { name: "Add a meal to your plan" })).toBeVisible();
@@ -167,16 +176,16 @@ test("keeps planner layout usable across requested responsive breakpoints", asyn
 	await page.setViewportSize({ width: 375, height: 800 });
 	await page.goto("/planning");
 	await page.getByRole("button", { name: "Start a weekly plan" }).click();
-	await expect(page.locator(".planning-grid")).toBeVisible();
+	await expect(page.locator('[aria-label="Weekly meal plan"]')).toBeVisible();
 
 	for (const width of [375, 768, 1024, 1440]) {
 		await page.setViewportSize({ width, height: 900 });
 		await page.goto("/planning");
-		await expect(page.locator(".planning-grid")).toBeVisible();
+		await expect(page.locator('[aria-label="Weekly meal plan"]')).toBeVisible();
 
 		const audit = await page.evaluate(() => {
-			const planner = document.querySelector(".planning-page");
-			const grid = document.querySelector(".planning-grid");
+			const planner = document.querySelector("main[aria-labelledby=planning-title]");
+			const grid = document.querySelector('[aria-label="Weekly meal plan"]');
 			const controls = Array.from(document.querySelectorAll(".planning-page button, .planning-page a"));
 			return {
 				viewportWidth: window.innerWidth,
@@ -195,6 +204,6 @@ test("keeps planner layout usable across requested responsive breakpoints", asyn
 		expect(audit.documentWidth).toBeLessThanOrEqual(audit.viewportWidth);
 		expect(audit.controlViolations).toEqual([]);
 		expect(audit.plannerWidth).toBeLessThanOrEqual(width);
-		expect(audit.gridColumns).toBe(width >= 1024 ? 7 : 1);
+		expect(audit.gridColumns).toBe(width >= 1024 ? 7 : width >= 640 ? 2 : 1);
 	}
 });
