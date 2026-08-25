@@ -5,6 +5,8 @@ import convertImage from "@/shared/utils/convertImage";
 import formatTimestamp from "@/shared/utils/formatTimestamp";
 import ratingStar from "@/shared/utils/ratingStar";
 import Button from "@/shared/ui/Button";
+import PrintRecipeButton from "@/features/recipes/share/PrintRecipeButton";
+import ShareRecipeButton from "@/features/recipes/share/ShareRecipeButton";
 
 const RecipeContainerSummary = ({
 	recipe,
@@ -90,6 +92,10 @@ const RecipeContainerSummary = ({
 							{isAddingIngredients ? "Adding ingredients..." : "Add ingredients to shopping list"}
 						</Button>
 					)}
+				</div>
+				<div className="mt-3 flex flex-wrap gap-2" aria-label="Secondary recipe actions">
+					<ShareRecipeButton recipeId={recipe.recipe_id} recipeName={recipe.recipe_name} description={recipe.recipe_description || ""} className="border-muted/60 bg-transparent text-background hover:bg-muted/20 hover:text-background" />
+					<PrintRecipeButton className="border-muted/60 bg-transparent text-background hover:bg-muted/20 hover:text-background" />
 				</div>
 			</div>
 
