@@ -54,6 +54,9 @@ async function authenticateAsTestUser(page) {
 	await page.route("**/users/me/ratings", (route) =>
 		route.fulfill(json({ ratings: [] }))
 	);
+	await page.route("**/users/me/pantry", (route) =>
+		route.fulfill(json({ items: [{ pantry_id: 1, name: "olive oil", have: true }] }))
+	);
 }
 
 async function stubShoppingApi(page) {

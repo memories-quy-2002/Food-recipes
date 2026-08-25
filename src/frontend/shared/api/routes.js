@@ -45,6 +45,7 @@ const apiRoutes = {
 	shoppingListItem: (itemId) => `/users/me/shopping-list/items/${itemId}`,
 	shoppingListFromRecipe: "/users/me/shopping-list/from-recipe",
 	shoppingListCompleted: "/users/me/shopping-list/completed",
+	cookingHistory: "/users/me/cooking-history",
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
 };

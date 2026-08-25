@@ -10,8 +10,9 @@ type CookingRecipe = Partial<RecipeDetail> & { id?: number | string; slug?: stri
 type CookingModeProps = {
 	recipe?: CookingRecipe | null;
 	onExit: () => void;
-	planningContext?: { date: string; slot: string; servings: number; returnTo?: string };
+	planningContext?: { date: string; slot: string; servings: number; planItemId?: number; returnTo?: string };
 	onBackToPlan?: () => void;
+	onComplete?: () => Promise<void> | void;
 };
 
 const useCookingModeWithIdentity = useCookingMode as (
@@ -25,9 +26,11 @@ const formatPlanningContext = (planningContext: NonNullable<CookingModeProps["pl
 	return `${weekday} · ${slot} · ${planningContext.servings} servings`;
 };
 
-const CookingMode = ({ recipe, onExit, planningContext, onBackToPlan }: CookingModeProps) => {
+const CookingMode = ({ recipe, onExit, planningContext, onBackToPlan, onComplete }: CookingModeProps) => {
 	const mainRef = useRef<HTMLElement | null>(null);
 	const [isComplete, setIsComplete] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+	const [saveError, setSaveError] = useState<string | null>(null);
 	const { steps, stepIndex, isFirstStep, isLastStep, goToPrevious, goToNext } = useCookingModeWithIdentity(recipe?.instructions, recipe?.recipe_id ?? recipe?.id ?? recipe?.slug ?? null);
 
 	useEffect(() => {
@@ -49,7 +52,27 @@ const CookingMode = ({ recipe, onExit, planningContext, onBackToPlan }: CookingM
 		}
 	};
 
-	const handleFinish = () => planningContext ? setIsComplete(true) : onExit();
+	const handleFinish = () => {
+		if (!isLastStep || isSaving) return;
+		if (!onComplete) {
+			if (planningContext) setIsComplete(true);
+			else onExit();
+			return;
+		}
+		setSaveError(null);
+		setIsSaving(true);
+		void (async () => {
+			try {
+				await onComplete();
+				if (planningContext) setIsComplete(true);
+				else onExit();
+			} catch {
+				setSaveError("We could not save this cook yet. Try finishing again.");
+			} finally {
+				setIsSaving(false);
+			}
+		})();
+	};
 	const progress = steps.length ? Math.round(((stepIndex + 1) / steps.length) * 100) : 0;
 
 	return (
@@ -60,7 +83,7 @@ const CookingMode = ({ recipe, onExit, planningContext, onBackToPlan }: CookingM
 						<p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Guided cooking</p>
 						{planningContext && <p className="mt-1 text-sm font-semibold text-muted-foreground">{formatPlanningContext(planningContext)}</p>}
 					</div>
-					<Button variant="outline" onClick={onExit} aria-label="Exit cooking"><X className="size-4" />Exit cooking</Button>
+					<Button variant="outline" onClick={onExit} aria-label="Exit cooking"><X className="size-4" aria-hidden="true" />Exit cooking</Button>
 				</header>
 
 				<Card className="overflow-hidden">
@@ -70,7 +93,7 @@ const CookingMode = ({ recipe, onExit, planningContext, onBackToPlan }: CookingM
 					</div>
 
 					<div className="p-5 sm:p-7 lg:p-9">
-						{isComplete ? <section className="py-8 text-center" aria-live="polite"><CheckCircle2 className="mx-auto size-14 text-primary" /><p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-primary">Cooked with your plan</p><h2 className="mt-2 text-3xl font-black">Recipe complete</h2><p className="mx-auto mt-3 max-w-lg leading-7 text-muted-foreground">Nice work. Keep this meal in your plan or return to the recipe to leave a review.</p><div className="mx-auto mt-6 flex max-w-md flex-col gap-3 sm:flex-row sm:justify-center">{onBackToPlan && <Button variant="outline" className="sm:flex-1" onClick={onBackToPlan} aria-label="Back to plan">Back to plan</Button>}<Button className="sm:flex-1" onClick={onExit} aria-label="Review recipe">Review recipe</Button></div></section> : steps.length > 0 ? <><section className="rounded-2xl bg-secondary/55 p-5 sm:p-7" aria-label={`Step ${stepIndex + 1}`}><p className="text-xl font-bold leading-9 text-foreground sm:text-2xl sm:leading-10">{steps[stepIndex]}</p></section><ManualTimer /><div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3"><Button variant="outline" size="lg" onClick={goToPrevious} disabled={isFirstStep} aria-label="Previous step"><ArrowLeft className="size-4" />Previous</Button><Button variant="outline" size="lg" onClick={goToNext} disabled={isLastStep} aria-label="Next step">Next<ArrowRight className="size-4" /></Button><Button size="lg" className="col-span-2 sm:col-span-1" onClick={handleFinish} disabled={!isLastStep} aria-label="Finish cooking">Finish cooking</Button></div><p className="mt-4 text-center text-xs text-muted-foreground">Keyboard: ← / → changes steps · Escape exits cooking</p></> : <div className="rounded-2xl border border-dashed border-border p-8 text-center" role="status"><h2 className="text-xl font-bold">No cooking steps yet</h2><p className="mt-2 text-muted-foreground">This recipe does not have any instructions to guide you through.</p></div>}
+						{isComplete ? <section className="py-8 text-center" aria-live="polite"><CheckCircle2 className="mx-auto size-14 text-primary" aria-hidden="true" /><p className="mt-4 text-xs font-black uppercase tracking-[0.16em] text-primary">Cooked with your plan</p><h2 className="mt-2 text-3xl font-black">Recipe complete</h2><p className="mx-auto mt-3 max-w-lg leading-7 text-muted-foreground">Nice work. Keep this meal in your plan or return to the recipe to leave a review.</p><div className="mx-auto mt-6 flex max-w-md flex-col gap-3 sm:flex-row sm:justify-center">{onBackToPlan && <Button variant="outline" className="sm:flex-1" onClick={onBackToPlan} aria-label="Back to plan">Back to plan</Button>}<Button className="sm:flex-1" onClick={onExit} aria-label="Review recipe">Review recipe</Button></div></section> : steps.length > 0 ? <><section className="rounded-2xl bg-secondary/55 p-5 sm:p-7" aria-label={`Step ${stepIndex + 1}`}><p className="text-xl font-bold leading-9 text-foreground sm:text-2xl sm:leading-10">{steps[stepIndex]}</p></section><ManualTimer /><div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3"><Button variant="outline" size="lg" onClick={goToPrevious} disabled={isFirstStep} aria-label="Previous step"><ArrowLeft className="size-4" aria-hidden="true" />Previous</Button><Button variant="outline" size="lg" onClick={goToNext} disabled={isLastStep} aria-label="Next step">Next<ArrowRight className="size-4" aria-hidden="true" /></Button><Button size="lg" className="col-span-2 sm:col-span-1" onClick={handleFinish} disabled={!isLastStep || isSaving} aria-busy={isSaving} aria-label="Finish cooking">{isSaving ? "Saving…" : "Finish cooking"}</Button></div>{saveError && <p className="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-center text-sm font-semibold text-destructive" role="alert">{saveError}</p>}<p className="mt-4 text-center text-xs text-muted-foreground">Keyboard: ← / → changes steps · Escape exits cooking</p></> : <div className="rounded-2xl border border-dashed border-border p-8 text-center" role="status"><h2 className="text-xl font-bold">No cooking steps yet</h2><p className="mt-2 text-muted-foreground">This recipe does not have any instructions to guide you through.</p></div>}
 					</div>
 				</Card>
 			</div>

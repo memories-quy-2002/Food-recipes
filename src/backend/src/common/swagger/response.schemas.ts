@@ -577,6 +577,48 @@ export class ShoppingListResponseDto {
   items!: ShoppingListItemResponseDto[];
 }
 
+export class CookingHistoryItemDto {
+  @ApiProperty({ example: 24 })
+  history_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Pasta Carbonara' })
+  recipe_name!: string;
+
+  @ApiProperty({ type: Number, nullable: true, example: 42 })
+  meal_plan_item_id!: number | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-08-25' })
+  planned_date!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'dinner' })
+  slot!: string | null;
+
+  @ApiProperty({ example: 4 })
+  servings!: number;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  started_at!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  completed_at!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  created_at!: string;
+}
+
+export class CookingHistoryItemResponseDto {
+  @ApiProperty({ type: CookingHistoryItemDto })
+  item!: CookingHistoryItemDto;
+}
+
+export class CookingHistoryResponseDto {
+  @ApiProperty({ type: [CookingHistoryItemDto] })
+  items!: CookingHistoryItemDto[];
+}
+
 export class UploadGrantResponseDto {
   @ApiProperty({ example: 'https://storage.example/upload/sign/recipes%2F7%2Fimage.webp' })
   uploadUrl!: string;

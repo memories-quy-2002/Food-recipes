@@ -11,6 +11,7 @@ import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
 import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import { useCreateCookingHistoryMutation } from "@/features/history/api/historyQueries";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -58,6 +59,7 @@ const Recipe = () => {
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
+	const cookingHistoryMutation = useCreateCookingHistoryMutation();
 	const collectionsQuery = useCollectionsQuery(isAuthenticated);
 	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
@@ -86,6 +88,7 @@ const Recipe = () => {
 					date: planningDate,
 					slot: planningSlot,
 					servings: Math.min(planningServings, 24),
+					planItemId: Number(planningItemId),
 					returnTo: safeReturnTo,
 			  }
 			: null;
@@ -308,6 +311,16 @@ const Recipe = () => {
 		});
 	};
 
+	const handleCookingComplete = async () => {
+		if (!recipe || cookingHistoryMutation.isPending) return;
+		await cookingHistoryMutation.mutateAsync({
+			recipeId: Number(recipe.recipe_id),
+			...(planningContext?.planItemId ? { mealPlanItemId: planningContext.planItemId } : {}),
+			...(planningContext?.servings ? { servings: planningContext.servings } : {}),
+		});
+		showToast({ title: "Cooking history saved" });
+	};
+
 	const handleAddToPlan = () => {
 		if (!isAuthenticated) {
 			navigate("/account?signup=false", { state: { from: currentPath } });
@@ -479,6 +492,7 @@ const Recipe = () => {
 				<CookingMode
 					recipe={recipe}
 					planningContext={planningContext || undefined}
+					onComplete={isAuthenticated ? handleCookingComplete : undefined}
 					onBackToPlan={
 						planningContext
 							? () => navigate(planningContext.returnTo || "/planning")

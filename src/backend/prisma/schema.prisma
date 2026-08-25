@@ -235,6 +235,21 @@ model ShoppingListItem {
   @@map("shopping_list_items")
 }
 
+model CookingHistory {
+  id             Int      @id @default(autoincrement()) @map("history_id")
+  userId         Int      @map("user_id")
+  recipeId       Int      @map("recipe_id")
+  mealPlanItemId Int?     @map("meal_plan_item_id")
+  servings       Int      @default(1)
+  startedAt      DateTime @map("started_at") @db.Timestamp(6)
+  completedAt    DateTime @map("completed_at") @db.Timestamp(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([userId, completedAt], map: "cooking_history_user_completed_idx")
+  @@index([userId, recipeId], map: "cooking_history_user_recipe_idx")
+  @@map("cooking_history")
+}
+
 model AuthSession {
   id         Int       @id @default(autoincrement()) @map("session_id")
   userId     Int       @map("user_id")

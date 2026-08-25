@@ -121,6 +121,8 @@ describe('Swagger document', () => {
       'POST /api/v1/users/me/pantry',
       'PATCH /api/v1/users/me/pantry/{pantryId}',
       'DELETE /api/v1/users/me/pantry/{pantryId}',
+      'GET /api/v1/users/me/cooking-history',
+      'POST /api/v1/users/me/cooking-history',
       'POST /api/v1/media/recipe-image/upload-url',
       'GET /api/v1/recipes/{recipeId}/metadata',
       'PUT /api/v1/recipes/{recipeId}/metadata',
