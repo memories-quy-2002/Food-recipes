@@ -30,7 +30,7 @@ describe("RecipeMetadataPanel", () => {
 		);
 
 		expect(screen.getByRole("heading", { name: "Nutrition and allergens" })).toBeInTheDocument();
-		expect(screen.getByText("420 kcal per serving")).toBeInTheDocument();
+		expect(screen.getByText(/420 kcal/)).toBeInTheDocument();
 		expect(screen.getByText("Peanuts")).toBeInTheDocument();
 		expect(screen.getByRole("note")).toHaveTextContent(/estimated/i);
 	});
@@ -39,7 +39,7 @@ describe("RecipeMetadataPanel", () => {
 		render(<RecipeMetadataPanel metadata={{ nutrition: null, allergens: [] }} />);
 
 		expect(screen.getByText(/No nutrition or allergen metadata has been provided/i)).toBeInTheDocument();
-		expect(screen.getByText(/This is not a guarantee that the recipe is allergen-free/i)).toBeInTheDocument();
+		expect(screen.getByText(/does not guarantee that the recipe is allergen-free/i)).toBeInTheDocument();
 	});
 
 	it("warns when an allergen declaration is estimated", () => {

@@ -4,8 +4,8 @@ import { cn } from "@/shared/lib/utils";
 const variants = {
 	default: "bg-primary text-primary-foreground",
 	secondary: "bg-secondary text-secondary-foreground",
-	success: "bg-emerald-100 text-emerald-800",
-	warning: "bg-amber-100 text-amber-900",
+	success: "bg-secondary text-secondary-foreground",
+	warning: "bg-accent text-accent-foreground",
 	outline: "border border-border bg-background text-foreground",
 };
 const Badge = ({ variant = "default", className, ...props }) => (

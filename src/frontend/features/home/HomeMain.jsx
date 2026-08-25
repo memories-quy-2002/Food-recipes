@@ -16,6 +16,8 @@ import HomeSearchBar from "./main/HomeSearchBar";
 import { useHomeSearchQuery } from "./main/api/useHomeSearchQuery";
 import PageState from "@/shared/ui/PageState";
 import RecentlyViewedRecipes from "@/features/recipes/RecentlyViewedRecipes";
+import PantryMatchPanel from "./main/PantryMatchPanel";
+import PersonalizedHomeFeed from "./PersonalizedHomeFeed";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
@@ -25,6 +27,8 @@ const normalizeMinutes = (value) => {
 	const minutes = Number(value);
 	return Number.isFinite(minutes) ? minutes : null;
 };
+
+const HOME_RECIPE_LIMIT = 4;
 
 export const normalizeRecipeSummary = (recipe) => {
 	const prepTimeMinutes = normalizeMinutes(recipe.prepTimeMinutes ?? recipe.prep_time_minutes);
@@ -44,7 +48,7 @@ export const normalizeRecipeSummary = (recipe) => {
 export const byQuickest = (a, b) => a.totalTimeMinutes - b.totalTimeMinutes;
 
 export const getQuickMeals = (recipes) =>
-	recipes.map(normalizeRecipeSummary).sort(byQuickest).slice(0, 8);
+	recipes.map(normalizeRecipeSummary).sort(byQuickest).slice(0, HOME_RECIPE_LIMIT);
 
 const HomeMain = () => {
 	const [categories, setCategories] = useState([]);
@@ -85,12 +89,12 @@ const HomeMain = () => {
 		if (featuredMode === "most-reviewed") {
 			return nextRecipes
 				.sort((a, b) => Number(b.num_ratings || 0) - Number(a.num_ratings || 0))
-				.slice(0, 8);
+				.slice(0, HOME_RECIPE_LIMIT);
 		}
 
 		return nextRecipes
 			.sort((a, b) => Number(b.overall_score || 0) - Number(a.overall_score || 0))
-			.slice(0, 8);
+			.slice(0, HOME_RECIPE_LIMIT);
 	}, [featuredMode, filteredRecipes]);
 
 	const handleClickFavorite = async (recipeId) => {
@@ -196,13 +200,19 @@ const HomeMain = () => {
 	}, [isAuthenticated, userId]);
 
 	return (
-		<div className="mx-auto w-full max-w-[112rem] space-y-12 px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:space-y-16 lg:px-10 lg:pb-24">
+		<div className="mx-auto w-full max-w-[112rem] space-y-8 px-4 pb-6 pt-8 sm:px-6 sm:pt-10 lg:space-y-10 lg:px-10 lg:pb-8">
 			{isLoadingRecipes ? (
 				<PageState title="Loading recipes" message="Fetching recipes for search and featured cards." />
 			) : recipesError ? (
 				<PageState type="error" title="Recipes could not load" message={recipesError} />
 			) : (
 				<>
+					<PersonalizedHomeFeed
+						isAuthenticated={isAuthenticated}
+						wishlist={wishlist}
+						onClickFavorite={handleClickFavorite}
+					/>
+					<PantryMatchPanel />
 					<HomeSearchBar
 						recipes={recipes}
 						searchResults={searchQuery.data?.recipes ?? []}

@@ -80,6 +80,6 @@ describe("HomeSearchBar keyboard accessibility", () => {
 
 		const emptyRenderer = renderSearchBar("/?q=does-not-exist");
 		expect(getList(emptyRenderer).props["aria-live"]).toBe("polite");
-		expect(getOptions(emptyRenderer)[0].children).toContain("No recipe found");
+		expect(getOptions(emptyRenderer)[0].children.join("")).toContain("No recipe found");
 	});
 });

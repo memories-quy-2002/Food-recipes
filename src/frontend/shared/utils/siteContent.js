@@ -7,7 +7,7 @@ import {
 
 export const siteContent = {
 	about:
-		"Welcome to Food Recipes, a website dedicated to sharing delicious and healthy recipes from around the world. Our team of passionate chefs and food lovers are here to inspire you to cook and enjoy food. Whether you are looking for breakfast, lunch, dinner, or dessert ideas, we have something for you.",
+		"Practical recipes and kitchen inspiration for everyday cooking.",
 	contact: {
 		email: "foodrecipes@example.com",
 		phone: "(+84) 123 456 7890",

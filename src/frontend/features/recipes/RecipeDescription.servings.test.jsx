@@ -25,9 +25,8 @@ describe("recipe servings", () => {
 		const decrement = renderer.root.findByProps({ "aria-label": "Decrease servings" });
 		const increment = renderer.root.findByProps({ "aria-label": "Increase servings" });
 		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["4"]);
-		expect(decrement.type).toBe("button");
-		expect(decrement.props.type).toBe("button");
-		expect(increment.props.type).toBe("button");
+		expect(renderer.root.findAllByType("button").some((node) => node.props["aria-label"] === "Decrease servings")).toBe(true);
+		expect(renderer.root.findAllByType("button").filter((node) => node.props["aria-label"]).every((node) => node.props.type === "button")).toBe(true);
 
 		act(() => increment.props.onClick());
 		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["5"]);
@@ -102,9 +101,9 @@ describe("recipe servings", () => {
 		});
 
 		expect(renderer.root.findAllByType("h2").some((node) => node.children.join("") === "Nutrition per serving")).toBe(true);
-		expect(renderer.root.findAllByType("li").some((node) => node.children.join("").includes("100 calories"))).toBe(true);
+		expect(renderer.root.findAllByType("span").some((node) => node.children.join("").includes("100 calories"))).toBe(true);
 		expect(renderer.root.findAllByType("span").some((node) => node.children.join("") === "vegetarian")).toBe(true);
-		expect(renderer.root.findAllByType("p").some((node) => node.children.join("") === "Contains: wheat")).toBe(true);
+		expect(renderer.root.findAllByType("p").some((node) => node.children.includes("wheat"))).toBe(true);
 	});
 
 	it("scales structured ingredient quantities from the recipe serving baseline", () => {

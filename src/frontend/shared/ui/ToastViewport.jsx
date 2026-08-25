@@ -4,13 +4,13 @@ import { CheckCircle2, CircleAlert, Info, X } from "lucide-react";
 const toastTone = {
 	success: {
 		icon: CheckCircle2,
-		className: "border-emerald-200 bg-emerald-50 text-emerald-950",
-		iconClassName: "text-emerald-600",
+		className: "border-secondary/60 bg-secondary/30 text-foreground",
+		iconClassName: "text-primary",
 	},
 	error: {
 		icon: CircleAlert,
-		className: "border-red-200 bg-red-50 text-red-950",
-		iconClassName: "text-red-600",
+		className: "border-destructive/30 bg-destructive/10 text-destructive",
+		iconClassName: "text-destructive",
 	},
 	info: {
 		icon: Info,
@@ -36,7 +36,7 @@ const ToastViewport = ({ toasts, onDismiss }) => {
 				return (
 					<div
 						key={toast.id}
-						className={`pointer-events-auto grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-2xl border p-4 shadow-lg shadow-black/5 backdrop-blur ${tone.className}`}
+						className={`pointer-events-auto grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-2xl border p-4 shadow-lg shadow-foreground/10 backdrop-blur ${tone.className}`}
 						role={toast.type === "error" ? "alert" : "status"}
 						aria-atomic="true"
 					>
@@ -44,12 +44,12 @@ const ToastViewport = ({ toasts, onDismiss }) => {
 						<div className="min-w-0">
 							<p className="text-sm font-bold leading-5">{toast.title}</p>
 							{toast.message ? (
-								<p className="mt-1 text-sm leading-5 opacity-80">{toast.message}</p>
+								<p className="mt-1 text-sm leading-5 text-muted-foreground">{toast.message}</p>
 							) : null}
 						</div>
 						<button
 							type="button"
-							className="-mr-1 -mt-1 inline-flex size-9 items-center justify-center rounded-full opacity-70 transition hover:bg-black/5 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+							className="-mr-1 -mt-1 inline-flex size-11 items-center justify-center rounded-full text-foreground transition hover:bg-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							onClick={() => onDismiss(toast.id)}
 							aria-label={`Dismiss notification: ${toast.title}`}
 						>

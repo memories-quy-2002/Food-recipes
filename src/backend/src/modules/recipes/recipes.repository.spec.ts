@@ -181,6 +181,8 @@ describe('RecipesRepository duration normalization', () => {
 
     const query = prisma.$queryRaw.mock.calls[0][0];
     expect(sqlSource(query)).toContain('recipe_ingredients');
+    expect(sqlSource(query)).toContain("'recipe_ingredient_id', ri.ingredient_id");
+    expect(sqlSource(query)).not.toContain('ri.recipe_ingredient_id');
     expect(sqlSource(query)).toContain('recipe_nutrition');
     expect(sqlSource(query)).toContain('recipe_dietary_tags');
     expect(sqlSource(query)).toContain('recipe_allergens');

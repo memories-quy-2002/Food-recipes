@@ -63,11 +63,11 @@ export const normalizeServings = (value) => {
 	return Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, Math.round(numericValue)));
 };
 
-const SectionCard = ({ title, description, children, id }) => (
+const SectionCard = ({ title, description, descriptionRole, children, id }) => (
 	<section id={id} className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8">
 		<div className="max-w-3xl">
 			<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{title}</h2>
-			{description ? <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">{description}</p> : null}
+			{description ? <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base" role={descriptionRole}>{description}</p> : null}
 		</div>
 		{children}
 	</section>
@@ -80,8 +80,10 @@ const RecipeDescription = ({ recipe }) => {
 	const recipeIdentity = getRecipeIdentity(recipe);
 	const baseServings = normalizeServings(getServings(recipe));
 	const structuredIngredients = useMemo(
-		() => (Array.isArray(recipe.structured_ingredients) ? recipe.structured_ingredients : []),
-		[recipe.structured_ingredients]
+		() => (Array.isArray(recipe.structured_ingredients)
+			? recipe.structured_ingredients
+			: Array.isArray(recipe.structuredIngredients) ? recipe.structuredIngredients : []),
+		[recipe.structured_ingredients, recipe.structuredIngredients]
 	);
 	const displayedIngredients = structuredIngredients.length > 0
 		? structuredIngredients.map((ingredient) => scaleStructuredIngredient(ingredient, servings, baseServings))
@@ -117,9 +119,9 @@ const RecipeDescription = ({ recipe }) => {
 				<div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
 					<div className="flex items-center gap-2 text-muted-foreground"><Users className="size-4" aria-hidden="true" /><span className="text-xs font-extrabold uppercase tracking-[0.14em]">Servings</span></div>
 					<div className="mt-2 flex items-center gap-2" aria-label="Adjust servings">
-						<Button variant="outline" size="icon" className="size-10 rounded-full" aria-label="Decrease servings" onClick={() => adjustServings(-1)} disabled={servings === MIN_SERVINGS}><Minus className="size-4" aria-hidden="true" /></Button>
+						<Button variant="outline" size="icon" className="size-11 rounded-full" aria-label="Decrease servings" onClick={() => adjustServings(-1)} disabled={servings === MIN_SERVINGS}><Minus className="size-4" aria-hidden="true" /></Button>
 						<span className="min-w-10 text-center text-xl font-black" aria-live="polite">{servings}</span>
-						<Button variant="outline" size="icon" className="size-10 rounded-full" aria-label="Increase servings" onClick={() => adjustServings(1)} disabled={servings === MAX_SERVINGS}><Plus className="size-4" aria-hidden="true" /></Button>
+						<Button variant="outline" size="icon" className="size-11 rounded-full" aria-label="Increase servings" onClick={() => adjustServings(1)} disabled={servings === MAX_SERVINGS}><Plus className="size-4" aria-hidden="true" /></Button>
 					</div>
 				</div>
 			</section>
@@ -133,9 +135,10 @@ const RecipeDescription = ({ recipe }) => {
 			<SectionCard
 				id="ingredients"
 				title="Ingredients"
+				descriptionRole="note"
 				description={structuredIngredients.length > 0
-					? "Quantities update with your serving count. Free-text notes stay exactly as written."
-					: "Ingredients are shown as written because automatic scaling is unavailable for this recipe."}
+					? "Quantities are scaled with your serving count. Free-text notes stay exactly as written."
+					: "Ingredients are shown as written because this recipe has unsupported ingredient data for automatic scaling."}
 			>
 				<RecipeIngredientChecklist
 					key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(displayedIngredients)}`}
@@ -157,7 +160,7 @@ const RecipeDescription = ({ recipe }) => {
 			{dietaryTags.length > 0 || allergenTags.length > 0 ? (
 				<SectionCard title="Dietary preferences">
 					{dietaryTags.length > 0 ? <div className="mt-4 flex flex-wrap gap-2">{dietaryTags.map((tag) => <span key={`dietary-${tag}`} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-bold text-secondary-foreground">{tag}</span>)}</div> : null}
-					{allergenTags.length > 0 ? <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-950"><strong>Contains:</strong> {allergenTags.join(", ")}</p> : null}
+					{allergenTags.length > 0 ? <p className="mt-4 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm font-semibold text-foreground"><strong>Contains:</strong> {allergenTags.join(", ")}</p> : null}
 				</SectionCard>
 			) : null}
 
@@ -165,8 +168,8 @@ const RecipeDescription = ({ recipe }) => {
 				{instructions.length > 0 ? (
 					<ol className="mt-6 space-y-3">
 						{instructions.map((instruction, index) => (
-							<li className="grid grid-cols-[2.5rem_1fr] gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-[3rem_1fr] sm:p-5" key={`${index}-${instruction}`}>
-								<span className="flex size-10 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground sm:size-12">{index + 1}</span>
+									<li className="grid grid-cols-[2.75rem_1fr] gap-3 rounded-2xl border border-border bg-background p-4 sm:grid-cols-[3rem_1fr] sm:p-5" key={`${index}-${instruction}`}>
+										<span className="flex size-11 items-center justify-center rounded-full bg-primary text-sm font-black text-primary-foreground sm:size-12">{index + 1}</span>
 								<p className="self-center text-base leading-7 text-foreground sm:text-lg">{instruction}</p>
 							</li>
 						))}

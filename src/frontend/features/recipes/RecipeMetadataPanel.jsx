@@ -31,7 +31,7 @@ const nutritionFields = [
 const sourceLabel = (source) => SOURCE_LABELS[source] || "Source not specified";
 
 const WarningNote = ({ children }) => (
-	<p className="mt-4 flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950" role="note">
+	<p className="mt-4 flex gap-2 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm leading-6 text-foreground" role="note">
 		<AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 		<span>{children}</span>
 	</p>
@@ -49,7 +49,7 @@ const RecipeMetadataPanel = ({ metadata }) => {
 					<ShieldAlert className="size-5" aria-hidden="true" />
 				</div>
 				<div>
-					<h2 id="recipe-metadata-title" className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Nutrition & allergens</h2>
+					<h2 id="recipe-metadata-title" className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Nutrition and allergens</h2>
 					<p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">Use this information as practical guidance, not medical advice. Always verify ingredient labels for allergies.</p>
 				</div>
 			</div>

@@ -12,7 +12,7 @@ describe("ManualTimer", () => {
 			renderer = TestRenderer.create(<ManualTimer />);
 		});
 
-		const button = (name) => renderer.root.findAllByType("button").find((node) => node.children.join("") === name);
+		const button = (name) => renderer.root.findAllByType("button").find((node) => node.props["aria-label"] === name);
 		expect(button("Start timer")).toBeTruthy();
 		act(() => button("Start timer").props.onClick());
 		expect(button("Pause timer")).toBeTruthy();

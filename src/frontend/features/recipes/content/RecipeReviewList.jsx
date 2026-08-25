@@ -38,7 +38,7 @@ const RecipeReviewList = ({ reviewList }) => {
 										<strong className="truncate text-sm font-black text-foreground">{review.full_name || "Anonymous cook"}</strong>
 										<time className="text-xs text-muted-foreground" dateTime={review.date_added || undefined}>{formatTimestamp(review.date_added)}</time>
 									</div>
-									<div className="mt-2 flex items-center gap-1 text-primary" aria-label={`Rated ${review.score || 0} out of 5`}>{ratingStar(review.score, "#d56b00")}</div>
+									<div className="mt-2 flex items-center gap-1 text-primary" aria-label={`Rated ${review.score || 0} out of 5`}>{ratingStar(review.score, "currentColor")}</div>
 									<p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground sm:text-base">{review.review || "No written review."}</p>
 								</div>
 							</div>
@@ -51,17 +51,17 @@ const RecipeReviewList = ({ reviewList }) => {
 				<nav className="mt-6 flex flex-wrap items-center justify-center gap-1" aria-label="Review pages">
 					{totalPages > 5 ? (
 						<>
-							<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(1)} disabled={currentPage === 1} aria-label="First reviews page"><ChevronFirst className="size-4" /></Button>
-							<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous reviews page"><ChevronLeft className="size-4" /></Button>
+							<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(1)} disabled={currentPage === 1} aria-label="First reviews page"><ChevronFirst className="size-4" /></Button>
+							<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} aria-label="Previous reviews page"><ChevronLeft className="size-4" /></Button>
 						</>
 					) : null}
 					{(totalPages <= 5 ? pageNumbers : displayedPages).map((number) => (
-						<Button key={number} variant={number === currentPage ? "default" : "ghost"} size="icon" className="size-10 rounded-full" onClick={() => goTo(number)} aria-current={number === currentPage ? "page" : undefined} aria-label={`Reviews page ${number}`}>{number}</Button>
+						<Button key={number} variant={number === currentPage ? "default" : "ghost"} size="icon" className="size-11 rounded-full" onClick={() => goTo(number)} aria-current={number === currentPage ? "page" : undefined} aria-label={`Reviews page ${number}`}>{number}</Button>
 					))}
 					{totalPages > 5 ? (
 						<>
-							<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Next reviews page"><ChevronRight className="size-4" /></Button>
-							<Button variant="ghost" size="icon" className="size-10 rounded-full" onClick={() => goTo(totalPages)} disabled={currentPage === totalPages} aria-label="Last reviews page"><ChevronLast className="size-4" /></Button>
+							<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages} aria-label="Next reviews page"><ChevronRight className="size-4" /></Button>
+							<Button variant="ghost" size="icon" className="size-11 rounded-full" onClick={() => goTo(totalPages)} disabled={currentPage === totalPages} aria-label="Last reviews page"><ChevronLast className="size-4" /></Button>
 						</>
 					) : null}
 				</nav>

@@ -21,6 +21,7 @@ describe("recipe discovery query state", () => {
 			categoryId: "2",
 			mealId: "3",
 			sort: "rating",
+			filter: "",
 			page: 2,
 			limit: 12,
 		});
@@ -38,6 +39,17 @@ describe("recipe discovery query state", () => {
 			sort: "rating",
 			page: 2,
 			limit: 12,
+		});
+	});
+
+	it("supports pantry-friendly filters and production sorting in the URL contract", () => {
+		const state = parseRecipeDiscoveryState("?filter=high-protein&sort=quickest");
+
+		expect(state.filter).toBe("high-protein");
+		expect(state.sort).toBe("quickest");
+		expect(createRecipeRequestParams(state)).toMatchObject({
+			filter: "high-protein",
+			sort: "quickest",
 		});
 	});
 

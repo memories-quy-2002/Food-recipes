@@ -151,15 +151,22 @@
 	font-weight: 500;
 }
 
-.shopping-list-page input {
+.shopping-list-page input:not([type="checkbox"]):not([type="radio"]) {
 	width: 100%;
-	min-height: 2.75rem;
-	padding: 0.6rem 0.7rem;
+	min-height: 3rem;
+	padding: 0.7rem 1rem;
 	border: 1px solid var(--shopping-border);
-	border-radius: 0.65rem;
+	border-radius: 0.875rem;
 	background: var(--shopping-surface);
 	color: var(--shopping-text);
 	font: inherit;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+.shopping-list-page input:not([type="checkbox"]):not([type="radio"]):focus-visible {
+	border-color: var(--shopping-primary);
+	box-shadow: 0 0 0 4px var(--shopping-ring);
 }
 
 .shopping-list-page input:focus-visible,

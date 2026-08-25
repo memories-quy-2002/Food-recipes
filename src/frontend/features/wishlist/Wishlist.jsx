@@ -364,8 +364,10 @@ const Wishlist = () => {
 					<label>
 						Search
 						<input
-							type="text"
+							id="saved-recipes-search"
+							type="search"
 							placeholder="Search saved recipes…"
+							autoComplete="off"
 							value={searchTerm}
 							onChange={(event) =>
 								setSearchTerm(event.target.value)
@@ -375,6 +377,7 @@ const Wishlist = () => {
 					<label>
 						Sort
 						<select
+							id="saved-recipes-sort"
 							value={sortBy}
 							onChange={(event) => setSortBy(event.target.value)}
 						>

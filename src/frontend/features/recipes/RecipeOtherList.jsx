@@ -41,7 +41,7 @@ const RecipeOtherList = ({ recipeId }) => {
 						<div className="p-4">
 							<h3 className="line-clamp-2 min-h-10 text-sm font-black leading-5 text-foreground">{recipe.recipe_name}</h3>
 							<div className="mt-3 flex items-center gap-2" aria-label={`Rated ${Number(recipe.overall_score || 0).toFixed(1)} out of 5 from ${Number(recipe.num_ratings || 0)} ratings`}>
-								<div className="flex items-center gap-0.5 text-primary" aria-hidden="true">{ratingStar(recipe.overall_score, "#d56b00")}</div>
+								<div className="flex items-center gap-0.5 text-primary" aria-hidden="true">{ratingStar(recipe.overall_score, "currentColor")}</div>
 								<span className="text-xs font-semibold text-muted-foreground">{Number(recipe.num_ratings || 0)} ratings</span>
 							</div>
 						</div>

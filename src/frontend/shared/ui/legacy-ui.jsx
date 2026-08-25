@@ -178,7 +178,7 @@ const FormControl = React.forwardRef(
 		<Component
 			ref={ref}
 			className={cn(
-				"flex min-h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+				"flex min-h-12 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-base leading-6 text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm",
 				plaintext && "border-transparent bg-transparent px-0 shadow-none",
 				isInvalid && "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/25",
 				isValid && "border-emerald-600 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20",
@@ -194,7 +194,7 @@ const FormSelect = React.forwardRef(({ className, ...props }, ref) => (
 	<select
 		ref={ref}
 		className={cn(
-			"flex min-h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm outline-none transition focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50",
+			"flex min-h-12 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-base leading-6 text-foreground shadow-sm outline-none transition focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm",
 			className
 		)}
 		{...props}
@@ -254,7 +254,7 @@ const PaginationButton = React.forwardRef(
 			disabled={disabled}
 			aria-current={active ? "page" : undefined}
 			className={cn(
-				"inline-flex size-10 items-center justify-center rounded-md border border-input bg-background text-sm font-semibold text-foreground transition hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-45",
+				"inline-flex size-11 items-center justify-center rounded-md border border-input bg-background text-sm font-semibold text-foreground transition hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-45",
 				active && "border-primary bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
 				className
 			)}

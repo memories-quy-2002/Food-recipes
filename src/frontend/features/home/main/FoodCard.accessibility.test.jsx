@@ -36,9 +36,10 @@ describe("FoodCard semantics", () => {
 
 		expect(link.props.to).toBe("/recipe?id=7");
 		expect(link.props["aria-label"]).toBe("Open Pasta Primavera");
-		expect(button.props["aria-label"]).toBe("Add to favorite");
+		expect(button.props["aria-label"]).toBe("Save Pasta Primavera");
 		expect(button.props.type).toBe("button");
-		expect(button.parent.parent.type).toBe("article");
+		expect(renderer.root.findByType("article")).toBeTruthy();
+		expect(link.findAllByType("button")).toHaveLength(0);
 	});
 
 	it("isolates favorite activation from recipe navigation", () => {

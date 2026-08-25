@@ -27,19 +27,19 @@
 				margin: 1rem 0;
 
 				button {
-					border: 1px solid rgba(255, 248, 239, 0.45);
+					border: 1px solid color-mix(in srgb, var(--primary-foreground) 45%, transparent);
 					background: transparent;
-					color: #fff8ef;
+					color: var(--primary-foreground);
 					box-shadow: none;
 
 					&:hover:not(:disabled) {
-						border-color: rgba(255, 248, 239, 0.65);
-						background: rgba(255, 248, 239, 0.12);
-						color: #fff8ef;
+						border-color: color-mix(in srgb, var(--primary-foreground) 65%, transparent);
+						background: color-mix(in srgb, var(--primary-foreground) 12%, transparent);
+						color: var(--primary-foreground);
 					}
 
 					&:focus-visible {
-						outline: 3px solid #ffcf75;
+						outline: 3px solid var(--ring);
 						outline-offset: 3px;
 					}
 
@@ -51,10 +51,10 @@
 				}
 
 				.recipe__container__summary__start {
-					border-color: #9a3412;
-					background: #9a3412;
-					color: #fff8ef;
-					box-shadow: 0 10px 24px rgba(154, 52, 18, 0.22);
+					border-color: var(--primary);
+					background: var(--primary);
+					color: var(--primary-foreground);
+					box-shadow: 0 10px 24px color-mix(in srgb, var(--foreground) 22%, transparent);
 					transition:
 						background-color 0.2s ease,
 						border-color 0.2s ease,
@@ -63,33 +63,33 @@
 					&:hover {
 						border-color: var(--accent-foreground);
 						background: var(--accent-foreground);
-						color: #fff8ef;
+						color: var(--primary-foreground);
 						transform: translateY(-1px);
 					}
 				}
 
 				.recipe__container__summary__plan {
-					border-color: #ffd18b;
-					background: #ffd18b;
-					color: #211813;
+					border-color: var(--accent);
+					background: var(--accent);
+					color: var(--accent-foreground);
 
 					&:hover:not(:disabled) {
-						border-color: #ffe1b2;
-						background: #ffe1b2;
-						color: #211813;
+						border-color: var(--accent);
+						background: var(--accent);
+						color: var(--accent-foreground);
 					}
 				}
 
 				.recipe__container__summary__collection,
 				.recipe__container__summary__shopping {
-					border-color: rgba(255, 248, 239, 0.7);
-					background: #fff8ef;
-					color: #211813;
+					border-color: color-mix(in srgb, var(--primary-foreground) 70%, transparent);
+					background: var(--card);
+					color: var(--card-foreground);
 
 					&:hover:not(:disabled) {
-						border-color: #ffd18b;
-						background: #ffd18b;
-						color: #211813;
+						border-color: var(--accent);
+						background: var(--accent);
+						color: var(--accent-foreground);
 					}
 				}
 			}

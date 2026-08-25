@@ -40,8 +40,8 @@ test("supports mobile filter sheet, URL chips, sort, and browser history", async
 	await page.setViewportSize({ width: 375, height: 900 });
 	await page.goto("/food");
 
-	await expect(page.getByRole("button", { name: "Filters (0)" })).toBeVisible();
-	await page.getByRole("button", { name: "Filters (0)" }).click();
+	await expect(page.getByRole("button", { name: "Filters" })).toBeVisible();
+	await page.getByRole("button", { name: "Filters" }).click();
 	const dialog = page.getByRole("dialog", { name: "Filter recipes" });
 	await expect(dialog).toBeVisible();
 	await dialog.getByRole("button", { name: "Main Course" }).click();
@@ -50,7 +50,7 @@ test("supports mobile filter sheet, URL chips, sort, and browser history", async
 	await dialog.getByRole("button", { name: "Dinner" }).click();
 	await expect(page).toHaveURL(/mealId=3/);
 	await dialog.getByLabel("Search recipes").fill("chicken");
-	await dialog.getByRole("button", { name: "Done" }).click();
+	await dialog.getByRole("button", { name: "Show results" }).click();
 
 	await expect(page).toHaveURL(/\/food\?q=chicken&categoryId=2&mealId=3/);
 	const activeFilters = page.getByLabel("Active recipe filters");
@@ -58,7 +58,7 @@ test("supports mobile filter sheet, URL chips, sort, and browser history", async
 	await expect(activeFilters.getByText("Main Course", { exact: true })).toBeVisible();
 	await expect(activeFilters.getByText("Dinner", { exact: true })).toBeVisible();
 
-	await page.getByRole("combobox", { name: "Sort" }).selectOption("rating");
+	await page.getByRole("combobox", { name: "Sort recipes by" }).selectOption("rating");
 	await expect(page).toHaveURL(/sort=rating/);
 
 	await page.getByRole("button", { name: "Remove category filter" }).click();
@@ -71,7 +71,7 @@ test("supports mobile filter sheet, URL chips, sort, and browser history", async
 
 	await page.getByRole("button", { name: "Clear all" }).click();
 	await expect(page).toHaveURL(/\/food\?sort=rating$/);
-	await expect(page.getByRole("button", { name: "Filters (0)" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Filters" })).toBeVisible();
 
 	const audit = await page.evaluate(() => ({
 		viewportWidth: window.innerWidth,
@@ -93,7 +93,7 @@ test("keeps the desktop sidebar and hides the mobile trigger", async ({ page }) 
 	await page.setViewportSize({ width: 1024, height: 900 });
 	await page.goto("/food?categoryId=2");
 
-	await expect(page.locator(".food__menubar")).toBeVisible();
-	await expect(page.getByRole("button", { name: /Filters \(/ })).toBeHidden();
+	await expect(page.getByRole("complementary")).toBeVisible();
+	await expect(page.getByRole("button", { name: "Filters" })).toBeHidden();
 	await expect(page.getByRole("button", { name: "Clear all" })).toBeVisible();
 });

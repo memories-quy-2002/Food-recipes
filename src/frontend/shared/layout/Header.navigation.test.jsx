@@ -170,7 +170,7 @@ describe("primary navigation", () => {
 
 		authenticated.renderer.unmount();
 		const unauthenticated = renderMobile(false);
-		expect(findButton(unauthenticated.renderer, "Sign up")).toBeDefined();
+		expect(findButton(unauthenticated.renderer, "Login / Sign up")).toBeDefined();
 		expect(findLink(unauthenticated.renderer, "Add Recipe")).toBeUndefined();
 	});
 

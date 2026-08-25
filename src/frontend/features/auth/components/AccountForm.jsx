@@ -55,27 +55,27 @@ const AccountForm = () => {
 	};
 
 	return (
-		<section className="grid w-full overflow-hidden rounded-[2rem] border border-white/10 bg-card shadow-2xl shadow-black/25 lg:grid-cols-[0.9fr_1.1fr]">
-			<aside className="hidden min-h-[42rem] flex-col justify-center bg-[linear-gradient(145deg,rgba(33,24,19,0.98),rgba(112,58,24,0.94))] p-10 text-[#fff8ef] lg:flex xl:p-14">
-				<p className="mb-4 w-fit rounded-full border border-[#ffd18b]/35 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-[#ffd18b]">
+		<section className="account__surface grid w-full overflow-hidden rounded-3xl border border-border bg-card shadow-xl shadow-foreground/15 lg:grid-cols-[0.9fr_1.1fr]">
+			<aside className="hidden min-h-[36rem] flex-col justify-center bg-foreground p-10 text-background lg:flex xl:p-14">
+				<p className="mb-4 w-fit rounded-full border border-secondary/50 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-secondary">
 					Food Recipes account
 				</p>
 				<h1 className="max-w-[9ch] text-balance text-5xl font-black leading-[0.95] tracking-[-0.05em] xl:text-6xl">
 					{isSignup ? "Start saving recipes." : "Welcome back."}
 				</h1>
-				<p className="mt-6 max-w-md text-base leading-7 text-[#fff8ef]/75">
+				<p className="mt-6 max-w-md text-base leading-7 text-muted">
 					{isSignup
 						? "Create an account to save favorites, rate dishes, and keep your recipe activity in one place."
 						: "Sign in to manage your Saved Recipes, share reviews, and get back to recipes you already love."}
 				</p>
-				<ul className="mt-8 grid gap-3 text-sm font-bold text-[#fff8ef]/90">
+				<ul className="mt-8 grid gap-3 text-sm font-bold text-background/90">
 					{[
 						"Save favorite recipes",
 						"Rate and review meals",
 						"Manage your cooking profile",
 					].map((item) => (
 						<li key={item} className="flex items-center gap-3">
-							<span className="size-2 rounded-full bg-[#ff9f1c]" aria-hidden="true" />
+							<span className="size-2 rounded-full bg-secondary" aria-hidden="true" />
 							{item}
 						</li>
 					))}
@@ -93,7 +93,7 @@ const AccountForm = () => {
 				</div>
 
 				{redirectPath && (
-					<div className="mb-5 rounded-xl border border-amber-500/25 bg-amber-50 px-4 py-3 text-sm text-amber-950" role="status">
+					<div className="mb-5 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm text-foreground" role="status">
 						<strong className="block font-black">Sign in required</strong>
 						<p className="mt-1 leading-6">
 							Log in or create an account to continue to that page.

@@ -126,6 +126,8 @@ describe('Swagger document', () => {
       'PUT /api/v1/recipes/{recipeId}/metadata',
       'POST /api/v1/suggestions',
       'POST /api/v1/users/me/suggestions',
+      'GET /api/v1/home-feed',
+      'GET /api/v1/users/me/home-feed',
     ];
     const actualRoutes = Object.entries(document.paths).flatMap(([path, operations]) =>
       Object.keys(operations).map((method) => `${method.toUpperCase()} ${path}`),
@@ -208,6 +210,7 @@ describe('Swagger document', () => {
       'categoryId',
       'mealId',
       'sort',
+      'filter',
       'page',
       'limit',
     ]);

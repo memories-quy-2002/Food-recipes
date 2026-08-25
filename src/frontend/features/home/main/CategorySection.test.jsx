@@ -52,7 +52,7 @@ describe("Home category ranking", () => {
 				);
 		});
 
-		expect(renderer.root.findAllByType("h4").map(({ children }) => children.join(""))).toEqual([
+		expect(renderer.root.findAll((node) => node.type === "h3" || node.type === "strong").map(({ children }) => children.join(""))).toEqual([
 			"All categories",
 			"Chicken",
 			"Pizza",

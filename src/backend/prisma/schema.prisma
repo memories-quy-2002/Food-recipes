@@ -60,7 +60,7 @@ model Recipe {
 }
 
 model RecipeIngredient {
-  id           Int      @id @default(autoincrement()) @map("recipe_ingredient_id")
+  id           Int      @id @default(autoincrement()) @map("ingredient_id")
   recipeId     Int      @map("recipe_id")
   position     Int
   quantity     Decimal? @db.Decimal(12, 3)

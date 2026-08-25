@@ -104,15 +104,15 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 		isResultListOpen && activeIndex >= 0 ? `recipe-search-option-${activeIndex}` : undefined;
 
 	return (
-		<section className="relative mx-auto w-full max-w-5xl overflow-visible rounded-[2rem] border border-border/80 bg-card px-5 py-8 text-center shadow-[0_24px_70px_rgba(55,35,20,0.08)] sm:px-8 sm:py-10 lg:px-12 lg:py-12">
+		<section className="relative w-full overflow-visible rounded-xl border border-border bg-card px-5 py-7 text-center shadow-md sm:px-8 sm:py-8 lg:px-10 lg:py-9">
 			<div className="mx-auto flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
 				<Sparkles className="size-5" aria-hidden="true" />
 			</div>
 			<p className="mt-4 text-xs font-extrabold uppercase tracking-[0.18em] text-primary sm:text-sm">
-				Start with a craving
+				Recipe index
 			</p>
-			<h1 className="mx-auto mt-3 max-w-3xl text-balance text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl lg:text-5xl">
-				What do you want to cook?
+			<h1 className="mx-auto mt-3 max-w-3xl text-balance text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl">
+				Search the recipe index.
 			</h1>
 			<p className="mx-auto mt-4 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
 				Search by recipe, category, or meal type. Pick an idea and get to cooking faster.
@@ -129,7 +129,7 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 					aria-controls={SEARCH_RESULTS_ID}
 					aria-expanded={Boolean(searchTerm) && isResultListOpen}
 					aria-activedescendant={activeDescendant}
-					className="h-12 w-full rounded-full border border-input bg-background pl-12 pr-5 text-base text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/80 focus:border-primary focus:ring-4 focus:ring-ring/40"
+					className="h-12 w-full rounded-full border border-input bg-background pl-12 pr-5 text-base text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-ring"
 					value={searchTerm}
 					onChange={handleChange}
 					onFocus={() => searchTerm.trim() && setIsResultListOpen(true)}
@@ -159,35 +159,37 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 						role="listbox"
 						aria-label="Recipe search results"
 						aria-live="polite"
-						className="absolute inset-x-0 top-[calc(100%+0.75rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-2xl shadow-black/10"
+						className="absolute inset-x-0 top-[calc(100%+0.75rem)] z-30 max-h-80 overflow-y-auto rounded-2xl border border-border bg-card p-2 shadow-2xl shadow-foreground/10"
 					>
 						{isSearchLoading ? (
-							<li className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">Searching recipes…</li>
+							<li key="search-loading" className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">Searching recipes…</li>
 						) : searchError ? (
-							<li className="px-4 py-4 text-sm text-destructive" role="option" aria-disabled="true">Search suggestions are unavailable.</li>
+							<li key="search-error" className="px-4 py-4 text-sm text-destructive" role="option" aria-disabled="true">Search suggestions are unavailable.</li>
 						) : filteredRecipes.length > 0 ? (
-							filteredRecipes.map((recipe, index) => (
-								<li
-									key={recipe.recipe_id}
-									id={`recipe-search-option-${index}`}
-									role="option"
-									tabIndex={-1}
-									aria-selected={index === activeIndex}
-									className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-accent aria-selected:bg-accent"
-									onMouseEnter={() => setActiveIndex(index)}
-									onClick={() => navigate(`/recipe?id=${recipe.recipe_id}`)}
-								>
-									{convertImage(recipe.recipe_name, "size-12 shrink-0 rounded-xl object-cover sm:size-14", recipe.image_url)}
-									<div className="min-w-0">
-										<p className="truncate font-bold text-foreground">{recipe.recipe_name}</p>
-										<p className="mt-0.5 truncate text-xs text-muted-foreground">{recipe.category_name || recipe.meal_name || "Recipe"}</p>
-									</div>
-								</li>
-							))
+							<React.Fragment key="recipe-search-options">
+								{filteredRecipes.map((recipe, index) => (
+									<li
+										key={recipe.recipe_id}
+										id={`recipe-search-option-${index}`}
+										role="option"
+										tabIndex={-1}
+										aria-selected={index === activeIndex}
+										className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-accent aria-selected:bg-accent"
+										onMouseEnter={() => setActiveIndex(index)}
+										onClick={() => navigate(`/recipe?id=${recipe.recipe_id}`)}
+									>
+										{convertImage(recipe.recipe_name, "size-12 shrink-0 rounded-xl object-cover sm:size-14", recipe.image_url)}
+										<div className="min-w-0">
+											<p className="truncate font-bold text-foreground">{recipe.recipe_name}</p>
+											<p className="mt-0.5 truncate text-xs text-muted-foreground">{recipe.category_name || recipe.meal_name || "Recipe"}</p>
+										</div>
+									</li>
+								))}
+							</React.Fragment>
 						) : (
-							<li className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">No recipe found. Try a broader term.</li>
+							<li key="search-empty" className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">No recipe found. Try a broader term.</li>
 						)}
-						<li className="mt-1 border-t border-border p-1 pt-2">
+						<li className="mt-1 border-t border-border p-1 pt-2" key="view-all-results">
 							<Link
 								className="flex min-h-11 items-center justify-center rounded-xl px-3 text-sm font-bold text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 								to={`/food?q=${encodeURIComponent(searchTerm.trim())}`}

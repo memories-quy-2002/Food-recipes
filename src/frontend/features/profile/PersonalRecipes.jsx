@@ -8,30 +8,140 @@ import PageState from "@/shared/ui/PageState";
 import Button from "@/shared/ui/Button";
 import Badge from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
-import { cn } from "@/shared/lib/utils";
 import convertImage from "@/shared/utils/convertImage";
 
 const STATUS_FILTERS = ["all", "draft", "published", "archived"];
 const statusLabel = (status) => status ? status[0].toUpperCase() + status.slice(1) : "Unknown";
+
 const PersonalRecipes = ({ user }) => {
-	const [personalRecipes, setPersonalRecipes] = useState([]), [showModal, setShowModal] = useState(false), [recipeId, setRecipeId] = useState(0), [isLoading, setIsLoading] = useState(true), [error, setError] = useState(""), [statusFilter, setStatusFilter] = useState("all"), [actionId, setActionId] = useState(null);
+	const [personalRecipes, setPersonalRecipes] = useState([]);
+	const [showModal, setShowModal] = useState(false);
+	const [recipeId, setRecipeId] = useState(0);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState("");
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [actionId, setActionId] = useState(null);
 	const navigate = useNavigate();
-	const fetchPersonalRecipes = useCallback(async () => { if (!user?.user_id) { setIsLoading(false); return; } try { setIsLoading(true); setError(""); const response = await axios.get(apiRoutes.userRecipes, { params: { status: "all" } }); if (response.status === undefined || response.status === 200) setPersonalRecipes(getArrayPayload(response.data, "recipes")); } catch (err) { console.error(err); setError(err.response?.data?.message || "Unable to load your personal recipes."); } finally { setIsLoading(false); } }, [user?.user_id]);
-	useEffect(() => { fetchPersonalRecipes(); }, [fetchPersonalRecipes]);
-	const visibleRecipes = useMemo(() => statusFilter === "all" ? personalRecipes : personalRecipes.filter((recipe) => (recipe.status || "published") === statusFilter), [personalRecipes, statusFilter]);
-	const recentCount = visibleRecipes.filter(({ date_added }) => { const date = new Date(date_added), now = new Date(), weekAgo = new Date(); weekAgo.setDate(now.getDate() - 7); return date >= weekAgo && date <= now; }).length;
-	const handleLifecycleAction = async (recipe, action) => { setActionId(recipe.recipe_id); setError(""); try { const routeName = `recipe${action[0].toUpperCase()}${action.slice(1)}`; await axios.post(apiRoutes[routeName](recipe.recipe_id)); await fetchPersonalRecipes(); } catch (err) { console.error(err); setError(err.response?.data?.message || `Unable to ${action} this recipe.`); } finally { setActionId(null); } };
-	const handleDeleteRecipe = async () => { try { const response = await axios.delete(apiRoutes.recipe(recipeId)); if (isRecipeDeleteSuccess(response.status)) { setShowModal(false); setRecipeId(0); await fetchPersonalRecipes(); } } catch (err) { console.error(err); setError(err.response?.data?.message || "Unable to delete this recipe."); } };
+
+	const fetchPersonalRecipes = useCallback(async () => {
+		if (!user?.user_id) {
+			setIsLoading(false);
+			return;
+		}
+
+		try {
+			setIsLoading(true);
+			setError("");
+			const response = await axios.get(apiRoutes.userRecipes, { params: { status: "all" } });
+			if (response.status === undefined || response.status === 200) {
+				setPersonalRecipes(getArrayPayload(response.data, "recipes"));
+			}
+		} catch (err) {
+			console.error(err);
+			setError(err.response?.data?.message || "Unable to load your personal recipes.");
+		} finally {
+			setIsLoading(false);
+		}
+	}, [user?.user_id]);
+
+	useEffect(() => {
+		fetchPersonalRecipes();
+	}, [fetchPersonalRecipes]);
+
+	const visibleRecipes = useMemo(
+		() => statusFilter === "all"
+			? personalRecipes
+			: personalRecipes.filter((recipe) => (recipe.status || "published") === statusFilter),
+		[personalRecipes, statusFilter],
+	);
+
+	const recentCount = visibleRecipes.filter(({ date_added }) => {
+		const date = new Date(date_added);
+		const now = new Date();
+		const weekAgo = new Date();
+		weekAgo.setDate(now.getDate() - 7);
+		return date >= weekAgo && date <= now;
+	}).length;
+
+	const handleLifecycleAction = async (recipe, action) => {
+		setActionId(recipe.recipe_id);
+		setError("");
+		try {
+			const routeName = `recipe${action[0].toUpperCase()}${action.slice(1)}`;
+			await axios.post(apiRoutes[routeName](recipe.recipe_id));
+			await fetchPersonalRecipes();
+		} catch (err) {
+			console.error(err);
+			setError(err.response?.data?.message || `Unable to ${action} this recipe.`);
+		} finally {
+			setActionId(null);
+		}
+	};
+
+	const handleDeleteRecipe = async () => {
+		try {
+			const response = await axios.delete(apiRoutes.recipe(recipeId));
+			if (isRecipeDeleteSuccess(response.status)) {
+				setShowModal(false);
+				setRecipeId(0);
+				await fetchPersonalRecipes();
+			}
+		} catch (err) {
+			console.error(err);
+			setError(err.response?.data?.message || "Unable to delete this recipe.");
+		}
+	};
+
 	return (
 		<div>
-			<header className="mb-6"><p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your cookbook</p><h1 className="text-3xl font-black tracking-tight sm:text-4xl">Personal recipes</h1><p className="mt-3 text-muted-foreground">Create drafts, publish when ready, and archive recipes without losing your work.</p></header>
-		<div className="mb-6 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Recipe status filters">{STATUS_FILTERS.map((filter) => <Button key={filter} type="button" size="sm" variant={statusFilter === filter ? "default" : "outline"} aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className="shrink-0">{statusLabel(filter)}</Button>)}</div>
-		{isLoading ? <PageState title="Loading your recipes" message="Fetching recipes you have shared." /> : error ? <PageState type="error" title="Personal recipes could not load" message={error} actionLabel="Try again" onAction={fetchPersonalRecipes} /> : visibleRecipes.length === 0 ? <PageState type="empty" title={statusFilter === "all" ? "You have not created any recipes yet" : `No ${statusFilter} recipes yet.`} message="Start with one recipe image, a few ingredients, and the cooking steps." actionLabel="Add a recipe" onAction={() => navigate("/food/add")} /> : <>
-			<div className="mb-6 grid grid-cols-2 gap-3"><Card className="p-4 text-center"><strong className="block text-2xl font-black">{visibleRecipes.length}</strong><span className="text-sm text-muted-foreground">{statusFilter === "all" ? "Total recipes" : statusLabel(statusFilter)}</span></Card><Card className="p-4 text-center"><strong className="block text-2xl font-black">{recentCount}</strong><span className="text-sm text-muted-foreground">Added in 7 days</span></Card></div>
-			<ul className="grid gap-4">{visibleRecipes.map((recipe) => { const status = recipe.status || "published", isBusy = actionId === recipe.recipe_id, canEdit = status !== "archived" && Number.isSafeInteger(Number(recipe.recipe_id)) && Number(recipe.recipe_id) > 0; return <li key={recipe.recipe_id}><Card className="grid overflow-hidden sm:grid-cols-[180px_minmax(0,1fr)]"><div className="min-h-44 bg-muted">{convertImage(recipe.recipe_name, "h-full w-full object-cover", recipe.image_url)}</div><div className="flex min-w-0 flex-col gap-4 p-4 sm:p-5"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate text-lg font-bold">{recipe.recipe_name || "Untitled draft"}</h2><p className="mt-1 text-sm text-muted-foreground">{recipe.category_name || "No category"} · {recipe.meal_name || "No meal"}</p></div><Badge variant={status === "published" ? "success" : status === "archived" ? "secondary" : "warning"}>{statusLabel(status)}</Badge></div><div className="mt-auto flex flex-wrap justify-end gap-2">{canEdit && <Button variant="outline" size="sm" onClick={() => navigate(`/food/edit?id=${recipe.recipe_id}`)}>Edit</Button>}{status === "published" && <Button variant="outline" size="sm" onClick={() => navigate(`/recipe/?id=${recipe.recipe_id}`)}>View</Button>}{status === "draft" && <Button size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "publish")}>Publish</Button>}{status === "published" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "archive")}>Archive</Button>}{status === "archived" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "restore")}>Restore</Button>}<Button variant="destructive" size="sm" onClick={() => { setShowModal(true); setRecipeId(recipe.recipe_id); }}>Delete</Button></div></div></Card></li>; })}</ul>
-		</>}
-		{showModal && <div className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}><div role="dialog" aria-modal="true" aria-labelledby="delete-recipe-title" className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"><h2 id="delete-recipe-title" className="text-xl font-bold">Delete recipe?</h2><p className="mt-2 leading-6 text-muted-foreground">This action cannot be undone. The recipe and its content will be permanently removed.</p><div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="outline" onClick={() => setShowModal(false)}>Keep recipe</Button><Button variant="destructive" onClick={handleDeleteRecipe}>Delete recipe</Button></div></div></div>}
+			<header className="mb-6">
+				<p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your cookbook</p>
+				<h1 className="text-3xl font-black tracking-tight sm:text-4xl">Personal recipes</h1>
+				<p className="mt-3 text-muted-foreground">Create drafts, publish when ready, and archive recipes without losing your work.</p>
+			</header>
+
+			<div className="mb-6 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Recipe status filters">
+				{STATUS_FILTERS.map((filter) => (
+					<Button key={filter} type="button" size="sm" variant={statusFilter === filter ? "default" : "outline"} aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className="shrink-0">
+						{statusLabel(filter)}
+					</Button>
+				))}
+			</div>
+
+			{isLoading ? <PageState title="Loading your recipes" message="Fetching recipes you have shared." /> : error ? <PageState type="error" title="Personal recipes could not load" message={error} actionLabel="Try again" onAction={fetchPersonalRecipes} /> : visibleRecipes.length === 0 ? <PageState type="empty" title={statusFilter === "all" ? "You have not created any recipes yet" : `No ${statusFilter} recipes yet.`} message="Start with one recipe image, a few ingredients, and the cooking steps." actionLabel="Add a recipe" onAction={() => navigate("/food/add")} /> : <>
+				<div className="mb-6 grid grid-cols-2 gap-3">
+					<Card className="p-4 text-center"><strong className="block text-2xl font-black">{visibleRecipes.length}</strong><span className="text-sm text-muted-foreground">{statusFilter === "all" ? "Total recipes" : statusLabel(statusFilter)}</span></Card>
+					<Card className="p-4 text-center"><strong className="block text-2xl font-black">{recentCount}</strong><span className="text-sm text-muted-foreground">Added in 7 days</span></Card>
+				</div>
+				<ul className="grid gap-4">
+					{visibleRecipes.map((recipe) => {
+						const status = recipe.status || "published";
+						const isBusy = actionId === recipe.recipe_id;
+						const recipeLabel = recipe.recipe_name || "recipe";
+						const canEdit = status !== "archived" && Number.isSafeInteger(Number(recipe.recipe_id)) && Number(recipe.recipe_id) > 0;
+						return <li key={recipe.recipe_id}>
+							<Card className="grid overflow-hidden sm:grid-cols-[180px_minmax(0,1fr)]">
+								<div className="min-h-44 bg-muted">{convertImage(recipe.recipe_name, "h-full w-full object-cover", recipe.image_url)}</div>
+								<div className="flex min-w-0 flex-col gap-4 p-4 sm:p-5">
+									<div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate text-lg font-bold">{recipe.recipe_name || "Untitled draft"}</h2><p className="mt-1 text-sm text-muted-foreground">{recipe.category_name || "No category"} · {recipe.meal_name || "No meal"}</p></div><Badge variant={status === "published" ? "success" : status === "archived" ? "secondary" : "warning"}>{statusLabel(status)}</Badge></div>
+									<div className="mt-auto flex flex-wrap justify-end gap-2">
+										{canEdit && <Button variant="outline" size="sm" onClick={() => navigate(`/food/edit?id=${recipe.recipe_id}`)} aria-label={`Edit recipe ${recipeLabel}`}>Edit</Button>}
+										{status === "published" && <Button variant="outline" size="sm" onClick={() => navigate(`/recipe/?id=${recipe.recipe_id}`)} aria-label={`View recipe ${recipeLabel}`}>View</Button>}
+										{status === "draft" && <Button size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "publish")} aria-label={`Publish recipe ${recipeLabel}`}>Publish</Button>}
+										{status === "published" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "archive")} aria-label={`Archive recipe ${recipeLabel}`}>Archive</Button>}
+										{status === "archived" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "restore")} aria-label={`Restore recipe ${recipeLabel}`}>Restore</Button>}
+										<Button variant="destructive" size="sm" onClick={() => { setShowModal(true); setRecipeId(recipe.recipe_id); }} aria-label={`Delete recipe ${recipeLabel}`}>Delete</Button>
+									</div>
+								</div>
+							</Card>
+						</li>;
+					})}
+				</ul>
+			</>}
+
+			{showModal && <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/45 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowModal(false); }}><div role="dialog" aria-modal="true" aria-labelledby="delete-recipe-title" className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"><h2 id="delete-recipe-title" className="text-xl font-bold">Delete recipe?</h2><p className="mt-2 leading-6 text-muted-foreground">This action cannot be undone. The recipe and its content will be permanently removed.</p><div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button variant="outline" onClick={() => setShowModal(false)}>Keep recipe</Button><Button variant="destructive" onClick={handleDeleteRecipe}>Delete recipe</Button></div></div></div>}
 		</div>
 	);
 };
+
 export default PersonalRecipes;

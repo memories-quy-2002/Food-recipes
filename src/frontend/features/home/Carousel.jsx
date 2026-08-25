@@ -84,7 +84,7 @@ const Carousel = ({ items }) => {
 
 	return (
 		<section
-			className="relative isolate mx-auto mt-4 w-full max-w-[112rem] overflow-hidden bg-[#211813] text-[#fff8ef] shadow-[0_30px_80px_rgba(33,24,19,0.16)] sm:mt-6 sm:rounded-[2rem] lg:mt-8"
+			className="relative isolate mx-auto mt-4 w-[calc(100%-1.5rem)] max-w-[96rem] overflow-hidden rounded-3xl bg-foreground text-background shadow-xl shadow-foreground/15 sm:mt-6 sm:w-[calc(100%-2.5rem)] lg:mt-8 lg:w-[calc(100%-4rem)]"
 			role="region"
 			aria-roledescription="carousel"
 			aria-label="Featured meals"

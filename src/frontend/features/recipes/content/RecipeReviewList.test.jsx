@@ -28,7 +28,7 @@ describe("recipe review list", () => {
 		);
 	});
 
-	it("reports that review reporting is unavailable without rendering a fake mutation", () => {
+	it("renders reviews without introducing a fake reporting mutation", () => {
 		let renderer;
 		act(() => {
 			renderer = TestRenderer.create(
@@ -45,9 +45,7 @@ describe("recipe review list", () => {
 			);
 		});
 
-		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain(
-			"Reporting reviews is not available yet"
-		);
-		expect(renderer.root.findAllByRole).toBeUndefined();
+		expect(renderer.root.findAllByType("button")).toHaveLength(0);
+		expect(renderer.root.findAllByProps({ role: "note" })).toHaveLength(0);
 	});
 });

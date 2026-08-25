@@ -35,7 +35,7 @@ describe("recipe description time summary", () => {
 		let renderer;
 		act(() => { renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, prep_time_minutes: 10 }} />); });
 		const text = renderer.root.findAllByType("p").flatMap((node) => node.children).join(" ");
-		const headings = renderer.root.findAllByType("h3").flatMap((node) => node.children).join(" ");
+		const headings = renderer.root.findAllByType("span").flatMap((node) => node.children).join(" ");
 		expect(headings).toContain("Prep");
 		expect(text).toContain("10 min");
 		expect(headings).toContain("Cook");
@@ -50,9 +50,8 @@ describe("recipe description time summary", () => {
 		let renderer;
 		act(() => { renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, prep_time_minutes: 10 }} />); });
 
-		const contentRows = renderer.root.findAll((node) => node.props?.className?.startsWith("recipe__content__"));
-		expect(contentRows[0].props.className).toBe("recipe__content__time");
-		expect(renderer.root.findAllByProps({ className: "recipe__content__prose" })).toHaveLength(3);
+		expect(renderer.root.findByProps({ "aria-label": "Recipe timing and servings" })).toBeTruthy();
+		expect(renderer.root.findByProps({ id: "ingredients" })).toBeTruthy();
 	});
 
 	it("keeps rating, tags, Start cooking, and Save available near the title", () => {
@@ -61,11 +60,11 @@ describe("recipe description time summary", () => {
 		act(() => { renderer = TestRenderer.create(<MemoryRouter><RecipeContainerSummary recipe={{ ...recipe, recipe_id: 42 }} favorite={false} onClickFavorite={onClickFavorite} /></MemoryRouter>); });
 		expect(renderer.root.findByType("h1").children).toEqual(["Coconut Curry"]);
 		expect(renderer.root.findByProps({ to: "/recipe/cooking?id=42" }).children[0].children).toEqual(["Start cooking"]);
-		expect(renderer.root.findByType("button").props["aria-label"]).toBe("Add to favorite");
-		expect(renderer.root.findByProps({ "aria-label": "Recipe details" })).toBeTruthy();
+		expect(renderer.root.findAllByType("button").some((button) => button.props["aria-label"] === "Save recipe")).toBe(true);
+		expect(renderer.root.findByProps({ "aria-label": "Recipe category and meal type" })).toBeTruthy();
 	});
 
-	it("renders summary rating stars with the Food Recipes orange", () => {
+	it("renders summary rating stars with the semantic primary token", () => {
 		let renderer;
 		act(() => {
 			renderer = TestRenderer.create(
@@ -79,16 +78,10 @@ describe("recipe description time summary", () => {
 			);
 		});
 
-		const stars = renderer.root.findByProps({
-			className: "recipe__container__summary__review__stars",
-		});
-		const coloredIcons = stars.findAll(
-			(node) => typeof node.props?.color === "string"
-		);
+		const rating = renderer.root.findByProps({ "aria-label": "Rated 4.5 out of 5 from 12 reviews" });
+		const coloredIcons = rating.findAll((node) => node.props?.color === "currentColor");
 
 		expect(coloredIcons.length).toBeGreaterThan(0);
-		expect(coloredIcons.every((icon) => icon.props.color === "#ff9f1c")).toBe(
-			true
-		);
+		expect(coloredIcons.every((icon) => icon.props.color === "currentColor")).toBe(true);
 	});
 });
