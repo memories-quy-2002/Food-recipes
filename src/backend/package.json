@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node dist/main.js",
-    "dev": "pnpm run dev:prepare && pnpm run start:dev",
+    "dev": "pnpm run prisma:migrate:deploy && pnpm run start:dev",
     "dev:prepare": "pnpm run prisma:generate && pnpm run prisma:migrate:deploy",
     "start:dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "build": "tsc -p tsconfig.build.json",

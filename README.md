@@ -38,8 +38,8 @@ Food-recipes/
       components.json     shadcn/ui metadata and aliases
       eslint.config.mjs  Frontend ESLint flat config
       index.html         Vite HTML entry
-      main.jsx           Frontend bootstrap
-      vite.config.ts     Vite config with @ alias to the frontend root
+      main.tsx           Frontend bootstrap
+      vite.config.mts    Vite config with @ alias to the frontend root
       jsconfig.json      Frontend JavaScript editor settings
       vite-env.d.ts      Vite environment types
       tsconfig.json      Frontend TypeScript settings
@@ -157,6 +157,39 @@ Local URLs:
 If the backend is provided by Docker Compose, do not start the local Nest API
 process at the same time. Both Compose files publish the API on the
 configurable `API_PORT`, which defaults to `3000`.
+
+### Fast local workflow
+
+From the repository root, the developer control center can start and stop the
+two applications without switching between package directories:
+
+```powershell
+.\tools\dev.ps1 start
+.\tools\dev.ps1 status
+.\tools\dev.ps1 stop
+```
+
+Use the Docker-backed API and PostgreSQL stack when needed:
+
+```powershell
+.\tools\dev.ps1 start -Mode docker
+```
+
+Run only the checks affected by the current worktree, or run the full package
+gates when preparing a checkpoint:
+
+```powershell
+.\tools\verify.ps1 -Scope Changed
+.\tools\verify.ps1 -Scope Changed -IncludeE2E
+.\tools\verify.ps1 -Scope Full
+```
+
+Use `-DryRun` to inspect the selected commands without running them and
+`-SkipBuild` for a faster feedback loop. `Changed` includes tracked and
+untracked files and does not run package checks for documentation-only or
+root-tooling changes. The repository root remains outside the pnpm workspace;
+the scripts delegate to the independent `src/frontend` and `src/backend`
+packages.
 
 ## Build
 
