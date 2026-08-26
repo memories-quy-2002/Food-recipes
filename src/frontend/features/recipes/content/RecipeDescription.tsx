@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Clock3, Minus, Plus, Users } from "lucide-react";
 import type { RecipeDetail, RecipeNutrition, StructuredIngredient } from "@/shared/api/contracts";
 import RecipeIngredientChecklist, { getIngredientSignature } from "./RecipeIngredientChecklist";
-import { scaleStructuredIngredient } from "../structuredIngredients";
-import { INGREDIENT_UNITS, type IngredientUnit } from "../structuredIngredients";
+import { normalizeIngredientUnit, scaleStructuredIngredient, type RecipeIngredient } from "../structuredIngredients";
 import Button from "@/shared/ui/Button";
 
 const DEFAULT_SERVINGS = 4;
@@ -12,12 +11,10 @@ const MAX_SERVINGS = 99;
 
 type ReadStructuredIngredient = StructuredIngredient & {
 	note?: string | null;
-	quantity_text?: string | null;
-	preparation_text?: string | null;
 };
 
 type RecipeDescriptionRecipe = {
-	recipe_name?: string;
+	recipe_name?: string | null;
 	recipe_description?: string | null;
 	recipe_id?: number;
 	id?: number | string;
@@ -132,15 +129,31 @@ type RecipeDescriptionProps = {
 	recipe: RecipeDescriptionRecipe;
 };
 
-const isIngredientUnit = (value: string): value is IngredientUnit =>
-	INGREDIENT_UNITS.includes(value as IngredientUnit);
+const toScalableIngredient = (ingredient: ReadStructuredIngredient): RecipeIngredient | null => {
+	if (typeof ingredient.quantity !== "number" || !Number.isFinite(ingredient.quantity)) return null;
+	const unitValue = typeof ingredient.unit === "string" && ingredient.unit.trim()
+		? ingredient.unit
+		: ingredient.unit_text;
+	if (unitValue !== undefined && unitValue !== null && !normalizeIngredientUnit(unitValue)) return null;
+	return {
+		name: ingredient.name,
+		quantity: ingredient.quantity,
+		unit: normalizeIngredientUnit(unitValue),
+		note: ingredient.note ?? ingredient.preparation ?? ingredient.preparation_text ?? undefined,
+	};
+};
 
-const isScalableIngredient = (
-	ingredient: StructuredIngredient,
-): ingredient is StructuredIngredient & { quantity: number; unit?: IngredientUnit } =>
-	typeof ingredient.quantity === "number" &&
-	Number.isFinite(ingredient.quantity) &&
-	(ingredient.unit === undefined || (typeof ingredient.unit === "string" && isIngredientUnit(ingredient.unit)));
+const scaleReadIngredient = (ingredient: ReadStructuredIngredient, servings: number, baseServings: number): ReadStructuredIngredient => {
+	const scalableIngredient = toScalableIngredient(ingredient);
+	if (!scalableIngredient) return ingredient;
+	const scaledIngredient = scaleStructuredIngredient(scalableIngredient, servings, baseServings);
+	return {
+		...ingredient,
+		quantity: scaledIngredient.quantity,
+		quantityText: null,
+		quantity_text: null,
+	};
+};
 
 const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactElement => {
 	const { prep, cook, total } = getRecipeTimeSummary(recipe);
@@ -155,9 +168,7 @@ const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactEleme
 		[recipe.structured_ingredients, recipe.structuredIngredients]
 	);
 	const displayedIngredients = structuredIngredients.length > 0
-		? structuredIngredients.map((ingredient) => isScalableIngredient(ingredient)
-			? scaleStructuredIngredient(ingredient, servings, baseServings)
-			: ingredient)
+		? structuredIngredients.map((ingredient) => scaleReadIngredient(ingredient, servings, baseServings))
 		: recipe.ingredients;
 
 	useEffect(() => {

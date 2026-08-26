@@ -47,4 +47,24 @@ describe("RecipeMetadataPanel", () => {
 
 		expect(screen.getByRole("note")).toHaveTextContent(/Estimated allergen information/i);
 	});
+
+	it("shows an explicit fallback when calories are unavailable", () => {
+		render(<RecipeMetadataPanel metadata={{
+			nutrition: {
+				calories_per_serving: null,
+				protein_grams: 12,
+				carbohydrates_grams: null,
+				fat_grams: null,
+				fiber_grams: null,
+				sugar_grams: null,
+				sodium_milligrams: null,
+				source: "provided_by_author",
+				source_reference: null,
+			},
+			allergens: [],
+		}} />);
+
+		expect(screen.getByText(/Calories not provided/)).toBeInTheDocument();
+		expect(screen.queryByText(/^ kcal/)).not.toBeInTheDocument();
+	});
 });

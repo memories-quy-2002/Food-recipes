@@ -72,7 +72,7 @@ const RecipeMetadataPanel = ({ metadata }: RecipeMetadataPanelProps): React.Reac
 					{nutrition ? (
 						<div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
 							<div className="flex flex-col gap-1 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
-								<strong className="text-xl font-black text-foreground">{nutrition.calories_per_serving} kcal <span className="text-sm font-semibold text-muted-foreground">per serving</span></strong>
+								<strong className="text-xl font-black text-foreground">{nutrition.calories_per_serving === null ? "Calories not provided" : `${nutrition.calories_per_serving} kcal`} <span className="text-sm font-semibold text-muted-foreground">per serving</span></strong>
 								<span className="text-xs font-bold text-muted-foreground">{sourceLabel(nutrition.source)}</span>
 							</div>
 							<div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">

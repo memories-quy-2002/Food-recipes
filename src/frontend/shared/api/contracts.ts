@@ -39,10 +39,14 @@ export type StructuredIngredient = {
 	position?: number;
 	quantity?: number | null;
 	quantityText?: string | null;
+	quantity_text?: string | null;
 	unit?: string | null;
+	unit_text?: string | null;
 	name: string;
 	preparation?: string | null;
+	preparation_text?: string | null;
 	originalText?: string | null;
+	original_text?: string | null;
 };
 
 export type RecipeNutrition = {

@@ -35,8 +35,11 @@ describe("RecipeContainerSummary planning action", () => {
 		const button = renderer.root.findAllByType("button").find(
 			(node: ReactTestInstance) => node.props["aria-label"] === "Add recipe to meal plan",
 		);
+		if (!button) throw new Error("Expected the add-to-plan button");
 		expect(button.children).toContain("Add to meal plan");
-		act(() => button.props.onClick());
+		const onClick = button.props.onClick;
+		if (typeof onClick !== "function") throw new Error("Expected the add-to-plan click handler");
+		act(() => onClick());
 		expect(onAddToPlan).toHaveBeenCalledOnce();
 	});
 
@@ -60,6 +63,7 @@ describe("RecipeContainerSummary planning action", () => {
 		const button = renderer.root.findAllByType("button").find(
 			(node: ReactTestInstance) => node.props["aria-label"] === "Adding recipe to meal plan",
 		);
+		if (!button) throw new Error("Expected the pending add-to-plan button");
 		expect(button.props.disabled).toBe(true);
 		expect(button.props["aria-busy"]).toBe(true);
 		expect(button.children).toContain("Adding…");
@@ -85,8 +89,11 @@ describe("RecipeContainerSummary planning action", () => {
 		const button = renderer.root.findAllByType("button").find(
 			(node: ReactTestInstance) => node.props["aria-label"] === "Save recipe to collection",
 		);
+		if (!button) throw new Error("Expected the save-to-collection button");
 		expect(button.children).toContain("Save to collection");
-		act(() => button.props.onClick());
+		const onClick = button.props.onClick;
+		if (typeof onClick !== "function") throw new Error("Expected the save-to-collection click handler");
+		act(() => onClick());
 		expect(onSaveToCollection).toHaveBeenCalledOnce();
 	});
 });

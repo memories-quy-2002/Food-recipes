@@ -8,6 +8,9 @@ declare module "react-test-renderer" {
 		props: Record<string, unknown>;
 		children: ReactTestChild[];
 		findByType(type: unknown): ReactTestInstance;
+		findAllByType(type: unknown): ReactTestInstance[];
+		findByProps(props: Record<string, unknown>): ReactTestInstance;
+		findAllByProps(props: Record<string, unknown>): ReactTestInstance[];
 		findAll(
 			predicate: (node: ReactTestInstance) => boolean,
 		): ReactTestInstance[];
@@ -16,12 +19,11 @@ declare module "react-test-renderer" {
 	export interface ReactTestRenderer {
 		root: ReactTestInstance;
 		unmount: () => void;
+		update: (element: ReactElement) => void;
 	}
 
 	export const create: (element: ReactElement) => ReactTestRenderer;
-	export const act: (
-		callback: () => void | Promise<void>,
-	) => void | Promise<void>;
+	export const act: (callback: () => unknown) => void | Promise<void>;
 
 	const TestRenderer: {
 		create: typeof create;

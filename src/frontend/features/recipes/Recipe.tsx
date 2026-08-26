@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useRef, useState } from "rea
 import { useLocation, useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
 import axios from "@/shared/api/axios";
-import type { RecipeDetail } from "@/shared/api/contracts";
+import type { RecipeDetail, RecipeMetadata } from "@/shared/api/contracts";
 import { apiRoutes, getUserRecipeRatingRoute } from "@/shared/api/routes";
 import {
 	isWishlistAddSuccess,
@@ -36,18 +36,20 @@ import {
 import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
 import "./Recipe.print.scss";
 
-export type RecipeViewProps = {
-	recipe: RecipeDetail;
-	isLoading?: boolean;
-	onRetry?: () => void;
-};
-
-type RecipeReadRecipe = RecipeDetail & {
-	difficulty?: string | null;
-	difficulty_level?: string | null;
-	servings?: number | string | null;
-	user_id?: number | null;
-	total_time_minutes?: number | string | null;
+type RecipeReadRecipe = Omit<Partial<RecipeDetail>,
+	| "recipe_id"
+	| "recipe_name"
+	| "recipe_description"
+	| "ingredients"
+	| "instructions"
+	| "metadata"
+> & {
+	recipe_id: number;
+	recipe_name?: string | null;
+	recipe_description?: string | null;
+	ingredients?: string[] | null;
+	instructions?: string[] | null;
+	metadata?: RecipeMetadata | null;
 };
 
 type RecipeReview = {
@@ -99,7 +101,9 @@ type CollectionDialogProps = {
 	onClose: () => void;
 };
 
-const TypedCollectionRecipeDialog = CollectionRecipeDialog as React.ComponentType<CollectionDialogProps>;
+const CollectionRecipeDialogAdapter = (props: CollectionDialogProps): React.ReactElement | null => (
+	<CollectionRecipeDialog {...props} />
+);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === "object" && value !== null;
@@ -573,7 +577,11 @@ const Recipe = (): React.ReactElement => {
 				/>
 			) : recipe && isCookingMode ? (
 				<CookingMode
-					recipe={recipe}
+					recipe={{
+					recipe_id: recipe.recipe_id,
+					recipe_name: recipe.recipe_name ?? undefined,
+					instructions: recipe.instructions ?? undefined,
+				}}
 					planningContext={planningContext || undefined}
 					onComplete={handleCookingComplete}
 					initialStepIndex={cookingSession.session?.current_step ?? 0}
@@ -592,7 +600,7 @@ const Recipe = (): React.ReactElement => {
 				<main className="recipe-print min-h-screen bg-background text-foreground">
 					<div className="recipe-print__summary">
 						<RecipeContainerSummary
-							recipe={recipe}
+							recipe={{ ...recipe, recipe_name: recipe.recipe_name ?? "Recipe" }}
 							favorite={favorite}
 							onClickFavorite={handleClickFavorite}
 							onSaveToCollection={handleSaveToCollection}
@@ -604,13 +612,13 @@ const Recipe = (): React.ReactElement => {
 					<div className="recipe-print__dialogs" data-print-hidden>
 						<AddToPlanDialog
 							open={isAddToPlanOpen}
-							recipe={recipe}
+							recipe={{ recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name ?? "Recipe" }}
 							onClose={() => setIsAddToPlanOpen(false)}
 							onAdded={handleRecipeAddedToPlan}
 						/>
-						<TypedCollectionRecipeDialog
+						<CollectionRecipeDialogAdapter
 							open={isCollectionDialogOpen}
-							recipeName={recipe.recipe_name}
+							recipeName={recipe.recipe_name ?? "Recipe"}
 							collections={collectionsQuery.data?.collections ?? []}
 							isLoading={collectionsQuery.isLoading}
 							isSubmitting={addRecipeToCollectionMutation.isPending}

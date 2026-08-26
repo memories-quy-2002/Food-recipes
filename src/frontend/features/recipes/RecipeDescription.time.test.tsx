@@ -62,7 +62,10 @@ describe("recipe description time summary", () => {
 		act(() => { renderer = TestRenderer.create(<MemoryRouter><RecipeContainerSummary recipe={{ ...recipe, recipe_id: 42 }} favorite={false} onClickFavorite={onClickFavorite} /></MemoryRouter>); });
 		if (!renderer) throw new Error("Expected the recipe summary renderer");
 		expect(renderer.root.findByType("h1").children).toEqual(["Coconut Curry"]);
-		expect(renderer.root.findByProps({ to: "/recipe/cooking?id=42" }).children[0].children).toEqual(["Start cooking"]);
+		const cookingLink = renderer.root.findByProps({ to: "/recipe/cooking?id=42" });
+		const cookingLinkChild = cookingLink.children[0];
+		if (!cookingLinkChild || typeof cookingLinkChild === "string") throw new Error("Expected the Start cooking link content");
+		expect(cookingLinkChild.children).toEqual(["Start cooking"]);
 		expect(renderer.root.findAllByType("button").some((button: ReactTestInstance) => button.props["aria-label"] === "Save recipe")).toBe(true);
 		expect(renderer.root.findByProps({ "aria-label": "Recipe category and meal type" })).toBeTruthy();
 	});
@@ -86,6 +89,6 @@ describe("recipe description time summary", () => {
 		const coloredIcons = rating.findAll((node: ReactTestInstance) => node.props?.color === "currentColor");
 
 		expect(coloredIcons.length).toBeGreaterThan(0);
-		expect(coloredIcons.every((icon) => icon.props.color === "currentColor")).toBe(true);
+		expect(coloredIcons.every((icon: ReactTestInstance) => icon.props.color === "currentColor")).toBe(true);
 	});
 });

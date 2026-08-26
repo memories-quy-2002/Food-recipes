@@ -11,6 +11,11 @@ const recipe = {
 	instructions: ["Mix everything"],
 };
 
+const invokeHandler = (handler: unknown): void => {
+	if (typeof handler !== "function") throw new Error("Expected a test click handler");
+	handler();
+};
+
 describe("recipe servings", () => {
 	it("clamps valid servings and keeps the selected value visible", () => {
 		expect(normalizeServings(undefined)).toBe(4);
@@ -22,18 +27,19 @@ describe("recipe servings", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={recipe} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 
-		const decrement = renderer.root.findByProps({ "aria-label": "Decrease servings" });
-		const increment = renderer.root.findByProps({ "aria-label": "Increase servings" });
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["4"]);
-		expect(renderer.root.findAllByType("button").some((node: ReactTestInstance) => node.props["aria-label"] === "Decrease servings")).toBe(true);
-		expect(renderer.root.findAllByType("button").filter((node: ReactTestInstance) => node.props["aria-label"]).every((node: ReactTestInstance) => node.props.type === "button")).toBe(true);
+		const decrement = rendered.root.findByProps({ "aria-label": "Decrease servings" });
+		const increment = rendered.root.findByProps({ "aria-label": "Increase servings" });
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["4"]);
+		expect(rendered.root.findAllByType("button").some((node: ReactTestInstance) => node.props["aria-label"] === "Decrease servings")).toBe(true);
+		expect(rendered.root.findAllByType("button").filter((node: ReactTestInstance) => node.props["aria-label"]).every((node: ReactTestInstance) => node.props.type === "button")).toBe(true);
 
-		act(() => increment.props.onClick());
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["5"]);
+		act(() => invokeHandler(increment.props.onClick));
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["5"]);
 
-		act(() => decrement.props.onClick());
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["4"]);
+		act(() => invokeHandler(decrement.props.onClick));
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["4"]);
 	});
 
 	it("resets local servings when the recipe identity changes", () => {
@@ -42,13 +48,14 @@ describe("recipe servings", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={recipe} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 
-		const increment = renderer.root.findByProps({ "aria-label": "Increase servings" });
-		act(() => increment.props.onClick());
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["5"]);
+		const increment = rendered.root.findByProps({ "aria-label": "Increase servings" });
+		act(() => invokeHandler(increment.props.onClick));
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["5"]);
 
-		act(() => renderer.update(<RecipeDescription recipe={{ ...recipe, recipe_id: 2, servings: 2 }} />));
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["2"]);
+		act(() => rendered.update(<RecipeDescription recipe={{ ...recipe, recipe_id: 2, servings: 2 }} />));
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["2"]);
 	});
 
 	it("disables and does not change at the serving boundaries", () => {
@@ -57,16 +64,17 @@ describe("recipe servings", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, servings: 1 }} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 		const decrement = renderer.root.findByProps({ "aria-label": "Decrease servings" });
 		expect(decrement.props.disabled).toBe(true);
-		act(() => decrement.props.onClick());
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["1"]);
+		act(() => invokeHandler(decrement.props.onClick));
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["1"]);
 
-		act(() => renderer.update(<RecipeDescription recipe={{ ...recipe, recipe_id: 2, servings: 99 }} />));
-		const increment = renderer.root.findByProps({ "aria-label": "Increase servings" });
+		act(() => rendered.update(<RecipeDescription recipe={{ ...recipe, recipe_id: 2, servings: 99 }} />));
+		const increment = rendered.root.findByProps({ "aria-label": "Increase servings" });
 		expect(increment.props.disabled).toBe(true);
-		act(() => increment.props.onClick());
-		expect(renderer.root.findByProps({ "aria-live": "polite" }).children).toEqual(["99"]);
+		act(() => invokeHandler(increment.props.onClick));
+		expect(rendered.root.findByProps({ "aria-live": "polite" }).children).toEqual(["99"]);
 	});
 
 	it("does not rewrite free-text ingredient quantities", () => {
@@ -75,8 +83,9 @@ describe("recipe servings", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={recipe} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 
-		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
+		const ingredientText = rendered.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
 		expect(ingredientText).toEqual(["2 cups flour", "1 egg"]);
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("shown as written");
 	});
@@ -87,9 +96,10 @@ describe("recipe servings", () => {
 			renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, ingredients: [{ name: "flour", quantity: 2, unit: "cups" }] }} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 
-		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
-		expect(ingredientText).toEqual([JSON.stringify({ name: "flour", quantity: 2, unit: "cups" })]);
+		const ingredientText = rendered.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
+		expect(ingredientText).toEqual(["2 cups flour"]);
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("unsupported");
 	});
 
@@ -105,11 +115,12 @@ describe("recipe servings", () => {
 			}} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 
-		expect(renderer.root.findAllByType("h2").some((node: ReactTestInstance) => node.children.join("") === "Nutrition per serving")).toBe(true);
-		expect(renderer.root.findAllByType("span").some((node: ReactTestInstance) => node.children.join("").includes("100 calories"))).toBe(true);
-		expect(renderer.root.findAllByType("span").some((node: ReactTestInstance) => node.children.join("") === "vegetarian")).toBe(true);
-		expect(renderer.root.findAllByType("p").some((node: ReactTestInstance) => node.children.includes("wheat"))).toBe(true);
+		expect(rendered.root.findAllByType("h2").some((node: ReactTestInstance) => node.children.join("") === "Nutrition per serving")).toBe(true);
+		expect(rendered.root.findAllByType("span").some((node: ReactTestInstance) => node.children.join("").includes("100 calories"))).toBe(true);
+		expect(rendered.root.findAllByType("span").some((node: ReactTestInstance) => node.children.join("") === "vegetarian")).toBe(true);
+		expect(rendered.root.findAllByType("p").some((node: ReactTestInstance) => node.children.includes("wheat"))).toBe(true);
 	});
 
 	it("scales structured ingredient quantities from the recipe serving baseline", () => {
@@ -121,10 +132,35 @@ describe("recipe servings", () => {
 			}} />);
 		});
 		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
 
-		act(() => renderer.root.findByProps({ "aria-label": "Increase servings" }).props.onClick());
-		const ingredientText = renderer.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
+		act(() => invokeHandler(rendered.root.findByProps({ "aria-label": "Increase servings" }).props.onClick));
+		const ingredientText = rendered.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
 		expect(ingredientText).toEqual(["625 g chicken breast, diced"]);
 		expect(renderer.root.findByProps({ role: "note" }).children.join(" ")).toContain("scaled");
+	});
+
+	it("renders and scales API-shaped structured ingredients with text units", () => {
+		let renderer: ReactTestRenderer | undefined;
+		act(() => {
+			renderer = TestRenderer.create(<RecipeDescription recipe={{
+				...recipe,
+				structured_ingredients: [{
+					name: "flour",
+					quantity: 1,
+					quantity_text: "1",
+					unit_text: "cup",
+					preparation_text: "sifted",
+				}],
+			}} />);
+		});
+		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const rendered = renderer;
+
+		const getIngredientText = () => rendered.root.findByProps({ id: "ingredients" }).findAllByType("span").flatMap((node: ReactTestInstance) => node.children);
+		expect(getIngredientText()).toEqual(["1 cup flour (sifted)"]);
+
+		act(() => invokeHandler(rendered.root.findByProps({ "aria-label": "Increase servings" }).props.onClick));
+		expect(getIngredientText()).toEqual(["1.25 cup flour (sifted)"]);
 	});
 });

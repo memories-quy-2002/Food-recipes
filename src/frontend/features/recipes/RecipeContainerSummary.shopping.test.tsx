@@ -35,10 +35,13 @@ describe("RecipeContainerSummary shopping action", () => {
 			const button = renderer.root.findAllByType("button").find(
 				(node: ReactTestInstance) => node.props["aria-label"] === "Add ingredients to shopping list",
 			);
+			if (!button) throw new Error("Expected the shopping-list button");
 			expect(button.props["aria-busy"]).toBe(false);
 			expect(button.children).toContain("Add ingredients to shopping list");
 
-		act(() => button.props.onClick());
+		const onClick = button.props.onClick;
+		if (typeof onClick !== "function") throw new Error("Expected the shopping-list click handler");
+		act(() => onClick());
 		expect(onAddIngredients).toHaveBeenCalledTimes(1);
 	});
 
@@ -63,6 +66,7 @@ describe("RecipeContainerSummary shopping action", () => {
 			const button = renderer.root.findAllByType("button").find(
 				(node: ReactTestInstance) => node.props["aria-label"] === "Adding ingredients to shopping list",
 			);
+			if (!button) throw new Error("Expected the pending shopping-list button");
 			expect(button.props.disabled).toBe(true);
 			expect(button.props["aria-busy"]).toBe(true);
 			expect(button.children).toContain("Adding ingredients…");

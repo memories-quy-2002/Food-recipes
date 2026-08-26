@@ -5,9 +5,20 @@ import type { RecipeRatingProps } from "./content/RecipeRating";
 import type { RecipeDetail, RecipeMetadata } from "@/shared/api/contracts";
 import RecipeMetadataPanel from "./RecipeMetadataPanel";
 
-type RecipeContentRecipe = Omit<Partial<RecipeDetail>, "metadata"> & {
+type RecipeContentRecipe = {
 	recipe_id: number;
+	recipe_name?: string | null;
+	recipe_description?: string | null;
+	ingredients?: string[] | null;
+	instructions?: string[] | null;
+	structured_ingredients?: RecipeDetail["structured_ingredients"];
+	structuredIngredients?: RecipeDetail["structuredIngredients"];
 	metadata?: RecipeMetadata | null;
+	nutrition?: RecipeDetail["nutrition"];
+	dietaryTags?: string[];
+	allergenTags?: string[];
+	dietary_tags?: string[];
+	allergen_tags?: string[];
 };
 
 export type RecipeContentProps = Omit<RecipeRatingProps, "reviewList" | "reviewMessage"> & {

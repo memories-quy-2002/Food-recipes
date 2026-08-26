@@ -49,14 +49,15 @@ describe("recipe rating review flow", () => {
 			);
 		});
 		if (!renderer) throw new Error("Expected the rating renderer");
+		const rendered = renderer;
 
 		expect(renderer.root.findByProps({ children: "Update review" })).toBeTruthy();
 		expect(renderer.root.findByProps({ children: "Delete my review" })).toBeTruthy();
 
 		act(() => {
-			renderer.update(<RecipeRating {...baseProps} />);
+			rendered.update(<RecipeRating {...baseProps} />);
 		});
-		expect(renderer.root.findAllByProps({ children: "Delete my review" })).toHaveLength(0);
+		expect(rendered.root.findAllByProps({ children: "Delete my review" })).toHaveLength(0);
 	});
 
 	it("keeps the 500-character review boundary on the textarea", () => {
