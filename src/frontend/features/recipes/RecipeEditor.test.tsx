@@ -1,12 +1,15 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, type RenderResult } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
+import type { AuthState } from "@/app/AuthProvider";
+import type { RecipeContextValue } from "@/app/RecipeProvider";
+import type { RecipeStatus } from "@/shared/api/contracts";
 import axios from "@/shared/api/axios";
-import RecipeEditor from "./RecipeEditor";
+import RecipeEditor, { type RecipeEditorInput, type RecipeEditorProps } from "./RecipeEditor";
 
 vi.mock("@/shared/api/axios", () => ({
 	default: {
@@ -22,7 +25,25 @@ vi.mock("@/shared/api/supabaseStorage", () => ({
 	uploadRecipeImage: vi.fn(),
 }));
 
-const fixtureRecipe = {
+type RecipeSaveCallback = NonNullable<RecipeEditorProps["onSaved"]>;
+type RenderEditorOptions = {
+	refreshRecipes?: RecipeContextValue["refreshRecipes"];
+};
+
+const authState: AuthState = {
+	isAuthenticated: true,
+	hydrated: true,
+	user: null,
+	userId: 42,
+	token: null,
+};
+
+const createRefreshRecipesMock = () =>
+	vi.fn<RecipeContextValue["refreshRecipes"]>().mockResolvedValue(undefined);
+
+const createOnSavedMock = () => vi.fn<RecipeSaveCallback>();
+
+const fixtureRecipe: RecipeEditorInput = {
 	recipe_id: 42,
 	recipe_name: "Tomato pasta",
 	recipe_description: "A quick pasta dinner.",
@@ -44,12 +65,26 @@ const savedRecipe = {
 		original_text: "1/2 cup tomatoes",
 		name: "Tomatoes",
 	}],
-};
+} satisfies RecipeEditorInput & { status: RecipeStatus };
 
-const renderEditor = (props, { refreshRecipes = vi.fn() } = {}) => render(
+const renderEditor = (
+	props: RecipeEditorProps,
+	{ refreshRecipes = createRefreshRecipesMock() }: RenderEditorOptions = {},
+): RenderResult => render(
 	<MemoryRouter>
-		<AuthContext.Provider value={{ auth: { current: { userId: "editor-user" } } }}>
-			<RecipeContext.Provider value={{ refreshRecipes }}>
+		<AuthContext.Provider value={{ auth: { current: {
+			isAuthenticated: true,
+			hydrated: true,
+			user: null,
+			userId: 42,
+			token: null,
+		} satisfies AuthState } }}>
+			<RecipeContext.Provider value={{
+				recipes: [],
+				isLoadingRecipes: false,
+				recipesError: null,
+				refreshRecipes,
+			} satisfies RecipeContextValue}>
 				<RecipeEditor onSaved={vi.fn()} {...props} />
 			</RecipeContext.Provider>
 		</AuthContext.Provider>
@@ -61,14 +96,14 @@ describe("RecipeEditor", () => {
 		cleanup();
 		localStorage.clear();
 		vi.clearAllMocks();
-		axios.get.mockImplementation((route) => {
+		vi.mocked(axios.get).mockImplementation((route: string) => {
 			if (route === "/categories") return Promise.resolve({ data: { categories: [{ id: 1, name: "Dinner" }] } });
 			if (route === "/meals") return Promise.resolve({ data: { meals: [{ id: 2, name: "Main course" }] } });
 			return Promise.resolve({ data: { recipe: { ...fixtureRecipe, status: "published" } } });
 		});
-		axios.patch.mockResolvedValue({ data: { recipe: savedRecipe } });
-		axios.put.mockResolvedValue({ data: { recipe: savedRecipe } });
-		axios.post.mockResolvedValue({ data: { recipe: { ...savedRecipe, status: "published" } } });
+		vi.mocked(axios.patch).mockResolvedValue({ data: { recipe: savedRecipe } });
+		vi.mocked(axios.put).mockResolvedValue({ data: { recipe: savedRecipe } });
+		vi.mocked(axios.post).mockResolvedValue({ data: { recipe: { ...savedRecipe, status: "published" } } });
 	});
 
 	it("renders create mode without an edit identifier", () => {
@@ -79,10 +114,10 @@ describe("RecipeEditor", () => {
 
 	it("hydrates edit mode from an owner recipe without using the create draft", async () => {
 		localStorage.setItem(
-			"food-recipes:recipe-draft:user:editor-user",
+			"food-recipes:recipe-draft:user:42",
 			JSON.stringify({
 				version: 2,
-				userId: "editor-user",
+				userId: "42",
 				savedAt: 1,
 				form: {
 					recipeName: "Unrelated create draft",
@@ -103,7 +138,7 @@ describe("RecipeEditor", () => {
 			expect(screen.getByLabelText(/recipe name/i)).toHaveValue("Tomato pasta");
 		});
 		expect(screen.queryByText("Restore your saved draft?")).not.toBeInTheDocument();
-		expect(localStorage.getItem("food-recipes:recipe-draft:user:editor-user")).toContain("Unrelated create draft");
+		expect(localStorage.getItem("food-recipes:recipe-draft:user:42")).toContain("Unrelated create draft");
 		expect(screen.queryByRole("button", { name: "Save draft" })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Publish" })).not.toBeInTheDocument();
 		expect(axios.post).not.toHaveBeenCalled();
@@ -119,8 +154,19 @@ describe("RecipeEditor", () => {
 
 		rerender(
 			<MemoryRouter>
-				<AuthContext.Provider value={{ auth: { current: { userId: "editor-user" } } }}>
-					<RecipeContext.Provider value={{ refreshRecipes: vi.fn() }}>
+				<AuthContext.Provider value={{ auth: { current: {
+					isAuthenticated: true,
+					hydrated: true,
+					user: null,
+					userId: 42,
+					token: null,
+				} satisfies AuthState } }}>
+					<RecipeContext.Provider value={{
+						recipes: [],
+						isLoadingRecipes: false,
+						recipesError: null,
+						refreshRecipes: vi.fn().mockResolvedValue(undefined),
+					} satisfies RecipeContextValue}>
 						<RecipeEditor mode="edit" recipeId={42} initialRecipe={{ ...fixtureRecipe, status: "draft" }} onSaved={vi.fn()} />
 					</RecipeContext.Provider>
 				</AuthContext.Provider>
@@ -143,7 +189,7 @@ describe("RecipeEditor", () => {
 
 	it("keeps the form available for retry and identifies a failed metadata section", async () => {
 		const onSaved = vi.fn();
-		axios.put
+		vi.mocked(axios.put)
 			.mockResolvedValueOnce({ data: { recipe: savedRecipe } })
 			.mockRejectedValueOnce(new Error("nutrition unavailable"))
 			.mockResolvedValue({ data: { recipe: savedRecipe } });
@@ -184,13 +230,13 @@ describe("RecipeEditor", () => {
 		})));
 		expect(axios.patch).toHaveBeenCalledWith("/recipes/42", expect.any(Object));
 		expect(axios.post).toHaveBeenCalledWith("/recipes/42/publish");
-		expect(axios.patch.mock.invocationCallOrder[0]).toBeLessThan(axios.post.mock.invocationCallOrder[0]);
+		expect(vi.mocked(axios.patch).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(axios.post).mock.invocationCallOrder[0]);
 	});
 
 	it("prevents a double submit while an edit save is in flight", async () => {
 		const onSaved = vi.fn();
-		let resolvePatch;
-		axios.patch.mockImplementationOnce(() => new Promise((resolve) => {
+		let resolvePatch: ((value: unknown) => void) | undefined;
+		vi.mocked(axios.patch).mockImplementationOnce(() => new Promise((resolve) => {
 			resolvePatch = resolve;
 		}));
 		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved });
@@ -201,6 +247,7 @@ describe("RecipeEditor", () => {
 		fireEvent.click(saveButton);
 		await waitFor(() => expect(axios.patch).toHaveBeenCalledTimes(1));
 
+		if (!resolvePatch) throw new Error("The patch request was not created.");
 		resolvePatch({ data: { recipe: { ...savedRecipe, status: "published" } } });
 		await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
 	});

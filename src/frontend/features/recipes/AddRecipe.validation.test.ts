@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { validateRecipeForm } from "./AddRecipe";
+import type { CatalogItem } from "@/shared/api/contracts";
+import type { RecipeFormValues } from "./recipeForm.schema";
 
-const supportedTaxonomy = {
+const supportedTaxonomy: { categories: CatalogItem[]; meals: CatalogItem[] } = {
 
 	categories: [{ id: 1, name: "Dinner" }],
 
@@ -10,7 +12,7 @@ const supportedTaxonomy = {
 
 };
 
-const validRecipe = {
+const validRecipe: Partial<RecipeFormValues> = {
 
 	recipeName: "  One-pan dinner  ",
 

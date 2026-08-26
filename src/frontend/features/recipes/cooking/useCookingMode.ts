@@ -1,20 +1,39 @@
 import { useCallback, useEffect, useState } from "react";
 
-export const getCookingInstructions = (instructionsOrRecipe) => {
+export type CookingInstructionSource =
+	| string[]
+	| { instructions?: string[] | null }
+	| null
+	| undefined;
+
+export type CookingModeResult = {
+	steps: string[];
+	stepIndex: number;
+	isFirstStep: boolean;
+	isLastStep: boolean;
+	goToPrevious: () => void;
+	goToNext: () => void;
+};
+
+export const getCookingInstructions = (
+	instructionsOrRecipe: CookingInstructionSource,
+): string[] => {
 	const instructions = Array.isArray(instructionsOrRecipe)
 		? instructionsOrRecipe
 		: instructionsOrRecipe?.instructions;
 	return Array.isArray(instructions)
 		? instructions.filter(
-				(instruction) =>
-					instruction !== null &&
-					instruction !== undefined &&
-					(typeof instruction !== "string" || instruction.trim().length > 0)
+				(instruction): instruction is string =>
+					typeof instruction === "string" && instruction.trim().length > 0,
 			  )
 		: [];
 };
 
-export const useCookingMode = (instructions, recipeIdentity = null, initialStepIndex = 0) => {
+export const useCookingMode = (
+	instructions: CookingInstructionSource,
+	recipeIdentity: number | string | null = null,
+	initialStepIndex = 0,
+): CookingModeResult => {
 	const steps = getCookingInstructions(instructions);
 	const instructionSignature = JSON.stringify(steps);
 	const [stepIndex, setStepIndex] = useState(initialStepIndex);
@@ -23,7 +42,7 @@ export const useCookingMode = (instructions, recipeIdentity = null, initialStepI
 		setStepIndex(initialStepIndex);
 	}, [initialStepIndex, recipeIdentity, instructionSignature]);
 
-	const goToStep = useCallback((nextIndex) => {
+	const goToStep = useCallback((nextIndex: number) => {
 		setStepIndex((currentIndex) => {
 			const boundedIndex = Math.min(Math.max(nextIndex, 0), steps.length - 1);
 			return steps.length > 0 ? boundedIndex : currentIndex;

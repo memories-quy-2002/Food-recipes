@@ -8,6 +8,7 @@ import {
 	saveRecipeDraft,
 	serializeRecipeDraft,
 } from "./recipeDraftStorage";
+import type { RecipeFormValues } from "./recipeForm.schema";
 
 const recipe = {
 	recipeImage: new File(["image"], "recipe.png", { type: "image/png" }),
@@ -25,7 +26,7 @@ const recipe = {
 	dietaryTags: ["vegan"],
 	allergenTags: ["soy"],
 	serverRecipeId: 77,
-};
+} satisfies Partial<RecipeFormValues> & { userId: number };
 
 describe("recipe draft storage", () => {
 	beforeEach(() => localStorage.clear());
@@ -104,8 +105,12 @@ describe("recipe draft storage", () => {
 			},
 		}));
 
+		expect(parsed).not.toBeNull();
+		if (!parsed) {
+			throw new Error("Expected a valid recipe draft.");
+		}
 		expect(parsed.form).toMatchObject({ recipeName: "Soup", recipeImage: null });
-		expect(parsed.form.token).toBeUndefined();
+		expect(Object.prototype.hasOwnProperty.call(parsed.form, "token")).toBe(false);
 	});
 
 	it("keeps version-1 drafts readable while normalizing new fields to safe defaults", () => {
@@ -125,6 +130,10 @@ describe("recipe draft storage", () => {
 			},
 		}));
 
+		expect(parsed).not.toBeNull();
+		if (!parsed) {
+			throw new Error("Expected a valid recipe draft.");
+		}
 		expect(parsed).toMatchObject({ version: 1, userId: "42" });
 		expect(parsed.form.structuredIngredients).toEqual([]);
 		expect(parsed.form.nutrition).toEqual({});

@@ -6,8 +6,10 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
+import type { AuthState } from "@/app/AuthProvider";
+import type { RecipeContextValue } from "@/app/RecipeProvider";
 import axios from "@/shared/api/axios";
-import RecipeEditor from "./RecipeEditor";
+import RecipeEditor, { type RecipeEditorInput } from "./RecipeEditor";
 
 vi.mock("@/shared/api/axios", () => ({
 	default: {
@@ -33,12 +35,23 @@ const recipe = {
 	cook_time_minutes: 20,
 	ingredients: ["Tomatoes"],
 	instructions: ["Simmer and serve."],
-};
+} satisfies RecipeEditorInput;
 
 const renderEditor = () => render(
 	<MemoryRouter>
-		<AuthContext.Provider value={{ auth: { current: { userId: "editor-user" } } }}>
-			<RecipeContext.Provider value={{ refreshRecipes: vi.fn() }}>
+		<AuthContext.Provider value={{ auth: { current: {
+			isAuthenticated: true,
+			hydrated: true,
+			user: null,
+			userId: 42,
+			token: null,
+		} satisfies AuthState } }}>
+			<RecipeContext.Provider value={{
+				recipes: [],
+				isLoadingRecipes: false,
+				recipesError: null,
+				refreshRecipes: vi.fn().mockResolvedValue(undefined),
+			} satisfies RecipeContextValue}>
 				<RecipeEditor mode="edit" recipeId={42} initialRecipe={recipe} onSaved={vi.fn()} />
 			</RecipeContext.Provider>
 		</AuthContext.Provider>
@@ -48,13 +61,13 @@ const renderEditor = () => render(
 describe("RecipeEditor edit accessibility", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		axios.get.mockImplementation((route) => {
+		vi.mocked(axios.get).mockImplementation((route: string) => {
 			if (route === "/categories") return Promise.resolve({ data: { categories: [{ id: 1, name: "Dinner" }] } });
 			if (route === "/meals") return Promise.resolve({ data: { meals: [{ id: 2, name: "Main course" }] } });
 			return Promise.resolve({ data: { recipe } });
 		});
-		axios.patch.mockResolvedValue({ data: {} });
-		axios.put.mockResolvedValue({ data: {} });
+		vi.mocked(axios.patch).mockResolvedValue({ data: {} });
+		vi.mocked(axios.put).mockResolvedValue({ data: {} });
 	});
 
 	it("keeps the published save action keyboard-operable", async () => {
@@ -66,6 +79,6 @@ describe("RecipeEditor edit accessibility", () => {
 		saveButton.focus();
 		await user.keyboard("{Enter}");
 
-		await waitFor(() => expect(axios.patch).toHaveBeenCalled());
+		await waitFor(() => expect(vi.mocked(axios.patch)).toHaveBeenCalled());
 	});
 });

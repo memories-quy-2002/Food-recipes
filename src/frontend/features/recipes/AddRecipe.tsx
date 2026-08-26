@@ -1,11 +1,11 @@
-import React from "react";
+import type { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import RecipeEditor from "./RecipeEditor";
 
 export { validateRecipeForm } from "./RecipeEditor";
 
-const AddRecipe = () => {
+const AddRecipe = (): ReactElement => {
 	const navigate = useNavigate();
 
 	return (

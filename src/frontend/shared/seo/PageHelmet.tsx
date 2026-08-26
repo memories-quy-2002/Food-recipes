@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect, type ReactElement } from "react";
 
 const SITE_NAME = "Food Recipes";
 const DEFAULT_DESCRIPTION =
@@ -8,7 +8,16 @@ const SITE_URL =
 	import.meta.env.VITE_SITE_URL || "https://foodrecipes1.vercel.app";
 const SEO_ATTRIBUTE = "data-food-recipes-seo";
 
-const appendMeta = (attributes) => {
+type PageHelmetProps = {
+	title?: string;
+	description?: string;
+	path?: string;
+	type?: string;
+	image?: string;
+	noIndex?: boolean;
+};
+
+const appendMeta = (attributes: Record<string, string>): void => {
 	const element = document.createElement("meta");
 	element.setAttribute(SEO_ATTRIBUTE, "true");
 	Object.entries(attributes).forEach(([name, value]) => {
@@ -24,7 +33,7 @@ const PageHelmet = ({
 	type = "website",
 	image = DEFAULT_IMAGE,
 	noIndex = false,
-}) => {
+}: PageHelmetProps): ReactElement | null => {
 	const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 	const canonicalUrl = `${SITE_URL}${path}`;
 

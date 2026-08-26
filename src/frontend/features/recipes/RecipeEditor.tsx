@@ -1,9 +1,10 @@
 import cameraPreview from "@/shared/assets/images/cameraPreview.png";
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ChangeEvent, type ClipboardEvent, type ReactElement } from "react";
+import type { AxiosResponse } from "axios";
 import Button from "@/shared/ui/Button";
 import { Form } from "@/shared/ui/Form";
 import { Col, Row } from "@/shared/ui/layout";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors, type Path, type SubmitErrorHandler, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
@@ -25,13 +26,77 @@ import {
 	saveRecipeDraft,
 } from "./recipeDraftStorage";
 import { createRecipeFormSchema } from "./recipeForm.schema";
-import { RecipeEditSaveError, saveRecipeEdits } from "./recipeEditorApi";
+import { RecipeEditSaveError, saveRecipeEdits, type RecipeEditPayload, type UpdateRecipePayload } from "./recipeEditorApi";
+import { recipeFormSchema } from "./recipeForm.schema";
+import type { CatalogItem, RecipeDetail, RecipeNutrition, StructuredIngredient } from "@/shared/api/contracts";
+import type { RecipeEditorValue } from "./editRecipeApi";
+import { z } from "zod";
 
-const DIETARY_OPTIONS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "low-carb"];
-const ALLERGEN_OPTIONS = ["wheat", "peanuts", "tree nuts", "milk", "eggs", "soy", "fish", "shellfish"];
-const NUTRITION_FIELDS = ["servings", "calories", "protein", "carbohydrates", "fat", "fiber", "sugar", "sodium"];
+const DIETARY_OPTIONS = ["vegetarian", "vegan", "gluten-free", "dairy-free", "low-carb"] as const;
+const ALLERGEN_OPTIONS = ["wheat", "peanuts", "tree nuts", "milk", "eggs", "soy", "fish", "shellfish"] as const;
+const NUTRITION_FIELDS = ["servings", "calories", "protein", "carbohydrates", "fat", "fiber", "sugar", "sodium"] as const;
+type NutritionField = (typeof NUTRITION_FIELDS)[number];
+type DurationUnit = "seconds" | "minutes" | "hours" | "days";
+type RecipeDuration = { number: string | number; unit: DurationUnit };
+type EditorStructuredIngredient = Omit<StructuredIngredient, "name"> & { name: string };
+type EditorNutrition = Record<NutritionField, string | number | null>;
+type RecipeEditorSchema = ReturnType<typeof createRecipeFormSchema>;
+type EditorFormValues = z.output<RecipeEditorSchema>;
+type EditorFormInput = z.input<RecipeEditorSchema>;
+type EditorStructuredIngredientValue = EditorFormValues["structuredIngredients"][number];
+export type RecipeEditorInput = Partial<RecipeEditorValue> & {
+	id?: number | string;
+	name?: string;
+	recipeName?: string;
+	recipeCategoryName?: string;
+	recipeMealName?: string;
+	recipeDescription?: string;
+	description?: string;
+	recipeIngredients?: string[];
+	recipeInstructions?: string[];
+	recipePrepTime?: RecipeDuration | number | string;
+	recipeCookTime?: RecipeDuration | number | string;
+	prepTimeMinutes?: number | string;
+	cookTimeMinutes?: number | string;
+	imageUrl?: string | null;
+	image_url?: string | null;
+	allergen_tags?: string[];
+	structured_ingredients?: EditorStructuredIngredient[] | null;
+};
+type RecipeEditorMode = "create" | "edit";
+type RecipeEditorSaveResult = {
+	recipe: Pick<RecipeDetail, "recipe_id"> & Partial<RecipeDetail>;
+	mode: RecipeEditorMode;
+};
+export type RecipeEditorProps = {
+	mode: RecipeEditorMode;
+	recipeId?: number | null;
+	initialRecipe?: RecipeEditorInput | null;
+	onSaved?: (result: RecipeEditorSaveResult) => void;
+};
+type CatalogOption = CatalogItem;
+type RecipeValidationOptions = {
+	categories?: CatalogOption[];
+	meals?: CatalogOption[];
+	isPublishing?: boolean;
+};
+type NormalizedStructuredIngredient = StructuredIngredient & {
+	position: number;
+	quantityText: string | null;
+	unit: string | null;
+	preparation: string | null;
+	originalText: string | null;
+};
 
-const createInitialRecipeState = () => ({
+const isCatalogOption = (value: unknown): value is CatalogOption =>
+	typeof value === "object" && value !== null &&
+	"id" in value && typeof value.id === "number" &&
+	"name" in value && typeof value.name === "string";
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const createInitialRecipeState = (): EditorFormValues => ({
 	recipeImage: null,
 	recipeName: "",
 	recipeCategoryName: "",
@@ -57,36 +122,69 @@ const createInitialRecipeState = () => ({
 	serverRecipeId: null,
 });
 
-const toDuration = (value, fallback) => {
-	if (value && typeof value === "object" && "number" in value) {
-		return {
-			number: value.number ?? fallback,
-			unit: value.unit || "minutes",
-		};
-	}
-	return { number: value ?? fallback, unit: "minutes" };
+const normalizeEditorStructuredIngredient = (
+	ingredient: StructuredIngredient,
+	position: number,
+): EditorStructuredIngredientValue => ({
+	...ingredient,
+	position,
+	quantityText: ingredient.quantityText ?? ingredient.quantity_text ?? "",
+	unit: ingredient.unit ?? ingredient.unit_text ?? "",
+	name: ingredient.name,
+	preparation: ingredient.preparation ?? ingredient.preparation_text ?? "",
+	originalText: ingredient.originalText ?? ingredient.original_text ?? "",
+});
+
+const normalizeEditorFormValues = (recipe: EditorFormInput): EditorFormValues => {
+	const initialState = createInitialRecipeState();
+	return {
+		...initialState,
+		...recipe,
+		recipeImage: recipe.recipeImage ?? null,
+		structuredIngredients: (recipe.structuredIngredients ?? []).map((ingredient) => ({
+			...ingredient,
+			quantityText: ingredient.quantityText ?? "",
+			unit: ingredient.unit ?? "",
+			name: ingredient.name,
+			preparation: ingredient.preparation ?? "",
+		})),
+		nutrition: { ...initialState.nutrition, ...(recipe.nutrition ?? {}) },
+		dietaryTags: recipe.dietaryTags ?? [],
+		allergenTags: recipe.allergenTags ?? [],
+		serverRecipeId: recipe.serverRecipeId ?? null,
+	} satisfies EditorFormValues;
 };
 
-const createInitialEditorState = ({ recipeId, initialRecipe }) => {
+const toDuration = (value: unknown, fallback: string | number): RecipeDuration => {
+	if (value && typeof value === "object" && "number" in value) {
+		const duration = value as { number?: unknown; unit?: unknown };
+		const number = typeof duration.number === "string" || typeof duration.number === "number" ? duration.number : fallback;
+		return {
+			number,
+			unit: typeof duration.unit === "string" && ["seconds", "minutes", "hours", "days"].includes(duration.unit) ? duration.unit as DurationUnit : "minutes",
+		};
+	}
+	return {
+		number: typeof value === "string" || typeof value === "number" ? value : fallback,
+		unit: "minutes",
+	};
+};
+
+const createInitialEditorState = ({ recipeId, initialRecipe }: { recipeId: number | null; initialRecipe?: RecipeEditorInput | null }): EditorFormValues => {
 	const initialState = createInitialRecipeState();
 	if (!initialRecipe) return initialState;
 	const structuredSource = initialRecipe.structuredIngredients ?? initialRecipe.structured_ingredients;
 	const structuredIngredients = Array.isArray(structuredSource)
-		? structuredSource.map((ingredient, position) => ({
-			...ingredient,
-			position,
-			quantityText: ingredient.quantityText ?? ingredient.quantity_text ?? "",
-			originalText: ingredient.originalText ?? ingredient.original_text ?? "",
-			unit: ingredient.unit ?? ingredient.unit_text ?? "",
-		}))
+		? structuredSource.map(normalizeEditorStructuredIngredient)
 		: Array.isArray(initialRecipe.recipeIngredients ?? initialRecipe.ingredients)
-			? (initialRecipe.recipeIngredients ?? initialRecipe.ingredients).map((name, position) => ({
-				position,
-				quantityText: "",
-				unit: "",
-				name: String(name || ""),
-				preparation: "",
-			}))
+			? (initialRecipe.recipeIngredients ?? initialRecipe.ingredients ?? []).map((name, position) =>
+				normalizeEditorStructuredIngredient({
+					quantityText: "",
+					unit: "",
+					name: String(name || ""),
+					preparation: "",
+				}, position)
+			)
 			: initialState.structuredIngredients;
 
 	return {
@@ -104,10 +202,10 @@ const createInitialEditorState = ({ recipeId, initialRecipe }) => {
 		dietaryTags: initialRecipe.dietaryTags ?? initialRecipe.dietary_tags ?? initialState.dietaryTags,
 		allergenTags: initialRecipe.allergenTags ?? initialRecipe.allergen_tags ?? initialState.allergenTags,
 		serverRecipeId: recipeId ?? initialRecipe.recipe_id ?? initialRecipe.id ?? null,
-	};
+	} satisfies EditorFormValues;
 };
 
-const hasDraftContent = (recipe) =>
+const hasDraftContent = (recipe: EditorFormInput): boolean =>
 	[
 		recipe.recipeName,
 		recipe.recipeCategoryName,
@@ -126,10 +224,10 @@ const hasDraftContent = (recipe) =>
 	String(recipe.recipeCookTime?.unit) !== "minutes";
 
 export const validateRecipeForm = (
-	recipe,
-	{ categories = [], meals = [], isPublishing = true } = {}
-) => {
-	const normalizedRecipe = {
+	recipe: Partial<EditorFormValues>,
+	{ categories = [], meals = [], isPublishing = true }: RecipeValidationOptions = {},
+): { errors: string[] } => {
+	const normalizedRecipe: EditorFormInput = {
 		recipeName: "",
 		recipeCategoryName: "",
 		recipeMealName: "",
@@ -154,39 +252,66 @@ export const validateRecipeForm = (
 	};
 };
 
-const getServerRecipeId = (response) => response?.data?.recipe?.recipe_id ?? response?.data?.recipe?.id ?? response?.data?.recipe_id ?? response?.data?.id;
+const getServerRecipeId = (response: AxiosResponse<unknown>): number | null => {
+	if (!isRecord(response.data)) return null;
+	const data = response.data;
+	const recipe = isRecord(data.recipe) ? data.recipe : undefined;
+	const candidate = recipe?.recipe_id ?? recipe?.id ?? data.recipe_id ?? data.id;
+	const id = typeof candidate === "number" ? candidate : Number(candidate);
+	return Number.isSafeInteger(id) && id > 0 ? id : null;
+};
 
-const normalizeStructuredIngredients = (ingredients, legacyIngredients = []) => {
+const getPositiveInteger = (value: unknown): number | undefined => {
+	const number = typeof value === "number" ? value : Number(value);
+	return Number.isSafeInteger(number) && number > 0 ? number : undefined;
+};
+
+const normalizeStructuredIngredients = (ingredients: EditorStructuredIngredient[] | undefined, legacyIngredients: string[] = []): NormalizedStructuredIngredient[] => {
 	const structured = (Array.isArray(ingredients) ? ingredients : [])
 		.map((ingredient, index) => ({
 			position: index,
-			quantity: ingredient.quantity === "" || ingredient.quantity === undefined ? null : Number(ingredient.quantity),
+			quantity: ingredient.quantity == null ? null : Number(ingredient.quantity),
 			quantityText: String(ingredient.quantityText || "").trim() || null,
 			unit: String(ingredient.unit || "").trim() || null,
 			name: String(ingredient.name || "").trim(),
 			preparation: String(ingredient.preparation || "").trim() || null,
 			originalText: String(ingredient.originalText || "").trim() || null,
 		}))
-		.filter((ingredient) => ingredient.name);
+		.filter((ingredient) => Boolean(ingredient.name));
 	if (structured.length) return structured;
 	return (Array.isArray(legacyIngredients) ? legacyIngredients : [])
 		.map((name, index) => ({ position: index, quantity: null, quantityText: null, unit: null, name: String(name).trim(), preparation: null, originalText: String(name).trim() }))
-		.filter((ingredient) => ingredient.name);
+		.filter((ingredient) => Boolean(ingredient.name));
 };
 
-const normalizeNutritionPayload = (nutrition = {}) => Object.fromEntries(
-	NUTRITION_FIELDS
-		.map((field) => [field, nutrition[field] === "" || nutrition[field] === undefined ? null : Number(nutrition[field])])
-		.filter(([, value]) => value !== null && Number.isFinite(value) || value === null)
-);
+const normalizeNutritionPayload = (nutrition: Partial<EditorNutrition> = {}): RecipeNutrition => {
+	const payload: RecipeNutrition = {};
+	for (const field of NUTRITION_FIELDS) {
+		const value = nutrition[field];
+		if (value === "" || value === undefined) payload[field] = null;
+		else if (typeof value === "number" && Number.isFinite(value)) payload[field] = value;
+		else if (typeof value === "string" && Number.isFinite(Number(value))) payload[field] = Number(value);
+	}
+	return payload;
+};
 
-const normalizeAllergenTag = (tag) => String(tag || "").trim().toLowerCase() === "tree nuts" ? "tree_nuts" : String(tag || "").trim().toLowerCase();
+const normalizeAllergenTag = (tag: string): string => String(tag || "").trim().toLowerCase() === "tree nuts" ? "tree_nuts" : String(tag || "").trim().toLowerCase();
 
-const getRecipeImageUrl = (recipe) => recipe?.imageUrl ?? recipe?.image_url ?? null;
+const getRecipeImageUrl = (recipe: RecipeEditorInput | null | undefined): string | null => recipe?.imageUrl ?? recipe?.image_url ?? null;
 
-const getEditErrorMessage = (error) => error?.response?.data?.message || error?.message || "Unable to save this recipe. Please try again.";
+const getEditErrorMessage = (error: unknown): string => {
+	if (error && typeof error === "object" && "response" in error) {
+		const response = error.response;
+		if (response && typeof response === "object" && "data" in response) {
+			const data = response.data;
+			if (data && typeof data === "object" && "message" in data && typeof data.message === "string") return data.message;
+		}
+	}
+	if (error instanceof Error && error.message) return error.message;
+	return "Unable to save this recipe. Please try again.";
+};
 
-const getEditErrorSection = (error) => {
+const getEditErrorSection = (error: unknown): string => {
 	if (!(error instanceof RecipeEditSaveError)) return "";
 	return {
 		base: "Recipe details",
@@ -194,31 +319,31 @@ const getEditErrorSection = (error) => {
 		nutrition: "Nutrition",
 		tags: "Dietary preferences",
 		refresh: "Recipe refresh",
-	}[error.section];
+	}[error.section] || "";
 };
 
-const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) => {
+const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: RecipeEditorProps): ReactElement => {
 	const { auth } = useContext(AuthContext);
 	const { userId } = auth.current;
 	const { refreshRecipes } = useContext(RecipeContext);
 	const { showToast } = useToast();
 	const isCreateMode = mode === "create";
 	const recipeStatus = initialRecipe?.status || "published";
-	const [preview, setPreview] = useState(null);
+	const [preview, setPreview] = useState<string | null>(null);
 	const [disabled, setDisabled] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const submitLockRef = useRef(false);
 	const [submitError, setSubmitError] = useState("");
-	const [uploadStatus, setUploadStatus] = useState("idle");
-	const [categories, setCategories] = useState([]);
-	const [meals, setMeals] = useState([]);
+	const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading" | "saving">("idle");
+	const [categories, setCategories] = useState<CatalogOption[]>([]);
+	const [meals, setMeals] = useState<CatalogOption[]>([]);
 	const [listError, setListError] = useState("");
-	const [restoreCandidate, setRestoreCandidate] = useState(null);
+	const [restoreCandidate, setRestoreCandidate] = useState<Awaited<ReturnType<typeof loadRecipeDraft>>>(null);
 	const [isDraftHydrated, setIsDraftHydrated] = useState(false);
-	const [hydratedUserId, setHydratedUserId] = useState(null);
-	const [draftStatus, setDraftStatus] = useState("idle");
+	const [hydratedUserId, setHydratedUserId] = useState<number | null>(null);
+	const [draftStatus, setDraftStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 	const storageConfigured = isSupabaseStorageConfigured();
-	const recipeSchema = useMemo(
+	const recipeSchema = useMemo<typeof recipeFormSchema>(
 		() => createRecipeFormSchema({ categories, meals, isPublishing: isCreateMode }),
 		[categories, isCreateMode, meals]
 	);
@@ -230,7 +355,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		watch,
 		getValues,
 		formState: { errors: formErrors },
-	} = useForm({
+	} = useForm<EditorFormInput, unknown, EditorFormValues>({
 		resolver: zodResolver(recipeSchema),
 		defaultValues: createInitialEditorState({ recipeId, initialRecipe }),
 	});
@@ -275,14 +400,14 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		setDraftStatus("saving");
 		const timeoutId = window.setTimeout(() => {
 			setDraftStatus(
-				saveRecipeDraft(window.localStorage, userId, formRecipe) ? "saved" : "error"
+				saveRecipeDraft(window.localStorage, userId, normalizeEditorFormValues(formRecipe)) ? "saved" : "error"
 			);
 		}, 500);
 
 		return () => window.clearTimeout(timeoutId);
 	}, [currentRestoreCandidate, draftFingerprint, hydratedUserId, isCreateMode, isDraftHydrated, userId]);
 
-	const calculateTotalTime = (timeField1, timeField2) => {
+	const calculateTotalTime = (timeField1: RecipeDuration, timeField2: RecipeDuration) => {
 		const unitsInSeconds = {
 			days: 24 * 60 * 60,
 			hours: 60 * 60,
@@ -291,8 +416,8 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		};
 
 		const totalSeconds =
-			timeField1.number * unitsInSeconds[timeField1.unit] +
-			timeField2.number * unitsInSeconds[timeField2.unit];
+			Number(timeField1.number) * unitsInSeconds[timeField1.unit] +
+			Number(timeField2.number) * unitsInSeconds[timeField2.unit];
 
 		const totalTime = {
 			days: Math.floor(totalSeconds / unitsInSeconds.days),
@@ -308,7 +433,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		return totalTime;
 	};
 
-	const parsePastedList = (value) =>
+	const parsePastedList = (value: string): string[] =>
 		value
 			.split(/\r?\n/)
 			.map((item) =>
@@ -319,33 +444,37 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			)
 			.filter(Boolean);
 
-	const handleFileChange = (event) => {
+	const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		setDisabled(false);
 		setSubmitError("");
-		const file = event.target.files[0];
+		const file = event.target.files?.[0] || null;
 		setValue("recipeImage", file || null, { shouldDirty: true });
 		if (file) {
 			const reader = new FileReader();
 
 			reader.onload = () => {
-				setPreview(reader.result);
+				if (typeof reader.result === "string") setPreview(reader.result);
 			};
 
 			reader.readAsDataURL(file);
 		}
 	};
-	const handleInputChange = (event) => {
+	const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setValue(name, value, { shouldDirty: true });
+		if (name === "recipeName" || name === "recipeDescription") setValue(name, value, { shouldDirty: true });
+		else if (name.startsWith("nutrition.")) {
+			const field = name.slice("nutrition.".length);
+			if ((NUTRITION_FIELDS as readonly string[]).includes(field)) setValue(`nutrition.${field}` as Path<EditorFormValues>, value, { shouldDirty: true });
+		}
 	};
-	const handleArrayChange = (field, index, value) => {
+	const handleArrayChange = (field: "recipeIngredients" | "recipeInstructions", index: number, value: string): void => {
 		setDisabled(false);
 		setSubmitError("");
-		setValue(`${field}.${index}`, value, { shouldDirty: true });
+		setValue(`${field}.${index}` as Path<EditorFormValues>, value, { shouldDirty: true });
 	};
-	const handleArrayPaste = (field, event, index) => {
+	const handleArrayPaste = (field: "recipeIngredients" | "recipeInstructions", event: ClipboardEvent<HTMLInputElement>, index: number): void => {
 		const pastedText = event.clipboardData.getData("text");
 		const pastedItems = parsePastedList(pastedText);
 
@@ -358,24 +487,24 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		currentItems.splice(index, 1, ...pastedItems);
 		setValue(field, currentItems, { shouldDirty: true });
 	};
-	const handleDeleteField = (event, index) => {
+	const handleDeleteField = (event: React.MouseEvent<HTMLButtonElement>, index: number): void => {
 		setDisabled(false);
 		setSubmitError("");
-		const { name } = event.target;
+		const name = event.currentTarget.name as "recipeInstructions";
 		setValue(name, getValues(name).filter((_, i) => i !== index), { shouldDirty: true });
 	};
-	const handleAddField = (event) => {
+	const handleAddField = (event: React.MouseEvent<HTMLButtonElement>): void => {
 		setDisabled(false);
 		setSubmitError("");
-		const { name } = event.target;
+		const name = event.currentTarget.name as "recipeInstructions";
 		setValue(name, [...getValues(name), ""], { shouldDirty: true });
 	};
-	const handleStructuredChange = (index, field, value) => {
+	const handleStructuredChange = (index: number, field: "quantityText" | "unit" | "name" | "preparation", value: string): void => {
 		setDisabled(false);
 		setSubmitError("");
-		setValue(`structuredIngredients.${index}.${field}`, value, { shouldDirty: true });
+		setValue(`structuredIngredients.${index}.${field}` as Path<EditorFormValues>, value, { shouldDirty: true });
 	};
-	const handleAddStructuredIngredient = () => {
+	const handleAddStructuredIngredient = (): void => {
 		setDisabled(false);
 		setSubmitError("");
 		const currentIngredients = getValues("structuredIngredients") || [];
@@ -384,47 +513,47 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			{ quantityText: "", unit: "", name: "", preparation: "" },
 		], { shouldDirty: true });
 	};
-	const handleDeleteStructuredIngredient = (index) => {
+	const handleDeleteStructuredIngredient = (index: number): void => {
 		setDisabled(false);
 		setSubmitError("");
 		const remaining = (getValues("structuredIngredients") || []).filter((_, itemIndex) => itemIndex !== index);
 		setValue("structuredIngredients", remaining.length ? remaining : [{ quantityText: "", unit: "", name: "", preparation: "" }], { shouldDirty: true });
 	};
-	const handleToggleTag = (field, tag) => {
+	const handleToggleTag = (field: "dietaryTags" | "allergenTags", tag: string): void => {
 		const selected = getValues(field) || [];
 		setValue(field, selected.includes(tag) ? selected.filter((item) => item !== tag) : [...selected, tag], { shouldDirty: true });
 		setDisabled(false);
 		setSubmitError("");
 	};
-	const handleTimeNumberChange = (event) => {
+	const handleTimeNumberChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setValue(name, value, { shouldDirty: true });
+		if (name === "recipePrepTime.number" || name === "recipeCookTime.number") setValue(name, value, { shouldDirty: true });
 	};
 
-	const handleSelectChange = (event) => {
+	const handleSelectChange = (event: ChangeEvent<HTMLSelectElement>): void => {
 		setDisabled(false);
 		setSubmitError("");
 		const { name, value } = event.target;
-		setValue(name, value, { shouldDirty: true });
+		if (name === "recipePrepTime.unit" || name === "recipeCookTime.unit") setValue(name, value as DurationUnit, { shouldDirty: true });
 	};
 
-	const handleCategoryOptionChange = (event) => {
+	const handleCategoryOptionChange = (event: ChangeEvent<HTMLSelectElement>): void => {
 		const { value } = event.target;
 		setDisabled(false);
 		setSubmitError("");
 		setValue("recipeCategoryName", value, { shouldDirty: true });
 	};
 
-	const handleMealOptionChange = (event) => {
+	const handleMealOptionChange = (event: ChangeEvent<HTMLSelectElement>): void => {
 		const { value } = event.target;
 		setDisabled(false);
 		setSubmitError("");
 		setValue("recipeMealName", value, { shouldDirty: true });
 	};
 
-	const handleReset = () => {
+	const handleReset = (): void => {
 		if (isCreateMode) clearRecipeDraft(window.localStorage, userId);
 		reset(createInitialEditorState({ recipeId, initialRecipe }));
 		setPreview(null);
@@ -436,10 +565,10 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		setDraftStatus("idle");
 	};
 
-	const handleRestoreDraft = () => {
+	const handleRestoreDraft = (): void => {
 		if (!currentRestoreCandidate) return;
 		reset({
-			...createInitialRecipeState(userId),
+			...createInitialRecipeState(),
 			...currentRestoreCandidate.form,
 			recipeImage: null,
 		});
@@ -449,7 +578,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		setDraftStatus("saved");
 	};
 
-	const handleStartFresh = () => {
+	const handleStartFresh = (): void => {
 		if (isCreateMode) clearRecipeDraft(window.localStorage, userId);
 		setRestoreCandidate(null);
 		reset(createInitialEditorState({ recipeId, initialRecipe }));
@@ -457,33 +586,33 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		setDraftStatus("idle");
 	};
 
-	const saveDraftLocally = (recipe) => {
+	const saveDraftLocally = (recipe: EditorFormInput): boolean => {
 		if (!isCreateMode) return false;
-		const saved = saveRecipeDraft(window.localStorage, userId, recipe);
+		const saved = saveRecipeDraft(window.localStorage, userId, normalizeEditorFormValues(recipe));
 		setDraftStatus(saved ? "saved" : "error");
 		return saved;
 	};
 
-	const saveDraftToServer = async (recipe, imageUrl) => {
+	const saveDraftToServer = async (recipe: EditorFormInput, imageUrl?: string | null): Promise<number> => {
 		const recipePayload = serializeCreateRecipeDraftPayload({
 			recipe,
 			categories,
 			meals,
 			imageUrl,
 		});
-		const existingId = recipe.serverRecipeId;
+		const existingId = getPositiveInteger(recipe.serverRecipeId);
 		const response = existingId
-			? await axios.patch(apiRoutes.recipe(existingId), recipePayload)
-			: await axios.post(apiRoutes.userRecipeDrafts, recipePayload, { headers: { "Content-Type": "application/json" } });
-		const recipeId = existingId || getServerRecipeId(response);
+			? await axios.patch<unknown>(apiRoutes.recipe(existingId), recipePayload)
+			: await axios.post<unknown>(apiRoutes.userRecipeDrafts, recipePayload, { headers: { "Content-Type": "application/json" } });
+		const recipeId = existingId ?? getServerRecipeId(response);
 		if (!recipeId) throw new Error("The server did not return a draft recipe ID.");
-		await axios.put(apiRoutes.recipeIngredients(recipeId), { ingredients: normalizeStructuredIngredients(recipe.structuredIngredients, recipe.recipeIngredients) });
-		await axios.put(apiRoutes.recipeNutrition(recipeId), normalizeNutritionPayload(recipe.nutrition));
-		await axios.put(apiRoutes.recipeDietaryTags(recipeId), { dietaryTags: recipe.dietaryTags || [], allergenTags: (recipe.allergenTags || []).map(normalizeAllergenTag) });
+		await axios.put<unknown>(apiRoutes.recipeIngredients(recipeId), { ingredients: normalizeStructuredIngredients(recipe.structuredIngredients, recipe.recipeIngredients) });
+		await axios.put<unknown>(apiRoutes.recipeNutrition(recipeId), normalizeNutritionPayload(recipe.nutrition));
+		await axios.put<unknown>(apiRoutes.recipeDietaryTags(recipeId), { dietaryTags: recipe.dietaryTags || [], allergenTags: (recipe.allergenTags || []).map(normalizeAllergenTag) });
 		return recipeId;
 	};
 
-	const handleSaveDraft = async () => {
+	const handleSaveDraft = async (): Promise<void> => {
 		if (!isCreateMode || submitLockRef.current) return;
 		submitLockRef.current = true;
 		setIsSubmitting(true);
@@ -495,12 +624,12 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			setValue("serverRecipeId", recipeId, { shouldDirty: false });
 			saveDraftLocally({ ...recipe, serverRecipeId: recipeId });
 			showToast({ title: "Draft saved" });
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Unable to save server draft:", error);
 			if (savedLocally) {
 				showToast({ title: "Draft saved locally", message: "The server draft could not be updated yet.", type: "error" });
 			} else {
-				setSubmitError(error.response?.data?.message || error.message || "Unable to save this draft.");
+				setSubmitError(getEditErrorMessage(error).replace("Unable to save this recipe", "Unable to save this draft"));
 			}
 		} finally {
 			submitLockRef.current = false;
@@ -509,7 +638,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 	};
 
 	useEffect(() => {
-		const fetchLists = async () => {
+		const fetchLists = async (): Promise<void> => {
 			try {
 				setListError("");
 				const [categoriesResponse, mealsResponse] = await Promise.all([
@@ -517,12 +646,12 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 					axios.get(apiRoutes.meals),
 				]);
 
-				setCategories(getArrayPayload(categoriesResponse.data, "categories"));
-				setMeals(getArrayPayload(mealsResponse.data, "meals"));
-			} catch (error) {
+				setCategories(getArrayPayload(categoriesResponse.data, "categories", isCatalogOption));
+				setMeals(getArrayPayload(mealsResponse.data, "meals", isCatalogOption));
+			} catch (error: unknown) {
 				console.error(error);
 				setListError(
-					error.response?.data?.message ||
+					getEditErrorMessage(error).replace("Unable to save this recipe", "Unable to load") ||
 						"Unable to load the current category and meal lists."
 				);
 			}
@@ -531,33 +660,40 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		fetchLists();
 	}, []);
 
-	const handleInvalidSubmit = (invalidFields) => {
+	const getFormErrorMessages = (field: unknown): string[] => {
+		if (!field || typeof field !== "object") return [];
+		if ("message" in field && typeof field.message === "string") return [field.message];
+		return Object.values(field).flatMap((nestedField) => getFormErrorMessages(nestedField));
+	};
+
+	const handleInvalidSubmit: SubmitErrorHandler<EditorFormInput> = (invalidFields) => {
 		const messages = Object.values(invalidFields)
-			.flatMap((field) => {
-				if (field?.message) return [field.message];
-				return Object.values(field || {}).flatMap((nestedField) =>
-					nestedField?.message ? [nestedField.message] : []
-				);
-			})
+			.flatMap((field) => getFormErrorMessages(field))
 			.filter(Boolean);
 		setSubmitError(messages.join(" ") || "Please review the recipe form.");
 	};
 
-	const buildEditPayload = (values, imageUrl) => {
-		const base = serializeCreateRecipeDraftPayload({
+	const buildEditPayload = (values: EditorFormInput, imageUrl: string | null): RecipeEditPayload => {
+		const serialized = serializeCreateRecipeDraftPayload({
 			recipe: values,
 			categories,
 			meals,
 			imageUrl,
 		});
+		const base: UpdateRecipePayload = {
+			name: typeof serialized.name === "string" ? serialized.name : undefined,
+			description: values.recipeDescription.trim(),
+			mealId: getPositiveInteger(serialized.mealId),
+			categoryId: getPositiveInteger(serialized.categoryId),
+			prepTimeMinutes: getPositiveInteger(serialized.prepTimeMinutes),
+			cookTimeMinutes: getPositiveInteger(serialized.cookTimeMinutes),
+			imageUrl,
+			ingredients: (values.recipeIngredients || []).map((ingredient) => ingredient.trim()).filter(Boolean),
+			instructions: (values.recipeInstructions || []).map((instruction) => instruction.trim()).filter(Boolean),
+		};
 
 		return {
-			base: {
-				...base,
-				description: values.recipeDescription.trim(),
-				ingredients: (values.recipeIngredients || []).map((ingredient) => ingredient.trim()).filter(Boolean),
-				instructions: (values.recipeInstructions || []).map((instruction) => instruction.trim()).filter(Boolean),
-			},
+			base,
 			ingredients: {
 				ingredients: normalizeStructuredIngredients(values.structuredIngredients),
 			},
@@ -569,7 +705,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		};
 	};
 
-	const invalidateEditedRecipe = async (savedRecipeId) => {
+	const invalidateEditedRecipe = async (savedRecipeId: number): Promise<void> => {
 		await Promise.all([
 			refreshRecipes(),
 			queryClient.invalidateQueries({ queryKey: recipeQueryKeys.detail(savedRecipeId) }),
@@ -577,7 +713,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		]);
 	};
 
-	const saveEditedRecipe = async (values) => {
+	const saveEditedRecipe = async (values: EditorFormInput): Promise<RecipeDetail> => {
 		const resolvedRecipeId = Number(recipeId ?? initialRecipe?.recipe_id);
 		if (!Number.isSafeInteger(resolvedRecipeId) || resolvedRecipeId < 1) {
 			throw new Error("This recipe cannot be saved because its ID is invalid.");
@@ -594,7 +730,10 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		return savedRecipe;
 	};
 
-	const handleSaveEditedRecipe = async (values, { publish = false, lockAlreadyAcquired = false } = {}) => {
+	const handleSaveEditedRecipe = async (
+		values: EditorFormInput,
+		{ publish = false, lockAlreadyAcquired = false }: { publish?: boolean; lockAlreadyAcquired?: boolean } = {},
+	): Promise<void> => {
 		if (!lockAlreadyAcquired) {
 			if (submitLockRef.current) return;
 			submitLockRef.current = true;
@@ -605,13 +744,13 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			setUploadStatus(values.recipeImage ? "uploading" : "saving");
 			const savedRecipe = await saveEditedRecipe(values);
 			const publishResponse = publish
-				? await axios.post(apiRoutes.recipePublish(savedRecipe.recipe_id ?? recipeId))
+				? await axios.post<{ recipe?: RecipeEditorSaveResult["recipe"] }>(apiRoutes.recipePublish(savedRecipe.recipe_id ?? recipeId))
 				: null;
 			const recipe = publishResponse?.data?.recipe || savedRecipe;
 			if (publish) await invalidateEditedRecipe(recipe.recipe_id ?? recipeId);
 			showToast({ title: publish ? "Recipe published successfully" : recipeStatus === "draft" ? "Draft saved" : "Recipe changes saved" });
 			onSaved?.({ recipe, mode });
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Unable to save recipe edits:", error);
 			const section = getEditErrorSection(error);
 			const message = getEditErrorMessage(error);
@@ -624,9 +763,9 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		}
 	};
 
-	const handleSaveEditedDraft = () => handleSaveEditedRecipe(getValues());
+	const handleSaveEditedDraft = (): Promise<void> => handleSaveEditedRecipe(getValues());
 
-	const handleEditSubmit = (values) => {
+	const handleEditSubmit: SubmitHandler<EditorFormValues> = (values) => {
 		if (submitLockRef.current) return;
 		submitLockRef.current = true;
 		return handleSaveEditedRecipe(values, {
@@ -635,7 +774,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 		});
 	};
 
-	const handleSubmit = async (values) => {
+	const handleSubmit: SubmitHandler<EditorFormValues> = async (values): Promise<void> => {
 		if (!isCreateMode) return;
 		const cleanedRecipe = {
 			...values,
@@ -649,7 +788,6 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 			recipeInstructions: values.recipeInstructions
 				.map((instruction) => instruction.trim())
 				.filter(Boolean),
-			userId,
 		};
 
 		try {
@@ -665,7 +803,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 
 			const recipeId = await saveDraftToServer(cleanedRecipe, imageUpload.url);
 			setValue("serverRecipeId", recipeId, { shouldDirty: false });
-			const response = await axios.post(apiRoutes.recipePublish(recipeId));
+			const response = await axios.post<unknown>(apiRoutes.recipePublish(recipeId));
 
 			if (response.status >= 200 && response.status < 300) {
 				if (isCreateMode) clearRecipeDraft(window.localStorage, userId);
@@ -674,14 +812,18 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 					console.error("Unable to refresh recipes after publish:", refreshError)
 				);
 				showToast({ title: "Recipe published successfully" });
-				onSaved?.({ recipe: { ...cleanedRecipe, recipe_id: recipeId }, mode });
+				onSaved?.({
+					recipe: {
+						...cleanedRecipe,
+						nutrition: normalizeNutritionPayload(cleanedRecipe.nutrition),
+						recipe_id: recipeId,
+					},
+					mode,
+				});
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			console.error("Error publishing recipe:", error);
-			const message =
-				error.response?.data?.message ||
-				error.message ||
-				"Unable to publish this recipe. Please try again.";
+			const message = getEditErrorMessage(error).replace("Unable to save this recipe", "Unable to publish this recipe");
 			setSubmitError(message);
 			showToast({
 				title: "Couldn’t publish recipe",
@@ -794,8 +936,8 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }) 
 										style={{ height: "fit-content" }}
 									>
 										<Form.Label>Description</Form.Label>
-										<Form.Control
-											as="textarea"
+										<textarea
+											className="flex min-h-12 min-h-36 w-full resize-y rounded-xl border border-input bg-background px-4 py-3.5 text-base leading-6 text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
 											rows={5}
 											{...register("recipeDescription", { onChange: handleInputChange })}
 											value={formRecipe.recipeDescription}

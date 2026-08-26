@@ -1,5 +1,5 @@
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestChild, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import CookingMode, { getCookingInstructions } from "./CookingMode";
 
@@ -13,21 +13,43 @@ const recipe = {
 	],
 };
 
-const renderCookingMode = (props = {}) => {
-	let renderer;
+type CookingModeRenderProps = Partial<
+	Pick<React.ComponentProps<typeof CookingMode>, "planningContext" | "onBackToPlan" | "initialStepIndex">
+>;
+
+const createRenderer = (element: React.ReactElement): ReactTestRenderer => {
+	let renderer: ReactTestRenderer | undefined;
 	act(() => {
-		renderer = TestRenderer.create(
-			<CookingMode recipe={recipe} onExit={vi.fn()} {...props} />
-		);
+		renderer = TestRenderer.create(element);
 	});
+	if (!renderer) throw new Error("CookingMode renderer was not created");
 	return renderer;
 };
 
-const getNodeText = (node) => node.children?.map((child) => typeof child === "string" ? child : getNodeText(child)).join("") || "";
-const findButton = (renderer, name) => renderer.root.findAllByType("button").find((button) => button.props["aria-label"] === name || getNodeText(button) === name);
+const renderCookingMode = (props: CookingModeRenderProps = {}): ReactTestRenderer =>
+	createRenderer(<CookingMode recipe={recipe} onExit={vi.fn()} {...props} />);
 
-const findText = (renderer, text) =>
-	renderer.root.findAll((node) => node.children.join("") === text)[0];
+const getNodeText = (node: ReactTestInstance): string =>
+	node.children
+		.map((child: ReactTestChild) => typeof child === "string" ? child : getNodeText(child))
+		.join("");
+
+const findButton = (renderer: ReactTestRenderer, name: string): ReactTestInstance => {
+	const button = renderer.root
+		.findAllByType("button")
+		.find((node: ReactTestInstance) => node.props["aria-label"] === name || getNodeText(node) === name);
+	if (!button) throw new Error(`Button not found: ${name}`);
+	return button;
+};
+
+const clickButton = (renderer: ReactTestRenderer, name: string): void => {
+	const onClick = findButton(renderer, name).props["onClick"];
+	if (typeof onClick !== "function") throw new Error(`Button is not clickable: ${name}`);
+	act(() => onClick());
+};
+
+const findText = (renderer: ReactTestRenderer, text: string): ReactTestInstance | undefined =>
+	renderer.root.findAll((node: ReactTestInstance) => node.children.join("") === text)[0];
 
 describe("cooking mode guided flow", () => {
 	it("shows planned meal context and offers a return to plan after completion", () => {
@@ -43,11 +65,11 @@ describe("cooking mode guided flow", () => {
 		});
 
 		expect(findText(renderer, "Monday · Dinner · 4 servings")).toBeTruthy();
-		act(() => findButton(renderer, "Next step").props.onClick());
-		act(() => findButton(renderer, "Finish cooking").props.onClick());
+		clickButton(renderer, "Next step");
+		clickButton(renderer, "Finish cooking");
 		expect(findText(renderer, "Recipe complete")).toBeTruthy();
 		expect(findButton(renderer, "Back to plan")).toBeTruthy();
-		act(() => findButton(renderer, "Back to plan").props.onClick());
+		clickButton(renderer, "Back to plan");
 		expect(onBackToPlan).toHaveBeenCalledOnce();
 	});
 
@@ -67,21 +89,25 @@ describe("cooking mode guided flow", () => {
 		const renderer = renderCookingMode();
 		const next = findButton(renderer, "Next step");
 
-		act(() => next.props.onClick());
+		const onNextClick = next.props["onClick"];
+		if (typeof onNextClick !== "function") throw new Error("Next step button is not clickable");
+		act(() => onNextClick());
 		expect(findText(renderer, "Step 2 of 2")).toBeTruthy();
 		expect(findText(renderer, recipe.instructions[1])).toBeTruthy();
 		expect(findButton(renderer, "Next step").props.disabled).toBe(true);
 		expect(findButton(renderer, "Finish cooking")).toBeTruthy();
 
 		const mode = renderer.root.findByType("main");
-		act(() => mode.props.onKeyDown({ key: "ArrowLeft", preventDefault: vi.fn() }));
+		const onKeyDown = mode.props["onKeyDown"];
+		if (typeof onKeyDown !== "function") throw new Error("Cooking mode does not handle keyboard input");
+		act(() => onKeyDown({ key: "ArrowLeft", preventDefault: vi.fn() }));
 		expect(findText(renderer, "Step 1 of 2")).toBeTruthy();
 	});
 
 	it("resets the step when the recipe changes to fewer instructions", () => {
 		const renderer = renderCookingMode();
 
-		act(() => findButton(renderer, "Next step").props.onClick());
+		clickButton(renderer, "Next step");
 		expect(findText(renderer, "Step 2 of 2")).toBeTruthy();
 
 		act(() => {
@@ -110,16 +136,20 @@ describe("cooking mode guided flow", () => {
 
 	it("shows a usable empty state and still offers Exit cooking", async () => {
 		const onExit = vi.fn();
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<CookingMode recipe={{ ...recipe, instructions: [] }} onExit={onExit} />
 			);
 		});
+		if (!renderer) throw new Error("CookingMode renderer was not created");
+		const currentRenderer = renderer;
 
-		expect(findText(renderer, "This recipe does not have any instructions to guide you through.")).toBeTruthy();
+		expect(findText(currentRenderer, "This recipe does not have any instructions to guide you through.")).toBeTruthy();
 		await act(async () => {
-			findButton(renderer, "Pause and exit cooking").props.onClick();
+			const onClick = findButton(currentRenderer, "Pause and exit cooking").props["onClick"];
+			if (typeof onClick !== "function") throw new Error("Pause and exit button is not clickable");
+			onClick();
 			await Promise.resolve();
 		});
 		expect(onExit).toHaveBeenCalledTimes(1);

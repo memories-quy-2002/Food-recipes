@@ -1,43 +1,71 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type ReactElement } from "react";
+import { isAxiosError, type AxiosResponse } from "axios";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import Button from "@/shared/ui/Button";
-import { Activity, CheckCircle2, Database, RefreshCw, Server, Utensils, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, Database, RefreshCw, Server, Utensils, XCircle, type LucideIcon } from "lucide-react";
 
-const checks = [
+type HealthCheckKey = "server" | "database" | "recipes";
+type HealthCheck = {
+	key: HealthCheckKey;
+	label: string;
+	description: string;
+	request: () => Promise<AxiosResponse<unknown>>;
+};
+type HealthResult = HealthCheck & {
+	ok: boolean;
+	statusCode: number | null;
+	durationMs: number;
+	data: unknown;
+	error?: string;
+};
+type ErrorPayload = { message?: string; errorMessage?: string };
+
+const checks: HealthCheck[] = [
 	{
 		key: "server",
 		label: "API gateway",
 		description: "Checks whether the configured API target responds.",
-		request: () => axios.get(apiRoutes.serverHealth),
+		request: () => axios.get<unknown>(apiRoutes.serverHealth),
 	},
 	{
 		key: "database",
 		label: "Database",
 		description: "Checks environment flags, SSL setup, and SELECT 1.",
-		request: () => axios.get(apiRoutes.databaseHealth),
+		request: () => axios.get<unknown>(apiRoutes.databaseHealth),
 	},
 	{
 		key: "recipes",
 		label: "Recipes API",
 		description: "Checks whether recipe data can be fetched.",
-		request: () => axios.get(apiRoutes.recipes),
+		request: () => axios.get<unknown>(apiRoutes.recipes),
 	},
 ];
 
-const formatError = (error) =>
-	error.response?.data?.message ||
-	error.response?.data?.errorMessage ||
-	error.message ||
-	"Request failed";
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null && !Array.isArray(value);
 
-const Health = () => {
-	const [status, setStatus] = useState("loading");
-	const [results, setResults] = useState([]);
+const formatError = (error: unknown): string => {
+	if (isAxiosError<ErrorPayload>(error)) {
+		return error.response?.data?.message || error.response?.data?.errorMessage || error.message || "Request failed";
+	}
+	return error instanceof Error ? error.message : "Request failed";
+};
 
-	const runChecks = async () => {
+const formatDatabaseConfig = (data: unknown): string | null => {
+	if (!isRecord(data) || !isRecord(data.config)) return null;
+	return Object.entries(data.config)
+		.map(([key, value]) => `${key}: ${String(value)}`)
+		.join(" | ");
+};
+
+const Health = (): ReactElement => {
+	const [status, setStatus] = useState<"loading" | "ready">("loading");
+	const [results, setResults] = useState<HealthResult[]>([]);
+
+	const runChecks = async (): Promise<void> => {
 		setStatus("loading");
 
 		const nextResults = await Promise.all(
@@ -53,14 +81,14 @@ const Health = () => {
 						durationMs: Math.round(performance.now() - startedAt),
 						data: response.data,
 					};
-				} catch (error) {
+				} catch (error: unknown) {
 					return {
 						...check,
 						ok: false,
-						statusCode: error.response?.status || null,
+						statusCode: isAxiosError(error) ? error.response?.status || null : null,
 						durationMs: Math.round(performance.now() - startedAt),
 						error: formatError(error),
-						data: error.response?.data || null,
+						data: isAxiosError(error) ? error.response?.data || null : null,
 					};
 				}
 			})
@@ -76,7 +104,7 @@ const Health = () => {
 
 	const failedCount = results.filter((result) => !result.ok).length;
 	const statusLabel = status === "loading" ? "Running checks" : failedCount ? `${failedCount} check${failedCount === 1 ? "" : "s"} need attention` : "All systems operational";
-	const checkIcons = { server: Server, database: Database, recipes: Utensils };
+	const checkIcons: Record<HealthCheckKey, LucideIcon> = { server: Server, database: Database, recipes: Utensils };
 
 	return (
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
@@ -126,7 +154,7 @@ const Health = () => {
 								<div className="flex items-start justify-between gap-3">
 									<div className="flex min-w-0 items-center gap-3">
 										<div className={`grid size-11 shrink-0 place-items-center rounded-xl ${result.ok ? "bg-secondary text-secondary-foreground" : "bg-destructive/10 text-destructive"}`}>
-											{React.createElement(checkIcons[result.key] || Activity, { className: "size-5", "aria-hidden": true })}
+											{(() => { const Icon = checkIcons[result.key] || Activity; return <Icon className="size-5" aria-hidden="true" />; })()}
 										</div>
 										<div className="min-w-0">
 											<span className={`text-xs font-black uppercase tracking-[0.14em] ${result.ok ? "text-primary" : "text-destructive"}`}>{result.ok ? "Healthy" : "Failed"}</span>
@@ -147,13 +175,11 @@ const Health = () => {
 											<dd className="break-words font-semibold text-destructive">{result.error}</dd>
 										</div>
 									)}
-									{result.key === "database" && result.data?.config && (
+									{result.key === "database" && formatDatabaseConfig(result.data) && (
 										<div className="grid gap-1">
 											<dt className="font-semibold text-muted-foreground">DB config</dt>
 											<dd className="break-words font-semibold text-foreground">
-												{Object.entries(result.data.config)
-													.map(([key, value]) => `${key}: ${value}`)
-													.join(" | ")}
+												{formatDatabaseConfig(result.data)}
 											</dd>
 										</div>
 									)}
