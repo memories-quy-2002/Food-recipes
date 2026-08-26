@@ -28,18 +28,22 @@ const jobs = Object.fromEntries(
 
 const expectedJobs = ['static', 'backend', 'frontend'];
 
-assert.deepEqual(Object.keys(jobs), expectedJobs, 'quality gates must stay minimal and ordered');
+assert.deepEqual(Object.keys(jobs), ['changes', ...expectedJobs], 'quality gates must include change detection before package jobs');
 assert.match(workflow, /^  pull_request:\s*$/m, 'workflow must run for pull requests');
 assert.match(
   workflow,
   /^  push:\r?\n    branches:\r?\n      - master\s*$/m,
   'workflow must run for pushes to the repository release branch master',
 );
-assert.match(workflow, /^permissions:\r?\n  contents: read\s*$/m, 'workflow must keep read-only repository permissions');
+assert.match(workflow, /^permissions:\r?\n  contents: read\r?\n  pull-requests: read\s*$/m, 'workflow must keep read-only repository permissions');
 
 const assertJobContains = (jobName, pattern, message) => {
   assert.match(jobs[jobName], pattern, message ?? `${jobName} must contain ${pattern}`);
 };
+assertJobContains('changes', /dorny\/paths-filter@v3/, 'changes must use the maintained path filter action');
+assertJobContains('changes', /frontend:\s*\r?\n\s+- 'src\/frontend\/\*\*'/, 'changes must detect frontend paths');
+assertJobContains('changes', /backend:\s*\r?\n\s+- 'src\/backend\/\*\*'/, 'changes must detect backend paths');
+assertJobContains('changes', /cross:\s*\r?\n\s+- '\.github\/\*\*'/, 'changes must detect cross-package paths');
 assertJobContains('static', /actions\/setup-node@v4[\s\S]*node-version: 24/, 'static validators must use Node 24');
 for (const validator of [
   'ci-workflow.validation.mjs',
@@ -58,6 +62,11 @@ for (const jobName of ['backend', 'frontend']) {
   assertJobContains(jobName, /pnpm install --frozen-lockfile/);
 }
 
+assertJobContains('backend', /needs:\s*changes/, 'backend must depend on change detection');
+assertJobContains('backend', /needs\.changes\.outputs\.backend == 'true'/, 'backend must run for backend changes');
+assertJobContains('frontend', /needs:\s*changes/, 'frontend must depend on change detection');
+assertJobContains('frontend', /needs\.changes\.outputs\.frontend == 'true'/, 'frontend must run for frontend changes');
+
 assertJobContains('backend', /pnpm prisma:validate/);
 assertJobContains('backend', /pnpm prisma:generate/);
 assertJobContains('backend', /pnpm check/);
@@ -67,7 +76,7 @@ assertJobContains('frontend', /pnpm check/);
 assertJobContains('frontend', /pnpm build/);
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
 assertJobContains('frontend', /pnpm exec playwright install --with-deps chromium/);
-assertJobContains('frontend', /pnpm test:e2e:ci/);
+assertJobContains('frontend', /pnpm exec playwright test --config e2e\/playwright\.config\.js/);
 assertJobContains('frontend', /actions\/upload-artifact@v4[\s\S]*retention-days: 7/);
 assert.doesNotMatch(workflow, /contents:\s*write/i, 'quality gates must never request write permissions');
 assert.doesNotMatch(workflow, /git push/i, 'quality gates must never push generated changes');

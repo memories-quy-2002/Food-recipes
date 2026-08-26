@@ -2,6 +2,7 @@ import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/commo
 import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
 import type { RequestWithContext } from '../middleware/request-context.middleware';
+import { captureSentryException } from '../../bootstrap/instrument';
 
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaExceptionFilter implements ExceptionFilter {
@@ -24,6 +25,15 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       : exception.code === 'P2025'
         ? 'The requested resource was not found'
         : 'Database operation failed';
+
+    if (statusCode >= 500) {
+      captureSentryException(exception, {
+        requestId: request.requestId ?? request.header('X-Request-ID'),
+        method: request.method,
+        path: request.originalUrl,
+        statusCode,
+      });
+    }
 
     response.status(statusCode).json({
       statusCode,

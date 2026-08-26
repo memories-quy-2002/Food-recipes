@@ -39,6 +39,93 @@ async function authenticateAsTestUser(page) {
 	await bootstrapTestAuth(page, undefined, "test-memory-planning-token");
 	await page.route("**/users/me/wishlist", (route) => route.fulfill(json({ wishlist: [] })));
 	await page.route("**/users/me/ratings", (route) => route.fulfill(json({ ratings: [] })));
+	await page.route("**/users/me/recipes/7/note", (route) => route.fulfill(json({ note: null })));
+	let cookingSession = null;
+	await page.route("**/users/me/cooking-session**", async (route) => {
+		const request = route.request();
+		const url = new URL(request.url());
+		const path = url.pathname.slice(url.pathname.indexOf("/users/me/cooking-session"));
+		const method = request.method();
+
+		if (method === "GET" && path === "/users/me/cooking-session") {
+			return route.fulfill(json({ session: cookingSession }));
+		}
+		if (method === "POST" && path === "/users/me/cooking-session") {
+			if (cookingSession) {
+				cookingSession = { ...cookingSession, status: "active", paused_at: null };
+				return route.fulfill(json({ session: cookingSession }, 201));
+			}
+			const body = JSON.parse(request.postData() || "{}");
+			cookingSession = {
+				session_id: 31,
+				user_id: 7,
+				recipe_id: body.recipeId,
+				recipe_name: recipe.recipe_name,
+				meal_plan_item_id: body.mealPlanItemId ?? null,
+				planned_date: "2026-08-24",
+				slot: "dinner",
+				servings: body.servings ?? 1,
+				current_step: 0,
+				status: "active",
+				started_at: "2026-08-24T17:00:00.000Z",
+				last_active_at: "2026-08-24T17:00:00.000Z",
+				paused_at: null,
+				completed_at: null,
+				created_at: "2026-08-24T17:00:00.000Z",
+				updated_at: "2026-08-24T17:00:00.000Z",
+			};
+			return route.fulfill(json({ session: cookingSession }, 201));
+		}
+		if (method === "PATCH" && path === "/users/me/cooking-session/31") {
+			const body = JSON.parse(request.postData() || "{}");
+			cookingSession = { ...cookingSession, ...(body.currentStep === undefined ? {} : { current_step: body.currentStep }), ...(body.status ? { status: body.status } : {}) };
+			return route.fulfill(json({ session: cookingSession }));
+		}
+		if (method === "POST" && path === "/users/me/cooking-session/31/complete") {
+			cookingSession = { ...cookingSession, status: "completed", completed_at: "2026-08-24T17:35:00.000Z" };
+			return route.fulfill(json({
+				session: cookingSession,
+				history: {
+					history_id: 21,
+					user_id: 7,
+					recipe_id: recipe.recipe_id,
+					recipe_name: recipe.recipe_name,
+					meal_plan_item_id: cookingSession.meal_plan_item_id,
+					planned_date: cookingSession.planned_date,
+					slot: cookingSession.slot,
+					servings: cookingSession.servings,
+					started_at: cookingSession.started_at,
+					completed_at: cookingSession.completed_at,
+					created_at: cookingSession.completed_at,
+				},
+			}));
+		}
+		if (method === "DELETE") {
+			cookingSession = null;
+			return route.fulfill(json({ message: "Cooking session abandoned" }));
+		}
+		return route.fallback();
+	});
+	await page.route("**/users/me/cooking-history", async (route) => {
+		if (route.request().method() === "POST") {
+			const body = JSON.parse(route.request().postData() || "{}");
+			return route.fulfill(json({
+				item: {
+					history_id: 21,
+					recipe_id: body.recipeId,
+					recipe_name: recipe.recipe_name,
+					meal_plan_item_id: body.mealPlanItemId ?? null,
+					planned_date: "2026-08-24",
+					slot: "dinner",
+					servings: body.servings ?? 1,
+					started_at: "2026-08-24T17:00:00.000Z",
+					completed_at: "2026-08-24T17:35:00.000Z",
+					created_at: "2026-08-24T17:35:00.000Z",
+				},
+			}, 201));
+		}
+		return route.fulfill(json({ items: [] }));
+	});
 }
 
 async function stubPlanningApi(page, { initialPlan = false, partialPlan = false } = {}) {
@@ -116,12 +203,12 @@ test("connects Recipe Detail to a new plan, Cooking Mode, and Back to plan", asy
 	const planningState = await stubPlanningApi(page);
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await expect(page.getByRole("button", { name: "Add to plan" })).toBeVisible();
-	await page.getByRole("button", { name: "Add to plan" }).click();
+	await expect(page.getByRole("button", { name: "Add recipe to meal plan" })).toBeVisible();
+	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
 	const dialog = page.getByRole("dialog", { name: "Add Chicken Curry to your plan" });
 	await expect(dialog).toBeVisible();
 	const dialogStyles = await dialog.evaluate((element) => {
-		const primary = element.querySelector(".planning-dialog__primary");
+			const primary = element.querySelector("footer > button:last-child");
 		return {
 			background: getComputedStyle(element).backgroundColor,
 			primaryBackground: primary ? getComputedStyle(primary).backgroundColor : "",
@@ -152,13 +239,28 @@ test("connects Recipe Detail to a new plan, Cooking Mode, and Back to plan", asy
 	await expect(page.getByText("6 servings", { exact: true })).toBeVisible();
 });
 
+test("restores cooking progress after leaving and returning to the recipe", async ({ page }) => {
+	await stubRecipeApi(page);
+	await authenticateAsTestUser(page);
+
+	await page.goto(`/recipe/cooking?id=${recipe.recipe_id}`);
+	await expect(page.getByText("Step 1 of 2")).toBeVisible();
+	await page.getByRole("button", { name: "Next step" }).click();
+	await expect(page.getByText("Step 2 of 2")).toBeVisible();
+	await page.getByRole("button", { name: "Pause and exit cooking" }).click();
+	await expect(page).toHaveURL(/\/recipe\?id=7$/);
+
+	await page.goto(`/recipe/cooking?id=${recipe.recipe_id}`);
+	await expect(page.getByText("Step 2 of 2")).toBeVisible();
+});
+
 test("adds directly to an existing plan without creating a duplicate", async ({ page }) => {
 	await stubRecipeApi(page);
 	await authenticateAsTestUser(page);
 	const planningState = await stubPlanningApi(page, { initialPlan: true });
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await page.getByRole("button", { name: "Add to plan" }).click();
+	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
 	const dialog = page.getByRole("dialog", { name: "Add Chicken Curry to your plan" });
 	await dialog.getByLabel("Meal").selectOption("breakfast");
 	await dialog.getByRole("button", { name: "Add to plan", exact: true }).click();
@@ -174,7 +276,7 @@ test("creates a full target week when an overlapping plan misses the selected da
 	const planningState = await stubPlanningApi(page, { initialPlan: true, partialPlan: true });
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await page.getByRole("button", { name: "Add to plan" }).click();
+	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
 	const dialog = page.getByRole("dialog", { name: "Add Chicken Curry to your plan" });
 	await dialog.getByLabel("Date").fill("2026-08-24");
 	await dialog.getByRole("button", { name: "Add to plan", exact: true }).click();
@@ -188,7 +290,7 @@ test("sends guests to account before opening Add to plan", async ({ page }) => {
 	await stubRecipeApi(page);
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await page.getByRole("button", { name: "Add to plan" }).click();
+	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
 
 	await expect(page).toHaveURL(/\/account\?signup=false$/);
 });
@@ -204,8 +306,8 @@ test("keeps Recipe Detail actions usable at mobile and desktop widths", async ({
 		await expect(page.getByRole("heading", { name: "Chicken Curry" })).toBeVisible();
 
 		const audit = await page.evaluate(() => {
-			const actionGroup = document.querySelector(".recipe__container__summary__fav");
-			const controls = Array.from(document.querySelectorAll(".recipe__container__summary__fav button, .recipe__container__summary__fav a"));
+			const actionGroup = document.querySelector('section[aria-labelledby="recipe-title"]');
+			const controls = Array.from(actionGroup?.querySelectorAll("button, a") ?? []);
 			return {
 				viewportWidth: window.innerWidth,
 				documentWidth: document.documentElement.scrollWidth,
@@ -221,6 +323,6 @@ test("keeps Recipe Detail actions usable at mobile and desktop widths", async ({
 
 		expect(audit.documentWidth).toBeLessThanOrEqual(audit.viewportWidth);
 		expect(audit.controlViolations).toEqual([]);
-		expect(audit.position).toBe(width <= 576 ? "sticky" : "static");
+		expect(audit.position).toBe("static");
 	}
 });

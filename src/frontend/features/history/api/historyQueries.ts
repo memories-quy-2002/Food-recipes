@@ -1,12 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getActiveCookingSession } from "./cookingSessionApi";
 import { createCookingHistory, listCookingHistory, type CreateCookingHistoryInput } from "./historyApi";
 import { useToast } from "@/app/ToastProvider";
 
-export const historyQueryKeys = { all: ["cooking-history"] as const };
+export const historyQueryKeys = {
+	all: ["cooking-history"] as const,
+	activeSession: ["cooking-session", "active"] as const,
+};
 
 export const useCookingHistoryQuery = () => useQuery({
 	queryKey: historyQueryKeys.all,
 	queryFn: ({ signal }) => listCookingHistory(signal),
+});
+
+export const useActiveCookingSessionQuery = () => useQuery({
+	queryKey: historyQueryKeys.activeSession,
+	queryFn: ({ signal }) => getActiveCookingSession(undefined, signal),
 });
 
 export const useCreateCookingHistoryMutation = () => {

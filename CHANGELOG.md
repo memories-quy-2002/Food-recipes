@@ -20,8 +20,7 @@ calendar dates for release entries.
 - Frontend lint, typecheck, unit-test, and Playwright commands.
 - Backend typecheck, Jest, Prisma, build, and migration commands.
 - Docker Compose development and production-like infrastructure with
-  PostgreSQL, a migration service, the Nest API, and optional Kong gateway
-  routing.
+  PostgreSQL, a migration service, and the Nest API.
 - JWT bearer authentication for signup, login, token resolution, and
   protected account, recipe, rating, and wishlist routes.
 - React Helmet SEO metadata, including page titles, descriptions, canonical
@@ -39,9 +38,8 @@ calendar dates for release entries.
 - Updated local development to run Vite and NestJS from their own package
   directories. The frontend runs on port `5173`; the direct Nest API runs on
   port `3000`.
-- Frontend API requests now use `VITE_KONG_BASE_URL` and append `/api/v1`.
-  The development Compose stack exposes the API directly; the
-  production-like stack routes through Kong on port `8000`.
+- Frontend API requests now use `VITE_API_BASE_URL` and append `/api/v1`.
+  Both Compose stacks expose the API directly on the configurable `API_PORT`.
 - Replaced the previous Express-oriented request and error handling with
   NestJS logging, global exception filters, validation, CORS, and Swagger
   bootstrap configuration.

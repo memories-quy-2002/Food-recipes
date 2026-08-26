@@ -50,7 +50,7 @@ test("authenticated user saves a recipe to a collection and removes it from Save
 	});
 
 	await page.goto("/recipe?id=1");
-	await page.getByRole("button", { name: "Save to..." }).click();
+	await page.getByRole("button", { name: "Save recipe to collection", exact: true }).click();
 	await page.getByRole("button", { name: "Save to Weeknight dinners" }).click();
 	await page.getByRole("button", { name: "Done" }).click();
 

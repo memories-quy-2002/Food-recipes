@@ -54,6 +54,7 @@ logs/
 *.pid
 *.seed
 *.pid.lock
+.dev/
 
 # IDE and editor files
 .vscode/

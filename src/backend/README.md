@@ -11,7 +11,7 @@ or application scripts.
 - `prisma/` contains the Prisma schema, migrations, legacy evidence, and demo
   seed.
 - `test/` contains backend static and E2E tests.
-- `infrastructure/` contains backend-only Compose and Kong configuration.
+- `infrastructure/` contains backend-only Compose configuration.
 - `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` are the backend
   package-manager entry points. The workspace file only defines the dependency
   build allowlist; it does not define nested packages.

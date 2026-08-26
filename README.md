@@ -9,7 +9,6 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Create an account, log in, manage profile details, and change passwords.
 - Save recipes to a wishlist and manage saved recipes interactively.
 - Add new recipes with ingredients, instructions, timing, and image preview.
-- Read News and About pages for project updates and product context.
 - SEO metadata with React Helmet for page titles, descriptions, canonical URLs, and social previews.
 - NestJS request logging, centralized exception filters, CORS, validation, Swagger, and PostgreSQL persistence.
 
@@ -18,13 +17,13 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, and shadcn/ui as an incremental UI layer; Bootstrap/react-bootstrap and existing SCSS remain during migration
 - Server state: TanStack Query
 - Forms and validation: React Hook Form + Zod for recipe forms
-- API: REST/OpenAPI-compatible NestJS `/api/v1`, optionally fronted by Kong
+- API: REST/OpenAPI-compatible NestJS `/api/v1`
 - Backend: Node.js, NestJS, PostgreSQL, Prisma 7, and REST/OpenAPI
 - Authentication: JWT bearer authentication for protected routes
-- Infrastructure: Docker Compose; Kong is available for the production-like stack
+- Infrastructure: Docker Compose with direct NestJS API hosting
 - Deployment: Vercel frontend and containerized NestJS API
 
-PostgreSQL, Prisma, JWT signing, Docker, and Kong are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend. The current NestJS API implements JWT bearer authentication; refresh-token rotation and RBAC are not yet exposed by the current API source.
+PostgreSQL, Prisma, JWT signing, and Docker are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend. The current NestJS API implements JWT bearer authentication, refresh-token rotation, and role-aware protected routes.
 
 ## Project Structure
 
@@ -39,8 +38,8 @@ Food-recipes/
       components.json     shadcn/ui metadata and aliases
       eslint.config.mjs  Frontend ESLint flat config
       index.html         Vite HTML entry
-      main.jsx           Frontend bootstrap
-      vite.config.ts     Vite config with @ alias to the frontend root
+      main.tsx           Frontend bootstrap
+      vite.config.mts    Vite config with @ alias to the frontend root
       jsconfig.json      Frontend JavaScript editor settings
       vite-env.d.ts      Vite environment types
       tsconfig.json      Frontend TypeScript settings
@@ -49,7 +48,7 @@ Food-recipes/
       app/               App shell, providers, routes, store, global styles
       features/
         auth/           Account forms, auth hooks, auth state, protected route
-        content/        About, News, and error pages
+        content/        Error page and shared content states
         diagnostics/    Local-only health page
         food/           Food listing page and filters
         home/           Home page, carousel, search, featured recipe sections
@@ -75,7 +74,7 @@ Food-recipes/
       prisma/              Prisma schema, migrations, legacy evidence, and seed
       src/                 NestJS API source
       test/                Backend static and E2E tests
-      infrastructure/      Docker Compose and Kong configuration
+      infrastructure/      Docker Compose configuration
 ```
 
 Frontend imports can use `@` for `src/frontend`, for example
@@ -130,10 +129,9 @@ docker compose --project-directory . -f infrastructure/docker/docker-compose.dev
 ### Configure the frontend
 
 Copy `src/frontend/.env.example` to `src/frontend/.env` and set only public
-`VITE_*` values. The frontend appends `/api/v1` to `VITE_KONG_BASE_URL`.
+`VITE_*` values. The frontend appends `/api/v1` to `VITE_API_BASE_URL`.
 
-- Direct Nest API or the development Compose stack: `VITE_KONG_BASE_URL=http://localhost:3000`
-- Production-like Compose stack with Kong: `VITE_KONG_BASE_URL=http://localhost:8000`
+- Direct Nest API or either Compose stack: `VITE_API_BASE_URL=http://localhost:3000`
 
 ### Run locally
 
@@ -155,12 +153,43 @@ Local URLs:
 - Nest API: `http://localhost:3000/api/v1`
 - Swagger UI: `http://localhost:3000/api/docs`
 - Swagger JSON: `http://localhost:3000/api/docs-json`
-- Kong proxy in the production-like Compose stack: `http://localhost:8000/api/v1`
 
 If the backend is provided by Docker Compose, do not start the local Nest API
-process at the same time. The development Compose file publishes the API on
-port `3000`; the production-like Compose file keeps the API internal and
-publishes Kong on port `8000`.
+process at the same time. Both Compose files publish the API on the
+configurable `API_PORT`, which defaults to `3000`.
+
+### Fast local workflow
+
+From the repository root, the developer control center can start and stop the
+two applications without switching between package directories:
+
+```powershell
+.\tools\dev.ps1 start
+.\tools\dev.ps1 status
+.\tools\dev.ps1 stop
+```
+
+Use the Docker-backed API and PostgreSQL stack when needed:
+
+```powershell
+.\tools\dev.ps1 start -Mode docker
+```
+
+Run only the checks affected by the current worktree, or run the full package
+gates when preparing a checkpoint:
+
+```powershell
+.\tools\verify.ps1 -Scope Changed
+.\tools\verify.ps1 -Scope Changed -IncludeE2E
+.\tools\verify.ps1 -Scope Full
+```
+
+Use `-DryRun` to inspect the selected commands without running them and
+`-SkipBuild` for a faster feedback loop. `Changed` includes tracked and
+untracked files and does not run package checks for documentation-only or
+root-tooling changes. The repository root remains outside the pnpm workspace;
+the scripts delegate to the independent `src/frontend` and `src/backend`
+packages.
 
 ## Build
 
@@ -231,10 +260,29 @@ been backed up and reconciled.
 
 ## Deployment Notes
 
-- Nest/Kong is the supported production-like API deployment: set public `VITE_KONG_BASE_URL=https://your-kong-gateway.example.com`; the frontend then uses the Kong `/api/v1` gateway.
+- The supported production-like deployment publishes the NestJS API directly: set public `VITE_API_BASE_URL=https://your-api.example.com`; the frontend then uses the NestJS `/api/v1` API.
 - Set public `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
 - Configure the Vercel project root directory as `src/frontend`; Vercel then runs that package's `pnpm build`, serves its `dist` output, and applies the SPA rewrites from `src/frontend/vercel.json`.
-- The backend Compose files live under `src/backend/infrastructure`; the API image uses `src/backend` as its build context and `Dockerfile`, and should be deployed behind the configured Kong gateway.
+- The backend Compose files live under `src/backend/infrastructure`; the API image uses `src/backend` as its build context and `Dockerfile`. For a public deployment, place the API behind the hosting platform's TLS and load-balancing layer.
+
+## Recommended Technology Roadmap
+
+The project is currently best served by a modular NestJS API, PostgreSQL, and
+Prisma. The next additions should solve concrete product or operational needs:
+
+1. Add backend OpenTelemetry traces and metrics, structured JSON log shipping,
+   and an error tracker such as Sentry.
+2. Complete one object-storage pipeline for recipe images with signed uploads,
+   validation, thumbnails, and CDN delivery.
+3. Add a transactional email provider for password recovery, verification, and
+   future cooking reminders.
+4. Add Redis-backed rate limiting and background jobs only when the API runs on
+   multiple replicas or image/email work becomes asynchronous.
+5. Start recipe search with PostgreSQL full-text search and `pg_trgm`; defer a
+   separate search engine until the catalog requires it.
+
+Microservices, Kafka, Kubernetes, GraphQL, and Elasticsearch would add
+operational complexity without a clear need in the current single-API system.
 
 ## Documentation
 

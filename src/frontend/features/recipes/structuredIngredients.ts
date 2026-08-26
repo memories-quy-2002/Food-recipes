@@ -1,3 +1,5 @@
+import type { StructuredIngredient } from "@/shared/api/contracts";
+
 export const INGREDIENT_UNITS = [
 	"GRAM",
 	"KILOGRAM",
@@ -17,6 +19,10 @@ export type RecipeIngredient = {
 	quantity?: number;
 	unit?: IngredientUnit;
 	note?: string;
+};
+
+export type ReadableStructuredIngredient = StructuredIngredient & {
+	note?: string | null;
 };
 
 const unitLabels: Record<IngredientUnit, string> = {
@@ -55,6 +61,12 @@ const unitFactors: Record<IngredientUnit, number> = {
 const isIngredientUnit = (value: unknown): value is IngredientUnit =>
 	typeof value === "string" && INGREDIENT_UNITS.includes(value as IngredientUnit);
 
+export const normalizeIngredientUnit = (value: unknown): IngredientUnit | undefined => {
+	if (typeof value !== "string") return undefined;
+	const normalized = value.trim().toUpperCase();
+	return isIngredientUnit(normalized) ? normalized : undefined;
+};
+
 const normalizeIngredient = (ingredient: RecipeIngredient): RecipeIngredient => ({
 	...ingredient,
 	name: ingredient.name.trim(),
@@ -62,26 +74,34 @@ const normalizeIngredient = (ingredient: RecipeIngredient): RecipeIngredient => 
 		typeof ingredient.quantity === "number" && Number.isFinite(ingredient.quantity)
 			? ingredient.quantity
 			: undefined,
-	unit: isIngredientUnit(ingredient.unit) ? ingredient.unit : undefined,
+	unit: normalizeIngredientUnit(ingredient.unit),
 	note: ingredient.note?.trim() || undefined,
 });
 
 const formatNumber = (value: number) =>
 	Number.isInteger(value) ? String(value) : String(Number(value.toFixed(2)));
 
-export const formatStructuredIngredient = (input: RecipeIngredient | unknown): string => {
-	if (!input || typeof input !== "object" || !("name" in input)) return JSON.stringify(input);
-	if ("unit" in input && input.unit !== undefined && input.unit !== null && !isIngredientUnit(input.unit)) return JSON.stringify(input);
-	const ingredient = normalizeIngredient(input as RecipeIngredient);
-	if (!ingredient.name || (ingredient.unit && !isIngredientUnit(ingredient.unit))) {
-		return JSON.stringify(input);
-	}
-	const quantity =
-		ingredient.quantity === undefined
-			? ""
-			: `${formatNumber(ingredient.quantity)}${ingredient.unit ? ` ${unitLabels[ingredient.unit]}` : ""} `;
-	const note = ingredient.note ? `, ${ingredient.note}` : "";
-	return `${quantity}${ingredient.name}${note}`.trim();
+const isReadableStructuredIngredient = (input: unknown): input is ReadableStructuredIngredient =>
+	typeof input === "object" && input !== null && "name" in input && typeof input.name === "string";
+
+export const formatStructuredIngredient = (input: unknown): string => {
+	if (!isReadableStructuredIngredient(input)) return String(JSON.stringify(input));
+
+	const ingredient = input;
+	const quantityText = [ingredient.quantityText, ingredient.quantity_text]
+		.find((value) => typeof value === "string" && value.trim())?.trim()
+		|| (typeof ingredient.quantity === "number" && Number.isFinite(ingredient.quantity) ? formatNumber(ingredient.quantity) : "");
+	const unitValue = [ingredient.unit, ingredient.unit_text]
+		.find((value) => typeof value === "string" && value.trim())?.trim() || "";
+	const normalizedUnit = normalizeIngredientUnit(unitValue);
+	const unit = normalizedUnit ? unitLabels[normalizedUnit] : unitValue;
+	const preparation = [ingredient.preparation, ingredient.preparation_text]
+		.find((value) => typeof value === "string" && value.trim())?.trim() || "";
+	const note = typeof ingredient.note === "string" ? ingredient.note.trim() : "";
+	const text = [quantityText, unit, ingredient.name.trim()]
+		.filter((value) => value.length > 0)
+		.join(" ");
+	return `${text}${preparation ? ` (${preparation})` : ""}${note ? `, ${note}` : ""}`.trim();
 };
 
 export const scaleStructuredIngredient = (

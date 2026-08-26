@@ -1,6 +1,6 @@
 {
 	"compilerOptions": {
-		"allowJs": true,
+		"allowJs": false,
 		"checkJs": false,
 		"noEmit": true,
 		"target": "ES2022",
@@ -8,6 +8,8 @@
 		"moduleResolution": "Bundler",
 		"jsx": "react-jsx",
 		"strict": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"skipLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
@@ -19,6 +21,6 @@
 		"**/*.ts",
 		"**/*.tsx",
 		"vite-env.d.ts",
-		"vite.config.ts"
+		"vite.config.mts"
 	]
 }

@@ -149,7 +149,7 @@ test("authenticated user manages a manual list and imports recipe ingredients", 
 	await milkRow.getByRole("button", { name: "Save changes" }).click();
 	await expect(page.locator(".shopping-list__item").filter({ hasText: "whole milk" })).toBeVisible();
 
-	await page.getByLabel("Item").fill("tea");
+	await page.getByRole("textbox", { name: "Item" }).fill("tea");
 	await page.getByRole("button", { name: "Add item" }).click();
 	await page.getByRole("button", { name: "Delete tea" }).click();
 	await expect(page.getByText("tea", { exact: true })).toHaveCount(0);
@@ -160,7 +160,7 @@ test("authenticated user manages a manual list and imports recipe ingredients", 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
 	await expect(page.getByRole("button", { name: "Add ingredients to shopping list" })).toBeVisible();
 	await page.getByRole("button", { name: "Add ingredients to shopping list" }).click();
-	await expect(page.getByText("2 ingredients added to Shopping List", { exact: true })).toBeVisible();
+	await expect(page.getByText("Recipe ingredients added to your shopping list", { exact: true })).toBeVisible();
 
 	await page.goto("/shopping-list");
 	await expect(page.locator(".shopping-list__item").filter({ hasText: "2 eggs" })).toBeVisible();

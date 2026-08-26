@@ -27,11 +27,19 @@ export const useCollectionsQuery = (enabled = true) => useQuery({
 	enabled,
 });
 
-export const useCollectionRecipesQuery = (collectionId: number | null, enabled = true) => useQuery({
-	queryKey: collectionsQueryKeys.recipes(collectionId ?? 0),
-	queryFn: ({ signal }) => listCollectionRecipes(collectionId as number, signal),
-	enabled: enabled && Number.isInteger(collectionId) && Number(collectionId) > 0,
-});
+export const useCollectionRecipesQuery = (collectionId: number | null, enabled = true) => {
+	const queryCollectionId =
+		Number.isInteger(collectionId) && Number(collectionId) > 0 ? collectionId : null;
+
+	return useQuery({
+	queryKey: collectionsQueryKeys.recipes(queryCollectionId ?? 0),
+	queryFn: ({ signal }) => {
+		if (queryCollectionId === null) return Promise.reject(new Error("Collection ID is required"));
+		return listCollectionRecipes(queryCollectionId, signal);
+	},
+	enabled: enabled && queryCollectionId !== null,
+	});
+};
 
 export const useCreateCollectionMutation = () => {
 	const queryClient = useQueryClient();
