@@ -171,6 +171,32 @@ describe("RecipeEditor", () => {
 	}]);
 	});
 
+	it("normalizes non-finite legacy quantities to null", () => {
+		expect(normalizeStructuredIngredients([
+			{ quantity: Number.NaN, name: "Tomatoes" },
+			{ quantity: Number.POSITIVE_INFINITY, name: "Basil" },
+		])).toEqual([
+			{
+				position: 0,
+				quantity: null,
+				quantityText: null,
+				unit: null,
+				name: "Tomatoes",
+				preparation: null,
+				originalText: null,
+			},
+			{
+				position: 1,
+				quantity: null,
+				quantityText: null,
+				unit: null,
+				name: "Basil",
+				preparation: null,
+				originalText: null,
+			},
+		]);
+	});
+
 	it("hydrates edit mode from an owner recipe without using the create draft", async () => {
 		localStorage.setItem(
 			"food-recipes:recipe-draft:user:42",
