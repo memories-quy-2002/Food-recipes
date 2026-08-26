@@ -5,8 +5,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ShareRecipeButton from "./ShareRecipeButton";
 import { shareRecipe } from "./recipeSharing";
+import type { ShareResult } from "./recipeSharing";
 
 const showToast = vi.fn();
+const mockedShareRecipe = vi.mocked(shareRecipe);
 
 vi.mock("@/app/ToastProvider", () => ({
 	useToast: () => ({ showToast }),
@@ -39,8 +41,8 @@ describe("ShareRecipeButton", () => {
 	});
 
 	it("shows a pending state and prevents repeated requests", async () => {
-		let resolveShare;
-		shareRecipe.mockReturnValue(new Promise((resolve) => { resolveShare = resolve; }));
+		let resolveShare: (result: ShareResult | PromiseLike<ShareResult>) => void = () => undefined;
+		mockedShareRecipe.mockReturnValue(new Promise((resolve) => { resolveShare = resolve; }));
 		renderButton();
 
 		const button = screen.getByRole("button", { name: "Share recipe" });
@@ -55,7 +57,7 @@ describe("ShareRecipeButton", () => {
 	});
 
 	it("announces successful native sharing", async () => {
-		shareRecipe.mockResolvedValue("shared");
+		mockedShareRecipe.mockResolvedValue("shared");
 		renderButton();
 		fireEvent.click(screen.getByRole("button", { name: "Share recipe" }));
 
@@ -64,7 +66,7 @@ describe("ShareRecipeButton", () => {
 	});
 
 	it("announces the clipboard fallback", async () => {
-		shareRecipe.mockResolvedValue("copied");
+		mockedShareRecipe.mockResolvedValue("copied");
 		renderButton();
 		fireEvent.click(screen.getByRole("button", { name: "Share recipe" }));
 
@@ -77,7 +79,7 @@ describe("ShareRecipeButton", () => {
 	});
 
 	it("announces when sharing is unsupported", async () => {
-		shareRecipe.mockRejectedValue(new Error("SHARE_UNAVAILABLE"));
+		mockedShareRecipe.mockRejectedValue(new Error("SHARE_UNAVAILABLE"));
 		renderButton();
 		fireEvent.click(screen.getByRole("button", { name: "Share recipe" }));
 

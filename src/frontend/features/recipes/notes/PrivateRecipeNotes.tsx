@@ -9,12 +9,17 @@ import Button from "@/shared/ui/Button";
 
 const NOTE_MAX_LENGTH = 2000;
 
-const PrivateRecipeNotes = ({ recipeId, isAuthenticated }) => {
+type PrivateRecipeNotesProps = {
+	recipeId: number | string;
+	isAuthenticated: boolean;
+};
+
+const PrivateRecipeNotes = ({ recipeId, isAuthenticated }: PrivateRecipeNotesProps): React.ReactElement | null => {
 	const noteQuery = useRecipeNoteQuery(Number(recipeId), isAuthenticated);
 	const saveMutation = useSaveRecipeNoteMutation();
 	const deleteMutation = useDeleteRecipeNoteMutation();
 	const [draft, setDraft] = useState("");
-	const [message, setMessage] = useState(null);
+	const [message, setMessage] = useState<string | null>(null);
 
 	useEffect(() => {
 		setDraft(noteQuery.data?.note?.note ?? "");

@@ -1,11 +1,11 @@
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import RecipeReviewList from "./RecipeReviewList";
 
 describe("recipe review list", () => {
 	it("shows the review author's identity and timestamp", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<RecipeReviewList
@@ -21,6 +21,7 @@ describe("recipe review list", () => {
 				/>
 			);
 		});
+		if (!renderer) throw new Error("Expected the review list renderer");
 
 		expect(renderer.root.findByProps({ children: "Ava Cook" })).toBeTruthy();
 		expect(renderer.root.findByType("time").props.dateTime).toBe(
@@ -29,7 +30,7 @@ describe("recipe review list", () => {
 	});
 
 	it("renders reviews without introducing a fake reporting mutation", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<RecipeReviewList
@@ -44,6 +45,7 @@ describe("recipe review list", () => {
 				/>
 			);
 		});
+		if (!renderer) throw new Error("Expected the review list renderer");
 
 		expect(renderer.root.findAllByType("button")).toHaveLength(0);
 		expect(renderer.root.findAllByProps({ role: "note" })).toHaveLength(0);

@@ -3,17 +3,22 @@ import { Check } from "lucide-react";
 import { formatStructuredIngredient } from "../structuredIngredients";
 import { cn } from "@/shared/lib/utils";
 
-const toIngredientText = (ingredient) => (
+const toIngredientText = (ingredient: unknown): string => (
 	typeof ingredient === "string" ? ingredient : formatStructuredIngredient(ingredient)
 );
 
-const toRecipeScope = (recipeIdentity) => String(recipeIdentity ?? "recipe").replace(/[^a-zA-Z0-9_-]/g, "-");
+const toRecipeScope = (recipeIdentity: number | string | null | undefined): string => String(recipeIdentity ?? "recipe").replace(/[^a-zA-Z0-9_-]/g, "-");
 
-export const getIngredientSignature = (ingredients) => (ingredients || [])
+export const getIngredientSignature = (ingredients: unknown[] | null | undefined): string => (ingredients || [])
 	.map((ingredient, index) => `${index}:${toIngredientText(ingredient)}`)
 	.join("|");
 
-const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }) => {
+type RecipeIngredientChecklistProps = {
+	recipeIdentity?: number | string | null;
+	ingredients?: unknown[] | null;
+};
+
+const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }: RecipeIngredientChecklistProps): React.ReactElement => {
 	const ingredientList = Array.isArray(ingredients) ? ingredients : [];
 	const recipeScope = toRecipeScope(recipeIdentity);
 	const ingredientSignature = getIngredientSignature(ingredientList);

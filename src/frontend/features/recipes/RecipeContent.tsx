@@ -1,7 +1,20 @@
 import React from "react";
 import RecipeDescription from "./content/RecipeDescription";
 import RecipeRating from "./content/RecipeRating";
+import type { RecipeRatingProps } from "./content/RecipeRating";
+import type { RecipeDetail, RecipeMetadata } from "@/shared/api/contracts";
 import RecipeMetadataPanel from "./RecipeMetadataPanel";
+
+type RecipeContentRecipe = Omit<Partial<RecipeDetail>, "metadata"> & {
+	recipe_id: number;
+	metadata?: RecipeMetadata | null;
+};
+
+export type RecipeContentProps = Omit<RecipeRatingProps, "reviewList" | "reviewMessage"> & {
+	recipe: RecipeContentRecipe;
+	reviewList: RecipeRatingProps["reviewList"];
+	reviewMessage: RecipeRatingProps["reviewMessage"];
+};
 
 const RecipeContent = ({
 	recipe,
@@ -24,7 +37,7 @@ const RecipeContent = ({
 	onStarClick,
 	onToggleReview,
 	onReviewChange,
-}) => {
+}: RecipeContentProps): React.ReactElement => {
 	return (
 		<section
 			className="mx-auto w-full max-w-[100rem] space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:space-y-10 lg:px-8 lg:py-12 2xl:max-w-[108rem]"

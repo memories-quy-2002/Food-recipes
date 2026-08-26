@@ -1,5 +1,5 @@
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import RecipeRating from "./RecipeRating";
 
@@ -27,12 +27,13 @@ const baseProps = {
 
 describe("recipe rating review flow", () => {
 	it("explains why the recipe author cannot rate their own recipe", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<RecipeRating {...baseProps} isRecipeAuthor />
 			);
 		});
+		if (!renderer) throw new Error("Expected the rating renderer");
 
 		expect(renderer.root.findByType("strong").children.join(" ")).toContain(
 			"cannot review your own recipe"
@@ -41,12 +42,13 @@ describe("recipe rating review flow", () => {
 	});
 
 	it("shows update and delete controls only for the authenticated user's existing review", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<RecipeRating {...baseProps} hasExistingRating />
 			);
 		});
+		if (!renderer) throw new Error("Expected the rating renderer");
 
 		expect(renderer.root.findByProps({ children: "Update review" })).toBeTruthy();
 		expect(renderer.root.findByProps({ children: "Delete my review" })).toBeTruthy();
@@ -58,30 +60,32 @@ describe("recipe rating review flow", () => {
 	});
 
 	it("keeps the 500-character review boundary on the textarea", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(<RecipeRating {...baseProps} />);
 		});
+		if (!renderer) throw new Error("Expected the rating renderer");
 
 		const textarea = renderer.root.findByType("textarea");
 		expect(textarea.props.maxLength).toBe(500);
 	});
 
 	it("uses native buttons for keyboard-accessible star selection", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(<RecipeRating {...baseProps} />);
 		});
+		if (!renderer) throw new Error("Expected the rating renderer");
 
 		const starButtons = renderer.root.findAll(
-			(node) =>
+			(node: ReactTestInstance) =>
 				node.type === "button" &&
 				typeof node.props["aria-label"] === "string" &&
 				node.props["aria-label"].startsWith("Rate ")
 		);
 
 		expect(starButtons).toHaveLength(5);
-		expect(starButtons.every((button) => button.props.type === "button")).toBe(
+		expect(starButtons.every((button: ReactTestInstance) => button.props.type === "button")).toBe(
 			true
 		);
 	});

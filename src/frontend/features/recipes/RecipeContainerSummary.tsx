@@ -1,6 +1,8 @@
 import React from "react";
 import { CalendarDays, ChefHat, Clock3, Heart, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { MouseEventHandler, ReactNode } from "react";
+import type { RecipeDetail } from "@/shared/api/contracts";
 import convertImage from "@/shared/utils/convertImage";
 import formatTimestamp from "@/shared/utils/formatTimestamp";
 import ratingStar from "@/shared/utils/ratingStar";
@@ -9,11 +11,42 @@ import { formatRecipeMinutes } from "@/shared/ui/RecipeCard";
 import PrintRecipeButton from "@/features/recipes/share/PrintRecipeButton";
 import ShareRecipeButton from "@/features/recipes/share/ShareRecipeButton";
 
-const getTotalMinutes = (recipe) => {
+type RecipeSummaryReadModel = {
+	recipe_id: number;
+	recipe_name: string;
+	recipe_description?: string | null;
+	date_added?: string | null;
+	image_url?: string | null;
+	category_name?: string;
+	meal_name?: string;
+	overall_score?: number | string | null;
+	num_ratings?: number | string | null;
+	full_name?: string | null;
+	nutrition?: RecipeDetail["nutrition"];
+	prep_time_minutes?: number | string | null;
+	cook_time_minutes?: number | string | null;
+	total_time_minutes?: number | string | null;
+	difficulty?: string | null;
+	difficulty_level?: string | null;
+	servings?: number | string | null;
+};
+
+const getTotalMinutes = (recipe: RecipeSummaryReadModel): number | string | null => {
 	if (recipe?.total_time_minutes !== undefined && recipe?.total_time_minutes !== null) return recipe.total_time_minutes;
 	const prep = Number(recipe?.prep_time_minutes || 0);
 	const cook = Number(recipe?.cook_time_minutes || 0);
 	return prep + cook || null;
+};
+
+export type RecipeContainerSummaryProps = {
+	recipe: RecipeSummaryReadModel;
+	favorite: boolean;
+	onClickFavorite: MouseEventHandler<HTMLButtonElement>;
+	onAddToPlan?: () => void;
+	isAddingToPlan?: boolean;
+	onSaveToCollection?: () => void;
+	onAddIngredients?: () => void;
+	isAddingIngredients?: boolean;
 };
 
 const RecipeContainerSummary = ({
@@ -25,17 +58,17 @@ const RecipeContainerSummary = ({
 	onSaveToCollection,
 	onAddIngredients,
 	isAddingIngredients = false,
-}) => {
+}: RecipeContainerSummaryProps): React.ReactElement => {
 	const tags = [...new Set([recipe.category_name, recipe.meal_name].filter(Boolean))];
 	const difficulty = recipe.difficulty ?? recipe.difficulty_level ?? "Everyday";
 	const servings = recipe.servings ?? recipe.nutrition?.servings ?? "—";
 	const score = Number(recipe.overall_score || 0);
 	const ratingCount = Number(recipe.num_ratings || 0);
-	const metrics = [
-		[<Clock3 className="size-4" aria-hidden="true" />, "Cooking time", formatRecipeMinutes(getTotalMinutes(recipe))],
-		[<Users className="size-4" aria-hidden="true" />, "Servings", servings],
-		[<ChefHat className="size-4" aria-hidden="true" />, "Difficulty", difficulty],
-		[<CalendarDays className="size-4" aria-hidden="true" />, "Added", formatTimestamp(recipe.date_added)],
+	const metrics: Array<{ icon: ReactNode; label: string; value: ReactNode }> = [
+		{ icon: <Clock3 className="size-4" aria-hidden="true" />, label: "Cooking time", value: formatRecipeMinutes(getTotalMinutes(recipe)) },
+		{ icon: <Users className="size-4" aria-hidden="true" />, label: "Servings", value: servings },
+		{ icon: <ChefHat className="size-4" aria-hidden="true" />, label: "Difficulty", value: difficulty },
+		{ icon: <CalendarDays className="size-4" aria-hidden="true" />, label: "Added", value: formatTimestamp(recipe.date_added) },
 	];
 
 	return (
@@ -58,7 +91,7 @@ const RecipeContainerSummary = ({
 				{tags.length ? <div className="mt-5 flex flex-wrap gap-2" aria-label="Recipe category and meal type">{tags.map((tag) => <span key={tag} className="rounded-full bg-secondary px-3 py-1.5 text-xs font-black text-secondary-foreground">{tag}</span>)}</div> : null}
 
 				<dl className="mt-7 grid grid-cols-2 gap-2 border-y border-muted/30 py-4 sm:grid-cols-4 sm:gap-3">
-					{metrics.map(([icon, label, value]) => <div key={label} className="min-w-0"><dt className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.08em] text-muted">{icon}{label}</dt><dd className="mt-1 truncate text-sm font-black text-background">{value}</dd></div>)}
+					{metrics.map(({ icon, label, value }) => <div key={label} className="min-w-0"><dt className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.08em] text-muted">{icon}{label}</dt><dd className="mt-1 truncate text-sm font-black text-background">{value}</dd></div>)}
 				</dl>
 
 				<div className="mt-7 grid gap-2.5 sm:grid-cols-2">

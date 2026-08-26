@@ -2,15 +2,20 @@ import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Clock3 } from "lucide-react";
 import convertImage from "@/shared/utils/convertImage";
+import type { RecipeSummary } from "@/shared/api/contracts";
 import { getRecentlyViewedRecipeIds } from "./recentlyViewed";
 
-const RecentlyViewedRecipes = ({ recipes = [] }) => {
+type RecentlyViewedRecipesProps = {
+	recipes?: RecipeSummary[];
+};
+
+const RecentlyViewedRecipes = ({ recipes = [] }: RecentlyViewedRecipesProps): React.ReactElement | null => {
 	const viewedRecipes = useMemo(() => {
 		if (typeof window === "undefined") return [];
 		const ids = getRecentlyViewedRecipeIds(window.localStorage);
 		return ids
 			.map((recipeId) => recipes.find((recipe) => Number(recipe.recipe_id) === recipeId))
-			.filter(Boolean)
+			.filter((recipe): recipe is RecipeSummary => Boolean(recipe))
 			.slice(0, 6);
 	}, [recipes]);
 

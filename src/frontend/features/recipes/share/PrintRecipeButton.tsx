@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, type HTMLAttributes } from "react";
 import { Printer } from "lucide-react";
 import { useToast } from "@/app/ToastProvider";
 import Button from "@/shared/ui/Button";
 
-const PrintRecipeButton = ({ className }) => {
+type PrintRecipeButtonProps = Pick<HTMLAttributes<HTMLButtonElement>, "className">;
+
+const PrintRecipeButton = ({ className }: PrintRecipeButtonProps): React.ReactElement => {
 	const [status, setStatus] = useState("");
 	const { showToast } = useToast();
 

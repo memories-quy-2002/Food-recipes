@@ -1,5 +1,5 @@
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import RecipeContainerSummary from "./RecipeContainerSummary";
@@ -17,7 +17,7 @@ const recipe = {
 describe("RecipeContainerSummary shopping action", () => {
 	it("exposes the recipe ingredient import action and forwards clicks", () => {
 		const onAddIngredients = vi.fn();
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter>
@@ -30,9 +30,10 @@ describe("RecipeContainerSummary shopping action", () => {
 				</MemoryRouter>,
 			);
 		});
+		if (!renderer) throw new Error("Expected the recipe summary renderer");
 
 			const button = renderer.root.findAllByType("button").find(
-				(node) => node.props["aria-label"] === "Add ingredients to shopping list",
+				(node: ReactTestInstance) => node.props["aria-label"] === "Add ingredients to shopping list",
 			);
 			expect(button.props["aria-busy"]).toBe(false);
 			expect(button.children).toContain("Add ingredients to shopping list");
@@ -43,7 +44,7 @@ describe("RecipeContainerSummary shopping action", () => {
 
 	it("communicates the pending state and prevents duplicate clicks", () => {
 		const onAddIngredients = vi.fn();
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter>
@@ -57,9 +58,10 @@ describe("RecipeContainerSummary shopping action", () => {
 				</MemoryRouter>,
 			);
 		});
+		if (!renderer) throw new Error("Expected the recipe summary renderer");
 
 			const button = renderer.root.findAllByType("button").find(
-				(node) => node.props["aria-label"] === "Adding ingredients to shopping list",
+				(node: ReactTestInstance) => node.props["aria-label"] === "Adding ingredients to shopping list",
 			);
 			expect(button.props.disabled).toBe(true);
 			expect(button.props["aria-busy"]).toBe(true);

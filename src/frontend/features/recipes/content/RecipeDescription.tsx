@@ -1,18 +1,61 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Clock3, Minus, Plus, Users } from "lucide-react";
+import type { RecipeDetail, RecipeNutrition, StructuredIngredient } from "@/shared/api/contracts";
 import RecipeIngredientChecklist, { getIngredientSignature } from "./RecipeIngredientChecklist";
 import { scaleStructuredIngredient } from "../structuredIngredients";
+import { INGREDIENT_UNITS, type IngredientUnit } from "../structuredIngredients";
 import Button from "@/shared/ui/Button";
 
 const DEFAULT_SERVINGS = 4;
 const MIN_SERVINGS = 1;
 const MAX_SERVINGS = 99;
 
-const firstDefined = (recipe, fields) => fields
-	.map((field) => recipe?.[field])
+type ReadStructuredIngredient = StructuredIngredient & {
+	note?: string | null;
+	quantity_text?: string | null;
+	preparation_text?: string | null;
+};
+
+type RecipeDescriptionRecipe = {
+	recipe_name?: string;
+	recipe_description?: string | null;
+	recipe_id?: number;
+	id?: number | string;
+	publicId?: number | string;
+	date_added?: string | null;
+	servings?: number | string | null;
+	serving_count?: number | string | null;
+	yield?: number | string | null;
+	recipe_yield?: number | string | null;
+	recipeYield?: number | string | null;
+	prepTimeMinutes?: unknown;
+	cookTimeMinutes?: unknown;
+	prepTime?: unknown;
+	cookTime?: unknown;
+	prep_time_minutes?: number | string | null;
+	cook_time_minutes?: number | string | null;
+	prep_time?: unknown;
+	cook_time?: unknown;
+	ingredients?: unknown[] | null;
+	instructions?: unknown;
+	structured_ingredients?: ReadStructuredIngredient[] | null;
+	structuredIngredients?: ReadStructuredIngredient[] | null;
+	metadata?: RecipeDetail["metadata"] | null;
+	dietaryTags?: string[];
+	allergenTags?: string[];
+	dietary_tags?: string[];
+	allergen_tags?: string[];
+	nutrition?: RecipeNutrition | null;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const firstDefined = (recipe: RecipeDescriptionRecipe | null | undefined, fields: string[]): unknown => fields
+	.map((field) => recipe?.[field as keyof RecipeDescriptionRecipe])
 	.find((value) => value !== undefined && value !== null && value !== "");
 
-const toMinutes = (value) => {
+const toMinutes = (value: unknown): number | null => {
 	if (typeof value === "number") return Number.isFinite(value) && value >= 0 ? value : null;
 	if (typeof value === "string") {
 		const text = value.trim();
@@ -24,7 +67,7 @@ const toMinutes = (value) => {
 		if (clock) return Number(clock[1] || 0) * 1440 + Number(clock[2]) * 60 + Number(clock[3]) + Number(clock[4] || 0) / 60;
 		return null;
 	}
-	if (typeof value !== "object") return null;
+	if (!isRecord(value)) return null;
 	const days = Number(value.days ?? value.day ?? value.days_count ?? 0);
 	const hours = Number(value.hours ?? value.hour ?? 0);
 	const minutes = Number(value.minutes ?? value.minute ?? 0);
@@ -33,10 +76,10 @@ const toMinutes = (value) => {
 	return [days, hours, minutes, seconds].every(Number.isFinite) && total >= 0 ? total : null;
 };
 
-export const normalizeRecipeTime = (recipe, kind) =>
+export const normalizeRecipeTime = (recipe: RecipeDescriptionRecipe, kind: "prep" | "cook"): number | null =>
 	toMinutes(firstDefined(recipe, [`${kind}TimeMinutes`, `${kind}_time_minutes`, `${kind}Time`, `${kind}_time`]));
 
-export const formatRecipeDuration = (minutes) => {
+export const formatRecipeDuration = (minutes: number | null | undefined): string => {
 	if (minutes === null || minutes === undefined) return "Not provided";
 	const totalMinutes = Math.round(minutes);
 	if (totalMinutes < 60) return `${totalMinutes} min`;
@@ -45,25 +88,37 @@ export const formatRecipeDuration = (minutes) => {
 	return remainder ? `${hours} hr ${remainder} min` : `${hours} hr`;
 };
 
-export const getRecipeTimeSummary = (recipe) => {
+export const getRecipeTimeSummary = (recipe: RecipeDescriptionRecipe): { prep: number | null; cook: number | null; total: number | null } => {
 	const prep = normalizeRecipeTime(recipe, "prep");
 	const cook = normalizeRecipeTime(recipe, "cook");
 	return { prep, cook, total: prep !== null && cook !== null ? prep + cook : null };
 };
 
-const getServings = (recipe) => firstDefined(recipe, ["servings", "serving_count", "yield", "recipe_yield", "recipeYield"]) ?? recipe?.nutrition?.servings;
-const getRecipeIdentity = (recipe) => firstDefined(recipe, ["recipe_id", "id", "publicId"]);
-const normalizeInstructions = (instructions) => Array.isArray(instructions)
-	? instructions.filter((instruction) => instruction !== null && instruction !== undefined && (typeof instruction !== "string" || instruction.trim().length > 0))
+const getServings = (recipe: RecipeDescriptionRecipe): unknown => firstDefined(recipe, ["servings", "serving_count", "yield", "recipe_yield", "recipeYield"]) ?? recipe.nutrition?.servings;
+const getRecipeIdentity = (recipe: RecipeDescriptionRecipe): number | string | undefined => {
+	const identity = firstDefined(recipe, ["recipe_id", "id", "publicId"]);
+	return typeof identity === "number" || typeof identity === "string" ? identity : undefined;
+};
+const normalizeInstructions = (instructions: unknown): Array<string | number> => Array.isArray(instructions)
+	? instructions.filter((instruction): instruction is string | number => typeof instruction === "number" || (typeof instruction === "string" && instruction.trim().length > 0))
 	: [];
 
-export const normalizeServings = (value) => {
-	const numericValue = typeof value === "number" ? value : Number.parseFloat(value);
+export const normalizeServings = (value: unknown): number => {
+	const numericValue = typeof value === "number" ? value : Number.parseFloat(String(value));
 	if (!Number.isFinite(numericValue)) return DEFAULT_SERVINGS;
 	return Math.min(MAX_SERVINGS, Math.max(MIN_SERVINGS, Math.round(numericValue)));
 };
 
-const SectionCard = ({ title, description, descriptionRole, children, id, className = "" }) => (
+type SectionCardProps = {
+	title: string;
+	description?: string;
+	descriptionRole?: React.AriaRole;
+	children: React.ReactNode;
+	id?: string;
+	className?: string;
+};
+
+const SectionCard = ({ title, description, descriptionRole, children, id, className = "" }: SectionCardProps): React.ReactElement => (
 	<section id={id} className={`rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8 ${className}`}>
 		<div className="max-w-3xl">
 			<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{title}</h2>
@@ -73,7 +128,21 @@ const SectionCard = ({ title, description, descriptionRole, children, id, classN
 	</section>
 );
 
-const RecipeDescription = ({ recipe }) => {
+type RecipeDescriptionProps = {
+	recipe: RecipeDescriptionRecipe;
+};
+
+const isIngredientUnit = (value: string): value is IngredientUnit =>
+	INGREDIENT_UNITS.includes(value as IngredientUnit);
+
+const isScalableIngredient = (
+	ingredient: StructuredIngredient,
+): ingredient is StructuredIngredient & { quantity: number; unit?: IngredientUnit } =>
+	typeof ingredient.quantity === "number" &&
+	Number.isFinite(ingredient.quantity) &&
+	(ingredient.unit === undefined || (typeof ingredient.unit === "string" && isIngredientUnit(ingredient.unit)));
+
+const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactElement => {
 	const { prep, cook, total } = getRecipeTimeSummary(recipe);
 	const instructions = normalizeInstructions(recipe.instructions);
 	const [servings, setServings] = useState(() => normalizeServings(getServings(recipe)));
@@ -86,7 +155,9 @@ const RecipeDescription = ({ recipe }) => {
 		[recipe.structured_ingredients, recipe.structuredIngredients]
 	);
 	const displayedIngredients = structuredIngredients.length > 0
-		? structuredIngredients.map((ingredient) => scaleStructuredIngredient(ingredient, servings, baseServings))
+		? structuredIngredients.map((ingredient) => isScalableIngredient(ingredient)
+			? scaleStructuredIngredient(ingredient, servings, baseServings)
+			: ingredient)
 		: recipe.ingredients;
 
 	useEffect(() => {
@@ -94,19 +165,22 @@ const RecipeDescription = ({ recipe }) => {
 		// Reset only when the displayed recipe changes; do not clobber a user's serving adjustment on re-render.
 	}, [recipeIdentity]);
 
-	const adjustServings = (amount) => setServings((current) => {
+	const adjustServings = (amount: number): void => setServings((current) => {
 		if ((current === MIN_SERVINGS && amount < 0) || (current === MAX_SERVINGS && amount > 0)) return current;
 		return normalizeServings(current + amount);
 	});
 
-	const timing = [["Prep", prep], ["Cook", cook], ["Total", total]];
-	const nutritionItems = recipe.nutrition
-		? [["Calories", "calories", "calories"], ["Protein", "protein", "g protein"], ["Carbohydrates", "carbohydrates", "g carbs"], ["Fat", "fat", "g fat"], ["Fiber", "fiber", "g fiber"], ["Sugar", "sugar", "g sugar"], ["Sodium", "sodium", "mg sodium"]]
-			.filter(([, key]) => recipe.nutrition[key] !== null && recipe.nutrition[key] !== undefined)
+	const timing: Array<[string, number | null]> = [["Prep", prep], ["Cook", cook], ["Total", total]];
+	const nutrition = recipe.nutrition;
+	const nutritionItems: Array<[string, keyof RecipeNutrition, string]> = nutrition
+		? ([
+			["Calories", "calories", "calories"], ["Protein", "protein", "g protein"], ["Carbohydrates", "carbohydrates", "g carbs"], ["Fat", "fat", "g fat"], ["Fiber", "fiber", "g fiber"], ["Sugar", "sugar", "g sugar"], ["Sodium", "sodium", "mg sodium"],
+		] as Array<[string, keyof RecipeNutrition, string]>)
+			.filter(([, key]) => nutrition[key] !== null && nutrition[key] !== undefined)
 		: [];
 	const dietaryTags = recipe.dietaryTags || recipe.dietary_tags || [];
 	const allergenTags = recipe.allergenTags || recipe.allergen_tags || [];
-	const hasManualNutrition = Boolean(recipe.nutrition && !recipe.metadata && nutritionItems.length > 0);
+	const hasManualNutrition = Boolean(nutrition && !recipe.metadata && nutritionItems.length > 0);
 	const hasDietaryInformation = dietaryTags.length > 0 || allergenTags.length > 0;
 
 	return (
@@ -172,7 +246,7 @@ const RecipeDescription = ({ recipe }) => {
 							<p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base">Manual values provided by the recipe author.</p>
 							<ul className="mt-5 grid gap-2 sm:grid-cols-2" aria-label="Nutrition facts">
 								{nutritionItems.map(([label, key, suffix]) => (
-									<li key={key} className="rounded-xl bg-muted px-4 py-3 text-sm"><strong className="font-black">{label}</strong><span className="ml-2 text-muted-foreground">{recipe.nutrition[key]} {key === "calories" ? "calories" : suffix}</span></li>
+									<li key={key} className="rounded-xl bg-muted px-4 py-3 text-sm"><strong className="font-black">{label}</strong><span className="ml-2 text-muted-foreground">{nutrition?.[key]} {key === "calories" ? "calories" : suffix}</span></li>
 								))}
 							</ul>
 						</div>

@@ -7,7 +7,19 @@ import Button from "@/shared/ui/Button";
 
 const REVIEWS_PER_PAGE = 5;
 
-const RecipeReviewList = ({ reviewList }) => {
+export type RecipeReview = {
+	rating_id: number | string;
+	score?: number | string | null;
+	review?: string | null;
+	full_name?: string | null;
+	date_added?: string | null;
+};
+
+type RecipeReviewListProps = {
+	reviewList: RecipeReview[];
+};
+
+const RecipeReviewList = ({ reviewList }: RecipeReviewListProps): React.ReactElement => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const numberReviews = reviewList.length;
 	const totalPages = Math.ceil(numberReviews / REVIEWS_PER_PAGE);
@@ -19,7 +31,7 @@ const RecipeReviewList = ({ reviewList }) => {
 	const lastPage = Math.min(firstPage + REVIEWS_PER_PAGE - 1, totalPages);
 	const displayedPages = pageNumbers.slice(firstPage - 1, lastPage);
 	const currentReviews = reviewList.slice((currentPage - 1) * REVIEWS_PER_PAGE, currentPage * REVIEWS_PER_PAGE);
-	const goTo = (page) => setCurrentPage(Math.min(Math.max(page, 1), Math.max(totalPages, 1)));
+	const goTo = (page: number): void => setCurrentPage(Math.min(Math.max(page, 1), Math.max(totalPages, 1)));
 
 	return (
 		<section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8" aria-labelledby="all-reviews-heading">

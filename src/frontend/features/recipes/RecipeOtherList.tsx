@@ -5,7 +5,11 @@ import { RecipeContext } from "@/app/RecipeProvider";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
 
-const RecipeOtherList = ({ recipeId }) => {
+type RecipeOtherListProps = {
+	recipeId: number | string;
+};
+
+const RecipeOtherList = ({ recipeId }: RecipeOtherListProps): React.ReactElement | null => {
 	const { recipes } = useContext(RecipeContext);
 	const relatedRecipes = useMemo(() => {
 		const candidates = recipes.filter(

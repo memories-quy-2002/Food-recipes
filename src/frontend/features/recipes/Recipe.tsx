@@ -1,6 +1,8 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
 import axios from "@/shared/api/axios";
+import type { RecipeDetail } from "@/shared/api/contracts";
 import { apiRoutes, getUserRecipeRatingRoute } from "@/shared/api/routes";
 import {
 	isWishlistAddSuccess,
@@ -34,29 +36,113 @@ import {
 import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
 import "./Recipe.print.scss";
 
-const Recipe = () => {
+export type RecipeViewProps = {
+	recipe: RecipeDetail;
+	isLoading?: boolean;
+	onRetry?: () => void;
+};
+
+type RecipeReadRecipe = RecipeDetail & {
+	difficulty?: string | null;
+	difficulty_level?: string | null;
+	servings?: number | string | null;
+	user_id?: number | null;
+	total_time_minutes?: number | string | null;
+};
+
+type RecipeReview = {
+	rating_id: number | string;
+	score?: number | string | null;
+	review?: string | null;
+	full_name?: string | null;
+	date_added?: string | null;
+};
+
+type ReviewMessage = {
+	type: "error" | "success";
+	text: string;
+};
+
+type WishlistItem = {
+	recipe_id?: number | string | null;
+	recipe?: { recipe_id?: number | string | null } | null;
+};
+
+type UserRating = {
+	recipe_id: number | string;
+	score?: number | string | null;
+	review?: string | null;
+};
+
+type CookingSessionState = {
+	current_step?: number;
+};
+
+type CookingSessionControls = {
+	session: CookingSessionState | null;
+	isReady: boolean;
+	error: string | null;
+	updateProgress: (stepIndex: number) => void;
+	pause: () => Promise<void>;
+	complete: () => Promise<unknown>;
+};
+
+type CollectionDialogProps = {
+	open: boolean;
+	recipeName: string;
+	collections: Array<{ collection_id: number; name: string }>;
+	isLoading: boolean;
+	isSubmitting: boolean;
+	pendingCollectionId: number | null;
+	errorMessage: string | null;
+	onAdd: (collectionId: number) => void;
+	onClose: () => void;
+};
+
+const TypedCollectionRecipeDialog = CollectionRecipeDialog as React.ComponentType<CollectionDialogProps>;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const getErrorMessage = (error: unknown, fallback: string): string => {
+	if (isAxiosError(error) && isRecord(error.response?.data) && typeof error.response.data.message === "string") {
+		return error.response.data.message;
+	}
+	return fallback;
+};
+
+const isRecipeReview = (value: unknown): value is RecipeReview =>
+	isRecord(value) && (typeof value.rating_id === "number" || typeof value.rating_id === "string");
+
+const isWishlistItem = (value: unknown): value is WishlistItem =>
+	isRecord(value) && (value.recipe_id === undefined || value.recipe_id === null || typeof value.recipe_id === "number" || typeof value.recipe_id === "string");
+
+const isUserRating = (value: unknown): value is UserRating =>
+	isRecord(value) && (typeof value.recipe_id === "number" || typeof value.recipe_id === "string");
+
+const Recipe = (): React.ReactElement => {
 	const { auth } = useContext(AuthContext);
 	const { isAuthenticated, userId } = auth.current;
-	const [recipe, setRecipe] = useState(null);
+	const [recipe, setRecipe] = useState<RecipeReadRecipe | null>(null);
 	const [isLoadingRecipe, setIsLoadingRecipe] = useState(true);
-	const [recipeError, setRecipeError] = useState(null);
+	const [recipeError, setRecipeError] = useState<string | null>(null);
 	const [favorite, setFavorite] = useState(false);
-	const [favoriteLoadedKey, setFavoriteLoadedKey] = useState(null);
+	const [favoriteLoadedKey, setFavoriteLoadedKey] = useState<string | null>(null);
 	const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
 	const [ratingScore, setRatingScore] = useState(0);
 	const [hasExistingRating, setHasExistingRating] = useState(false);
 	const [review, setReview] = useState("");
 	const [showReview, setShowReview] = useState(false);
-	const [reviewList, setReviewList] = useState([]);
+	const [reviewList, setReviewList] = useState<RecipeReview[]>([]);
 	const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-	const [reviewsError, setReviewsError] = useState(null);
+	const [reviewsError, setReviewsError] = useState<string | null>(null);
 	const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 	const [isDeletingReview, setIsDeletingReview] = useState(false);
-	const [reviewMessage, setReviewMessage] = useState(null);
+	const [reviewMessage, setReviewMessage] = useState<ReviewMessage | null>(null);
 	const [isAddToPlanOpen, setIsAddToPlanOpen] = useState(false);
 	const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
-	const [collectionDialogError, setCollectionDialogError] = useState(null);
-	const [pendingCollectionId, setPendingCollectionId] = useState(null);
+	const [collectionDialogError, setCollectionDialogError] = useState<string | null>(null);
+	const [pendingCollectionId, setPendingCollectionId] = useState<number | null>(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
@@ -93,7 +179,7 @@ const Recipe = () => {
 					returnTo: safeReturnTo,
 			  }
 			: null;
-	const cookingSession = useCookingSession({
+	const cookingSession: CookingSessionControls = useCookingSession({
 		enabled: isCookingMode && Boolean(recipe),
 		userId: isAuthenticated ? userId : 0,
 		recipeId: recipe?.recipe_id,
@@ -101,7 +187,7 @@ const Recipe = () => {
 		servings: planningContext?.servings,
 	});
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
-	const processedAuthIntent = useRef(null);
+	const processedAuthIntent = useRef<unknown>(null);
 	const favoriteLoadKey =
 		isAuthenticated
 			? userId && recipe
@@ -110,27 +196,25 @@ const Recipe = () => {
 			: "guest";
 	const isFavoriteLoaded = favoriteLoadedKey === favoriteLoadKey;
 
-	const fetchRecipe = useCallback(async ({ showLoading = true } = {}) => {
+	const fetchRecipe = useCallback(async ({ showLoading = true }: { showLoading?: boolean } = {}): Promise<void> => {
 		if (!id) return;
 
 		try {
 			if (showLoading) setIsLoadingRecipe(true);
 			setRecipeError(null);
-			const response = await axios.get(apiRoutes.recipe(id));
+			const response = await axios.get<{ recipe: RecipeReadRecipe }>(apiRoutes.recipe(id));
 			if (response.status === 200) {
 				setRecipe(response.data.recipe);
 			}
-		} catch (err) {
-			console.error(err);
-			setRecipeError(
-				err.response?.data?.message || "Unable to load this recipe."
-			);
+		} catch (error: unknown) {
+			console.error(error);
+			setRecipeError(getErrorMessage(error, "Unable to load this recipe."));
 		} finally {
 			if (showLoading) setIsLoadingRecipe(false);
 		}
 	}, [id]);
 
-	const handleStarClick = (clickedRating) => {
+	const handleStarClick = (clickedRating: number): void => {
 		setRatingScore(clickedRating);
 	};
 
@@ -138,31 +222,29 @@ const Recipe = () => {
 		setShowReview((showReview) => !showReview);
 	};
 
-	const handleReviewChange = (event) => {
+	const handleReviewChange = (event: React.ChangeEvent<HTMLTextAreaElement>): void => {
 		setReview(event.target.value.slice(0, 500));
 	};
 
-	const fetchReviews = useCallback(async (recipeId) => {
+	const fetchReviews = useCallback(async (recipeId: number): Promise<void> => {
 		if (!recipeId) return;
 
 		try {
 			setIsLoadingReviews(true);
 			setReviewsError(null);
-			const response = await axios.get(apiRoutes.recipeReviews(recipeId));
+			const response = await axios.get<unknown>(apiRoutes.recipeReviews(recipeId));
 			if (response.status === 200) {
-				setReviewList(getArrayPayload(response.data, "reviews"));
+				setReviewList(getArrayPayload<RecipeReview>(response.data, "reviews", isRecipeReview));
 			}
-		} catch (err) {
-			console.error(err);
-			setReviewsError(
-				err.response?.data?.message || "Unable to load reviews."
-			);
+		} catch (error: unknown) {
+			console.error(error);
+			setReviewsError(getErrorMessage(error, "Unable to load reviews."));
 		} finally {
 			setIsLoadingReviews(false);
 		}
 	}, []);
 
-	const handleSubmit = async (event) => {
+	const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();
 
 		if (!isAuthenticated) {
@@ -201,8 +283,8 @@ const Recipe = () => {
 					: "Your rating and review have been saved.",
 			});
 			showToast({ title: hasExistingRating ? "Review updated" : "Review saved" });
-		} catch (err) {
-			console.error(err);
+		} catch (error: unknown) {
+			console.error(error);
 			setReviewMessage({
 				type: "error",
 				text: "We could not save your review. Please try again.",
@@ -241,8 +323,8 @@ const Recipe = () => {
 				text: "Your review has been deleted.",
 			});
 			showToast({ title: "Review deleted" });
-		} catch (err) {
-			console.error(err);
+		} catch (error: unknown) {
+			console.error(error);
 			setReviewMessage({
 				type: "error",
 				text: "We could not delete your review. Please try again.",
@@ -253,7 +335,7 @@ const Recipe = () => {
 		}
 	};
 
-	const handleClickFavorite = async (event) => {
+	const handleClickFavorite = async (event?: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
 		event?.preventDefault();
 		if (!isAuthenticated) {
 			beginAuthIntent({
@@ -288,8 +370,8 @@ const Recipe = () => {
 					showToast({ title: "Saved recipe" });
 				}
 			}
-		} catch (err) {
-			console.error(err);
+		} catch (error: unknown) {
+			console.error(error);
 			showToast({
 				title: "Couldn’t update Saved",
 				message: "Please try again in a moment.",
@@ -348,18 +430,15 @@ const Recipe = () => {
 		setIsCollectionDialogOpen(true);
 	};
 
-	const handleAddRecipeToCollection = (collectionId) => {
+	const handleAddRecipeToCollection = (collectionId: number): void => {
 		if (!recipe || addRecipeToCollectionMutation.isPending) return;
 		setPendingCollectionId(collectionId);
 		setCollectionDialogError(null);
 		addRecipeToCollectionMutation.mutate(
 			{ collectionId, recipeId: Number(recipe.recipe_id) },
 			{
-				onError: (error) => {
-					setCollectionDialogError(
-						error.response?.data?.message ||
-							"We could not save this recipe to that collection. Try again.",
-					);
+				onError: (error: unknown) => {
+					setCollectionDialogError(getErrorMessage(error, "We could not save this recipe to that collection. Try again."));
 				},
 				onSettled: () => setPendingCollectionId(null),
 			},
@@ -371,7 +450,8 @@ const Recipe = () => {
 		showToast({ title: `Added ${recipe?.recipe_name || "recipe"} to your plan` });
 	};
 	useEffect(() => {
-		const intent = location.state?.pendingAuthIntent;
+		const locationState = isRecord(location.state) ? location.state : null;
+		const intent = locationState?.pendingAuthIntent;
 		if (!isAuthenticated || !recipe || processedAuthIntent.current === intent) {
 			return;
 		}
@@ -405,10 +485,10 @@ const Recipe = () => {
 			}
 
 			try {
-				const response = await axios.get(apiRoutes.userWishlist);
+				const response = await axios.get<unknown>(apiRoutes.userWishlist);
 				if (response.status === 200) {
 					setFavorite(
-						getArrayPayload(response.data, "wishlist").some(
+						getArrayPayload<WishlistItem>(response.data, "wishlist", isWishlistItem).some(
 							(wishlistRecipe) =>
 								Number(
 									wishlistRecipe.recipe?.recipe_id ??
@@ -418,8 +498,8 @@ const Recipe = () => {
 						)
 					);
 				}
-			} catch (err) {
-				console.error(err);
+			} catch (error: unknown) {
+				console.error(error);
 			} finally {
 				setFavoriteLoadedKey(`user:${userId}:recipe:${recipe.recipe_id}`);
 			}
@@ -436,11 +516,12 @@ const Recipe = () => {
 			}
 
 			try {
-				const response = await axios.get(apiRoutes.userRatings);
+				const response = await axios.get<unknown>(apiRoutes.userRatings);
 				if (response.status === 200) {
 					const myRecipeRating = getArrayPayload(
 						response.data,
-						"ratings"
+						"ratings",
+						isUserRating,
 					).find(
 						(rating) =>
 							Number(rating.recipe_id) === Number(recipe.recipe_id)
@@ -451,8 +532,8 @@ const Recipe = () => {
 					setReview(myRecipeRating?.review || "");
 					setShowReview(Boolean(myRecipeRating?.review));
 				}
-			} catch (err) {
-				console.error(err);
+			} catch (error: unknown) {
+				console.error(error);
 			}
 		};
 		fetchRating();
@@ -461,7 +542,7 @@ const Recipe = () => {
 		if (!recipe) return;
 		recordRecentlyViewedRecipe(window.localStorage, Number(recipe.recipe_id));
 
-		fetchReviews(recipe.recipe_id).catch((err) => console.error(err));
+		fetchReviews(recipe.recipe_id).catch((error: unknown) => console.error(error));
 	}, [fetchReviews, recipe]);
 	if (!id) {
 		return <ErrorPage />;
@@ -527,7 +608,7 @@ const Recipe = () => {
 							onClose={() => setIsAddToPlanOpen(false)}
 							onAdded={handleRecipeAddedToPlan}
 						/>
-						<CollectionRecipeDialog
+						<TypedCollectionRecipeDialog
 							open={isCollectionDialogOpen}
 							recipeName={recipe.recipe_name}
 							collections={collectionsQuery.data?.collections ?? []}

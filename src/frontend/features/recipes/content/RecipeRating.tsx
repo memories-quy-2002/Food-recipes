@@ -2,21 +2,49 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { BsStar, BsStarFill } from "react-icons/bs";
 import RecipeReviewList from "./RecipeReviewList";
+import type { RecipeReview } from "./RecipeReviewList";
 import Button from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
 
-const Notice = ({ children }) => (
+type ReviewMessage = {
+	type: "error" | "success";
+	text: string;
+};
+
+const Notice = ({ children }: { children: React.ReactNode }): React.ReactElement => (
 	<div className="rounded-2xl border border-border bg-muted/60 px-5 py-4 text-sm leading-6 text-muted-foreground" role="note">
 		{children}
 	</div>
 );
+
+export type RecipeRatingProps = {
+	ratingScore: number;
+	review: string;
+	reviewList: RecipeReview[];
+	reviewMessage: ReviewMessage | null;
+	hasExistingRating: boolean;
+	isLoadingReviews: boolean;
+	reviewsError: string | null;
+	showReview: boolean;
+	isAuthenticated: boolean;
+	isRecipeAuthor: boolean;
+	canMutateReview: boolean;
+	canDeleteReview: boolean;
+	isSubmittingReview: boolean;
+	isDeletingReview: boolean;
+	onSubmit: (event: React.FormEvent<HTMLFormElement>) => void | Promise<void>;
+	onDelete: () => void | Promise<void>;
+	onStarClick: (rating: number) => void;
+	onToggleReview: () => void;
+	onReviewChange: (event: React.ChangeEvent<HTMLTextAreaElement>) => void;
+};
 
 const RecipeRating = ({
 	ratingScore, review, reviewList, reviewMessage, hasExistingRating,
 	isLoadingReviews, reviewsError, showReview, isAuthenticated,
 	isRecipeAuthor, canMutateReview, canDeleteReview, isSubmittingReview,
 	isDeletingReview, onSubmit, onDelete, onStarClick, onToggleReview, onReviewChange,
-}) => (
+}: RecipeRatingProps): React.ReactElement => (
 	<section className="space-y-6" aria-labelledby="recipe-reviews-title">
 		<div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8">
 			<h2 id="recipe-reviews-title" className="text-2xl font-black tracking-tight sm:text-3xl">Ratings & reviews</h2>

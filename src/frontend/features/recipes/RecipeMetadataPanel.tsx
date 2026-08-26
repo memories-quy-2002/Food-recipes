@@ -1,13 +1,17 @@
 import React from "react";
 import { AlertTriangle, ShieldAlert } from "lucide-react";
+import type { RecipeMetadata } from "@/shared/api/contracts";
 
-const SOURCE_LABELS = {
+type MetadataSource = NonNullable<RecipeMetadata["nutrition"]>["source"];
+type NutritionMetadata = NonNullable<RecipeMetadata["nutrition"]>;
+
+const SOURCE_LABELS: Record<MetadataSource, string> = {
 	provided_by_author: "Provided by recipe author",
 	estimated: "Estimated",
 	verified_external: "Verified external data",
 };
 
-const ALLERGEN_LABELS = {
+const ALLERGEN_LABELS: Record<string, string> = {
 	milk: "Milk",
 	eggs: "Eggs",
 	peanuts: "Peanuts",
@@ -19,7 +23,7 @@ const ALLERGEN_LABELS = {
 	sesame: "Sesame",
 };
 
-const nutritionFields = [
+const nutritionFields: Array<[keyof Omit<NutritionMetadata, "source" | "source_reference" | "calories_per_serving">, string, string]> = [
 	["protein_grams", "Protein", "g"],
 	["carbohydrates_grams", "Carbohydrates", "g"],
 	["fat_grams", "Fat", "g"],
@@ -28,16 +32,20 @@ const nutritionFields = [
 	["sodium_milligrams", "Sodium", "mg"],
 ];
 
-const sourceLabel = (source) => SOURCE_LABELS[source] || "Source not specified";
+const sourceLabel = (source: MetadataSource): string => SOURCE_LABELS[source] || "Source not specified";
 
-const WarningNote = ({ children }) => (
+const WarningNote = ({ children }: { children: React.ReactNode }): React.ReactElement => (
 	<p className="mt-4 flex gap-2 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm leading-6 text-foreground" role="note">
 		<AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
 		<span>{children}</span>
 	</p>
 );
 
-const RecipeMetadataPanel = ({ metadata }) => {
+type RecipeMetadataPanelProps = {
+	metadata?: RecipeMetadata | null;
+};
+
+const RecipeMetadataPanel = ({ metadata }: RecipeMetadataPanelProps): React.ReactElement => {
 	const nutrition = metadata?.nutrition ?? null;
 	const allergens = Array.isArray(metadata?.allergens) ? metadata.allergens : [];
 	const hasMetadata = Boolean(nutrition || allergens.length);

@@ -1,5 +1,5 @@
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import RecipeContainerSummary from "./RecipeContainerSummary";
@@ -32,10 +32,11 @@ describe("recipe description time summary", () => {
 	});
 
 	it("renders scannable metadata and a stable servings control", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => { renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, prep_time_minutes: 10 }} />); });
-		const text = renderer.root.findAllByType("p").flatMap((node) => node.children).join(" ");
-		const headings = renderer.root.findAllByType("span").flatMap((node) => node.children).join(" ");
+		if (!renderer) throw new Error("Expected the recipe description renderer");
+		const text = renderer.root.findAllByType("p").flatMap((node: ReactTestInstance) => node.children).join(" ");
+		const headings = renderer.root.findAllByType("span").flatMap((node: ReactTestInstance) => node.children).join(" ");
 		expect(headings).toContain("Prep");
 		expect(text).toContain("10 min");
 		expect(headings).toContain("Cook");
@@ -47,8 +48,9 @@ describe("recipe description time summary", () => {
 	});
 
 	it("puts the cooking decision strip before long-form recipe copy", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => { renderer = TestRenderer.create(<RecipeDescription recipe={{ ...recipe, prep_time_minutes: 10 }} />); });
+		if (!renderer) throw new Error("Expected the recipe description renderer");
 
 		expect(renderer.root.findByProps({ "aria-label": "Recipe timing and servings" })).toBeTruthy();
 		expect(renderer.root.findByProps({ id: "ingredients" })).toBeTruthy();
@@ -56,16 +58,17 @@ describe("recipe description time summary", () => {
 
 	it("keeps rating, tags, Start cooking, and Save available near the title", () => {
 		const onClickFavorite = vi.fn();
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => { renderer = TestRenderer.create(<MemoryRouter><RecipeContainerSummary recipe={{ ...recipe, recipe_id: 42 }} favorite={false} onClickFavorite={onClickFavorite} /></MemoryRouter>); });
+		if (!renderer) throw new Error("Expected the recipe summary renderer");
 		expect(renderer.root.findByType("h1").children).toEqual(["Coconut Curry"]);
 		expect(renderer.root.findByProps({ to: "/recipe/cooking?id=42" }).children[0].children).toEqual(["Start cooking"]);
-		expect(renderer.root.findAllByType("button").some((button) => button.props["aria-label"] === "Save recipe")).toBe(true);
+		expect(renderer.root.findAllByType("button").some((button: ReactTestInstance) => button.props["aria-label"] === "Save recipe")).toBe(true);
 		expect(renderer.root.findByProps({ "aria-label": "Recipe category and meal type" })).toBeTruthy();
 	});
 
 	it("renders summary rating stars with the semantic primary token", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter>
@@ -77,9 +80,10 @@ describe("recipe description time summary", () => {
 				</MemoryRouter>
 			);
 		});
+		if (!renderer) throw new Error("Expected the recipe summary renderer");
 
 		const rating = renderer.root.findByProps({ "aria-label": "Rated 4.5 out of 5 from 12 reviews" });
-		const coloredIcons = rating.findAll((node) => node.props?.color === "currentColor");
+		const coloredIcons = rating.findAll((node: ReactTestInstance) => node.props?.color === "currentColor");
 
 		expect(coloredIcons.length).toBeGreaterThan(0);
 		expect(coloredIcons.every((icon) => icon.props.color === "currentColor")).toBe(true);

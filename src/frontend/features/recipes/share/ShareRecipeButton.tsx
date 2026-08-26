@@ -1,10 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, type HTMLAttributes } from "react";
 import { Share2 } from "lucide-react";
 import { useToast } from "@/app/ToastProvider";
 import Button from "@/shared/ui/Button";
 import { buildRecipeShareUrl, shareRecipe } from "./recipeSharing";
 
-const ShareRecipeButton = ({ recipeId, recipeName, description, className }) => {
+type ShareRecipeButtonProps = {
+	recipeId: number | string;
+	recipeName: string;
+	description?: string | null;
+	className?: HTMLAttributes<HTMLButtonElement>["className"];
+};
+
+const ShareRecipeButton = ({ recipeId, recipeName, description, className }: ShareRecipeButtonProps): React.ReactElement => {
 	const [isPending, setIsPending] = useState(false);
 	const [status, setStatus] = useState("");
 	const { showToast } = useToast();
@@ -17,7 +24,7 @@ const ShareRecipeButton = ({ recipeId, recipeName, description, className }) => 
 		try {
 			const result = await shareRecipe({
 				title: recipeName,
-				text: description,
+				text: description ?? "",
 				url: buildRecipeShareUrl(recipeId, window.location.origin),
 			});
 
@@ -30,8 +37,8 @@ const ShareRecipeButton = ({ recipeId, recipeName, description, className }) => 
 			} else if (result === "cancelled") {
 				setStatus("Share cancelled.");
 			}
-		} catch (error) {
-			const message = error?.message === "SHARE_UNAVAILABLE"
+		} catch (error: unknown) {
+			const message = error instanceof Error && error.message === "SHARE_UNAVAILABLE"
 				? "Sharing isn't available in this browser."
 				: "We couldn't share this recipe. Please try again.";
 			setStatus(message);

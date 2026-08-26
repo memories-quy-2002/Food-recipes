@@ -4,12 +4,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const readRecipeSource = (fileName) =>
+const readRecipeSource = (fileName: string): string =>
 	readFileSync(path.resolve(process.cwd(), "features", "recipes", fileName), "utf8");
 
 describe("recipe print layout", () => {
 	it("marks interactive and unrelated recipe areas for exclusion while preserving recipe details", () => {
-		const recipeSource = readRecipeSource("Recipe.jsx");
+		const recipeSource = readRecipeSource("Recipe.tsx");
 
 		expect(recipeSource).toContain('className="recipe-print');
 		expect(recipeSource).toMatch(/className="recipe-print__dialogs"\s+data-print-hidden/);

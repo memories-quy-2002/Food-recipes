@@ -1,13 +1,14 @@
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import RecipeDescription from "./RecipeDescription";
 
-const renderDescription = (recipe) => {
-	let renderer;
+const renderDescription = (recipe: React.ComponentProps<typeof RecipeDescription>["recipe"]): ReactTestRenderer => {
+	let renderer: ReactTestRenderer | undefined;
 	act(() => {
 		renderer = TestRenderer.create(<RecipeDescription recipe={recipe} />);
 	});
+	if (!renderer) throw new Error("Expected the recipe description renderer");
 	return renderer;
 };
 
@@ -29,8 +30,8 @@ describe("recipe instructions", () => {
 
 		expect(list.props.className).toContain("space-y-3");
 		expect(items).toHaveLength(2);
-		expect(items.map((item) => item.findByType("span").children.join(""))).toEqual(["1", "2"]);
-		expect(items.map((item) => item.findByType("p").children.join(""))).toEqual(instructions);
+		expect(items.map((item: ReactTestInstance) => item.findByType("span").children.join(""))).toEqual(["1", "2"]);
+		expect(items.map((item: ReactTestInstance) => item.findByType("p").children.join(""))).toEqual(instructions);
 	});
 
 	it.each([undefined, [], [""], ["   "], [null], ["", "   ", null]])("shows an accessible fallback when no meaningful instructions remain: %s", (instructions) => {
@@ -45,7 +46,7 @@ describe("recipe instructions", () => {
 		const items = renderer.root.findByType("ol").findAllByType("li");
 
 		expect(items).toHaveLength(2);
-		expect(items.map((item) => ({
+		expect(items.map((item: ReactTestInstance) => ({
 			number: item.findByType("span").children.join(""),
 			text: item.findByType("p").children.join(""),
 		}))).toEqual([
