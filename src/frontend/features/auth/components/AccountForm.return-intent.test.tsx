@@ -40,6 +40,8 @@ describe("AccountForm auth-intent cleanup", () => {
 			value: {
 				location: { origin: "http://localhost" },
 				sessionStorage: createStorage(),
+				setTimeout: globalThis.setTimeout,
+				clearTimeout: globalThis.clearTimeout,
 			},
 		});
 	});

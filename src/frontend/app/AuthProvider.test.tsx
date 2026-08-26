@@ -13,12 +13,17 @@ import {
 	setAccessToken,
 } from "@/features/auth/state/authTokenStore";
 
-vi.mock("@/features/auth/api/authSessionApi", () => ({
-	authSessionApi: {
-		refresh: vi.fn(),
-		logout: vi.fn(),
-	},
-}));
+vi.mock("@/features/auth/api/authSessionApi", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@/features/auth/api/authSessionApi")>();
+	return {
+		...actual,
+		authSessionApi: {
+			...actual.authSessionApi,
+			refresh: vi.fn(),
+			logout: vi.fn(),
+		},
+	};
+});
 
 const refreshMock = vi.mocked(authSessionApi.refresh);
 const logoutMock = vi.mocked(authSessionApi.logout);
