@@ -1,14 +1,11 @@
 import type { ChangeEventHandler, ReactElement } from "react";
 import type { CatalogItem } from "@/shared/api/contracts";
-import type { RecipeDiscoveryState } from "@/features/food/api/useRecipesQuery";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
 import FoodMenuSection from "./menu/FoodMenuSection";
 
 type MenuFilterField = "categoryId" | "mealId";
-type QueryStateChange = Partial<RecipeDiscoveryState>;
-
 export type FoodMenuBarProps = {
 	categoryId: string;
 	mealId: string;

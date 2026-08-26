@@ -1,7 +1,6 @@
 import { useContext, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { isAxiosError } from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-import type { RecipeSummary } from "@/shared/api/contracts";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";

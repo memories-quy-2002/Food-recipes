@@ -68,17 +68,6 @@ const DRAFT_FIELDS = [
 	"allergenTags",
 	"serverRecipeId",
 ] as const satisfies readonly DraftField[];
-const NUTRITION_FIELDS = new Set<NutritionField>([
-	"servings",
-	"calories",
-	"protein",
-	"carbohydrates",
-	"fat",
-	"fiber",
-	"sugar",
-	"sodium",
-]);
-
 const isStringField = (field: DraftField): field is StringDraftField =>
 	field === "recipeName" || field === "recipeCategoryName" || field === "recipeMealName" || field === "recipeDescription";
 const isArrayField = (field: DraftField): field is ArrayDraftField =>

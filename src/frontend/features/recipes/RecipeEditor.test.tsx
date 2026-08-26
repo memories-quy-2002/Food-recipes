@@ -25,23 +25,12 @@ vi.mock("@/shared/api/supabaseStorage", () => ({
 	uploadRecipeImage: vi.fn(),
 }));
 
-type RecipeSaveCallback = NonNullable<RecipeEditorProps["onSaved"]>;
 type RenderEditorOptions = {
 	refreshRecipes?: RecipeContextValue["refreshRecipes"];
 };
 
-const authState: AuthState = {
-	isAuthenticated: true,
-	hydrated: true,
-	user: null,
-	userId: 42,
-	token: null,
-};
-
 const createRefreshRecipesMock = () =>
 	vi.fn<RecipeContextValue["refreshRecipes"]>().mockResolvedValue(undefined);
-
-const createOnSavedMock = () => vi.fn<RecipeSaveCallback>();
 
 const fixtureRecipe: RecipeEditorInput = {
 	recipe_id: 42,

@@ -32,10 +32,6 @@ const isRecord = (value: unknown): value is RecordValue =>
 const isAuthIntentAction = (value: unknown): value is AuthIntentAction =>
 	value === "saveRecipe" || value === "saveToCollection";
 
-const isRecipeIdValue = (value: unknown): value is string | number =>
-	(typeof value === "string" && value.length > 0) ||
-	(typeof value === "number" && Number.isFinite(value));
-
 const isStoredRecipeId = (value: unknown): value is string =>
 	typeof value === "string" && value.length > 0;
 

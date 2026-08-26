@@ -4,7 +4,7 @@ import type { AxiosResponse } from "axios";
 import Button from "@/shared/ui/Button";
 import { Form } from "@/shared/ui/Form";
 import { Col, Row } from "@/shared/ui/layout";
-import { useForm, type FieldErrors, type Path, type SubmitErrorHandler, type SubmitHandler } from "react-hook-form";
+import { useForm, type Path, type SubmitErrorHandler, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
