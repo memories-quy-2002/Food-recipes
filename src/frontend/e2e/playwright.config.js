@@ -1,6 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 import path from "node:path";
 
+const vitePreviewCli = path.resolve(__dirname, "../node_modules/vite/bin/vite.js");
+const previewCommand = `${JSON.stringify(process.execPath)} ${JSON.stringify(vitePreviewCli)} preview --host 127.0.0.1 --port 4173`;
+
 export default defineConfig({
 	testDir: __dirname,
 	fullyParallel: true,
@@ -19,9 +22,9 @@ export default defineConfig({
 	],
 	webServer: {
 		cwd: path.resolve(__dirname, ".."),
-		command: "pnpm run build && pnpm exec vite preview --host 127.0.0.1 --port 4173",
+		command: process.env.CI ? previewCommand : `pnpm run build && ${previewCommand}`,
 		env: {
-			VITE_KONG_BASE_URL: "http://127.0.0.1:3000",
+			VITE_API_BASE_URL: "http://127.0.0.1:3000",
 		},
 		url: "http://127.0.0.1:4173",
 		reuseExistingServer: !process.env.CI,

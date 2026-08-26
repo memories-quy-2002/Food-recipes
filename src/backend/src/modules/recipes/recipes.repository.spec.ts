@@ -77,7 +77,10 @@ describe('RecipesRepository duration normalization', () => {
     await repository.list({ search: ' soup ', sort: 'name', page: 3, limit: 500 });
     const query = prisma.$queryRaw.mock.calls[1][0];
 
-    expect(query.values).toEqual(expect.arrayContaining(['%soup%', 100, 200]));
+    expect(query.values).toEqual(expect.arrayContaining(['soup', '%soup%', 100, 200]));
+    expect(sqlSource(query)).toContain("to_tsvector(");
+    expect(sqlSource(query)).toContain("plainto_tsquery('simple'");
+    expect(sqlSource(query)).toContain('similarity(');
     expect(recipeOrderBySql('name')).toBe(
       'LOWER(r.recipe_name) ASC, r.recipe_name ASC, r.recipe_id ASC',
     );

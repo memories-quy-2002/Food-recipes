@@ -26,7 +26,7 @@ const RecipeContainerSummary = ({
 	onAddIngredients,
 	isAddingIngredients = false,
 }) => {
-	const tags = [recipe.category_name, recipe.meal_name].filter(Boolean);
+	const tags = [...new Set([recipe.category_name, recipe.meal_name].filter(Boolean))];
 	const difficulty = recipe.difficulty ?? recipe.difficulty_level ?? "Everyday";
 	const servings = recipe.servings ?? recipe.nutrition?.servings ?? "—";
 	const score = Number(recipe.overall_score || 0);

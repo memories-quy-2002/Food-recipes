@@ -619,6 +619,66 @@ export class CookingHistoryResponseDto {
   items!: CookingHistoryItemDto[];
 }
 
+export class CookingSessionDto {
+  @ApiProperty({ example: 24 })
+  session_id!: number;
+
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Pasta Carbonara' })
+  recipe_name!: string;
+
+  @ApiProperty({ type: Number, nullable: true, example: 42 })
+  meal_plan_item_id!: number | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-08-25' })
+  planned_date!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'dinner' })
+  slot!: string | null;
+
+  @ApiProperty({ example: 4 })
+  servings!: number;
+
+  @ApiProperty({ example: 2, description: 'Zero-based current instruction step' })
+  current_step!: number;
+
+  @ApiProperty({ enum: ['active', 'paused', 'completed', 'abandoned'], example: 'active' })
+  status!: 'active' | 'paused' | 'completed' | 'abandoned';
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  started_at!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  last_active_at!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  paused_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  completed_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  created_at!: string;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  updated_at!: string;
+}
+
+export class CookingSessionResponseDto {
+  @ApiProperty({ type: CookingSessionDto, nullable: true })
+  session!: CookingSessionDto | null;
+}
+
+export class CookingSessionCompletionResponseDto {
+  @ApiProperty({ type: CookingSessionDto })
+  session!: CookingSessionDto;
+
+  @ApiProperty({ type: CookingHistoryItemDto })
+  history!: CookingHistoryItemDto;
+}
+
 export class UploadGrantResponseDto {
   @ApiProperty({ example: 'https://storage.example/upload/sign/recipes%2F7%2Fimage.webp' })
   uploadUrl!: string;

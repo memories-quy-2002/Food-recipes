@@ -15,39 +15,91 @@ const prisma = new PrismaClient({
 });
 
 const DEMO_PASSWORD = 'DemoPass123!';
+type RecipeStatus = 'draft' | 'published' | 'archived';
 
 const demoUsers = [
   {
+    key: 'chef',
     fullName: 'Linh Nguyen',
     email: 'demo.chef@foodrecipes.local',
     phone: '+84901234567',
     address: '12 Nguyen Hue, Ho Chi Minh City',
+    role: 'user',
   },
   {
+    key: 'homecook',
     fullName: 'Minh Tran',
     email: 'demo.homecook@foodrecipes.local',
     phone: '+84907654321',
     address: '48 Le Loi, Ho Chi Minh City',
+    role: 'user',
   },
   {
+    key: 'foodie',
     fullName: 'An Pham',
     email: 'demo.foodie@foodrecipes.local',
     phone: null,
     address: 'Da Nang, Vietnam',
+    role: 'user',
+  },
+  {
+    key: 'admin',
+    fullName: 'Demo Moderator',
+    email: 'demo.admin@foodrecipes.local',
+    phone: null,
+    address: 'Food Recipes Demo Workspace',
+    role: 'admin',
   },
 ] as const;
+
+const demoRegularUserEmails = demoUsers
+  .filter((user) => user.role === 'user')
+  .map((user) => user.email);
 
 const demoCategories = [
   { name: 'Breakfast' },
   { name: 'Main Course' },
   { name: 'Dessert' },
+  { name: 'Vegetarian' },
+  { name: 'Soup & Salad' },
 ] as const;
 
 const demoMeals = [
   { name: 'Breakfast', description: 'Easy recipes for a bright start to the day.' },
   { name: 'Lunch & Dinner', description: 'Comforting meals for the main part of the day.' },
   { name: 'Snack', description: 'Small, simple dishes between meals.' },
+  { name: 'Dinner', description: 'Relaxed recipes for a satisfying evening meal.' },
 ] as const;
+
+const categoryOverrides: Record<string, string> = {
+  'Greek Chickpea Salad': 'Vegetarian',
+  'Tofu Banh Mi': 'Vegetarian',
+  'Coconut Curry Lentils': 'Vegetarian',
+  'Roasted Pumpkin Soup': 'Soup & Salad',
+  'Caprese Pasta Salad': 'Soup & Salad',
+};
+
+const mealOverrides: Record<string, string> = {
+  'Lemongrass Chicken Rice': 'Dinner',
+  'Garlic Butter Shrimp Pasta': 'Dinner',
+  'Lemon Herb Roasted Salmon': 'Dinner',
+  'Chicken Caesar Wrap': 'Dinner',
+  'Spicy Tuna Rice Bowl': 'Dinner',
+  'Sesame Peanut Noodles': 'Dinner',
+  'Caprese Pasta Salad': 'Dinner',
+  'Honey Soy Glazed Tofu': 'Dinner',
+};
+
+const recipeStatusOverrides: Record<string, RecipeStatus> = {
+  'Blueberry Lemon Muffins': 'draft',
+  'Dark Chocolate Energy Bites': 'draft',
+  'Apple Cinnamon Crumble': 'archived',
+  'Strawberry Shortcake Cups': 'archived',
+};
+
+const recipeImageOverrides: Record<string, string | null> = {
+  'Tomato Basil Bruschetta': null,
+};
 
 const demoRecipes = [
   {
@@ -407,6 +459,11 @@ const demoRecipes = [
   },
 ].map((recipe, index) => ({
   ...recipe,
+  categoryName: categoryOverrides[recipe.name] ?? recipe.categoryName,
+  mealName: mealOverrides[recipe.name] ?? recipe.mealName,
+  imageUrl: Object.prototype.hasOwnProperty.call(recipeImageOverrides, recipe.name)
+    ? recipeImageOverrides[recipe.name]
+    : recipe.imageUrl,
   dateAdded: new Date(Date.UTC(2026, 7, 1 + index, 8, 0, 0)),
 }));
 
@@ -414,23 +471,308 @@ if (demoRecipes.length !== 25) {
   throw new Error(`Expected exactly 25 demo recipes, got ${demoRecipes.length}`);
 }
 
-const wishlistUserEmails = [
-  'demo.homecook@foodrecipes.local',
-  'demo.foodie@foodrecipes.local',
-  'demo.chef@foodrecipes.local',
+type IngredientUnit =
+  | 'GRAM'
+  | 'KILOGRAM'
+  | 'MILLILITER'
+  | 'LITER'
+  | 'TEASPOON'
+  | 'TABLESPOON'
+  | 'CUP'
+  | 'PIECE';
+
+type StructuredIngredientSeed = {
+  name: string;
+  quantity: number | null;
+  quantityText: string | null;
+  unit: IngredientUnit | null;
+  unitText: string | null;
+  preparation: string | null;
+  originalText: string;
+  note: string | null;
+};
+
+const unitLabels: Record<IngredientUnit, string> = {
+  GRAM: 'g',
+  KILOGRAM: 'kg',
+  MILLILITER: 'ml',
+  LITER: 'l',
+  TEASPOON: 'tsp',
+  TABLESPOON: 'tbsp',
+  CUP: 'cup',
+  PIECE: 'piece',
+};
+
+const structuredIngredient = (
+  name: string,
+  quantity: number | null,
+  unit: IngredientUnit | null,
+  preparation?: string,
+  quantityText?: string,
+): StructuredIngredientSeed => {
+  const readableQuantity = quantityText ?? (quantity === null ? '' : String(quantity));
+  const readableUnit = unit ? unitLabels[unit] : '';
+  const originalText = [readableQuantity, readableUnit, name, preparation ? `, ${preparation}` : '']
+    .join(' ')
+    .replace(' ,', ',')
+    .trim();
+
+  return {
+    name,
+    quantity,
+    quantityText: quantityText ?? (quantity === null ? null : String(quantity)),
+    unit,
+    unitText: unit ? readableUnit : null,
+    preparation: preparation ?? null,
+    originalText,
+    note: null,
+  };
+};
+
+const structuredIngredientOverrides: Record<string, StructuredIngredientSeed[]> = {
+  'Classic Vietnamese Pho': [
+    structuredIngredient('beef bones', 500, 'GRAM'),
+    structuredIngredient('rice noodles', 250, 'GRAM'),
+    structuredIngredient('yellow onion', 1, 'PIECE', 'charred'),
+    structuredIngredient('ginger', 1, 'PIECE', 'sliced'),
+    structuredIngredient('lime', 1, 'PIECE', 'cut into wedges'),
+  ],
+  'Avocado Toast with Chili': [
+    structuredIngredient('sourdough bread', 2, 'PIECE', 'toasted'),
+    structuredIngredient('avocado', 1, 'PIECE', 'mashed'),
+    structuredIngredient('lemon juice', 1, 'TABLESPOON'),
+    structuredIngredient('chili flakes', 1, 'TEASPOON'),
+  ],
+  'Lemongrass Chicken Rice': [
+    structuredIngredient('chicken thighs', 500, 'GRAM'),
+    structuredIngredient('lemongrass', 2, 'PIECE', 'minced'),
+    structuredIngredient('fish sauce', 2, 'TABLESPOON'),
+    structuredIngredient('jasmine rice', 2, 'CUP', 'cooked'),
+    structuredIngredient('garlic', 3, 'PIECE', 'minced'),
+  ],
+  'Greek Chickpea Salad': [
+    structuredIngredient('chickpeas', 400, 'GRAM', 'cooked'),
+    structuredIngredient('cucumber', 1, 'PIECE', 'diced'),
+    structuredIngredient('tomatoes', 2, 'PIECE', 'diced'),
+    structuredIngredient('feta', 80, 'GRAM', 'crumbled'),
+    structuredIngredient('olives', 60, 'GRAM'),
+  ],
+  'Tofu Banh Mi': [
+    structuredIngredient('baguettes', 2, 'PIECE'),
+    structuredIngredient('firm tofu', 300, 'GRAM'),
+    structuredIngredient('carrot', 1, 'PIECE', 'julienned'),
+    structuredIngredient('daikon', 1, 'PIECE', 'julienned'),
+    structuredIngredient('soy sauce', 2, 'TABLESPOON'),
+  ],
+  'Coconut Curry Lentils': [
+    structuredIngredient('red lentils', 250, 'GRAM'),
+    structuredIngredient('coconut milk', 400, 'MILLILITER'),
+    structuredIngredient('diced tomatoes', 400, 'GRAM'),
+    structuredIngredient('spinach', 100, 'GRAM'),
+    structuredIngredient('rice', 2, 'CUP', 'cooked'),
+  ],
+  'Roasted Pumpkin Soup': [
+    structuredIngredient('pumpkin', 800, 'GRAM', 'cubed'),
+    structuredIngredient('onion', 1, 'PIECE', 'quartered'),
+    structuredIngredient('vegetable stock', 500, 'MILLILITER'),
+    structuredIngredient('coconut milk', 200, 'MILLILITER'),
+    structuredIngredient('pumpkin seeds', 30, 'GRAM', 'toasted'),
+  ],
+  'Lemon Herb Roasted Salmon': [
+    structuredIngredient('salmon fillets', 2, 'PIECE'),
+    structuredIngredient('lemon', 1, 'PIECE'),
+    structuredIngredient('dill', 10, 'GRAM'),
+    structuredIngredient('asparagus', 200, 'GRAM'),
+    structuredIngredient('baby potatoes', 300, 'GRAM'),
+  ],
+  'Spicy Tuna Rice Bowl': [
+    structuredIngredient('tuna cans', 2, 'PIECE'),
+    structuredIngredient('rice', 2, 'CUP', 'cooked'),
+    structuredIngredient('avocado', 1, 'PIECE'),
+    structuredIngredient('cucumber', 1, 'PIECE', 'sliced'),
+    structuredIngredient('mayonnaise', 2, 'TABLESPOON'),
+  ],
+  'Caprese Pasta Salad': [
+    structuredIngredient('short pasta', 250, 'GRAM'),
+    structuredIngredient('cherry tomatoes', 200, 'GRAM'),
+    structuredIngredient('mozzarella pearls', 150, 'GRAM'),
+    structuredIngredient('basil', 20, 'GRAM'),
+    structuredIngredient('pesto', 2, 'TABLESPOON'),
+  ],
+  'Honey Soy Glazed Tofu': [
+    structuredIngredient('firm tofu', 400, 'GRAM'),
+    structuredIngredient('soy sauce', 2, 'TABLESPOON'),
+    structuredIngredient('honey', 1, 'TABLESPOON'),
+    structuredIngredient('broccoli', 300, 'GRAM'),
+    structuredIngredient('rice', 2, 'CUP', 'cooked'),
+  ],
+};
+
+const fallbackStructuredIngredients = (recipe: (typeof demoRecipes)[number]): StructuredIngredientSeed[] =>
+  recipe.ingredients.map((originalText) => ({
+    name: originalText.replace(/^\s*\d+(?:\.\d+)?\s*(?:g|kg|ml|l)?\s*/i, '').trim(),
+    quantity: null,
+    quantityText: null,
+    unit: null,
+    unitText: null,
+    preparation: null,
+    originalText,
+    note: null,
+  }));
+
+const dietaryTagsByRecipe: Record<string, string[]> = {
+  'Classic Vietnamese Pho': ['high-protein'],
+  'Avocado Toast with Chili': ['vegetarian'],
+  'Mango Coconut Chia Pudding': ['vegan', 'dairy-free', 'gluten-free'],
+  'Banana Oat Pancakes': ['vegetarian'],
+  'Greek Chickpea Salad': ['vegetarian', 'gluten-free'],
+  'Tofu Banh Mi': ['vegetarian', 'dairy-free'],
+  'Coconut Curry Lentils': ['vegan', 'dairy-free', 'gluten-free'],
+  'Roasted Pumpkin Soup': ['vegan', 'dairy-free', 'gluten-free'],
+  'Vietnamese Fresh Spring Rolls': ['dairy-free'],
+  'Chocolate Banana Smoothie Bowl': ['vegetarian'],
+  'Caprese Pasta Salad': ['vegetarian'],
+  'Crispy Potato Tacos': ['vegetarian'],
+  'Honey Soy Glazed Tofu': ['vegetarian', 'dairy-free'],
+  'Dark Chocolate Energy Bites': ['vegetarian', 'dairy-free'],
+};
+
+const allergensByRecipe: Record<string, Array<{ name: string; source: string; sourceReference?: string }>> = {
+  'Classic Vietnamese Pho': [{ name: 'fish', source: 'provided_by_author' }],
+  'Avocado Toast with Chili': [{ name: 'wheat', source: 'provided_by_author' }],
+  'Mango Coconut Chia Pudding': [{ name: 'tree_nuts', source: 'estimated' }],
+  'Lemongrass Chicken Rice': [{ name: 'fish', source: 'provided_by_author' }],
+  'Banana Oat Pancakes': [
+    { name: 'eggs', source: 'provided_by_author' },
+    { name: 'milk', source: 'provided_by_author' },
+  ],
+  'Berry Yogurt Parfait': [{ name: 'milk', source: 'provided_by_author' }],
+  'Garlic Butter Shrimp Pasta': [
+    { name: 'shellfish', source: 'provided_by_author' },
+    { name: 'milk', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Greek Chickpea Salad': [{ name: 'milk', source: 'provided_by_author' }],
+  'Tofu Banh Mi': [
+    { name: 'soy', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Lemon Herb Roasted Salmon': [{ name: 'fish', source: 'verified_external', sourceReference: 'https://fdc.nal.usda.gov/' }],
+  'Chicken Caesar Wrap': [
+    { name: 'milk', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Spicy Tuna Rice Bowl': [
+    { name: 'fish', source: 'provided_by_author' },
+    { name: 'eggs', source: 'estimated' },
+  ],
+  'Vietnamese Fresh Spring Rolls': [
+    { name: 'shellfish', source: 'provided_by_author' },
+    { name: 'peanuts', source: 'provided_by_author' },
+  ],
+  'Chocolate Banana Smoothie Bowl': [{ name: 'peanuts', source: 'provided_by_author' }],
+  'Apple Cinnamon Crumble': [
+    { name: 'milk', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Strawberry Shortcake Cups': [
+    { name: 'milk', source: 'provided_by_author' },
+    { name: 'eggs', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Sesame Peanut Noodles': [
+    { name: 'peanuts', source: 'provided_by_author' },
+    { name: 'soy', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+    { name: 'sesame', source: 'provided_by_author' },
+  ],
+  'Caprese Pasta Salad': [
+    { name: 'milk', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Honey Soy Glazed Tofu': [
+    { name: 'soy', source: 'provided_by_author' },
+    { name: 'sesame', source: 'provided_by_author' },
+  ],
+  'Blueberry Lemon Muffins': [
+    { name: 'milk', source: 'provided_by_author' },
+    { name: 'eggs', source: 'provided_by_author' },
+    { name: 'wheat', source: 'provided_by_author' },
+  ],
+  'Dark Chocolate Energy Bites': [{ name: 'peanuts', source: 'provided_by_author' }],
+};
+
+const recipesWithoutMetadata = new Set([
+  'Chocolate Banana Smoothie Bowl',
+  'Crispy Potato Tacos',
+  'Dark Chocolate Energy Bites',
+]);
+
+const demoWishlistDefinitions = [
+  {
+    userEmail: 'demo.homecook@foodrecipes.local',
+    recipeNames: [
+      'Classic Vietnamese Pho',
+      'Avocado Toast with Chili',
+      'Lemon Herb Roasted Salmon',
+      'Coconut Curry Lentils',
+      'Honey Soy Glazed Tofu',
+    ],
+  },
+  {
+    userEmail: 'demo.foodie@foodrecipes.local',
+    recipeNames: [
+      'Garlic Butter Shrimp Pasta',
+      'Mango Coconut Chia Pudding',
+      'Vietnamese Fresh Spring Rolls',
+      'Caprese Pasta Salad',
+    ],
+  },
+  {
+    userEmail: 'demo.chef@foodrecipes.local',
+    recipeNames: [
+      'Greek Chickpea Salad',
+      'Roasted Pumpkin Soup',
+      'Spicy Tuna Rice Bowl',
+      'Banana Oat Pancakes',
+    ],
+  },
 ] as const;
 
-const demoWishlists = demoRecipes.map((recipe, index) => ({
-  userEmail: wishlistUserEmails[(index + 1) % wishlistUserEmails.length],
-  recipeName: recipe.name,
-}));
+const demoCollectionDefinitions = [
+  {
+    userEmail: 'demo.homecook@foodrecipes.local',
+    name: 'Weeknight dinners',
+    recipeNames: ['Lemongrass Chicken Rice', 'Coconut Curry Lentils', 'Spicy Tuna Rice Bowl', 'Honey Soy Glazed Tofu'],
+  },
+  {
+    userEmail: 'demo.homecook@foodrecipes.local',
+    name: 'Vegetarian favorites',
+    recipeNames: ['Greek Chickpea Salad', 'Tofu Banh Mi', 'Roasted Pumpkin Soup', 'Caprese Pasta Salad'],
+  },
+  {
+    userEmail: 'demo.foodie@foodrecipes.local',
+    name: 'Try this weekend',
+    recipeNames: ['Classic Vietnamese Pho', 'Garlic Butter Shrimp Pasta', 'Vietnamese Fresh Spring Rolls'],
+  },
+] as const;
 
-const demoRatings = demoRecipes.map((recipe, index) => ({
-  userEmail: wishlistUserEmails[(index + 2) % wishlistUserEmails.length],
-  recipeName: recipe.name,
-  score: 4 + (index % 2),
-  review: `A delicious demo recipe with a clear ${recipe.mealName.toLowerCase()} use case.`,
-}));
+const demoPantryItems = [
+  { name: 'rice', have: true },
+  { name: 'avocado', have: true },
+  { name: 'garlic', have: true },
+  { name: 'cucumber', have: true },
+  { name: 'tofu', have: true },
+  { name: 'tomatoes', have: true },
+  { name: 'lemon', have: true },
+  { name: 'salmon', have: false },
+] as const;
+
+const demoNoteDefinitions = [
+  { recipeName: 'Classic Vietnamese Pho', note: 'Try a little less salt and add extra lime at the table.' },
+  { recipeName: 'Coconut Curry Lentils', note: 'Double the lentils for tomorrow\'s lunch.' },
+  { recipeName: 'Honey Soy Glazed Tofu', note: 'Press the tofu for at least 20 minutes before frying.' },
+] as const;
 
 type SeedRecipeRow = { recipe_id: number };
 
@@ -461,7 +803,10 @@ const insertRecipe = async (
   userId: number,
   categoryId: number,
   mealId: number,
+  status: RecipeStatus,
 ): Promise<number> => {
+  const publishedAt = status === 'draft' ? null : new Date(recipe.dateAdded.getTime() + 24 * 60 * 60 * 1000);
+  const archivedAt = status === 'archived' ? new Date(recipe.dateAdded.getTime() + 5 * 24 * 60 * 60 * 1000) : null;
   const rows = await client.$queryRaw<SeedRecipeRow[]>(Prisma.sql`
     INSERT INTO "recipes" (
       "recipe_name",
@@ -476,7 +821,11 @@ const insertRecipe = async (
       "user_id",
       "image_url",
       "ingredients",
-      "instructions"
+      "instructions",
+      "status",
+      "published_at",
+      "archived_at",
+      "updated_at"
     ) VALUES (
       ${recipe.name},
       ${recipe.description},
@@ -490,7 +839,11 @@ const insertRecipe = async (
       ${userId},
       ${recipe.imageUrl},
       ${recipe.ingredients},
-      ${recipe.instructions}
+      ${recipe.instructions},
+      ${status},
+      ${publishedAt},
+      ${archivedAt},
+      ${recipe.dateAdded}
     )
     RETURNING "recipe_id"
   `);
@@ -503,25 +856,68 @@ const insertRecipe = async (
   return Number(recipeId);
 };
 
+const startOfUtcDay = (value: Date): Date =>
+  new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+
+const addDays = (value: Date, days: number): Date =>
+  new Date(value.getTime() + days * 24 * 60 * 60 * 1000);
+
 const seed = async (): Promise<void> => {
   const passwordHash = await hash(DEMO_PASSWORD, 10);
+  const today = startOfUtcDay(new Date());
   const summary = await prisma.$transaction(async (client) => {
+    const demoUserEmails = demoUsers.map((user) => user.email);
+    const demoRecipeNames = demoRecipes.map((recipe) => recipe.name);
+    const existingUsers = await client.user.findMany({
+      where: { email: { in: demoUserEmails } },
+      select: { id: true },
+    });
+    const existingUserIds = existingUsers.map((user) => user.id);
     const existingRecipes = await client.recipe.findMany({
-      where: { name: { in: demoRecipes.map((recipe) => recipe.name) } },
+      where: { name: { in: demoRecipeNames } },
       select: { id: true },
     });
     const existingRecipeIds = existingRecipes.map((recipe) => recipe.id);
 
+    // Reset only rows owned by this demo graph. Foreign keys still protect
+    // unrelated application data from being removed by the seed.
+    if (existingUserIds.length) {
+      await client.reviewReport.deleteMany({
+        where: {
+          OR: [
+            { reporterUserId: { in: existingUserIds } },
+            { resolvedBy: { in: existingUserIds } },
+          ],
+        },
+      });
+      await client.authSession.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.passwordResetToken.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.emailVerificationToken.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.recipeNote.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.pantryItem.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.shoppingListItem.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.mealPlan.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.wishlist.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.rating.deleteMany({ where: { userId: { in: existingUserIds } } });
+
+      const existingCollections = await client.savedCollection.findMany({
+        where: { userId: { in: existingUserIds } },
+        select: { id: true },
+      });
+      if (existingCollections.length) {
+        await client.savedCollectionItem.deleteMany({
+          where: { collectionId: { in: existingCollections.map((collection) => collection.id) } },
+        });
+      }
+      await client.savedCollection.deleteMany({ where: { userId: { in: existingUserIds } } });
+    }
+
     if (existingRecipeIds.length) {
-      await client.rating.deleteMany({
-        where: { recipeId: { in: existingRecipeIds } },
-      });
-      await client.wishlist.deleteMany({
-        where: { recipeId: { in: existingRecipeIds } },
-      });
-      await client.recipe.deleteMany({
-        where: { id: { in: existingRecipeIds } },
-      });
+      await client.reviewReport.deleteMany({ where: { recipeId: { in: existingRecipeIds } } });
+      await client.savedCollectionItem.deleteMany({ where: { recipeId: { in: existingRecipeIds } } });
+      await client.rating.deleteMany({ where: { recipeId: { in: existingRecipeIds } } });
+      await client.wishlist.deleteMany({ where: { recipeId: { in: existingRecipeIds } } });
+      await client.recipe.deleteMany({ where: { id: { in: existingRecipeIds } } });
     }
 
     const users = new Map<string, number>();
@@ -533,15 +929,19 @@ const seed = async (): Promise<void> => {
           password: passwordHash,
           phone: user.phone,
           address: user.address,
+          role: user.role,
+          emailVerifiedAt: today,
         },
         create: {
           fullName: user.fullName,
           email: user.email,
           password: passwordHash,
           createdOn: new Date('2026-08-15T08:00:00.000Z'),
-          lastLogin: new Date('2026-08-23T08:00:00.000Z'),
+          lastLogin: today,
           phone: user.phone,
           address: user.address,
+          role: user.role,
+          emailVerifiedAt: today,
         },
       });
       users.set(user.email, row.id);
@@ -560,64 +960,282 @@ const seed = async (): Promise<void> => {
     }
 
     const recipes = new Map<string, number>();
-    for (const recipe of demoRecipes) {
+    let structuredIngredientCount = 0;
+    let nutritionCount = 0;
+    let dietaryTagCount = 0;
+    let allergenCount = 0;
+
+    for (const [index, recipe] of demoRecipes.entries()) {
       const userId = users.get(recipe.authorEmail);
       const categoryId = categories.get(recipe.categoryName);
       const mealId = meals.get(recipe.mealName);
+      const status = recipeStatusOverrides[recipe.name] ?? 'published';
 
       if (!userId || !categoryId || !mealId) {
         throw new Error(`Missing parent row for recipe: ${recipe.name}`);
       }
 
-      const recipeId = await insertRecipe(client, recipe, userId, categoryId, mealId);
+      const recipeId = await insertRecipe(client, recipe, userId, categoryId, mealId, status);
       recipes.set(recipe.name, recipeId);
+
+      const structuredIngredients = structuredIngredientOverrides[recipe.name] ?? fallbackStructuredIngredients(recipe);
+      for (const [position, ingredient] of structuredIngredients.entries()) {
+        await client.recipeIngredient.create({
+          data: {
+            recipeId,
+            position: position + 1,
+            quantity: ingredient.quantity,
+            quantityText: ingredient.quantityText,
+            unit: ingredient.unit,
+            unitText: ingredient.unitText,
+            name: ingredient.name,
+            preparation: ingredient.preparation,
+            originalText: ingredient.originalText,
+            note: ingredient.note,
+          },
+        });
+        structuredIngredientCount += 1;
+      }
+
+      if (!recipesWithoutMetadata.has(recipe.name)) {
+        const source = index % 5 === 0 ? 'verified_external' : index % 2 === 0 ? 'estimated' : 'provided_by_author';
+        await client.recipeNutrition.create({
+          data: {
+            recipeId,
+            servings: 2 + (index % 3),
+            caloriesPerServing: 280 + ((index * 37) % 360),
+            proteinGrams: 8 + ((index * 3) % 28),
+            carbohydratesGrams: 20 + ((index * 7) % 55),
+            fatGrams: 5 + ((index * 2) % 22),
+            fiberGrams: 2 + (index % 8),
+            sugarGrams: 3 + ((index * 2) % 18),
+            sodiumMilligrams: 120 + ((index * 67) % 680),
+            source,
+            sourceReference: source === 'verified_external' ? 'https://fdc.nal.usda.gov/' : null,
+          },
+        });
+        nutritionCount += 1;
+      }
+
+      for (const tag of dietaryTagsByRecipe[recipe.name] ?? []) {
+        await client.recipeDietaryTag.create({ data: { recipeId, tag } });
+        dietaryTagCount += 1;
+      }
+
+      for (const allergen of allergensByRecipe[recipe.name] ?? []) {
+        await client.recipeAllergen.create({
+          data: {
+            recipeId,
+            name: allergen.name,
+            source: allergen.source,
+            sourceReference: allergen.sourceReference ?? null,
+          },
+        });
+        allergenCount += 1;
+      }
     }
 
-    for (const [index, wishlist] of demoWishlists.entries()) {
-      const userId = users.get(wishlist.userEmail);
-      const recipeId = recipes.get(wishlist.recipeName);
-      if (!userId || !recipeId) throw new Error(`Missing wishlist parent for ${wishlist.recipeName}`);
+    const requireUserId = (email: string): number => {
+      const id = users.get(email);
+      if (!id) throw new Error(`Missing demo user: ${email}`);
+      return id;
+    };
+    const requireRecipeId = (name: string): number => {
+      const id = recipes.get(name);
+      if (!id) throw new Error(`Missing demo recipe: ${name}`);
+      return id;
+    };
 
-      await client.wishlist.create({
+    let wishlistCount = 0;
+    for (const [index, definition] of demoWishlistDefinitions.entries()) {
+      const userId = requireUserId(definition.userEmail);
+      for (const [recipeIndex, recipeName] of definition.recipeNames.entries()) {
+        await client.wishlist.create({
+          data: {
+            userId,
+            recipeId: requireRecipeId(recipeName),
+            dateAdded: addDays(today, -(index * 5 + recipeIndex + 1)),
+          },
+        });
+        wishlistCount += 1;
+      }
+    }
+
+    const ratingIds = new Map<string, number>();
+    let ratingCount = 0;
+    const publishedRecipes = demoRecipes.filter(
+      (recipe) => (recipeStatusOverrides[recipe.name] ?? 'published') === 'published',
+    );
+    for (const [index, recipe] of publishedRecipes.entries()) {
+      // Keep one unrated recipe so the reviews empty state is visible.
+      if (recipe.name === 'Chocolate Banana Smoothie Bowl') continue;
+
+      const reviewers = demoRegularUserEmails.filter((email) => email !== recipe.authorEmail);
+      for (const [reviewerIndex, reviewerEmail] of reviewers.entries()) {
+        const score = reviewerIndex === 0
+          ? (index % 4 === 0 ? 5 : 4)
+          : (index % 5 === 0 ? 3 : 5);
+        const row = await client.rating.create({
+          data: {
+            userId: requireUserId(reviewerEmail),
+            recipeId: requireRecipeId(recipe.name),
+            score: new Prisma.Decimal(score),
+            review: reviewerIndex === 0
+              ? `A dependable demo ${recipe.mealName.toLowerCase()} with clear, repeatable steps.`
+              : `The flavors work well together; I would make this ${index % 2 === 0 ? 'on a busy weeknight' : 'for guests'}.`,
+            dateAdded: addDays(today, -(index + reviewerIndex + 1)),
+          },
+        });
+        ratingIds.set(`${recipe.name}:${reviewerEmail}`, row.id);
+        ratingCount += 1;
+      }
+    }
+
+    let collectionCount = 0;
+    let collectionItemCount = 0;
+    for (const [index, definition] of demoCollectionDefinitions.entries()) {
+      const collection = await client.savedCollection.create({
         data: {
-          userId,
-          recipeId,
-          dateAdded: new Date(Date.UTC(2026, 7, 21 + index, 8, 0, 0)),
+          userId: requireUserId(definition.userEmail),
+          name: definition.name,
+          createdAt: addDays(today, -(index + 10)),
+          updatedAt: today,
+        },
+      });
+      collectionCount += 1;
+      for (const recipeName of definition.recipeNames) {
+        await client.savedCollectionItem.create({
+          data: { collectionId: collection.id, recipeId: requireRecipeId(recipeName), createdAt: today },
+        });
+        collectionItemCount += 1;
+      }
+    }
+
+    for (const item of demoPantryItems) {
+      await client.pantryItem.create({
+        data: { userId: requireUserId('demo.homecook@foodrecipes.local'), name: item.name, have: item.have, updatedAt: today },
+      });
+    }
+
+    const mealPlan = await client.mealPlan.create({
+      data: {
+        userId: requireUserId('demo.homecook@foodrecipes.local'),
+        name: 'Demo weeknight plan',
+        startDate: today,
+        endDate: addDays(today, 6),
+        createdAt: addDays(today, -2),
+        updatedAt: today,
+      },
+    });
+    const mealPlanItems = [
+      { recipeName: 'Avocado Toast with Chili', day: 0, slot: 'breakfast', servings: 2 },
+      { recipeName: 'Lemongrass Chicken Rice', day: 1, slot: 'dinner', servings: 3 },
+      { recipeName: 'Greek Chickpea Salad', day: 2, slot: 'lunch', servings: 2 },
+      { recipeName: 'Coconut Curry Lentils', day: 3, slot: 'dinner', servings: 4 },
+      { recipeName: 'Mango Coconut Chia Pudding', day: 4, slot: 'snack', servings: 2 },
+      { recipeName: 'Honey Soy Glazed Tofu', day: 5, slot: 'dinner', servings: 2 },
+    ] as const;
+    for (const item of mealPlanItems) {
+      await client.mealPlanItem.create({
+        data: {
+          planId: mealPlan.id,
+          recipeId: requireRecipeId(item.recipeName),
+          plannedDate: addDays(today, item.day),
+          slot: item.slot,
+          servings: item.servings,
         },
       });
     }
 
-    for (const [index, rating] of demoRatings.entries()) {
-      const userId = users.get(rating.userEmail);
-      const recipeId = recipes.get(rating.recipeName);
-      if (!userId || !recipeId) throw new Error(`Missing rating parent for ${rating.recipeName}`);
-
-      await client.rating.create({
+    const shoppingListItems = [
+      { label: 'rice noodles', quantity: '250 g', recipeName: 'Classic Vietnamese Pho', checked: false },
+      { label: 'fresh cilantro', quantity: '1 bunch', recipeName: null, checked: false },
+      { label: 'firm tofu', quantity: '400 g', recipeName: 'Honey Soy Glazed Tofu', checked: false },
+      { label: 'limes', quantity: '3 pieces', recipeName: 'Classic Vietnamese Pho', checked: true },
+    ] as const;
+    for (const item of shoppingListItems) {
+      await client.shoppingListItem.create({
         data: {
-          userId,
-          recipeId,
-          score: new Prisma.Decimal(rating.score),
-          review: rating.review,
-          dateAdded: new Date(Date.UTC(2026, 7, 21 + index, 10, 0, 0)),
+          userId: requireUserId('demo.homecook@foodrecipes.local'),
+          label: item.label,
+          quantity: item.quantity,
+          sourceRecipeId: item.recipeName ? requireRecipeId(item.recipeName) : null,
+          checked: item.checked,
         },
       });
     }
+
+    for (const note of demoNoteDefinitions) {
+      await client.recipeNote.create({
+        data: {
+          userId: requireUserId('demo.homecook@foodrecipes.local'),
+          recipeId: requireRecipeId(note.recipeName),
+          note: note.note,
+          updatedAt: today,
+        },
+      });
+    }
+
+    const openReportRatingId = ratingIds.get('Classic Vietnamese Pho:demo.homecook@foodrecipes.local');
+    const resolvedReportRatingId = ratingIds.get('Avocado Toast with Chili:demo.chef@foodrecipes.local');
+    if (!openReportRatingId || !resolvedReportRatingId) {
+      throw new Error('Missing demo ratings required for review moderation data');
+    }
+
+    await client.reviewReport.create({
+      data: {
+        ratingId: openReportRatingId,
+        recipeId: requireRecipeId('Classic Vietnamese Pho'),
+        reporterUserId: requireUserId('demo.foodie@foodrecipes.local'),
+        reason: 'other',
+        details: 'Demo report for the moderation queue: please review this comment.',
+        status: 'open',
+        createdAt: addDays(today, -1),
+      },
+    });
+    await client.reviewReport.create({
+      data: {
+        ratingId: resolvedReportRatingId,
+        recipeId: requireRecipeId('Avocado Toast with Chili'),
+        reporterUserId: requireUserId('demo.foodie@foodrecipes.local'),
+        reason: 'spam',
+        details: 'Demo report already reviewed by the moderator.',
+        status: 'resolved',
+        resolutionNote: 'Demo report resolved after review.',
+        createdAt: addDays(today, -4),
+        resolvedAt: addDays(today, -3),
+        resolvedBy: requireUserId('demo.admin@foodrecipes.local'),
+      },
+    });
 
     return {
       users: users.size,
       categories: categories.size,
       meals: meals.size,
       recipes: recipes.size,
-      wishlists: demoWishlists.length,
-      ratings: demoRatings.length,
+      publishedRecipes: publishedRecipes.length,
+      drafts: demoRecipes.filter((recipe) => (recipeStatusOverrides[recipe.name] ?? 'published') === 'draft').length,
+      archivedRecipes: demoRecipes.filter((recipe) => recipeStatusOverrides[recipe.name] === 'archived').length,
+      structuredIngredients: structuredIngredientCount,
+      nutrition: nutritionCount,
+      dietaryTags: dietaryTagCount,
+      allergens: allergenCount,
+      wishlists: wishlistCount,
+      ratings: ratingCount,
+      collections: collectionCount,
+      collectionItems: collectionItemCount,
+      pantryItems: demoPantryItems.length,
+      mealPlans: 1,
+      mealPlanItems: mealPlanItems.length,
+      shoppingListItems: shoppingListItems.length,
+      notes: demoNoteDefinitions.length,
+      reviewReports: 2,
     };
   });
 
-  console.log(
-    `Seeded demo graph: ${summary.users} users, ${summary.categories} categories, `
-      + `${summary.meals} meals, ${summary.recipes} recipes, `
-      + `${summary.wishlists} wishlist rows, ${summary.ratings} rating rows.`,
-  );
+  console.log('Seeded demo graph:');
+  console.log(JSON.stringify(summary, null, 2));
+  console.log(`Demo password: ${DEMO_PASSWORD}`);
   console.log(`Demo accounts: ${demoUsers.map((user) => user.email).join(', ')}`);
 };
 

@@ -3,8 +3,7 @@ import { Link } from "react-router-dom";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
-import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
-import { useCookingHistoryQuery } from "./api/historyQueries";
+import { useActiveCookingSessionQuery, useCookingHistoryQuery } from "./api/historyQueries";
 import type { CookingHistoryItem } from "./api/historyApi";
 import type { CookingSession } from "./api/cookingSessionApi";
 
@@ -29,7 +28,9 @@ const replayHref = (item: CookingResumeContext) => {
 
 const HistoryPage = () => {
 	const historyQuery = useCookingHistoryQuery();
+	const activeSessionQuery = useActiveCookingSessionQuery();
 	const items = historyQuery.data?.items ?? [];
+	const activeSession = activeSessionQuery.data?.session;
 
 	return (
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="history-title">
@@ -46,6 +47,17 @@ const HistoryPage = () => {
 						<Button asChild variant="outline"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Open shopping list</Link></Button>
 					</div>
 				</header>
+
+				{activeSession && <Card as="section" className="border-primary/30 bg-primary/5 p-5 sm:p-6" aria-labelledby="active-cooking-title">
+					<div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+						<div>
+							<p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Saved progress</p>
+							<h2 id="active-cooking-title" className="mt-1 text-2xl font-black">Continue cooking {activeSession.recipe_name}</h2>
+							<p className="mt-2 text-sm leading-6 text-muted-foreground">{activeSession.status === "paused" ? "Paused" : "In progress"} · Step {activeSession.current_step + 1}</p>
+						</div>
+						<Button asChild><Link to={replayHref(activeSession)}>Continue cooking</Link></Button>
+					</div>
+				</Card>}
 
 				{historyQuery.isPending ? (
 					<section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading cooking history">
@@ -82,7 +94,6 @@ const HistoryPage = () => {
 					</section>
 				)}
 
-				<SuggestionPanel mode="personalized" recipeId={0} isAuthenticated allowPersonalized />
 			</div>
 		</main>
 	);

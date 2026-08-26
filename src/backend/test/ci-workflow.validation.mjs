@@ -67,7 +67,7 @@ assertJobContains('frontend', /pnpm check/);
 assertJobContains('frontend', /pnpm build/);
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
 assertJobContains('frontend', /pnpm exec playwright install --with-deps chromium/);
-assertJobContains('frontend', /pnpm test:e2e:ci/);
+assertJobContains('frontend', /pnpm exec playwright test --config e2e\/playwright\.config\.js/);
 assertJobContains('frontend', /actions\/upload-artifact@v4[\s\S]*retention-days: 7/);
 assert.doesNotMatch(workflow, /contents:\s*write/i, 'quality gates must never request write permissions');
 assert.doesNotMatch(workflow, /git push/i, 'quality gates must never push generated changes');

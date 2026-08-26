@@ -250,10 +250,24 @@ export class RecipesRepository implements RecipesRepositoryPort {
     const conditions: Prisma.Sql[] = [Prisma.sql`r.status = 'published'`];
     const searchTerm = query.q?.trim() || query.search?.trim();
     if (searchTerm) {
-      const search = `%${searchTerm}%`;
-      conditions.push(
-        Prisma.sql`(r.recipe_name ILIKE ${search} OR r.recipe_description ILIKE ${search})`,
-      );
+      const normalizedSearchTerm = searchTerm.replace(/\s+/g, ' ').slice(0, 120);
+      const search = `%${normalizedSearchTerm}%`;
+      const searchConditions: Prisma.Sql[] = [
+        Prisma.sql`to_tsvector(
+          'simple',
+          COALESCE(r.recipe_name, '') || ' ' || COALESCE(r.recipe_description, '')
+        ) @@ plainto_tsquery('simple', ${normalizedSearchTerm})`,
+        Prisma.sql`r.recipe_name ILIKE ${search}`,
+        Prisma.sql`r.recipe_description ILIKE ${search}`,
+      ];
+
+      if (normalizedSearchTerm.length >= 3) {
+        searchConditions.push(
+          Prisma.sql`similarity(COALESCE(r.recipe_name, ''), ${normalizedSearchTerm}) >= 0.2`,
+        );
+      }
+
+      conditions.push(Prisma.sql`(${Prisma.join(searchConditions, ' OR ')})`);
     }
     if (query.categoryId) conditions.push(Prisma.sql`r.category_id = ${query.categoryId}`);
     if (query.mealId) conditions.push(Prisma.sql`r.meal_id = ${query.mealId}`);

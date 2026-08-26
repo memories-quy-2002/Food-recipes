@@ -7,6 +7,7 @@ import {
 import { Observable, tap } from 'rxjs';
 import type { Response } from 'express';
 import { RequestWithContext } from '../middleware/request-context.middleware';
+import { writeStructuredLog } from '../logging/structured-logger';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -28,15 +29,18 @@ export class LoggingInterceptor implements NestInterceptor {
     response: Response,
     durationMs: number,
   ): void {
-    console.log(
-      `[http] ${JSON.stringify({
+    const statusCode = response.statusCode;
+    writeStructuredLog(
+      statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info',
+      'HTTP request completed',
+      {
         type: 'http_request',
         requestId: request.requestId,
         method: request.method,
         path: request.originalUrl,
-        statusCode: response.statusCode,
+        statusCode,
         durationMs,
-      })}`,
+      },
     );
   }
 }

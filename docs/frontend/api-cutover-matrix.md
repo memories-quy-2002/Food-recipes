@@ -1,10 +1,10 @@
 # Frontend API cutover matrix
 
-The frontend now targets the NestJS API through Kong. Set
-`VITE_KONG_BASE_URL=<Kong origin>` to use `<Kong origin>/api/v1`; do not put
+The frontend now targets the NestJS API directly. Set
+`VITE_API_BASE_URL=<API origin>` to use `<API origin>/api/v1`; do not put
 secrets or environment-specific production URLs in source control. In local
-development, the client defaults the Kong origin to `http://localhost:8000`
-when `VITE_KONG_BASE_URL` is omitted.
+development, the client defaults the API origin to `http://localhost:3000`
+when `VITE_API_BASE_URL` is omitted.
 
 ## Route and journey status
 
@@ -22,15 +22,15 @@ when `VITE_KONG_BASE_URL` is omitted.
 “Contract-ready at the checked-in consumer boundary” means the route exists in
 the checked-in Nest controllers, the client sends the DTO field names/types,
 and the client handles the documented status/response shape. It does not mean
-Kong, PostgreSQL, JWT signing, payload data availability, or the browser
+PostgreSQL, JWT signing, payload data availability, or the browser
 journey has passed in a live environment.
 
 ## Live E2E gate
 
-Before selecting Nest mode for a deployed frontend, run the browser suite and
-authenticated journey checks against Kong with a real Nest API and PostgreSQL:
+Before selecting a deployed frontend API origin, run the browser suite and
+authenticated journey checks against the direct Nest API and PostgreSQL:
 
-1. Verify Kong forwards `/api/v1/*`, CORS, JWT issuer/signature, and readiness.
+1. Verify `/api/v1/*`, CORS, JWT issuer/signature, and readiness.
 2. Verify login/signup, recipe discovery/detail, save/unsave, ratings/reviews,
    profile/password, create/delete, and logout in a browser.
 3. Compare response payloads and status codes used by the current consumers.

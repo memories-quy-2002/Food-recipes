@@ -1,3 +1,4 @@
+import './bootstrap/instrument';
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { INestApplication, VersioningType } from '@nestjs/common';
@@ -9,6 +10,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { PrismaExceptionFilter } from './common/filters/prisma-exception.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { requestContextMiddleware } from './common/middleware/request-context.middleware';
+import { writeStructuredLog } from './common/logging/structured-logger';
 
 export function configureExceptionFilters(
   app: Pick<INestApplication, 'useGlobalFilters'>,
@@ -55,7 +57,13 @@ export async function createApplication() {
 
 async function bootstrap(): Promise<void> {
   const app = await createApplication();
-  await app.listen(Number(process.env.PORT ?? 3000));
+  const port = Number(process.env.PORT ?? 3000);
+  await app.listen(port);
+  writeStructuredLog('info', 'Food Recipes API started', {
+    type: 'application_started',
+    port,
+    environment: process.env.NODE_ENV ?? 'development',
+  });
 }
 
 if (require.main === module) {

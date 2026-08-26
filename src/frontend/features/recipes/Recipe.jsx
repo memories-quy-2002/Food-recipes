@@ -10,6 +10,7 @@ import RecipeContainerSummary from "@/features/recipes/RecipeContainerSummary";
 import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
+import { useCookingSession } from "@/features/recipes/cooking/useCookingSession";
 import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
 import { useCreateCookingHistoryMutation } from "@/features/history/api/historyQueries";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
@@ -92,6 +93,13 @@ const Recipe = () => {
 					returnTo: safeReturnTo,
 			  }
 			: null;
+	const cookingSession = useCookingSession({
+		enabled: isCookingMode && Boolean(recipe),
+		userId: isAuthenticated ? userId : 0,
+		recipeId: recipe?.recipe_id,
+		mealPlanItemId: planningContext?.planItemId,
+		servings: planningContext?.servings,
+	});
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef(null);
 	const favoriteLoadKey =
@@ -304,11 +312,18 @@ const Recipe = () => {
 
 	const handleCookingComplete = async () => {
 		if (!recipe || cookingHistoryMutation.isPending) return;
-		await cookingHistoryMutation.mutateAsync({
-			recipeId: Number(recipe.recipe_id),
-			...(planningContext?.planItemId ? { mealPlanItemId: planningContext.planItemId } : {}),
-			...(planningContext?.servings ? { servings: planningContext.servings } : {}),
-		});
+		const completedSession = await cookingSession.complete();
+		if (completedSession) {
+			showToast({ title: "Cooking history saved" });
+			return;
+		}
+		if (isAuthenticated) {
+			await cookingHistoryMutation.mutateAsync({
+				recipeId: Number(recipe.recipe_id),
+				...(planningContext?.planItemId ? { mealPlanItemId: planningContext.planItemId } : {}),
+				...(planningContext?.servings ? { servings: planningContext.servings } : {}),
+			});
+		}
 	};
 
 	const handleAddToPlan = () => {
@@ -479,7 +494,12 @@ const Recipe = () => {
 				<CookingMode
 					recipe={recipe}
 					planningContext={planningContext || undefined}
-					onComplete={isAuthenticated ? handleCookingComplete : undefined}
+					onComplete={handleCookingComplete}
+					initialStepIndex={cookingSession.session?.current_step ?? 0}
+					isSessionReady={cookingSession.isReady}
+					sessionError={cookingSession.error}
+					onStepChange={cookingSession.updateProgress}
+					onPause={cookingSession.pause}
 					onBackToPlan={
 						planningContext
 							? () => navigate(planningContext.returnTo || "/planning")

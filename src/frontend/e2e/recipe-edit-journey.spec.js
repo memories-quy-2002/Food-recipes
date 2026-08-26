@@ -65,6 +65,9 @@ async function stubRecipeEditingApi(page, {
 		if (path.endsWith("/auth/token")) {
 			return route.fulfill(json({ user: testUser }));
 		}
+		if (path.endsWith("/auth/refresh")) {
+			return route.fallback();
+		}
 
 		if (path.endsWith("/users/me/recipes")) {
 			expect(method).toBe("GET");
@@ -77,6 +80,12 @@ async function stubRecipeEditingApi(page, {
 
 		if (path.endsWith("/users/me/ratings")) {
 			return route.fulfill(json({ ratings: [] }));
+		}
+		if (path.endsWith("/users/me/collections") && method === "GET") {
+			return route.fulfill(json({ collections: [] }));
+		}
+		if (path.endsWith(`/users/me/recipes/${recipeId}/note`) && method === "GET") {
+			return route.fulfill(json({ note: null }));
 		}
 
 		if (path.endsWith("/users/me/wishlist")) {
@@ -128,6 +137,9 @@ async function stubRecipeEditingApi(page, {
 
 		if (path.endsWith(`/recipes/${recipeId}/reviews`)) {
 			return route.fulfill(json({ reviews: [] }));
+		}
+		if (requestUrl.hostname === "fonts.googleapis.com") {
+			return route.fulfill({ status: 200, contentType: "text/css", body: "" });
 		}
 
 		if (path.startsWith("/api/") || requestUrl.port === "3000") {

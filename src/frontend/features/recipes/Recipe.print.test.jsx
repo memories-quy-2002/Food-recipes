@@ -26,7 +26,6 @@ describe("recipe print layout", () => {
 		expect(printStyles).toMatch(/:is\(header,\s*footer,\s*nav\)/);
 		expect(printStyles).toMatch(/\[data-print-hidden\]/);
 		expect(printStyles).toMatch(/\.recipe-print__summary\s+:is\(button,\s*a\)/);
-		expect(printStyles).toMatch(/suggestion-panel-title/);
 		expect(printStyles).toMatch(/recipe-reviews-title/);
 		expect(printStyles).toMatch(/break-inside:\s*avoid/);
 		expect(printStyles).toMatch(/h1,\s*h2,\s*h3/);

@@ -14,14 +14,14 @@ export const getCookingInstructions = (instructionsOrRecipe) => {
 		: [];
 };
 
-export const useCookingMode = (instructions, recipeIdentity = null) => {
+export const useCookingMode = (instructions, recipeIdentity = null, initialStepIndex = 0) => {
 	const steps = getCookingInstructions(instructions);
 	const instructionSignature = JSON.stringify(steps);
-	const [stepIndex, setStepIndex] = useState(0);
+	const [stepIndex, setStepIndex] = useState(initialStepIndex);
 
 	useEffect(() => {
-		setStepIndex(0);
-	}, [recipeIdentity, instructionSignature]);
+		setStepIndex(initialStepIndex);
+	}, [initialStepIndex, recipeIdentity, instructionSignature]);
 
 	const goToStep = useCallback((nextIndex) => {
 		setStepIndex((currentIndex) => {

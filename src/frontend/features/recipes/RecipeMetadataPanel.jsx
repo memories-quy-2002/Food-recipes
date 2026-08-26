@@ -60,7 +60,7 @@ const RecipeMetadataPanel = ({ metadata }) => {
 					<p className="mt-1 font-semibold text-foreground">This does not guarantee that the recipe is allergen-free.</p>
 				</div>
 			) : (
-				<div className="mt-6 grid gap-6 lg:grid-cols-2">
+				<div className="mt-6 grid gap-6">
 					{nutrition ? (
 						<div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
 							<div className="flex flex-col gap-1 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">

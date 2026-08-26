@@ -12,8 +12,7 @@
 	body:has(.recipe-print) :is(header, footer, nav),
 	body:has(.recipe-print) [role="dialog"],
 	.recipe-print [data-print-hidden],
-	.recipe-print [aria-labelledby="suggestion-panel-title"],
-	.recipe-print [aria-labelledby="recipe-reviews-title"],
+		.recipe-print [aria-labelledby="recipe-reviews-title"],
 	.recipe-print .carousel,
 	.recipe-print [data-carousel] {
 		display: none !important;

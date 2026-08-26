@@ -5,8 +5,9 @@ migration.
 
 ## Base URL
 
-The NestJS API is served under `/api/v1`. Local development uses the API on
-`http://localhost:3000` or the Kong gateway on `http://localhost:8000`.
+The NestJS API is served under `/api/v1`. Local development and the
+production-like Compose stack use the API directly at
+`http://localhost:3000` by default.
 
 ## Routes
 
@@ -62,6 +63,11 @@ The NestJS API is served under `/api/v1`. Local development uses the API on
 | DELETE | `/api/v1/users/me/shopping-list/items/:itemId` | JWT + owner |
 | POST | `/api/v1/users/me/shopping-list/from-recipe` | JWT |
 | DELETE | `/api/v1/users/me/shopping-list/completed` | JWT |
+| GET | `/api/v1/users/me/cooking-session` | JWT |
+| POST | `/api/v1/users/me/cooking-session` | JWT |
+| PATCH | `/api/v1/users/me/cooking-session/:sessionId` | JWT + owner |
+| POST | `/api/v1/users/me/cooking-session/:sessionId/complete` | JWT + owner |
+| DELETE | `/api/v1/users/me/cooking-session/:sessionId` | JWT + owner |
 | POST | `/api/v1/media/recipe-image/upload-url` | JWT |
 
 ## Authentication response
@@ -106,6 +112,9 @@ The PostgreSQL database currently uses these table and column names:
 - `meal_plans`, `meal_plan_items`, and `shopping_list_items` are additive P2
   tables. Recipe ingredients are copied as separate free-text lines; the API
   does not infer equivalent quantities.
+- `cooking_sessions` stores one user-owned progress record per recipe while it
+  is active or paused. Completion atomically creates the existing
+  `cooking_history` record; browser storage is only a guest/offline fallback.
 - `accounts.role` is server-owned (`user` or `admin`). Admin moderation routes
   always reload the current role through `RolesGuard`.
 
@@ -128,7 +137,8 @@ normalization phase.
    signing configuration is absent.
 6. JSON and URL-encoded request bodies are capped at 256 KiB, common security
    headers are applied at bootstrap, and auth attempts have an in-process
-   per-IP/per-email throttle. Kong remains the distributed edge rate limit.
+   per-IP/per-email throttle. A shared rate-limit service should be added
+   before scaling the API horizontally.
 7. Backend CI audits dependencies at high severity. One upstream Prisma
    tooling advisory (`GHSA-ggr8-5vv4-36mx`) is explicitly allowlisted because
    Prisma 7.9.1 still pins the vulnerable transitive version; this should be

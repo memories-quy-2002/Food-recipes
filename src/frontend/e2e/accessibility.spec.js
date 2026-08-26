@@ -106,8 +106,6 @@ const publicRoutes = [
 	{ name: "Food", path: "/food" },
 	{ name: "Recipe detail", path: "/recipe?id=1" },
 	{ name: "Account", path: "/account?signup=false" },
-	{ name: "About", path: "/about" },
-	{ name: "News", path: "/news" },
 ];
 
 const formatViolations = (violations) =>

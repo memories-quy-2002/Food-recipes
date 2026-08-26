@@ -23,17 +23,9 @@ const historyItem = {
 async function authenticateAndStubLoop(page) {
 	await bootstrapTestAuth(page, undefined, "test-memory-kitchen-loop-token");
 	await page.route("**/users/me/cooking-history", (route) => route.fulfill(json({ items: [historyItem] })));
-	await page.route("**/users/me/suggestions", async (route) => {
-		if (route.request().method() !== "POST") return route.fallback();
-		return route.fulfill(json({
-			disclaimer: "Suggestions are based on your existing catalog.",
-			source: "catalog",
-			suggestions: [{ recipe_id: 8, recipe_name: "Coconut Rice", reason: "A good follow-up to your recent dinner." }],
-		}));
-	});
 }
 
-test("authenticated user can continue from cooking history to personalized suggestions", async ({ page }) => {
+test("authenticated user can continue from cooking history to cooking again", async ({ page }) => {
 	await authenticateAndStubLoop(page);
 	await page.goto("/history");
 
@@ -42,8 +34,7 @@ test("authenticated user can continue from cooking history to personalized sugge
 	await expect(page.getByText("Planned cook", { exact: true })).toBeVisible();
 	await expect(page.getByRole("link", { name: "Cook again" })).toHaveAttribute("href", /planItemId=4/);
 
-	await page.getByRole("button", { name: "Find suggestions" }).click();
-	await expect(page.getByRole("link", { name: "Coconut Rice" })).toBeVisible();
+	await expect(page.getByRole("button", { name: "Find suggestions" })).toHaveCount(0);
 	await page.screenshot({ path: "output/playwright/kitchen-history-desktop.png", fullPage: true });
 });
 

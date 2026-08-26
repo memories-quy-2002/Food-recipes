@@ -106,6 +106,8 @@ jobs:
 
       - name: Build frontend
         working-directory: src/frontend
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:3000
         run: pnpm build
 
       - name: Install Chromium
@@ -114,7 +116,7 @@ jobs:
 
       - name: Run frontend Playwright journeys
         working-directory: src/frontend
-        run: pnpm test:e2e:ci
+        run: pnpm exec playwright test --config e2e/playwright.config.js
 
       - name: Upload Playwright artifacts on failure
         if: ${{ failure() }}

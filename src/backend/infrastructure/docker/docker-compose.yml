@@ -42,8 +42,8 @@ services:
       DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/food_recipes}
       JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET to a random value of at least 32 characters}"
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
-    expose:
-      - "3000"
+    ports:
+      - "${API_PORT:-3000}:3000"
     healthcheck:
       test:
         [
@@ -63,23 +63,6 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-
-  kong:
-    image: kong:3.9
-    environment:
-      KONG_DATABASE: "off"
-      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
-      KONG_PROXY_LISTEN: 0.0.0.0:8000
-      KONG_ADMIN_LISTEN: "off"
-    volumes:
-      - ../kong/kong.yml:/etc/kong/kong.yml:ro
-    ports:
-      - "8000:8000"
-    networks:
-      - internal
-    depends_on:
-      api:
-        condition: service_healthy
 
 volumes:
   postgres-data:

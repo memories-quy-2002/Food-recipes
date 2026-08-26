@@ -101,7 +101,14 @@ describe("cooking mode guided flow", () => {
 		expect(findText(renderer, "Toast the bread.")).toBeTruthy();
 	});
 
-	it("shows a usable empty state and still offers Exit cooking", () => {
+	it("starts on the server-restored step", () => {
+		const renderer = renderCookingMode({ initialStepIndex: 1 });
+
+		expect(findText(renderer, "Step 2 of 2")).toBeTruthy();
+		expect(findText(renderer, recipe.instructions[1])).toBeTruthy();
+	});
+
+	it("shows a usable empty state and still offers Exit cooking", async () => {
 		const onExit = vi.fn();
 		let renderer;
 		act(() => {
@@ -111,7 +118,10 @@ describe("cooking mode guided flow", () => {
 		});
 
 		expect(findText(renderer, "This recipe does not have any instructions to guide you through.")).toBeTruthy();
-		act(() => findButton(renderer, "Exit cooking").props.onClick());
+		await act(async () => {
+			findButton(renderer, "Pause and exit cooking").props.onClick();
+			await Promise.resolve();
+		});
 		expect(onExit).toHaveBeenCalledTimes(1);
 	});
 });

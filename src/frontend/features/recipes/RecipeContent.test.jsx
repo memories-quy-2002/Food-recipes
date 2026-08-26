@@ -8,7 +8,6 @@ import RecipeContent from "./RecipeContent";
 vi.mock("./content/RecipeDescription", () => ({ default: () => <div data-testid="recipe-description" /> }));
 vi.mock("./RecipeMetadataPanel", () => ({ default: () => <div data-testid="recipe-metadata" /> }));
 vi.mock("./content/RecipeRating", () => ({ default: () => <div data-testid="recipe-rating" /> }));
-vi.mock("@/features/suggestions/SuggestionPanel", () => ({ default: () => <div data-testid="recipe-suggestions" /> }));
 
 describe("RecipeContent hierarchy", () => {
 	it("groups cooking content, supporting details, and community content", () => {
@@ -39,7 +38,7 @@ describe("RecipeContent hierarchy", () => {
 
 		expect(screen.getByTestId("recipe-cooking-core").contains(screen.getByTestId("recipe-description"))).toBe(true);
 		expect(screen.getByTestId("recipe-supporting-details").contains(screen.getByTestId("recipe-metadata"))).toBe(true);
-		expect(screen.getByTestId("recipe-supporting-details").contains(screen.getByTestId("recipe-suggestions"))).toBe(true);
+		expect(screen.queryByRole("heading", { name: "Recipe suggestions" })).toBeNull();
 		expect(screen.getByTestId("recipe-community").contains(screen.getByTestId("recipe-rating"))).toBe(true);
 	});
 });
