@@ -6,10 +6,16 @@ import { Card } from "@/shared/ui/Card";
 import SuggestionPanel from "@/features/suggestions/SuggestionPanel";
 import { useCookingHistoryQuery } from "./api/historyQueries";
 import type { CookingHistoryItem } from "./api/historyApi";
+import type { CookingSession } from "./api/cookingSessionApi";
 
 const formatDate = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 
-const replayHref = (item: CookingHistoryItem) => {
+type CookingResumeContext = Pick<
+	CookingHistoryItem | CookingSession,
+	"recipe_id" | "meal_plan_item_id" | "planned_date" | "slot" | "servings"
+>;
+
+const replayHref = (item: CookingResumeContext) => {
 	const params = new URLSearchParams({ id: String(item.recipe_id) });
 	if (item.meal_plan_item_id && item.planned_date && item.slot) {
 		params.set("planItemId", String(item.meal_plan_item_id));
