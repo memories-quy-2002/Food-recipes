@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
+import type { ReactElement } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -44,7 +45,7 @@ describe("PersonalRecipes lifecycle controls", () => {
 			{ recipe_id: 6, recipe_name: "Old soup", status: "archived", category_name: "Dinner", meal_name: "Main course" },
 		] } });
 		const user = userEvent.setup();
-		const Location = () => <output data-testid="location">{useLocation().pathname}{useLocation().search}</output>;
+		const Location = (): ReactElement => <output data-testid="location">{useLocation().pathname}{useLocation().search}</output>;
 
 		render(<MemoryRouter><PersonalRecipes user={{ user_id: 1 }} /><Location /></MemoryRouter>);
 

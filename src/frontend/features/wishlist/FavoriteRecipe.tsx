@@ -1,17 +1,43 @@
-import React from "react";
 import { BsTrash3 } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
+import type { ReactElement } from "react";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
 import { formatSavedAt } from "./savedRecipe";
 
-const FavoriteRecipe = ({ recipe, savedAt, handleShowModal }) => {
+export type WishlistRecipe = {
+	recipe_id?: number | string | null;
+	recipe_name?: string | null;
+	recipe_description?: string | null;
+	prep_time_minutes?: number;
+	cook_time_minutes?: number;
+	total_time_minutes?: number;
+	date_added?: string | null;
+	image_url?: string | null;
+	user_id?: number;
+	meal_id?: number;
+	meal_name?: string | null;
+	meal_description?: string | null;
+	category_id?: number;
+	category_name?: string | null;
+	overall_score?: number;
+	num_ratings?: number;
+	dietary_tags?: string[];
+};
+
+type FavoriteRecipeProps = {
+	recipe: WishlistRecipe;
+	savedAt?: string | null;
+	handleShowModal: (triggeringButton: HTMLButtonElement) => void;
+};
+
+const FavoriteRecipe = ({ recipe, savedAt, handleShowModal }: FavoriteRecipeProps): ReactElement => {
 	const navigate = useNavigate();
 	return (
 		<li className="wishlist__main__content__list__item">
 			<div className="wishlist__main__content__list__item__media">
 				{convertImage(
-					recipe.recipe_name,
+					recipe.recipe_name || "Recipe image",
 					"wishlist__main__content__list__item__img",
 					recipe.image_url
 				)}

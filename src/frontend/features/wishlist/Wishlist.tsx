@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { Container } from "@/shared/ui/legacy-ui";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -23,23 +23,82 @@ import {
 import { getSavedAtTimestamp } from "./savedRecipe";
 import "./Wishlist.scss";
 import { useToast } from "@/app/ToastProvider";
+import type { RootState } from "@/app/store";
+import { isAxiosError } from "axios";
+import type { RecipeSummary } from "@/shared/api/contracts";
+import type { SavedCollection } from "@/features/saved/api/collectionsApi";
+import type { WishlistRecipe } from "./FavoriteRecipe";
 
-export const normalizeSavedRecipe = (item) => ({
-	recipe: item?.recipe || item || {},
-	savedAt:
-		item?.savedAt ?? item?.saved_at ?? item?.dateAdded ?? item?.date_added ??
-			item?.recipe?.savedAt ?? item?.recipe?.saved_at ?? null,
-});
+export type SavedRecipeEntry = {
+	recipe: WishlistRecipe;
+	savedAt: string | null;
+};
 
-const compareRecipeNames = (a, b) =>
+type SavedRecipeResponseItem = {
+	recipe?: (WishlistRecipe & { savedAt?: string | null; saved_at?: string | null }) | null;
+	recipe_id?: number | string | null;
+	savedAt?: string | null;
+	saved_at?: string | null;
+	dateAdded?: string | null;
+	date_added?: string | null;
+};
+
+type CollectionDialogState =
+	| { mode: "create"; collection: null }
+	| { mode: "rename"; collection: Pick<SavedCollection, "collection_id" | "name"> };
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+	const data = isAxiosError(error)
+		? error.response?.data
+		: isRecord(error) && isRecord(error.response)
+			? error.response.data
+			: undefined;
+	return isRecord(data) && typeof data.message === "string" ? data.message : fallback;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const isWishlistRecipe = (value: unknown): value is WishlistRecipe =>
+	isRecord(value) &&
+	(typeof value.recipe_id === "number" || typeof value.recipe_id === "string") &&
+	(typeof value.recipe_name === "string" || value.recipe_name === undefined);
+
+const asSavedRecipeResponseItem = (value: unknown): SavedRecipeResponseItem =>
+	isRecord(value) ? value : {};
+
+export const normalizeSavedRecipe = (item: unknown): SavedRecipeEntry => {
+	const responseItem = asSavedRecipeResponseItem(item);
+	const recipe = isWishlistRecipe(responseItem.recipe)
+		? responseItem.recipe
+		: isWishlistRecipe(responseItem)
+			? responseItem
+				: {};
+
+	return {
+		recipe,
+		savedAt:
+			responseItem.savedAt ?? responseItem.saved_at ?? responseItem.dateAdded ??
+			responseItem.date_added ??
+			(isRecord(responseItem.recipe)
+				? typeof responseItem.recipe.savedAt === "string"
+						? responseItem.recipe.savedAt
+					: typeof responseItem.recipe.saved_at === "string"
+						? responseItem.recipe.saved_at
+						: null
+				: null),
+	};
+};
+
+const compareRecipeNames = (a: SavedRecipeEntry, b: SavedRecipeEntry): number =>
 	(a.recipe.recipe_name || "").localeCompare(b.recipe.recipe_name || "") ||
 	Number(a.recipe.recipe_id) - Number(b.recipe.recipe_id);
 
-const compareUnavailableSavedDates = (a, b) =>
+const compareUnavailableSavedDates = (a: SavedRecipeEntry, b: SavedRecipeEntry): number =>
 	Number(Boolean(a.savedAt)) - Number(Boolean(b.savedAt)) ||
 		compareRecipeNames(a, b);
 
-export const byRecentlySaved = (a, b) => {
+export const byRecentlySaved = (a: SavedRecipeEntry, b: SavedRecipeEntry): number => {
 	const difference = getSavedAtTimestamp(b.savedAt) - getSavedAtTimestamp(a.savedAt);
 	return Number.isNaN(difference)
 		? compareUnavailableSavedDates(a, b)
@@ -49,7 +108,10 @@ export const byRecentlySaved = (a, b) => {
 					: compareRecipeNames(a, b));
 };
 
-export const getSavedRecipeEntries = (recipes, wishlist) =>
+export const getSavedRecipeEntries = (
+	recipes: WishlistRecipe[],
+	wishlist: unknown[],
+): SavedRecipeEntry[] =>
 	wishlist
 		.map(normalizeSavedRecipe)
 		.map(({ recipe: savedRecipe, savedAt }) => {
@@ -59,25 +121,27 @@ export const getSavedRecipeEntries = (recipes, wishlist) =>
 			);
 			return recipe ? { recipe, savedAt } : null;
 		})
-		.filter(Boolean);
+		.filter((entry): entry is SavedRecipeEntry => entry !== null);
+
+export type SavedRecipeSort = "recent" | "name" | "rating";
 
 export const getVisibleSavedRecipes = (
-	recipes,
-	wishlist,
+	recipes: WishlistRecipe[],
+	wishlist: unknown[],
 	searchTerm = "",
-	sortBy = "recent"
-) => {
+	sortBy: SavedRecipeSort = "recent",
+): WishlistRecipe[] => {
 	return getVisibleSavedEntries(recipes, wishlist, searchTerm, sortBy).map(
 		({ recipe }) => recipe
 	);
 };
 
 export const getVisibleSavedEntries = (
-	recipes,
-	wishlist,
+	recipes: WishlistRecipe[],
+	wishlist: unknown[],
 	searchTerm = "",
-	sortBy = "recent"
-) => {
+	sortBy: SavedRecipeSort = "recent",
+): SavedRecipeEntry[] => {
 	const normalizedSearch = searchTerm.trim().toLowerCase();
 	let nextRecipes = getSavedRecipeEntries(recipes, wishlist).filter(({ recipe }) =>
 		(recipe.recipe_name || "").toLowerCase().includes(normalizedSearch)
@@ -98,32 +162,29 @@ export const getVisibleSavedEntries = (
 	return nextRecipes;
 };
 
-const Wishlist = () => {
-	const [wishlist, setWishlist] = useState([]);
+const Wishlist = (): ReactElement => {
+	const [wishlist, setWishlist] = useState<unknown[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [isRemoving, setIsRemoving] = useState(false);
-	const [removeError, setRemoveError] = useState(null);
+	const [removeError, setRemoveError] = useState<string | null>(null);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [sortBy, setSortBy] = useState("recent");
+	const [sortBy, setSortBy] = useState<SavedRecipeSort>("recent");
 	const [isLoadingWishlist, setIsLoadingWishlist] = useState(true);
-	const [wishlistError, setWishlistError] = useState(null);
-	const [collectionDialog, setCollectionDialog] = useState(null);
-	const [collectionDialogError, setCollectionDialogError] = useState(null);
-	const confirmButtonRef = useRef(null);
-	const triggeringButtonRef = useRef(null);
-	const pendingRecipeIdRef = useRef(null);
+	const [wishlistError, setWishlistError] = useState<string | null>(null);
+	const [collectionDialog, setCollectionDialog] = useState<CollectionDialogState | null>(null);
+	const [collectionDialogError, setCollectionDialogError] = useState<string | null>(null);
+	const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
+	const triggeringButtonRef = useRef<HTMLButtonElement | null>(null);
+	const pendingRecipeIdRef = useRef<number | null>(null);
 	const isRemovingRef = useRef(false);
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
-	const { local, session } = useSelector(({ auth }) => auth);
+	const { local, session } = useSelector((state: RootState) => state.auth);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
-	const user_id = isAuthenticated
-		? local.isAuthenticated
-			? local.user.user_id
-			: session.user.user_id
-		: 0;
+	const authenticatedUser = local.isAuthenticated ? local.user : session.user;
+	const user_id = isAuthenticated ? authenticatedUser?.user_id ?? 0 : 0;
 	const rawCollectionId = searchParams.get("collectionId");
 	const parsedCollectionId = Number(rawCollectionId);
 	const selectedCollectionId =
@@ -145,7 +206,7 @@ const Wishlist = () => {
 	const selectedCollectionRecipesError =
 		selectedCollectionId !== null && collectionRecipesQuery.isError;
 
-	const selectCollection = (collectionId) => {
+	const selectCollection = (collectionId: number | null): void => {
 		const nextParams = new URLSearchParams(searchParams);
 		if (collectionId === null) nextParams.delete("collectionId");
 		else nextParams.set("collectionId", String(collectionId));
@@ -153,7 +214,7 @@ const Wishlist = () => {
 	};
 
 	useEffect(() => {
-		const fetchFavorites = async () => {
+		const fetchFavorites = async (): Promise<void> => {
 			if (!user_id) {
 				setIsLoadingWishlist(false);
 				return;
@@ -164,12 +225,9 @@ const Wishlist = () => {
 				setWishlistError(null);
 				const response = await axios.get(apiRoutes.userWishlist);
 				setWishlist(getArrayPayload(response.data, "wishlist"));
-			} catch (err) {
+			} catch (err: unknown) {
 				console.error(err);
-				setWishlistError(
-					err.response?.data?.message ||
-						"Unable to load your saved recipes."
-				);
+				setWishlistError(getApiErrorMessage(err, "Unable to load your saved recipes."));
 			} finally {
 				setIsLoadingWishlist(false);
 			}
@@ -219,14 +277,14 @@ const Wishlist = () => {
 		}
 	}, [collectionsQuery.data?.collections, collectionsQuery.isLoading, selectedCollectionId]);
 
-	const handleShowModal = (recipe_id, triggeringButton) => {
+	const handleShowModal = (recipe_id: number, triggeringButton: HTMLButtonElement): void => {
 		pendingRecipeIdRef.current = recipe_id;
 		triggeringButtonRef.current = triggeringButton;
 		setShowModal(true);
 		setRemoveError(null);
 	};
 
-	const closeModal = () => {
+	const closeModal = (): void => {
 		if (isRemovingRef.current) return;
 		setShowModal(false);
 		setRemoveError(null);
@@ -240,7 +298,7 @@ const Wishlist = () => {
 		}
 
 		confirmButtonRef.current?.focus?.();
-		const handleEscape = (event) => {
+		const handleEscape = (event: KeyboardEvent): void => {
 			if (event.key === "Escape") closeModal();
 		};
 		window.addEventListener("keydown", handleEscape);
@@ -258,7 +316,7 @@ const Wishlist = () => {
 		};
 	}, [showModal]);
 
-	const handleDelete = async () => {
+	const handleDelete = async (): Promise<void> => {
 		if (isRemovingRef.current) return;
 		const capturedRecipeId = pendingRecipeIdRef.current;
 		if (capturedRecipeId == null) return;
@@ -280,9 +338,7 @@ const Wishlist = () => {
 				if (response.status === 200) {
 				setWishlist((currentWishlist) =>
 					currentWishlist.filter(
-						(item) =>
-							Number(item.recipe?.recipe_id ?? item.recipe_id) !==
-							Number(capturedRecipeId)
+						(item) => Number(normalizeSavedRecipe(item).recipe.recipe_id) !== Number(capturedRecipeId),
 					)
 				);
 				setShowModal(false);
@@ -290,12 +346,9 @@ const Wishlist = () => {
 				showToast({ title: "Recipe removed from Saved" });
 				}
 			}
-		} catch (err) {
+		} catch (err: unknown) {
 			console.error(err);
-			setRemoveError(
-					err.response?.data?.message ||
-					"We could not remove this recipe from the collection. Please try again."
-			);
+			setRemoveError(getApiErrorMessage(err, "We could not remove this recipe from the collection. Please try again."));
 			showToast({ title: "Couldn’t remove this saved recipe", message: "Please try again.", type: "error" });
 		} finally {
 			isRemovingRef.current = false;
@@ -383,7 +436,9 @@ const Wishlist = () => {
 						<select
 							id="saved-recipes-sort"
 							value={sortBy}
-							onChange={(event) => setSortBy(event.target.value)}
+							onChange={(event) => {
+								if (event.target.value === "recent" || event.target.value === "rating" || event.target.value === "name") setSortBy(event.target.value);
+							}}
 						>
 							<option value="recent">Recently saved</option>
 							<option value="rating">Highest rated</option>
@@ -442,7 +497,7 @@ const Wishlist = () => {
 									recipe={recipe}
 									savedAt={savedAt}
 												handleShowModal={(triggeringButton) =>
-													handleShowModal(recipe.recipe_id, triggeringButton)
+														handleShowModal(Number(recipe.recipe_id), triggeringButton)
 												}
 								/>
 							))}
@@ -483,8 +538,8 @@ const Wishlist = () => {
 							setCollectionDialog(null);
 							selectCollection(Number(response.collection.collection_id));
 						},
-						onError: (error) => setCollectionDialogError(
-							error.response?.data?.message || "We could not create this collection. Try again.",
+						onError: (error: unknown) => setCollectionDialogError(
+							getApiErrorMessage(error, "We could not create this collection. Try again."),
 						),
 					});
 				}}

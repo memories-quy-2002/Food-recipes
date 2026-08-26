@@ -1,6 +1,18 @@
-import React from "react";
+import type { ReactElement } from "react";
+import type { SavedCollection } from "@/features/saved/api/collectionsApi";
 
-const recipeCountLabel = (count) => `${count} recipe${count === 1 ? "" : "s"}`;
+type CollectionSummary = Pick<SavedCollection, "collection_id" | "name" | "recipe_count">;
+
+export type SavedCollectionsProps = {
+	collections?: CollectionSummary[];
+	selectedCollectionId: number | null;
+	onSelect: (collectionId: number | null) => void;
+	onCreate: () => void;
+	onRename: (collection: CollectionSummary) => void;
+	onDelete: (collection: CollectionSummary) => void;
+};
+
+const recipeCountLabel = (count: number): string => `${count} recipe${count === 1 ? "" : "s"}`;
 
 const SavedCollections = ({
 	collections = [],
@@ -9,7 +21,7 @@ const SavedCollections = ({
 	onCreate,
 	onRename,
 	onDelete,
-	}) => {
+}: SavedCollectionsProps): ReactElement => {
 		const selectedCollection = collections.find((collection) => collection.collection_id === selectedCollectionId);
 
 		return (

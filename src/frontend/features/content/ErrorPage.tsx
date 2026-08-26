@@ -1,11 +1,11 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import type { ReactElement } from "react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 
-const ErrorPage = () => (
+const ErrorPage = (): ReactElement => (
 	<main className="grid min-h-[70vh] place-items-center bg-background px-4 py-12 sm:px-6 lg:px-8">
 		<PageHelmet title="Page Not Found" description="The page you requested could not be found on Food Recipes." path="/404" noIndex />
 		<Card className="w-full max-w-2xl p-7 text-center sm:p-10">

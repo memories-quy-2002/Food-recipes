@@ -1,5 +1,15 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent, type ReactElement } from "react";
 import Input from "@/shared/ui/Input";
+
+export type CollectionDialogProps = {
+	open: boolean;
+	mode?: "create" | "rename";
+	initialName?: string;
+	isSubmitting?: boolean;
+	errorMessage?: string | null;
+	onClose: () => void;
+	onSubmit: (name: string) => void;
+};
 
 const CollectionDialog = ({
 	open,
@@ -9,15 +19,15 @@ const CollectionDialog = ({
 	errorMessage = null,
 	onClose,
 	onSubmit,
-}) => {
+}: CollectionDialogProps): ReactElement | null => {
 	const [name, setName] = useState(initialName);
-	const [validationError, setValidationError] = useState(null);
+	const [validationError, setValidationError] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!open) return undefined;
 		setName(initialName);
 		setValidationError(null);
-		const handleEscape = (event) => {
+		const handleEscape = (event: KeyboardEvent): void => {
 			if (event.key === "Escape" && !isSubmitting) onClose();
 		};
 		window.addEventListener("keydown", handleEscape);
@@ -27,7 +37,7 @@ const CollectionDialog = ({
 	if (!open) return null;
 
 	const isRename = mode === "rename";
-	const submit = (event) => {
+	const submit = (event: FormEvent<HTMLFormElement>): void => {
 		event.preventDefault();
 		const normalizedName = name.trim();
 		if (!normalizedName) {

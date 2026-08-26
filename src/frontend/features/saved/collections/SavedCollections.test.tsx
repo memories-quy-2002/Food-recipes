@@ -1,12 +1,11 @@
 // @vitest-environment jsdom
 
-import React from "react";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SavedCollections from "./SavedCollections";
 
-const collections = [{ collection_id: 4, name: "Weeknight dinners", recipe_count: 2 }];
+const collections: Array<{ collection_id: number; name: string; recipe_count: number }> = [{ collection_id: 4, name: "Weeknight dinners", recipe_count: 2 }];
 
 describe("SavedCollections", () => {
 	afterEach(cleanup);

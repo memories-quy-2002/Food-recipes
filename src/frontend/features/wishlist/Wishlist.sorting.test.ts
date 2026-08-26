@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { WishlistRecipe } from "./FavoriteRecipe";
 import {
 	getVisibleSavedEntries,
 	getVisibleSavedRecipes,
@@ -7,7 +8,7 @@ import {
 
 describe("Recently Saved sorting", () => {
 	it("derives nested Saved items in valid savedAt descending order", () => {
-		const recipes = [
+		const recipes: WishlistRecipe[] = [
 			{ recipe_id: 1, recipe_name: "Older", overall_score: 5 },
 			{ recipe_id: 2, recipe_name: "Newest", overall_score: 4 },
 		];

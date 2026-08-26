@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import React from "react";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -13,7 +12,7 @@ describe("CollectionDialog", () => {
 		render(<CollectionDialog open mode="create" onClose={vi.fn()} onSubmit={onSubmit} />);
 
 		fireEvent.change(screen.getByLabelText("Collection name"), { target: { value: "  Weeknight dinners  " } });
-		fireEvent.submit(screen.getByRole("dialog").querySelector("form"));
+		fireEvent.submit(screen.getByRole("dialog").querySelector("form") as HTMLFormElement);
 
 		expect(onSubmit).toHaveBeenCalledWith("Weeknight dinners");
 	});
@@ -24,7 +23,7 @@ describe("CollectionDialog", () => {
 
 		expect(screen.getByRole("heading", { name: "Rename collection" })).toBeInTheDocument();
 		fireEvent.change(screen.getByLabelText("Collection name"), { target: { value: "   " } });
-		fireEvent.submit(screen.getByRole("dialog").querySelector("form"));
+		fireEvent.submit(screen.getByRole("dialog").querySelector("form") as HTMLFormElement);
 
 		expect(onSubmit).not.toHaveBeenCalled();
 		expect(screen.getByRole("alert")).toHaveTextContent("Enter a collection name");

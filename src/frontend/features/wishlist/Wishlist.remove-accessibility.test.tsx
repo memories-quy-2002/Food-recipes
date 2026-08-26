@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import React from "react";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -9,15 +8,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Wishlist from "./Wishlist";
 import { RecipeContext } from "@/app/RecipeProvider";
 import axios from "@/shared/api/axios";
+import type { RootState } from "@/app/store";
+import type { RecipeSummary } from "@/shared/api/contracts";
 
 vi.mock("@/shared/api/axios", () => ({
 	default: { get: vi.fn(), delete: vi.fn() },
 }));
 
 vi.mock("react-redux", () => ({
-	useSelector: (selector) =>
+	useSelector: (selector: (state: RootState) => RootState["auth"]) =>
 		selector({
 			auth: {
+				hydrated: true,
 				local: { isAuthenticated: true, user: { user_id: 7 } },
 				session: { isAuthenticated: false, user: null },
 			},
@@ -33,16 +35,16 @@ vi.mock("@/features/saved/api/collectionsQueries", () => ({
 	useRemoveRecipeFromCollectionMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
-const recipes = [
-	{ recipe_id: 1, recipe_name: "First recipe", overall_score: 4, num_ratings: 1 },
-	{ recipe_id: 2, recipe_name: "Second recipe", overall_score: 5, num_ratings: 2 },
+const recipes: RecipeSummary[] = [
+	{ recipe_id: 1, recipe_name: "First recipe", recipe_description: null, date_added: null, image_url: null, prep_time_minutes: 10, cook_time_minutes: 10, total_time_minutes: 20, user_id: 1, meal_id: 1, meal_name: "Dinner", meal_description: null, category_id: 1, category_name: "Main", overall_score: 4, num_ratings: 1 },
+	{ recipe_id: 2, recipe_name: "Second recipe", recipe_description: null, date_added: null, image_url: null, prep_time_minutes: 10, cook_time_minutes: 10, total_time_minutes: 20, user_id: 1, meal_id: 1, meal_name: "Dinner", meal_description: null, category_id: 1, category_name: "Main", overall_score: 5, num_ratings: 2 },
 ];
 
 const renderWishlist = () =>
 	render(
 		<MemoryRouter initialEntries={["/saved"]}>
 			<RecipeContext.Provider
-				value={{ recipes, isLoadingRecipes: false, recipesError: null }}
+				value={{ recipes, isLoadingRecipes: false, recipesError: null, refreshRecipes: async () => undefined }}
 			>
 				<Wishlist />
 			</RecipeContext.Provider>
@@ -53,7 +55,7 @@ const renderWishlist = () =>
 describe("Wishlist remove confirmation accessibility", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
-		axios.get.mockResolvedValue({ data: { wishlist: recipes } });
+		vi.mocked(axios.get).mockResolvedValue({ data: { wishlist: recipes } });
 	});
 	afterEach(() => cleanup());
 
@@ -79,10 +81,10 @@ describe("Wishlist remove confirmation accessibility", () => {
 
 	it("uses the captured item and ignores a second submit while removing", async () => {
 		const user = userEvent.setup();
-		let resolveDelete;
-		axios.delete.mockImplementation(
+		let resolveDelete: ((value: { status: number }) => void) | undefined;
+		vi.mocked(axios.delete).mockImplementation(
 			() => new Promise((resolve) => {
-				resolveDelete = resolve;
+				resolveDelete = () => resolve({ status: 200, statusText: "OK", headers: {}, config: { headers: {} }, data: {} });
 			})
 		);
 		renderWishlist();
@@ -94,13 +96,13 @@ describe("Wishlist remove confirmation accessibility", () => {
 
 		expect(axios.delete).toHaveBeenCalledTimes(1);
 		expect(axios.delete).toHaveBeenCalledWith("/users/me/wishlist/1");
-		resolveDelete({ status: 200 });
+		resolveDelete?.({ status: 200 });
 		await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 	});
 
 	it("keeps the dialog open and recovers after a remove error", async () => {
 		const user = userEvent.setup();
-		axios.delete.mockRejectedValueOnce({ response: { data: { message: "Remove failed" } } });
+		vi.mocked(axios.delete).mockRejectedValueOnce({ response: { data: { message: "Remove failed" } } });
 		renderWishlist();
 		await screen.findByRole("button", { name: "Remove First recipe" });
 

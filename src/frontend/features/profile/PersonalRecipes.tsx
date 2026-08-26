@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
+import { isAxiosError } from "axios";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -10,23 +11,39 @@ import Badge from "@/shared/ui/Badge";
 import { Card } from "@/shared/ui/Card";
 import convertImage from "@/shared/utils/convertImage";
 import { useToast } from "@/app/ToastProvider";
+import { isPersonalRecipe, type PersonalRecipe, type ProfileUser } from "./profileTypes";
 
-const STATUS_FILTERS = ["all", "draft", "published", "archived"];
-const statusLabel = (status) => status ? status[0].toUpperCase() + status.slice(1) : "Unknown";
-const actionPastTense = { publish: "published", archive: "archived", restore: "restored" };
+const STATUS_FILTERS = ["all", "draft", "published", "archived"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+type LifecycleAction = "publish" | "archive" | "restore";
+type PersonalRecipesProps = { user: ProfileUser | null | undefined };
 
-const PersonalRecipes = ({ user }) => {
-	const [personalRecipes, setPersonalRecipes] = useState([]);
+const statusLabel = (status: string | null | undefined): string => status ? status[0].toUpperCase() + status.slice(1) : "Unknown";
+const actionPastTense: Record<LifecycleAction, string> = { publish: "published", archive: "archived", restore: "restored" };
+const actionRoutes: Record<LifecycleAction, (recipeId: number) => string> = {
+	publish: apiRoutes.recipePublish,
+	archive: apiRoutes.recipeArchive,
+	restore: apiRoutes.recipeRestore,
+};
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+	if (!isAxiosError(error)) return fallback;
+	const data = error.response?.data;
+	return typeof data === "object" && data !== null && "message" in data && typeof data.message === "string" ? data.message : fallback;
+};
+
+const PersonalRecipes = ({ user }: PersonalRecipesProps): ReactElement => {
+	const [personalRecipes, setPersonalRecipes] = useState<PersonalRecipe[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [recipeId, setRecipeId] = useState(0);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState("");
-	const [statusFilter, setStatusFilter] = useState("all");
-	const [actionId, setActionId] = useState(null);
+	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+	const [actionId, setActionId] = useState<number | null>(null);
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 
-	const fetchPersonalRecipes = useCallback(async () => {
+	const fetchPersonalRecipes = useCallback(async (): Promise<void> => {
 		if (!user?.user_id) {
 			setIsLoading(false);
 			return;
@@ -35,13 +52,13 @@ const PersonalRecipes = ({ user }) => {
 		try {
 			setIsLoading(true);
 			setError("");
-			const response = await axios.get(apiRoutes.userRecipes, { params: { status: "all" } });
+			const response = await axios.get<unknown>(apiRoutes.userRecipes, { params: { status: "all" } });
 			if (response.status === undefined || response.status === 200) {
-				setPersonalRecipes(getArrayPayload(response.data, "recipes"));
+				setPersonalRecipes(getArrayPayload(response.data, "recipes", isPersonalRecipe));
 			}
-		} catch (err) {
+		} catch (err: unknown) {
 			console.error(err);
-			setError(err.response?.data?.message || "Unable to load your personal recipes.");
+			setError(getApiErrorMessage(err, "Unable to load your personal recipes."));
 		} finally {
 			setIsLoading(false);
 		}
@@ -51,7 +68,7 @@ const PersonalRecipes = ({ user }) => {
 		fetchPersonalRecipes();
 	}, [fetchPersonalRecipes]);
 
-	const visibleRecipes = useMemo(
+	const visibleRecipes = useMemo<PersonalRecipe[]>(
 		() => statusFilter === "all"
 			? personalRecipes
 			: personalRecipes.filter((recipe) => (recipe.status || "published") === statusFilter),
@@ -59,31 +76,30 @@ const PersonalRecipes = ({ user }) => {
 	);
 
 	const recentCount = visibleRecipes.filter(({ date_added }) => {
-		const date = new Date(date_added);
+		const date = new Date(date_added ?? "");
 		const now = new Date();
 		const weekAgo = new Date();
 		weekAgo.setDate(now.getDate() - 7);
 		return date >= weekAgo && date <= now;
 	}).length;
 
-	const handleLifecycleAction = async (recipe, action) => {
+	const handleLifecycleAction = async (recipe: PersonalRecipe, action: LifecycleAction): Promise<void> => {
 		setActionId(recipe.recipe_id);
 		setError("");
 		try {
-			const routeName = `recipe${action[0].toUpperCase()}${action.slice(1)}`;
-			await axios.post(apiRoutes[routeName](recipe.recipe_id));
+			await axios.post(actionRoutes[action](recipe.recipe_id));
 			await fetchPersonalRecipes();
 			showToast({ title: `Recipe ${actionPastTense[action] || action} successfully` });
-		} catch (err) {
+		} catch (err: unknown) {
 			console.error(err);
-			setError(err.response?.data?.message || `Unable to ${action} this recipe.`);
+			setError(getApiErrorMessage(err, `Unable to ${action} this recipe.`));
 			showToast({ title: `Couldn’t ${action} this recipe`, message: "Please try again.", type: "error" });
 		} finally {
 			setActionId(null);
 		}
 	};
 
-	const handleDeleteRecipe = async () => {
+	const handleDeleteRecipe = async (): Promise<void> => {
 		try {
 			const response = await axios.delete(apiRoutes.recipe(recipeId));
 			if (isRecipeDeleteSuccess(response.status)) {
@@ -92,9 +108,9 @@ const PersonalRecipes = ({ user }) => {
 				await fetchPersonalRecipes();
 				showToast({ title: "Recipe deleted" });
 			}
-		} catch (err) {
+		} catch (err: unknown) {
 			console.error(err);
-			setError(err.response?.data?.message || "Unable to delete this recipe.");
+			setError(getApiErrorMessage(err, "Unable to delete this recipe."));
 			showToast({ title: "Couldn’t delete this recipe", message: "Please try again.", type: "error" });
 		}
 	};
@@ -108,7 +124,7 @@ const PersonalRecipes = ({ user }) => {
 			</header>
 
 			<div className="mb-6 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Recipe status filters">
-				{STATUS_FILTERS.map((filter) => (
+						{STATUS_FILTERS.map((filter: StatusFilter) => (
 					<Button key={filter} type="button" size="sm" variant={statusFilter === filter ? "default" : "outline"} aria-pressed={statusFilter === filter} onClick={() => setStatusFilter(filter)} className="shrink-0">
 						{statusLabel(filter)}
 					</Button>

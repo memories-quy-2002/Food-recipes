@@ -1,6 +1,7 @@
-import React, { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState, type ReactElement } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
+import { isAxiosError } from "axios";
 import ProfileAside from "@/features/profile/ProfileAside";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -9,32 +10,43 @@ import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
-import { CancelToken } from "axios";
 import { useToast } from "@/app/ToastProvider";
+import type { RootState } from "@/app/store";
+import { isProfileRating, type ProfilePage, type ProfileRating } from "./profileTypes";
 
 const ProfileMain = lazy(() => import("@/features/profile/ProfileMain"));
-const profilePageList = [
+const profilePageList: Array<{ link: ProfilePage; name: string }> = [
 	{ link: "", name: "Personal info" },
 	{ link: "password", name: "Change password" },
 	{ link: "recipes", name: "My recipes" },
 	{ link: "reviews", name: "My reviews" },
 ];
-const getProfilePageFromHash = (hash = "") => hash.replace(/^#\/?/, "");
+const getProfilePageFromHash = (hash = ""): ProfilePage => {
+	const page = hash.replace(/^#\/?/, "");
+	return page === "password" || page === "recipes" || page === "reviews" ? page : "";
+};
 
-const Profile = () => {
-	const user = useSelector((state) => state.auth.local.user ?? state.auth.session.user);
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+	if (!isAxiosError(error)) return fallback;
+	const data = error.response?.data;
+	return typeof data === "object" && data !== null && "message" in data && typeof data.message === "string" ? data.message : fallback;
+};
+
+const Profile = (): ReactElement => {
+	const user = useSelector((state: RootState) => state.auth.local.user ?? state.auth.session.user);
 	const location = useLocation();
 	const [page, setPage] = useState(() => getProfilePageFromHash(window.location.hash));
 	const dispatch = useDispatch();
-	const [ratings, setRatings] = useState([]);
+	const [ratings, setRatings] = useState<ProfileRating[]>([]);
 	const [isLoadingRatings, setIsLoadingRatings] = useState(true);
-	const [ratingsError, setRatingsError] = useState(null);
+	const [ratingsError, setRatingsError] = useState<string | null>(null);
 	const { showToast } = useToast();
-	const handleLogOut = async () => {
+	const handleLogOut = async (): Promise<void> => {
 		try {
 			await authSessionApi.logout();
-		} catch {
+		} catch (error: unknown) {
 			// Local auth must still clear when the server is unavailable.
+			console.error(error);
 		} finally {
 			dispatch(authActions.logout());
 			showToast({ title: "Signed out" });
@@ -43,21 +55,20 @@ const Profile = () => {
 
 	useEffect(() => setPage(getProfilePageFromHash(location.hash)), [location.hash]);
 	useEffect(() => {
-		const source = CancelToken.source();
-		const fetchReviews = async () => {
+		const fetchReviews = async (): Promise<void> => {
 			if (!user?.user_id) { setIsLoadingRatings(false); return; }
 			try {
 				setIsLoadingRatings(true);
 				setRatingsError(null);
-				const response = await axios.get(apiRoutes.userRatings);
-				setRatings(getArrayPayload(response.data, "ratings"));
-			} catch (err) {
+				const response = await axios.get<unknown>(apiRoutes.userRatings);
+				setRatings(getArrayPayload(response.data, "ratings", isProfileRating));
+			} catch (err: unknown) {
 				console.error(err);
-				setRatingsError(err.response?.data?.message || "Unable to load your profile reviews.");
+				setRatingsError(getApiErrorMessage(err, "Unable to load your profile reviews."));
 			} finally { setIsLoadingRatings(false); }
 		};
 		fetchReviews();
-		return () => source.cancel("Component unmounted, canceling request");
+		return undefined;
 	}, [user]);
 
 	return (

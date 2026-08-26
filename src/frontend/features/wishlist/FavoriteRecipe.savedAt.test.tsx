@@ -1,5 +1,4 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import FavoriteRecipe from "./FavoriteRecipe";
@@ -15,7 +14,7 @@ const recipe = {
 
 describe("FavoriteRecipe saved metadata", () => {
 	it("renders the backend save date when supplied", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter>
@@ -32,7 +31,7 @@ describe("FavoriteRecipe saved metadata", () => {
 	});
 
 	it("truthfully labels entries without a save date", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter>

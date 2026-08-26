@@ -1,4 +1,17 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactElement } from "react";
+import type { SavedCollection } from "@/features/saved/api/collectionsApi";
+
+type CollectionRecipeDialogProps = {
+	open: boolean;
+	recipeName: string;
+	collections?: Array<Pick<SavedCollection, "collection_id" | "name">>;
+	isLoading?: boolean;
+	isSubmitting?: boolean;
+	pendingCollectionId?: number | null;
+	errorMessage?: string | null;
+	onAdd: (collectionId: number) => void;
+	onClose: () => void;
+};
 
 const CollectionRecipeDialog = ({
 	open,
@@ -10,13 +23,13 @@ const CollectionRecipeDialog = ({
 	errorMessage = null,
 	onAdd,
 	onClose,
-}) => {
-	const closeButtonRef = useRef(null);
+}: CollectionRecipeDialogProps): ReactElement | null => {
+	const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
 	useEffect(() => {
 		if (!open) return undefined;
 		closeButtonRef.current?.focus();
-		const handleEscape = (event) => {
+		const handleEscape = (event: KeyboardEvent): void => {
 			if (event.key === "Escape" && !isSubmitting) onClose();
 		};
 		window.addEventListener("keydown", handleEscape);

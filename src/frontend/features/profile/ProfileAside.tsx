@@ -1,10 +1,20 @@
-import React from "react";
+import type { ReactElement } from "react";
 import { IoPersonCircleSharp } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import Button from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
+import type { ProfilePage } from "./profileTypes";
 
-const ProfileAside = ({ name, page, handleLogOut, handleChangePage, profilePageList }) => (
+export type ProfilePageItem = { link: ProfilePage; name: string };
+type ProfileAsideProps = {
+	name?: string | null;
+	page: ProfilePage;
+	handleLogOut: () => void | Promise<void>;
+	handleChangePage: (page: ProfilePage) => void;
+	profilePageList: ProfilePageItem[];
+};
+
+const ProfileAside = ({ name, page, handleLogOut, handleChangePage, profilePageList }: ProfileAsideProps): ReactElement => (
 	<aside className="h-fit overflow-hidden rounded-2xl border border-border bg-card shadow-sm lg:sticky lg:top-24">
 		<div className="flex items-center gap-3 border-b border-border bg-secondary/60 p-4 sm:p-5">
 			<IoPersonCircleSharp className="size-12 shrink-0 text-primary sm:size-14" aria-hidden="true" />
