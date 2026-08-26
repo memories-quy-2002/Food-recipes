@@ -1,28 +1,69 @@
-import React from "react";
+import type { ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import type { RecipeSummary } from "@/shared/api/contracts";
 import FoodCard from "./FoodCard";
 import Button from "@/shared/ui/Button";
 
-const featuredModes = [
+export type FeaturedMode = "top-rated" | "most-reviewed" | "quick-meals";
+
+type FeaturedModeOption = {
+	id: FeaturedMode;
+	label: string;
+};
+
+const featuredModes: FeaturedModeOption[] = [
 	{ id: "top-rated", label: "Top rated" },
 	{ id: "most-reviewed", label: "Most reviewed" },
 	{ id: "quick-meals", label: "Quick meals" },
 ];
 
-export const featuredModeMeta = {
+type FeaturedModeMeta = {
+	eyebrow: string;
+	title: string;
+};
+
+export const featuredModeMeta: Record<FeaturedMode, FeaturedModeMeta> = {
 	"top-rated": { eyebrow: "Community favorites", title: "Top rated recipes" },
 	"most-reviewed": { eyebrow: "Popular with cooks", title: "Most reviewed recipes" },
 	"quick-meals": { eyebrow: "Short on time", title: "Quick meals" },
 };
 
-export const isRecipeFavorite = (recipe, wishlist) =>
+export type WishlistItem = {
+	recipe_id?: number;
+	recipe?: {
+		recipe_id?: number;
+	} | null;
+	savedAt?: string;
+};
+
+export type FeaturedRecipe = Pick<RecipeSummary, "recipe_id"> &
+	Partial<Omit<RecipeSummary, "recipe_id">>;
+
+export const isRecipeFavorite = (
+	recipe: Pick<RecipeSummary, "recipe_id">,
+	wishlist: WishlistItem[],
+): boolean =>
 	wishlist.some(
-		(item) => Number(item.recipe?.recipe_id ?? item.recipe_id) === Number(recipe.recipe_id)
+		(item) => Number(item.recipe?.recipe_id ?? item.recipe_id) === Number(recipe.recipe_id),
 	);
 
-const FoodCardList = ({ recipes, wishlist, onClickFavorite, featuredMode, onFeaturedModeChange }) => {
-	const activeModeMeta = featuredModeMeta[featuredMode] ?? featuredModeMeta["top-rated"];
+export type FoodCardListProps = {
+	recipes: FeaturedRecipe[];
+	wishlist: WishlistItem[];
+	onClickFavorite: (recipeId: number) => void | Promise<void>;
+	featuredMode: FeaturedMode;
+	onFeaturedModeChange: (mode: FeaturedMode) => void;
+};
+
+const FoodCardList = ({
+	recipes,
+	wishlist,
+	onClickFavorite,
+	featuredMode,
+	onFeaturedModeChange,
+}: FoodCardListProps): ReactElement => {
+	const activeModeMeta = featuredModeMeta[featuredMode];
 
 	return (
 		<section aria-labelledby="featured-recipes-heading">
@@ -56,20 +97,20 @@ const FoodCardList = ({ recipes, wishlist, onClickFavorite, featuredMode, onFeat
 
 			{recipes.length > 0 ? (
 				<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:gap-5">
-					{recipes.map(({ recipe_id, recipe_name, category_name, meal_name, num_ratings, overall_score, image_url, total_time_minutes, dietary_tags }) => (
+					{recipes.map((recipe) => (
 						<FoodCard
-							key={recipe_id}
-							id={recipe_id}
-							name={recipe_name}
-							category={category_name}
-							meal={meal_name}
-							ratings={num_ratings}
-							score={overall_score}
-							imageUrl={image_url}
-							totalTimeMinutes={total_time_minutes}
-							dietaryTags={dietary_tags}
-							favorite={isRecipeFavorite({ recipe_id }, wishlist)}
-							onClickFavorite={() => onClickFavorite(recipe_id)}
+							key={recipe.recipe_id}
+							id={recipe.recipe_id}
+							name={recipe.recipe_name || "Untitled recipe"}
+							category={recipe.category_name}
+							meal={recipe.meal_name}
+							ratings={recipe.num_ratings}
+							score={recipe.overall_score}
+							imageUrl={recipe.image_url}
+							totalTimeMinutes={recipe.total_time_minutes}
+							dietaryTags={recipe.dietary_tags}
+							favorite={isRecipeFavorite(recipe, wishlist)}
+							onClickFavorite={onClickFavorite}
 						/>
 					))}
 				</div>

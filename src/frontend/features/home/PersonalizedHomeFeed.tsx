@@ -1,13 +1,15 @@
-import React from "react";
-import { ArrowRight, CalendarDays, ChefHat, Clock3, Heart, Sparkles, Utensils } from "lucide-react";
+import type { ReactElement } from "react";
+import { ArrowRight, CalendarDays, ChefHat, Clock3, Heart, Sparkles, Utensils, type LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { HomeFeedSection, HomeFeedSectionKey, RecipeSummary } from "@/shared/api/contracts";
 import { useHomeFeedQuery } from "./api/useHomeFeedQuery";
+import type { WishlistItem } from "./main/FoodCardList";
 import RecipeCard from "@/shared/ui/RecipeCard";
 
 const HOME_FEED_SECTION_LIMIT = 1;
 const HOME_FEED_RECIPE_LIMIT = 4;
 
-const sectionIcons = {
+const sectionIcons: Record<HomeFeedSectionKey, LucideIcon> = {
 	continue: CalendarDays,
 	pantry: Utensils,
 	recommended: Sparkles,
@@ -16,8 +18,18 @@ const sectionIcons = {
 	popular: ChefHat,
 };
 
-const HomeFeedSection = ({ section, wishlist, onClickFavorite }) => {
-	const Icon = sectionIcons[section.key] || Sparkles;
+type HomeFeedSectionProps = {
+	section: HomeFeedSection;
+	wishlist: WishlistItem[];
+	onClickFavorite: (recipeId: number) => void | Promise<void>;
+};
+
+const HomeFeedSection = ({
+	section,
+	wishlist,
+	onClickFavorite,
+}: HomeFeedSectionProps): ReactElement => {
+	const Icon = sectionIcons[section.key] ?? Sparkles;
 
 	return (
 		<section aria-labelledby={`home-feed-${section.key}-title`}>
@@ -32,7 +44,7 @@ const HomeFeedSection = ({ section, wishlist, onClickFavorite }) => {
 				</div>
 			</div>
 			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:gap-5">
-				{section.recipes.map((recipe) => (
+				{section.recipes.map((recipe: RecipeSummary) => (
 					<RecipeCard
 						key={recipe.recipe_id}
 						recipe={recipe}
@@ -45,9 +57,19 @@ const HomeFeedSection = ({ section, wishlist, onClickFavorite }) => {
 	);
 };
 
-const PersonalizedHomeFeed = ({ isAuthenticated, wishlist, onClickFavorite }) => {
+export type PersonalizedHomeFeedProps = {
+	isAuthenticated: boolean;
+	wishlist: WishlistItem[];
+	onClickFavorite: (recipeId: number) => void | Promise<void>;
+};
+
+const PersonalizedHomeFeed = ({
+	isAuthenticated,
+	wishlist,
+	onClickFavorite,
+}: PersonalizedHomeFeedProps): ReactElement => {
 	const { data, isLoading, isError, refetch } = useHomeFeedQuery(isAuthenticated);
-	const sections = (data?.sections || [])
+	const sections = (data?.sections ?? [])
 		.filter((section) => section.recipes?.length > 0)
 		.slice(0, HOME_FEED_SECTION_LIMIT)
 		.map((section) => ({
@@ -73,7 +95,7 @@ const PersonalizedHomeFeed = ({ isAuthenticated, wishlist, onClickFavorite }) =>
 				<p className="text-xs font-extrabold uppercase tracking-[0.16em] text-destructive">Home feed unavailable</p>
 				<h2 className="mt-2 text-2xl font-black tracking-tight">We could not load your recipe ideas.</h2>
 				<p className="mt-2 text-sm text-muted-foreground">Your saved recipes and the full recipe explorer are still available.</p>
-				<button type="button" className="mt-5 inline-flex min-h-11 items-center rounded-full border border-border bg-card px-4 text-sm font-bold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => refetch()}>Try again</button>
+				<button type="button" className="mt-5 inline-flex min-h-11 items-center rounded-full border border-border bg-card px-4 text-sm font-bold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => void refetch()}>Try again</button>
 			</section>
 		);
 	}

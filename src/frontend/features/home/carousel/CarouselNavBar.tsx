@@ -7,6 +7,18 @@ import {
 } from "react-icons/bs";
 import Button from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
+import type { CarouselItemData } from "../Carousel";
+
+export type CarouselNavBarProps = {
+	currIndex: number;
+	items: CarouselItemData[];
+	onSpecSlide: (index: number) => void;
+	onPrevSlide: () => void;
+	onNextSlide: () => void;
+	isPaused: boolean;
+	onTogglePause: () => void;
+	showPauseControl?: boolean;
+};
 
 const CarouselNavBar = ({
 	currIndex,
@@ -17,7 +29,7 @@ const CarouselNavBar = ({
 	isPaused,
 	onTogglePause,
 	showPauseControl = true,
-}) => {
+}: CarouselNavBarProps): React.ReactElement => {
 	return (
 		<div
 			className="absolute bottom-2 left-4 right-4 z-10 flex items-center gap-2 sm:bottom-6 sm:left-8 sm:right-auto lg:bottom-10 lg:left-14 xl:left-20 2xl:left-24"

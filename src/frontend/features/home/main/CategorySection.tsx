@@ -3,21 +3,29 @@ import { Link } from "react-router-dom";
 import { ArrowRight, LayoutGrid } from "lucide-react";
 import convertImage from "@/shared/utils/convertImage";
 import { cn } from "@/shared/lib/utils";
+import type { CatalogItem } from "@/shared/api/contracts";
+
+export type HomeCategory = CatalogItem & {
+	recipe_count?: number | string | null;
+	recipeCount?: number | string | null;
+	category_name?: string | null;
+};
 
 export const curatedCategoryOrder = [
 	"chicken", "pasta dishes", "pizza", "soups", "salads", "desserts", "beef",
 	"seafood", "sandwiches", "appetizers", "baking", "breads", "egg", "sweet", "main",
 ];
 
-const categoryPopularity = (category) => {
+const categoryPopularity = (category: HomeCategory): number | null => {
 	const value = category?.recipe_count ?? category?.recipeCount;
 	const popularity = Number(value);
 	return Number.isFinite(popularity) && popularity >= 0 ? popularity : null;
 };
 
-const categoryName = (category) => String(category?.name ?? category?.category_name ?? "");
+const categoryName = (category: HomeCategory): string =>
+	String(category.name ?? category.category_name ?? "");
 
-export const rankCategories = (categories = []) =>
+export const rankCategories = (categories: HomeCategory[] = []): HomeCategory[] =>
 	[...categories].sort((left, right) => {
 		const leftPopularity = categoryPopularity(left);
 		const rightPopularity = categoryPopularity(right);
@@ -35,7 +43,17 @@ export const rankCategories = (categories = []) =>
 		return categoryName(left).localeCompare(categoryName(right), "en", { sensitivity: "base" });
 	});
 
-const CategorySection = ({ categories, selectedCategoryId, onCategorySelect }) => {
+export type CategorySectionProps = {
+	categories: HomeCategory[];
+	selectedCategoryId: string | number;
+	onCategorySelect: (categoryId: string | number) => void;
+};
+
+const CategorySection = ({
+	categories,
+	selectedCategoryId,
+	onCategorySelect,
+}: CategorySectionProps): React.ReactElement => {
 	const rankedCategories = rankCategories(categories).slice(0, 5);
 	const baseCard = "group relative min-h-36 overflow-hidden rounded-2xl border text-left shadow-sm transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:-translate-y-0.5 hover:shadow-md";
 

@@ -1,15 +1,22 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, type FocusEvent } from "react";
 import CarouselItem from "./carousel/CarouselItem";
 import CarouselNavBar from "./carousel/CarouselNavBar";
 
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
-const readReducedMotionPreference = () =>
+export type CarouselItemData = {
+	id: number | null;
+	name: string;
+	description?: string | null;
+	imageName?: string | null;
+};
+
+const readReducedMotionPreference = (): boolean =>
 	typeof window !== "undefined" &&
 	typeof window.matchMedia === "function" &&
 	window.matchMedia(REDUCED_MOTION_QUERY).matches;
 
-const fallbackItems = [
+const fallbackItems: CarouselItemData[] = [
 	{
 		id: null,
 		name: "Cook something memorable",
@@ -19,17 +26,21 @@ const fallbackItems = [
 	},
 ];
 
-const Carousel = ({ items }) => {
-	const [currIndex, setCurrIndex] = useState(0);
-	const [isUserPaused, setIsUserPaused] = useState(false);
-	const [isPointerPaused, setIsPointerPaused] = useState(false);
-	const [isFocusPaused, setIsFocusPaused] = useState(false);
-	const [prefersReducedMotion, setPrefersReducedMotion] = useState(
+export type CarouselProps = {
+	items: CarouselItemData[];
+};
+
+const Carousel = ({ items }: CarouselProps): React.ReactElement => {
+	const [currIndex, setCurrIndex] = useState<number>(0);
+	const [isUserPaused, setIsUserPaused] = useState<boolean>(false);
+	const [isPointerPaused, setIsPointerPaused] = useState<boolean>(false);
+	const [isFocusPaused, setIsFocusPaused] = useState<boolean>(false);
+	const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(
 		readReducedMotionPreference
 	);
 	const displayItems = items.length ? items : fallbackItems;
 
-	const handleSpecSlide = (index) => setCurrIndex(index);
+	const handleSpecSlide = (index: number): void => setCurrIndex(index);
 	const handlePrevSlide = () => {
 		setCurrIndex(
 			(prevIndex) =>
@@ -53,7 +64,8 @@ const Carousel = ({ items }) => {
 		}
 
 		const mediaQuery = window.matchMedia(REDUCED_MOTION_QUERY);
-		const handleChange = (event) => setPrefersReducedMotion(event.matches);
+		const handleChange = (event: MediaQueryListEvent): void =>
+			setPrefersReducedMotion(event.matches);
 
 		setPrefersReducedMotion(mediaQuery.matches);
 		mediaQuery.addEventListener?.("change", handleChange);
@@ -76,7 +88,7 @@ const Carousel = ({ items }) => {
 		return () => clearInterval(intervalId);
 	}, [displayItems.length, shouldAutoRotate]);
 
-	const handleBlurCapture = (event) => {
+	const handleBlurCapture = (event: FocusEvent<HTMLElement>): void => {
 		if (!event.currentTarget.contains(event.relatedTarget)) {
 			setIsFocusPaused(false);
 		}
@@ -105,7 +117,7 @@ const Carousel = ({ items }) => {
 						key={id || index}
 						id={id}
 						title={name}
-						desc={description}
+						desc={description ?? ""}
 						imgSrc={imageName || name}
 						index={index}
 						total={displayItems.length}

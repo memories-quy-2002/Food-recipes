@@ -3,6 +3,16 @@ import { useNavigate } from "react-router-dom";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
 
+export type CarouselItemProps = {
+	id: number | null;
+	title: string;
+	desc: string;
+	imgSrc: string;
+	index: number;
+	total: number;
+	isActive: boolean;
+};
+
 const CarouselItem = ({
 	id,
 	title,
@@ -11,7 +21,7 @@ const CarouselItem = ({
 	index,
 	total,
 	isActive,
-}) => {
+}: CarouselItemProps): React.ReactElement => {
 	const navigate = useNavigate();
 
 	return (

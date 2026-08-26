@@ -1,5 +1,7 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
+import { isAxiosError } from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
+import type { RecipeSummary } from "@/shared/api/contracts";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -10,8 +12,8 @@ import {
 import { AuthContext } from "@/app/AuthProvider";
 import { RecipeContext } from "@/app/RecipeProvider";
 import { useToast } from "@/app/ToastProvider";
-import CategorySection from "./main/CategorySection";
-import FoodCardList from "./main/FoodCardList";
+import CategorySection, { type HomeCategory } from "./main/CategorySection";
+import FoodCardList, { type FeaturedMode, type FeaturedRecipe, type WishlistItem } from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
 import { useHomeSearchQuery } from "./main/api/useHomeSearchQuery";
 import PageState from "@/shared/ui/PageState";
@@ -23,14 +25,65 @@ import {
 	isMatchingSaveRecipeIntent,
 } from "@/features/auth/returnIntent";
 
-const normalizeMinutes = (value) => {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+	typeof value === "object" && value !== null;
+
+const toHomeCategory = (value: unknown): HomeCategory | null => {
+	if (!isRecord(value) || typeof value.id !== "number") return null;
+	const name = typeof value.name === "string" ? value.name : value.category_name;
+	if (typeof name !== "string" || name.trim().length === 0) return null;
+
+	const recipeCount = value.recipe_count;
+	const legacyRecipeCount = value.recipeCount;
+	return {
+		id: value.id,
+		name,
+		...(typeof recipeCount === "number" || typeof recipeCount === "string" || recipeCount === null
+			? { recipe_count: recipeCount }
+			: {}),
+		...(typeof legacyRecipeCount === "number" || typeof legacyRecipeCount === "string" || legacyRecipeCount === null
+			? { recipeCount: legacyRecipeCount }
+			: {}),
+	};
+};
+
+const toHomeCategories = (payload: unknown): HomeCategory[] =>
+	getArrayPayload(payload, "categories")
+		.map(toHomeCategory)
+		.filter((category): category is HomeCategory => category !== null);
+
+const isWishlistItem = (value: unknown): value is WishlistItem => {
+	if (!isRecord(value)) return false;
+	const hasFlatId = typeof value.recipe_id === "number";
+	const hasNestedId = isRecord(value.recipe) && typeof value.recipe.recipe_id === "number";
+	return hasFlatId || hasNestedId;
+};
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+	if (!isAxiosError(error)) return fallback;
+	const data = error.response?.data;
+	return isRecord(data) && typeof data.message === "string" ? data.message : fallback;
+};
+
+const normalizeMinutes = (value: unknown): number | null => {
 	const minutes = Number(value);
 	return Number.isFinite(minutes) ? minutes : null;
 };
 
 const HOME_RECIPE_LIMIT = 4;
 
-export const normalizeRecipeSummary = (recipe) => {
+type HomeRecipe = FeaturedRecipe & {
+	prepTimeMinutes?: number | string | null;
+	cookTimeMinutes?: number | string | null;
+};
+
+type NormalizedHomeRecipe = HomeRecipe & {
+	prepTimeMinutes: number | null;
+	cookTimeMinutes: number | null;
+	totalTimeMinutes: number;
+};
+
+export const normalizeRecipeSummary = (recipe: HomeRecipe): NormalizedHomeRecipe => {
 	const prepTimeMinutes = normalizeMinutes(recipe.prepTimeMinutes ?? recipe.prep_time_minutes);
 	const cookTimeMinutes = normalizeMinutes(recipe.cookTimeMinutes ?? recipe.cook_time_minutes);
 
@@ -45,19 +98,22 @@ export const normalizeRecipeSummary = (recipe) => {
 	};
 };
 
-export const byQuickest = (a, b) => a.totalTimeMinutes - b.totalTimeMinutes;
+export const byQuickest = (
+	a: Pick<NormalizedHomeRecipe, "totalTimeMinutes">,
+	b: Pick<NormalizedHomeRecipe, "totalTimeMinutes">,
+): number => a.totalTimeMinutes - b.totalTimeMinutes;
 
-export const getQuickMeals = (recipes) =>
+export const getQuickMeals = (recipes: HomeRecipe[]): NormalizedHomeRecipe[] =>
 	recipes.map(normalizeRecipeSummary).sort(byQuickest).slice(0, HOME_RECIPE_LIMIT);
 
-const HomeMain = () => {
-	const [categories, setCategories] = useState([]);
-	const [wishlist, setWishlist] = useState([]);
-	const [wishlistLoadedKey, setWishlistLoadedKey] = useState(null);
-	const [pendingFavoriteIds, setPendingFavoriteIds] = useState([]);
-	const [selectedCategoryId, setSelectedCategoryId] = useState("all");
-	const [featuredMode, setFeaturedMode] = useState("top-rated");
-	const [categoryError, setCategoryError] = useState(null);
+const HomeMain = (): ReactElement => {
+	const [categories, setCategories] = useState<HomeCategory[]>([]);
+	const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+	const [wishlistLoadedKey, setWishlistLoadedKey] = useState<string | null>(null);
+	const [pendingFavoriteIds, setPendingFavoriteIds] = useState<number[]>([]);
+	const [selectedCategoryId, setSelectedCategoryId] = useState<string | number>("all");
+	const [featuredMode, setFeaturedMode] = useState<FeaturedMode>("top-rated");
+	const [categoryError, setCategoryError] = useState<string | null>(null);
 	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { auth } = useContext(AuthContext);
 	const { isAuthenticated, userId } = auth.current;
@@ -66,7 +122,7 @@ const HomeMain = () => {
 	const location = useLocation();
 	const searchTerm = new URLSearchParams(location.search).get("q") || "";
 	const searchQuery = useHomeSearchQuery(searchTerm);
-	const processedAuthIntent = useRef(null);
+	const processedAuthIntent = useRef<unknown>(null);
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const wishlistLoadKey = isAuthenticated
 		? userId
@@ -75,15 +131,15 @@ const HomeMain = () => {
 		: "guest";
 	const isWishlistLoaded = wishlistLoadedKey === wishlistLoadKey;
 
-	const filteredRecipes = useMemo(() => {
+	const filteredRecipes = useMemo<HomeRecipe[]>(() => {
 		if (selectedCategoryId === "all") return recipes;
 		return recipes.filter(
-			(recipe) => Number(recipe.category_id) === Number(selectedCategoryId)
+			(recipe) => Number(recipe.category_id) === Number(selectedCategoryId),
 		);
 	}, [recipes, selectedCategoryId]);
 
-	const featuredRecipes = useMemo(() => {
-		const nextRecipes = [...filteredRecipes];
+	const featuredRecipes = useMemo<FeaturedRecipe[]>(() => {
+		const nextRecipes: HomeRecipe[] = [...filteredRecipes];
 
 		if (featuredMode === "quick-meals") return getQuickMeals(nextRecipes);
 		if (featuredMode === "most-reviewed") {
@@ -97,7 +153,7 @@ const HomeMain = () => {
 			.slice(0, HOME_RECIPE_LIMIT);
 	}, [featuredMode, filteredRecipes]);
 
-	const handleClickFavorite = async (recipeId) => {
+	const handleClickFavorite = async (recipeId: number): Promise<void> => {
 		if (!isAuthenticated) {
 			beginAuthIntent({ returnTo: currentPath, action: "saveRecipe", recipeId });
 			navigate("/account?signup=false", { state: { from: currentPath } });
@@ -106,7 +162,7 @@ const HomeMain = () => {
 		if (pendingFavoriteIds.includes(recipeId)) return;
 
 		const isFavorite = wishlist.some(
-			(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) === Number(recipeId)
+			(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) === Number(recipeId),
 		);
 		setPendingFavoriteIds((currentIds) => [...currentIds, recipeId]);
 
@@ -116,8 +172,8 @@ const HomeMain = () => {
 				if (response.status === 200) {
 					setWishlist((currentWishlist) =>
 						currentWishlist.filter(
-							(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) !== Number(recipeId)
-						)
+							(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) !== Number(recipeId),
+						),
 					);
 					showToast({ title: "Removed from Saved" });
 				}
@@ -126,14 +182,14 @@ const HomeMain = () => {
 
 			const response = await axios.post(
 				apiRoutes.userWishlist,
-				serializeWishlistPayload(recipeId)
+				serializeWishlistPayload(recipeId),
 			);
 			if (isWishlistAddSuccess(response.status)) {
 				setWishlist((currentWishlist) => [...currentWishlist, { recipe_id: recipeId }]);
 				showToast({ title: "Saved recipe" });
 			}
-		} catch (err) {
-			console.error(err);
+		} catch (error: unknown) {
+			console.error(error);
 			showToast({
 				title: "Couldn’t update Saved",
 				message: "Please try again in a moment.",
@@ -141,45 +197,51 @@ const HomeMain = () => {
 			});
 		} finally {
 			setPendingFavoriteIds((currentIds) =>
-				currentIds.filter((currentId) => currentId !== recipeId)
+				currentIds.filter((currentId) => currentId !== recipeId),
 			);
 		}
 	};
 
 	useEffect(() => {
-		const intent = location.state?.pendingAuthIntent;
+		const routeState: unknown = location.state;
+		const intent = isRecord(routeState) ? routeState.pendingAuthIntent : undefined;
+		const intentRecipeId = isRecord(intent) &&
+			(typeof intent.recipeId === "string" || typeof intent.recipeId === "number")
+			? intent.recipeId
+			: "";
+
 		if (
 			!isAuthenticated ||
 			!isWishlistLoaded ||
-			!isMatchingSaveRecipeIntent(intent, currentPath, intent?.recipeId) ||
-			!recipes.some((recipe) => Number(recipe.recipe_id) === Number(intent.recipeId)) ||
+			!isMatchingSaveRecipeIntent(intent, currentPath, intentRecipeId) ||
+			!recipes.some((recipe) => Number(recipe.recipe_id) === Number(intentRecipeId)) ||
 			processedAuthIntent.current === intent
 		) return;
 
 		processedAuthIntent.current = intent;
 		navigate(currentPath, { replace: true, state: null });
 		const isFavorite = wishlist.some(
-			(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) === Number(intent.recipeId)
+			(recipe) => Number(recipe.recipe?.recipe_id ?? recipe.recipe_id) === Number(intentRecipeId),
 		);
-		if (!isFavorite) handleClickFavorite(Number(intent.recipeId));
+		if (!isFavorite) void handleClickFavorite(Number(intentRecipeId));
 	}, [currentPath, handleClickFavorite, isAuthenticated, isWishlistLoaded, location.state, navigate, recipes, wishlist]);
 
 	useEffect(() => {
-		const fetchCategories = async () => {
+		const fetchCategories = async (): Promise<void> => {
 			try {
 				setCategoryError(null);
-				const response = await axios.get(apiRoutes.categories);
-				setCategories(getArrayPayload(response.data, "categories"));
-			} catch (err) {
-				console.error(err);
-				setCategoryError(err.response?.data?.message || "Unable to load recipe categories.");
+				const response = await axios.get<unknown>(apiRoutes.categories);
+				setCategories(toHomeCategories(response.data));
+			} catch (error: unknown) {
+				console.error(error);
+				setCategoryError(getApiErrorMessage(error, "Unable to load recipe categories."));
 			}
 		};
-		fetchCategories();
+		void fetchCategories();
 	}, [userId]);
 
 	useEffect(() => {
-		const fetchWishlists = async () => {
+		const fetchWishlists = async (): Promise<void> => {
 			setWishlistLoadedKey(null);
 			if (!isAuthenticated || !userId) {
 				setWishlist([]);
@@ -188,15 +250,17 @@ const HomeMain = () => {
 			}
 
 			try {
-				const response = await axios.get(apiRoutes.userWishlist);
-				if (response.status === 200) setWishlist(getArrayPayload(response.data, "wishlist"));
-			} catch (err) {
-				console.error(err);
+				const response = await axios.get<unknown>(apiRoutes.userWishlist);
+				if (response.status === 200) {
+					setWishlist(getArrayPayload(response.data, "wishlist", isWishlistItem));
+				}
+			} catch (error: unknown) {
+				console.error(error);
 			} finally {
 				setWishlistLoadedKey(`user:${userId}`);
 			}
 		};
-		fetchWishlists();
+		void fetchWishlists();
 	}, [isAuthenticated, userId]);
 
 	return (

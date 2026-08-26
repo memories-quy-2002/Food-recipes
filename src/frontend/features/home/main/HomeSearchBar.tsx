@@ -1,17 +1,25 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Search, Sparkles } from "lucide-react";
+import type { RecipeSummary } from "@/shared/api/contracts";
 import convertImage from "@/shared/utils/convertImage";
 import Button from "@/shared/ui/Button";
 
 const QUICK_FILTER_LIMIT = 4;
 const SEARCH_RESULTS_ID = "recipe-search-results";
 
-const normalizeLabel = (value) =>
+export type HomeSearchRecipe = Partial<RecipeSummary> & {
+	recipe_id?: number;
+	recipe_name?: string;
+};
+
+const normalizeLabel = (value: unknown): string =>
 	typeof value === "string" ? value.trim() : "";
 
-export const getQuickFilters = (recipes = []) => {
-	const labels = new Map();
+export const getQuickFilters = (
+	recipes: Array<HomeSearchRecipe | null> = [],
+): string[] => {
+	const labels = new Map<string, { label: string; count: number; order: number }>();
 
 	recipes.forEach((recipe) => {
 		[recipe?.category_name, recipe?.meal_name].forEach((value) => {
@@ -33,15 +41,27 @@ export const getQuickFilters = (recipes = []) => {
 		.map(({ label }) => label);
 };
 
-const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, searchError = null }) => {
+export type HomeSearchBarProps = {
+	recipes?: Array<HomeSearchRecipe | null>;
+	searchResults?: HomeSearchRecipe[];
+	isSearchLoading?: boolean;
+	searchError?: unknown | null;
+};
+
+const HomeSearchBar = ({
+	recipes = [],
+	searchResults,
+	isSearchLoading = false,
+	searchError = null,
+}: HomeSearchBarProps): React.ReactElement => {
 	const navigate = useNavigate();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const searchTerm = searchParams.get("q") || "";
 	const quickFilters = getQuickFilters(recipes);
-	const [activeIndex, setActiveIndex] = useState(-1);
-	const [isResultListOpen, setIsResultListOpen] = useState(Boolean(searchTerm));
+	const [activeIndex, setActiveIndex] = useState<number>(-1);
+	const [isResultListOpen, setIsResultListOpen] = useState<boolean>(Boolean(searchTerm));
 
-	const updateSearchTerm = (value) => {
+	const updateSearchTerm = (value: string): void => {
 		setSearchParams((currentParams) => {
 			const nextParams = new URLSearchParams(currentParams);
 			if (value.trim()) nextParams.set("q", value);
@@ -50,13 +70,13 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 		}, { replace: true });
 	};
 
-	const handleChange = (event) => {
+	const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		setActiveIndex(-1);
 		setIsResultListOpen(Boolean(event.target.value.trim()));
 		updateSearchTerm(event.target.value);
 	};
 
-	const handleQuickFilter = (label) => {
+	const handleQuickFilter = (label: string): void => {
 		setActiveIndex(-1);
 		setIsResultListOpen(true);
 		updateSearchTerm(label);
@@ -64,10 +84,11 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 
 	const filteredRecipes = Array.isArray(searchResults)
 		? searchResults
-		: recipes.filter((recipe) =>
+		: recipes.filter((recipe): recipe is HomeSearchRecipe =>
+			recipe !== null &&
 			[recipe.recipe_name, recipe.category_name, recipe.meal_name].some((value) =>
-				normalizeLabel(value).toLocaleLowerCase().includes(searchTerm.trim().toLocaleLowerCase())
-			)
+				normalizeLabel(value).toLocaleLowerCase().includes(searchTerm.trim().toLocaleLowerCase()),
+			),
 		);
 
 	useEffect(() => {
@@ -75,7 +96,7 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 		setIsResultListOpen(Boolean(searchTerm.trim()));
 	}, [searchTerm]);
 
-	const handleKeyDown = (event) => {
+	const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>): void => {
 		if (event.key === "Escape") {
 			event.preventDefault();
 			setActiveIndex(-1);
@@ -96,7 +117,8 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 		}
 		if (event.key === "Enter" && isResultListOpen && filteredRecipes[activeIndex]) {
 			event.preventDefault();
-			navigate(`/recipe?id=${filteredRecipes[activeIndex].recipe_id}`);
+			const recipeId = filteredRecipes[activeIndex].recipe_id;
+			if (recipeId !== undefined) navigate(`/recipe?id=${recipeId}`);
 		}
 	};
 
@@ -166,26 +188,28 @@ const HomeSearchBar = ({ recipes = [], searchResults, isSearchLoading = false, s
 						) : searchError ? (
 							<li key="search-error" className="px-4 py-4 text-sm text-destructive" role="option" aria-disabled="true">Search suggestions are unavailable.</li>
 						) : filteredRecipes.length > 0 ? (
-							<React.Fragment key="recipe-search-options">
+							<>
 								{filteredRecipes.map((recipe, index) => (
 									<li
-										key={recipe.recipe_id}
+										key={recipe.recipe_id ?? `recipe-${index}`}
 										id={`recipe-search-option-${index}`}
 										role="option"
 										tabIndex={-1}
 										aria-selected={index === activeIndex}
 										className="flex min-h-16 cursor-pointer items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-accent aria-selected:bg-accent"
 										onMouseEnter={() => setActiveIndex(index)}
-										onClick={() => navigate(`/recipe?id=${recipe.recipe_id}`)}
+										onClick={() => {
+											if (recipe.recipe_id !== undefined) navigate(`/recipe?id=${recipe.recipe_id}`);
+										}}
 									>
-										{convertImage(recipe.recipe_name, "size-12 shrink-0 rounded-xl object-cover sm:size-14", recipe.image_url)}
+										{convertImage(recipe.recipe_name || "Recipe", "size-12 shrink-0 rounded-xl object-cover sm:size-14", recipe.image_url)}
 										<div className="min-w-0">
-											<p className="truncate font-bold text-foreground">{recipe.recipe_name}</p>
+											<p className="truncate font-bold text-foreground">{recipe.recipe_name || "Untitled recipe"}</p>
 											<p className="mt-0.5 truncate text-xs text-muted-foreground">{recipe.category_name || recipe.meal_name || "Recipe"}</p>
 										</div>
 									</li>
 								))}
-							</React.Fragment>
+							</>
 						) : (
 							<li key="search-empty" className="px-4 py-4 text-sm text-muted-foreground" role="option" aria-disabled="true">No recipe found. Try a broader term.</li>
 						)}

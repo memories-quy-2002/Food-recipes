@@ -1,11 +1,41 @@
-import React from "react";
+import type { ChangeEventHandler, ReactElement } from "react";
+import type { CatalogItem } from "@/shared/api/contracts";
+import type { RecipeDiscoveryState } from "@/features/food/api/useRecipesQuery";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
 import FoodMenuSection from "./menu/FoodMenuSection";
 
-const FoodMenuBar = ({ categoryId, mealId, searchTerm, categories, meals, onCategoryClick, onMealClick, onMenuAllClick, onChangeSearchTerm, onClearFilters }) => {
+type MenuFilterField = "categoryId" | "mealId";
+type QueryStateChange = Partial<RecipeDiscoveryState>;
+
+export type FoodMenuBarProps = {
+	categoryId: string;
+	mealId: string;
+	searchTerm: string;
+	categories: CatalogItem[];
+	meals: CatalogItem[];
+	onCategoryClick: (categoryId: number) => void;
+	onMealClick: (mealId: number) => void;
+	onMenuAllClick: (field: MenuFilterField) => void;
+	onChangeSearchTerm: ChangeEventHandler<HTMLInputElement>;
+	onClearFilters: () => void;
+};
+
+const FoodMenuBar = ({
+	categoryId,
+	mealId,
+	searchTerm,
+	categories,
+	meals,
+	onCategoryClick,
+	onMealClick,
+	onMenuAllClick,
+	onChangeSearchTerm,
+	onClearFilters,
+}: FoodMenuBarProps): ReactElement => {
 	const hasActiveFilters = Boolean(categoryId || mealId || searchTerm);
+
 	return (
 		<Card as="aside" className="sticky top-24 overflow-hidden p-4">
 			<div className="mb-5 flex items-start justify-between gap-3">
@@ -17,4 +47,5 @@ const FoodMenuBar = ({ categoryId, mealId, searchTerm, categories, meals, onCate
 		</Card>
 	);
 };
+
 export default FoodMenuBar;
