@@ -1,10 +1,9 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import CategorySection, { rankCategories } from "./CategorySection";
 
-const categories = (items) => items.map(([id, name, recipe_count]) => ({ id, name, recipe_count }));
+const categories = (items: Array<[number, string, number?]>) => items.map(([id, name, recipe_count]) => ({ id, name, recipe_count }));
 
 describe("Home category ranking", () => {
 	it("uses recipe popularity instead of API/database order", () => {
@@ -32,7 +31,7 @@ describe("Home category ranking", () => {
 	});
 
 	it("renders All categories first and only the five highest-ranked categories", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 				renderer = TestRenderer.create(
 					<MemoryRouter>
@@ -52,7 +51,7 @@ describe("Home category ranking", () => {
 				);
 		});
 
-		expect(renderer.root.findAll((node) => node.type === "h3" || node.type === "strong").map(({ children }) => children.join(""))).toEqual([
+		expect(renderer.root.findAll((node: ReactTestInstance) => node.type === "h3" || node.type === "strong").map(({ children }) => children.join(""))).toEqual([
 			"All categories",
 			"Chicken",
 			"Pizza",

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import ActiveFilterChips from "./ActiveFilterChips";
 
-const queryState = { q: "chicken", categoryId: "2", mealId: "3", sort: "popular", page: 1, limit: 6 };
+const queryState = { q: "chicken", categoryId: "2", mealId: "3", sort: "popular", filter: "", page: 1, limit: 6 } as const;
 const categories = [{ id: 2, name: "Main Course" }];
 const meals = [{ id: 3, name: "Dinner" }];
 

@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-globalThis.localStorage = { getItem: () => null };
-globalThis.sessionStorage = { getItem: () => null };
+const emptyStorage: Storage = {
+	length: 0,
+	clear: () => undefined,
+	getItem: () => null,
+	key: () => null,
+	removeItem: () => undefined,
+	setItem: () => undefined,
+};
+
+globalThis.localStorage = emptyStorage;
+globalThis.sessionStorage = emptyStorage;
 
 const { getQuickMeals } = await import("./HomeMain");
 

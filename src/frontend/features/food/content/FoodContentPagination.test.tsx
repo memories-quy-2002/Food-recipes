@@ -1,5 +1,4 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import FoodContentPagination, { getPaginationPageNumbers } from "./FoodContentPagination";
 
@@ -16,7 +15,7 @@ describe("FoodContentPagination", () => {
 
 	it("renders a bounded nearby window and keeps the active page visible", () => {
 		const onPagination = vi.fn();
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<FoodContentPagination
@@ -29,7 +28,7 @@ describe("FoodContentPagination", () => {
 		);
 		});
 
-		expect(renderer.root.findAll((node) => node.type === "button" && node.props?.["aria-current"] === "page")).toHaveLength(1);
+		expect(renderer.root.findAll((node: ReactTestInstance) => node.type === "button" && node.props?.["aria-current"] === "page")).toHaveLength(1);
 		expect(renderer.root.findAllByType("button")).toHaveLength(9);
 	});
 });

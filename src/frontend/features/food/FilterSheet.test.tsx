@@ -6,7 +6,7 @@ import FilterSheet from "./FilterSheet";
 
 const categories = [{ id: 2, name: "Main Course" }];
 const meals = [{ id: 3, name: "Dinner" }];
-const queryState = { q: "", categoryId: "", mealId: "", sort: "popular", page: 1, limit: 6 };
+const queryState = { q: "", categoryId: "", mealId: "", sort: "popular", filter: "", page: 1, limit: 6 } as const;
 
 const renderSheet = (overrides = {}) => render(
 	<FilterSheet

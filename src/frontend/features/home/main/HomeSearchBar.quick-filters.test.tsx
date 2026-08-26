@@ -1,5 +1,4 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { getQuickFilters } from "./HomeSearchBar";
@@ -10,8 +9,8 @@ const LocationSearch = () => {
 	return <output>{location.search}</output>;
 };
 
-const renderSearchBar = (recipes, initialEntry = "/") => {
-	let renderer;
+const renderSearchBar = (recipes: Parameters<typeof HomeSearchBar>[0]["recipes"], initialEntry = "/"): ReactTestRenderer => {
+	let renderer!: ReactTestRenderer;
 	act(() => {
 		renderer = TestRenderer.create(
 			<MemoryRouter initialEntries={[initialEntry]}>
@@ -30,7 +29,7 @@ describe("getQuickFilters", () => {
 				{ category_name: "Dinner", meal_name: "Pasta" },
 				{ category_name: "dinner", meal_name: "Soup" },
 				{ category_name: "Dessert", meal_name: "Pasta" },
-				{ category_name: "", meal_name: null },
+				{ category_name: "" },
 			])
 		).toEqual(["Dinner", "Pasta", "Soup", "Dessert"]);
 	});
@@ -46,13 +45,13 @@ describe("HomeSearchBar search state", () => {
 			{ recipe_name: "Pasta Primavera", category_name: "Dinner", meal_name: "Pasta" },
 		]);
 
-		act(() => {
-			renderer.root.findByProps({ children: "Dinner" }).props.onClick();
-		});
+		const onClick = renderer.root.findByProps({ children: "Dinner" }).props.onClick;
+		if (typeof onClick !== "function") throw new Error("Quick filter handler was not rendered");
+		act(() => onClick());
 
 		expect(renderer.root.findByType("input").props.value).toBe("Dinner");
 		expect(
-			new URLSearchParams(renderer.root.findByType("output").children[0]).get("q")
+			new URLSearchParams(String(renderer.root.findByType("output").children[0] ?? "")).get("q")
 		).toBe("Dinner");
 	});
 
@@ -79,11 +78,11 @@ describe("HomeSearchBar search state", () => {
 			"/?q=Pasta&sort=popular"
 		);
 
-		act(() => {
-			renderer.root.findByType("input").props.onChange({ target: { value: "" } });
-		});
+		const onChange = renderer.root.findByType("input").props.onChange;
+		if (typeof onChange !== "function") throw new Error("Search change handler was not rendered");
+		act(() => onChange({ target: { value: "" } }));
 
-		const params = new URLSearchParams(renderer.root.findByType("output").children[0]);
+		const params = new URLSearchParams(String(renderer.root.findByType("output").children[0] ?? ""));
 		expect(params.get("q")).toBeNull();
 		expect(params.get("sort")).toBe("popular");
 	});

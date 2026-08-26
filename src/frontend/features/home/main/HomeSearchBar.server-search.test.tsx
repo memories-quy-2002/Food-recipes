@@ -1,5 +1,4 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import HomeSearchBar from "./HomeSearchBar";
@@ -15,7 +14,7 @@ const serverSearchResults = [
 
 describe("HomeSearchBar server-backed results", () => {
 	it("renders only server suggestions and links to the complete filtered page", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter initialEntries={["/?q=chick"]}>
@@ -26,7 +25,7 @@ describe("HomeSearchBar server-backed results", () => {
 
 		expect(renderer.root.findAllByProps({ role: "option" })).toHaveLength(1);
 		expect(
-			renderer.root.findAllByType("p").some((node) => node.children.includes("Chicken Curry")),
+			renderer.root.findAllByType("p").some((node: ReactTestInstance) => node.children.includes("Chicken Curry")),
 		).toBe(true);
 		const links = renderer.root.findAllByType("a");
 		expect(links.some((link) => link.props.href === "/food?q=chick")).toBe(true);

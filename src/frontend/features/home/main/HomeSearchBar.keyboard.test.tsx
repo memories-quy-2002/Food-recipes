@@ -1,6 +1,5 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import HomeSearchBar from "./HomeSearchBar";
 
@@ -15,7 +14,7 @@ const recipes = [
 ];
 
 const renderSearchBar = (initialEntry = "/?q=Pasta") => {
-	let renderer;
+	let renderer!: ReactTestRenderer;
 	act(() => {
 		renderer = TestRenderer.create(
 			<MemoryRouter initialEntries={[initialEntry]}>
@@ -27,10 +26,22 @@ const renderSearchBar = (initialEntry = "/?q=Pasta") => {
 	return renderer;
 };
 
-const getInput = (renderer) => renderer.root.findByType("input");
-const getList = (renderer) => renderer.root.findByProps({ role: "listbox" });
-const getOptions = (renderer) =>
+const getInput = (renderer: ReactTestRenderer) => renderer.root.findByType("input");
+const getList = (renderer: ReactTestRenderer) => renderer.root.findByProps({ role: "listbox" });
+const getOptions = (renderer: ReactTestRenderer) =>
 	renderer.root.findAllByProps({ role: "option" });
+
+const pressKey = (renderer: ReactTestRenderer, key: string): void => {
+	const onKeyDown = getInput(renderer).props.onKeyDown;
+	if (typeof onKeyDown !== "function") throw new Error("Search keyboard handler was not rendered");
+	onKeyDown({ key, preventDefault: vi.fn() });
+};
+
+const clickOption = (renderer: ReactTestRenderer, index: number): void => {
+	const onClick = getOptions(renderer)[index].props.onClick;
+	if (typeof onClick !== "function") throw new Error("Search option handler was not rendered");
+	onClick();
+};
 
 describe("HomeSearchBar keyboard accessibility", () => {
 	it("exposes combobox/listbox semantics and announces the active option", () => {
@@ -41,17 +52,17 @@ describe("HomeSearchBar keyboard accessibility", () => {
 		expect(getList(renderer).props["aria-label"]).toBe("Recipe search results");
 		expect(getOptions(renderer)).toHaveLength(2);
 
-		act(() => getInput(renderer).props.onKeyDown({ key: "ArrowDown", preventDefault() {} }));
+		act(() => pressKey(renderer, "ArrowDown"));
 		expect(getInput(renderer).props["aria-activedescendant"]).toBe(
 			"recipe-search-option-0"
 		);
 		expect(getOptions(renderer)[0].props["aria-selected"]).toBe(true);
 
-		act(() => getInput(renderer).props.onKeyDown({ key: "ArrowDown", preventDefault() {} }));
+		act(() => pressKey(renderer, "ArrowDown"));
 		expect(getInput(renderer).props["aria-activedescendant"]).toBe(
 			"recipe-search-option-1"
 		);
-		act(() => getInput(renderer).props.onKeyDown({ key: "ArrowUp", preventDefault() {} }));
+		act(() => pressKey(renderer, "ArrowUp"));
 		expect(getInput(renderer).props["aria-activedescendant"]).toBe(
 			"recipe-search-option-0"
 		);
@@ -60,12 +71,12 @@ describe("HomeSearchBar keyboard accessibility", () => {
 	it("opens a recipe with Enter from the active result and supports mouse selection", () => {
 		const renderer = renderSearchBar();
 
-		act(() => getInput(renderer).props.onKeyDown({ key: "ArrowDown", preventDefault() {} }));
-		act(() => getInput(renderer).props.onKeyDown({ key: "Enter", preventDefault() {} }));
+		act(() => pressKey(renderer, "ArrowDown"));
+		act(() => pressKey(renderer, "Enter"));
 		expect(renderer.root.findByType("output").children[0]).toBe("/recipe?id=1");
 
 		const mouseRenderer = renderSearchBar();
-		act(() => getOptions(mouseRenderer)[1].props.onClick());
+		act(() => clickOption(mouseRenderer, 1));
 		expect(mouseRenderer.root.findByType("output").children[0]).toBe("/recipe?id=2");
 	});
 
@@ -73,7 +84,9 @@ describe("HomeSearchBar keyboard accessibility", () => {
 		const renderer = renderSearchBar();
 		const input = getInput(renderer);
 
-		act(() => input.props.onKeyDown({ key: "Escape", preventDefault() {} }));
+		const onKeyDown = input.props.onKeyDown;
+		if (typeof onKeyDown !== "function") throw new Error("Search keyboard handler was not rendered");
+		act(() => onKeyDown({ key: "Escape", preventDefault: vi.fn() }));
 		expect(getInput(renderer).props["aria-expanded"]).toBe(false);
 		expect(renderer.root.findAllByProps({ role: "listbox" })).toHaveLength(0);
 		expect(getInput(renderer).props.tabIndex).toBeUndefined();

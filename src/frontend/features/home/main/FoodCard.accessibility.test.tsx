@@ -1,12 +1,11 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { Link, MemoryRouter } from "react-router-dom";
 import FoodCard from "./FoodCard";
 
 const renderCard = (favorite = false) => {
 	const onClickFavorite = vi.fn();
-	let renderer;
+	let renderer!: ReactTestRenderer;
 
 	act(() => {
 		renderer = TestRenderer.create(
@@ -46,8 +45,10 @@ describe("FoodCard semantics", () => {
 		const { renderer, onClickFavorite } = renderCard();
 		const button = renderer.root.findByType("button");
 		const stopPropagation = vi.fn();
+		const onClick = button.props.onClick;
+		if (typeof onClick !== "function") throw new Error("Favorite handler was not rendered");
 
-		act(() => button.props.onClick({ stopPropagation }));
+		act(() => onClick({ preventDefault: vi.fn(), stopPropagation }));
 
 		expect(stopPropagation).toHaveBeenCalledOnce();
 		expect(onClickFavorite).toHaveBeenCalledWith(7);

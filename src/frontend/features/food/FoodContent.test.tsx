@@ -1,5 +1,5 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import { type AnchorHTMLAttributes, type ReactNode } from "react";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import FoodContent, {
 	getRecipeContentState,
@@ -8,14 +8,16 @@ import FoodContent, {
 
 vi.mock("react-router-dom", () => ({
 	useNavigate: () => vi.fn(),
-	Link: ({ children, ...props }) => <a {...props}>{children}</a>,
+	Link: ({ children, ...props }: { children?: ReactNode } & AnchorHTMLAttributes<HTMLAnchorElement>) => <a {...props}>{children}</a>,
 }));
 
 const recipes = [
-	{ recipe_id: 1, recipe_name: "Pasta", category_id: 1, category_name: "Dinner" },
-	{ recipe_id: 2, recipe_name: "Soup", category_id: 1, category_name: "Dinner" },
-	{ recipe_id: 3, recipe_name: "Toast", category_id: 2, category_name: "Breakfast" },
+	{ recipe_id: 1, recipe_name: "Pasta", recipe_description: null, date_added: null, image_url: null, category_id: 1, category_name: "Dinner", prep_time_minutes: 10, cook_time_minutes: 20, total_time_minutes: 30, user_id: 1 },
+	{ recipe_id: 2, recipe_name: "Soup", recipe_description: null, date_added: null, image_url: null, category_id: 1, category_name: "Dinner", prep_time_minutes: 10, cook_time_minutes: 20, total_time_minutes: 30, user_id: 1 },
+	{ recipe_id: 3, recipe_name: "Toast", recipe_description: null, date_added: null, image_url: null, category_id: 2, category_name: "Breakfast", prep_time_minutes: 5, cook_time_minutes: 5, total_time_minutes: 10, user_id: 1 },
 ];
+
+const queryState = { q: "", categoryId: "", mealId: "", sort: "popular" as const, filter: "" as const, page: 1, limit: 6 };
 
 describe("FoodContent", () => {
 	it("keeps a stable page slice while the server contract lacks pagination metadata", () => {
@@ -23,12 +25,12 @@ describe("FoodContent", () => {
 	});
 
 	it("renders loading, error, and empty states without removing the content region", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<FoodContent
 					recipes={[]}
-					queryState={{ page: 1, limit: 6, sort: "popular" }}
+					queryState={queryState}
 					isLoading
 				/>
 		);
@@ -39,7 +41,7 @@ describe("FoodContent", () => {
 			renderer.update(
 				<FoodContent
 					recipes={[]}
-					queryState={{ page: 1, limit: 6, sort: "popular" }}
+					queryState={queryState}
 					error="Request failed"
 				/>
 			);
@@ -50,7 +52,7 @@ describe("FoodContent", () => {
 			renderer.update(
 				<FoodContent
 					recipes={[]}
-					queryState={{ page: 1, limit: 6, sort: "popular" }}
+					queryState={queryState}
 				/>
 			);
 		});
@@ -58,12 +60,12 @@ describe("FoodContent", () => {
 	});
 
 	it("keeps previous recipes visible and exposes an accessible updating state during a query transition", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<FoodContent
 					recipes={recipes}
-					queryState={{ page: 1, limit: 6, sort: "popular" }}
+					queryState={queryState}
 				/>
 			);
 		});
@@ -74,7 +76,7 @@ describe("FoodContent", () => {
 			renderer.update(
 				<FoodContent
 					recipes={recipes}
-					queryState={{ page: 1, limit: 6, sort: "popular", q: "soup" }}
+					queryState={{ ...queryState, q: "soup" }}
 					isFetching
 				/>
 			);
@@ -83,14 +85,14 @@ describe("FoodContent", () => {
 		const content = renderer.root.findByProps({ "aria-busy": true });
 		expect(content.props["aria-busy"]).toBe(true);
 		expect(renderer.root.findByProps({ role: "status" })).toBeTruthy();
-		expect(renderer.root.find((node) => typeof node.props?.className === "string" && node.props.className.includes("sm:grid-cols-2"))).toBeTruthy();
+		expect(renderer.root.findAll((node: ReactTestInstance) => typeof node.props?.className === "string" && node.props.className.includes("sm:grid-cols-2"))[0]).toBeTruthy();
 		expect(renderer.root.findByProps({ "aria-label": "Open Pasta" })).toBeTruthy();
 
 		act(() => {
 			renderer.update(
 				<FoodContent
 					recipes={[recipes[1]]}
-					queryState={{ page: 1, limit: 6, sort: "popular", q: "soup" }}
+					queryState={{ ...queryState, q: "soup" }}
 				/>
 			);
 		});
@@ -108,13 +110,13 @@ describe("FoodContent", () => {
 	});
 
 	it("renders a server-paginated page directly without sorting or slicing it again", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<FoodContent
 					recipes={[recipes[2], recipes[1]]}
 					pagination={{ page: 2, limit: 2, total: 4, totalPages: 2, hasNext: false }}
-					queryState={{ page: 2, limit: 2, sort: "name" }}
+					queryState={{ ...queryState, page: 2, limit: 2, sort: "name" }}
 				/>
 			);
 		});
@@ -128,18 +130,18 @@ describe("FoodContent", () => {
 	});
 
 	it("uses the server-clamped page as the active pagination page", () => {
-		let renderer;
+		let renderer!: ReactTestRenderer;
 		act(() => {
 			renderer = TestRenderer.create(
 				<FoodContent
 					recipes={[recipes[0]]}
 					pagination={{ page: 2, limit: 1, total: 3, totalPages: 3, hasNext: true }}
-					queryState={{ page: 1000000, limit: 1, sort: "popular" }}
+					queryState={{ ...queryState, page: 1000000, limit: 1 }}
 				/>
 			);
 		});
 
-		const activeItems = renderer.root.findAll((node) => node.type === "button" && node.props?.["aria-current"] === "page");
+		const activeItems = renderer.root.findAll((node: ReactTestInstance) => node.type === "button" && node.props?.["aria-current"] === "page");
 		expect(activeItems).toHaveLength(1);
 		expect(activeItems[0].props.children).toBe(2);
 	});

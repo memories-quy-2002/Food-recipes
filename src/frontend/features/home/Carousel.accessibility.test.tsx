@@ -1,5 +1,4 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Carousel from "./Carousel";
@@ -20,7 +19,7 @@ const items = [
 ];
 
 const renderCarousel = () => {
-	let renderer;
+	let renderer!: ReactTestRenderer;
 	act(() => {
 		renderer = TestRenderer.create(
 			<MemoryRouter>
@@ -31,12 +30,12 @@ const renderCarousel = () => {
 	return renderer;
 };
 
-const getRegion = (renderer) =>
-	renderer.root.find((node) => node.props.role === "region" && node.props["aria-roledescription"] === "carousel");
+const getRegion = (renderer: ReactTestRenderer): ReactTestInstance =>
+	renderer.root.findAll((node: ReactTestInstance) => node.props.role === "region" && node.props["aria-roledescription"] === "carousel")[0];
 
-const getSlides = (renderer) =>
+const getSlides = (renderer: ReactTestRenderer): ReactTestInstance[] =>
 	renderer.root.findAll(
-		(node) => node.props.role === "group" && node.props["aria-roledescription"] === "slide"
+		(node: ReactTestInstance) => node.props.role === "group" && node.props["aria-roledescription"] === "slide"
 	);
 
 afterEach(() => {
@@ -77,13 +76,16 @@ describe("Carousel accessibility", () => {
 		vi.useFakeTimers();
 		const renderer = renderCarousel();
 		const region = getRegion(renderer);
+		const focusCapture = region.props.onFocusCapture;
+		const blurCapture = region.props.onBlurCapture;
+		if (typeof focusCapture !== "function" || typeof blurCapture !== "function") throw new Error("Carousel focus handlers were not rendered");
 
-		act(() => region.props.onFocusCapture());
+		act(() => focusCapture());
 		act(() => vi.advanceTimersByTime(10000));
 		expect(getSlides(renderer)[0].props["aria-hidden"]).toBe(false);
 
 		act(() =>
-			region.props.onBlurCapture({
+			blurCapture({
 				currentTarget: { contains: () => false },
 				relatedTarget: null,
 			})

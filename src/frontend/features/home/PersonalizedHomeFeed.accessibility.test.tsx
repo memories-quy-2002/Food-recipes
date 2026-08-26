@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import React from "react";
+import type { ReactNode } from "react";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -40,7 +40,7 @@ vi.mock("./api/useHomeFeedQuery", () => ({
 }));
 
 vi.mock("@/shared/ui/RecipeCard", () => ({
-	default: ({ recipe }) => <article>{recipe.recipe_name}</article>,
+	default: ({ recipe }: { recipe: { recipe_name: ReactNode } }) => <article>{recipe.recipe_name}</article>,
 }));
 
 import PersonalizedHomeFeed from "./PersonalizedHomeFeed";
