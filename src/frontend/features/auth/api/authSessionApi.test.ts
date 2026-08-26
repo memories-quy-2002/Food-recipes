@@ -1,3 +1,4 @@
+import { AxiosHeaders, type AxiosResponse } from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import axios from "@/shared/api/axios";
 import {
@@ -11,33 +12,56 @@ vi.mock("@/shared/api/axios", () => ({
 	default: { post: vi.fn() },
 }));
 
+const postMock = vi.mocked(axios.post);
+
+const createResponse = <T,>(data: T): AxiosResponse<T> => ({
+	data,
+	status: 200,
+	statusText: "OK",
+	headers: new AxiosHeaders(),
+	config: { headers: new AxiosHeaders() },
+});
+
 afterEach(() => {
 	clearAccessToken();
+	postMock.mockReset();
 	vi.restoreAllMocks();
 });
 
 describe("authSessionApi", () => {
 	it("refreshes through the HttpOnly-cookie endpoint and keeps the access token in memory", async () => {
 		const user = { user_id: 7, full_name: "Smoke User" };
-		axios.post.mockResolvedValue({ data: { user, token: "fresh-token" } });
+		postMock.mockResolvedValue(
+			createResponse({ user, token: "fresh-token" }),
+		);
 
 		await expect(authSessionApi.refresh()).resolves.toEqual({ user, token: "fresh-token" });
-		expect(axios.post).toHaveBeenCalledWith(apiRoutes.authRefresh, {}, { timeout: AUTH_REFRESH_TIMEOUT_MS });
+		expect(postMock).toHaveBeenCalledWith(
+			apiRoutes.authRefresh,
+			{},
+			{ timeout: AUTH_REFRESH_TIMEOUT_MS },
+		);
 		expect(getAccessToken()).toBe("fresh-token");
 	});
 
 	it("rejects malformed refresh responses without accepting a missing token", async () => {
-		axios.post.mockResolvedValue({ data: { user: { user_id: 7 } } });
+		postMock.mockResolvedValue(
+			createResponse({ user: { user_id: 7 } }),
+		);
 
-		await expect(authSessionApi.refresh()).rejects.toMatchObject({ code: "AUTH_REFRESH_INVALID" });
+		await expect(authSessionApi.refresh()).rejects.toMatchObject({
+			code: "AUTH_REFRESH_INVALID",
+		});
 		expect(getAccessToken()).toBeNull();
 	});
 
 	it("logs out through the server endpoint", async () => {
-		axios.post.mockResolvedValue({ data: { message: "Logged out" } });
+		postMock.mockResolvedValue(
+			createResponse({ message: "Logged out" }),
+		);
 
 		await authSessionApi.logout();
 
-		expect(axios.post).toHaveBeenCalledWith(apiRoutes.authLogout, {});
+		expect(postMock).toHaveBeenCalledWith(apiRoutes.authLogout, {});
 	});
 });

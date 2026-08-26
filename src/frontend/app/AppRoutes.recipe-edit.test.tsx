@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import React from "react";
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { type ReactElement } from "react";
+import { cleanup, render, screen, type RenderResult } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import AppRoutes from "./AppRoutes";
@@ -16,18 +16,21 @@ vi.mock("@/features/recipes/EditRecipe", () => ({
 	default: () => <div data-testid="edit-recipe-page">Edit recipe page</div>,
 }));
 
-const LocationProbe = () => {
+const LocationProbe = (): ReactElement => {
 	const location = useLocation();
-	return <output data-testid="location">{location.pathname}{location.search}</output>;
+	return (
+		<output data-testid="location">
+			{location.pathname}
+			{location.search}
+		</output>
+	);
 };
 
-const renderEditRoute = (isAuthenticated) => {
-	mocks.useSelector.mockImplementation((selector) => selector({
-		 auth: {
-			hydrated: true,
-			local: { isAuthenticated },
-			session: { isAuthenticated: false },
-		},
+const renderEditRoute = (isAuthenticated: boolean): RenderResult => {
+	mocks.useSelector.mockImplementation(() => ({
+		hydrated: true,
+		local: { isAuthenticated, user: null },
+		session: { isAuthenticated: false, user: null },
 	}));
 
 	return render(
@@ -51,13 +54,17 @@ describe("AppRoutes owner edit boundary", () => {
 
 		expect(await screen.findByTestId("account-page")).toBeInTheDocument();
 		expect(screen.queryByTestId("edit-recipe-page")).not.toBeInTheDocument();
-		expect(screen.getByTestId("location")).toHaveTextContent("/account?signup=false");
+		expect(screen.getByTestId("location")).toHaveTextContent(
+		"/account?signup=false",
+		);
 	});
 
 	it("renders the edit route for an authenticated user", async () => {
 		renderEditRoute(true);
 
-	expect(await screen.findByTestId("edit-recipe-page")).toBeInTheDocument();
-		expect(screen.getByTestId("location")).toHaveTextContent("/food/edit?id=42");
+		expect(await screen.findByTestId("edit-recipe-page")).toBeInTheDocument();
+		expect(screen.getByTestId("location")).toHaveTextContent(
+		"/food/edit?id=42",
+		);
 	});
 });

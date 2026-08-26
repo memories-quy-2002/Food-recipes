@@ -1,5 +1,8 @@
-import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, {
+	act,
+	type ReactTestInstance,
+	type ReactTestRenderer,
+} from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import Account from "./Account";
@@ -14,16 +17,23 @@ vi.mock("@/shared/seo/PageHelmet", () => ({
 
 describe("Account surface", () => {
 	it("does not use Tailwind's blur utility class for the auth form", () => {
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 		act(() => {
 			renderer = TestRenderer.create(
 				<MemoryRouter initialEntries={["/account?login=true"]}>
 					<Account />
-				</MemoryRouter>
+				</MemoryRouter>,
 			);
 		});
 
+		if (!renderer) throw new Error("Expected the account surface renderer");
 		expect(renderer.root.findByType("main")).toBeTruthy();
-		expect(renderer.root.findAll((node) => typeof node.props?.className === "string" && node.props.className.split(" ").includes("blur"))).toHaveLength(0);
+		expect(
+			renderer.root.findAll(
+				(node: ReactTestInstance) =>
+					typeof node.props?.className === "string" &&
+					node.props.className.split(" ").includes("blur"),
+			),
+		).toHaveLength(0);
 	});
 });

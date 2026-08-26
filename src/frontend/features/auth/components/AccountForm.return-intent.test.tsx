@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
 import React from "react";
-import TestRenderer, { act } from "react-test-renderer";
+import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import AccountForm from "./AccountForm";
@@ -12,8 +13,15 @@ import {
 vi.mock("./LoginForm", () => ({ default: () => <div>Login form</div> }));
 vi.mock("./SignupForm", () => ({ default: () => <div>Signup form</div> }));
 
-const createStorage = () => {
-	const values = new Map();
+type MemoryStorage = {
+	getItem: (key: string) => string | null;
+	setItem: (key: string, value: string) => void;
+	removeItem: (key: string) => void;
+	clear: () => void;
+};
+
+const createStorage = (): MemoryStorage => {
+	const values = new Map<string, string>();
 	return {
 		getItem: (key) => values.get(key) ?? null,
 		setItem: (key, value) => values.set(key, value),
@@ -22,16 +30,26 @@ const createStorage = () => {
 	};
 };
 
+const originalWindow = globalThis.window;
+
 describe("AccountForm auth-intent cleanup", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
-		globalThis.window = {
-			location: { origin: "http://localhost" },
-			sessionStorage: createStorage(),
-		};
+		Object.defineProperty(globalThis, "window", {
+			configurable: true,
+			value: {
+				location: { origin: "http://localhost" },
+				sessionStorage: createStorage(),
+			},
+		});
 	});
+
 	afterEach(() => {
 		vi.useRealTimers();
+		Object.defineProperty(globalThis, "window", {
+			configurable: true,
+			value: originalWindow,
+		});
 	});
 
 	it("preserves an unchanged intent through StrictMode replay but clears it after a real unmount", () => {
@@ -41,7 +59,7 @@ describe("AccountForm auth-intent cleanup", () => {
 			recipeId: 7,
 		});
 		const enteredSnapshot = getAuthIntentSnapshot();
-		let renderer;
+		let renderer: ReactTestRenderer | undefined;
 
 		act(() => {
 			renderer = TestRenderer.create(
@@ -49,7 +67,7 @@ describe("AccountForm auth-intent cleanup", () => {
 					<MemoryRouter initialEntries={["/account"]}>
 						<AccountForm />
 					</MemoryRouter>
-				</React.StrictMode>
+				</React.StrictMode>,
 			);
 		});
 
@@ -58,7 +76,8 @@ describe("AccountForm auth-intent cleanup", () => {
 		});
 		expect(window.sessionStorage.getItem(STORAGE_KEY)).toBe(enteredSnapshot);
 
-		act(() => renderer.unmount());
+		if (!renderer) throw new Error("Expected the account form renderer");
+		act(() => renderer?.unmount());
 		act(() => {
 			vi.runOnlyPendingTimers();
 		});

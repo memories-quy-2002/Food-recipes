@@ -1,8 +1,8 @@
-import React from "react";
 import AccountForm from "@/features/auth/components/AccountForm";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import type { ReactElement } from "react";
 
-const Account = () => {
+const Account = (): ReactElement => {
 	return (
 		<main className="fr-page min-h-[calc(100vh-5rem)] w-full bg-background px-3 py-5 text-foreground sm:px-6 sm:py-8 lg:px-10 lg:py-12">
 			<PageHelmet

@@ -10,8 +10,14 @@ const originalSessionStorage = globalThis.sessionStorage;
 
 afterEach(() => {
 	clearAccessToken();
-	globalThis.localStorage = originalLocalStorage;
-	globalThis.sessionStorage = originalSessionStorage;
+	Object.defineProperty(globalThis, "localStorage", {
+		configurable: true,
+		value: originalLocalStorage,
+	});
+	Object.defineProperty(globalThis, "sessionStorage", {
+		configurable: true,
+		value: originalSessionStorage,
+	});
 	vi.restoreAllMocks();
 });
 

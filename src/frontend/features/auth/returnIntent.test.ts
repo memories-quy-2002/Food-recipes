@@ -1,27 +1,52 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
 	beginAuthIntent,
 	clearAuthIntent,
 	clearAuthIntentIfUnchanged,
 	consumeAuthIntent,
+	getAuthReturnPath,
 	isSafeInternalPath,
 	isMatchingSaveRecipeIntent,
+	type AuthIntent,
 } from "./returnIntent";
 
-describe("authentication return intent", () => {
-	beforeEach(() => {
-		const values = new Map();
-		globalThis.window = {
-			location: { origin: "http://localhost" },
-			sessionStorage: {
-				getItem: (key) => values.get(key) ?? null,
-				setItem: (key, value) => values.set(key, value),
-				removeItem: (key) => values.delete(key),
-				clear: () => values.clear(),
-			},
-		};
-	});
+type MemoryStorage = {
+	getItem: (key: string) => string | null;
+	setItem: (key: string, value: string) => void;
+	removeItem: (key: string) => void;
+	clear: () => void;
+};
 
+const createStorage = (): MemoryStorage => {
+	const values = new Map<string, string>();
+	return {
+		getItem: (key) => values.get(key) ?? null,
+		setItem: (key, value) => values.set(key, value),
+		removeItem: (key) => values.delete(key),
+		clear: () => values.clear(),
+	};
+};
+
+const originalWindow = globalThis.window;
+
+beforeEach(() => {
+	Object.defineProperty(globalThis, "window", {
+		configurable: true,
+		value: {
+			location: { origin: "http://localhost" },
+			sessionStorage: createStorage(),
+		},
+	});
+});
+
+afterEach(() => {
+	Object.defineProperty(globalThis, "window", {
+		configurable: true,
+		value: originalWindow,
+	});
+});
+
+describe("authentication return intent", () => {
 	it("accepts same-origin internal paths and rejects external targets", () => {
 		expect(isSafeInternalPath("/recipe?id=7")).toBe(true);
 		expect(isSafeInternalPath("/?q=pasta&categories=2")).toBe(true);
@@ -48,7 +73,10 @@ describe("authentication return intent", () => {
 	it("expires intents after the bounded auth-flow lifetime", () => {
 		window.sessionStorage.setItem(
 			"food-recipes:auth-intent",
-			JSON.stringify({ returnTo: "/recipe?id=7", createdAt: Date.now() - 11 * 60 * 1000 })
+			JSON.stringify({
+				returnTo: "/recipe?id=7",
+				createdAt: Date.now() - 11 * 60 * 1000,
+			}),
 		);
 
 		expect(consumeAuthIntent()).toBeNull();
@@ -74,7 +102,7 @@ describe("authentication return intent", () => {
 	});
 
 	it("matches a save intent to both the current path and recipe", () => {
-		const intent = {
+		const intent: AuthIntent = {
 			returnTo: "/recipe?id=7",
 			action: "saveRecipe",
 			recipeId: "7",
@@ -83,6 +111,15 @@ describe("authentication return intent", () => {
 		expect(isMatchingSaveRecipeIntent(intent, "/recipe?id=7", 7)).toBe(true);
 		expect(isMatchingSaveRecipeIntent(intent, "/recipe?id=8", 7)).toBe(false);
 		expect(isMatchingSaveRecipeIntent(intent, "/", 7)).toBe(false);
+	});
+
+	it("returns only safe internal paths from router state", () => {
+		expect(getAuthReturnPath({ state: { from: "/recipe?id=7" } })).toBe(
+			"/recipe?id=7",
+		);
+		expect(getAuthReturnPath({ state: { from: "https://attacker.example" } })).toBe(
+			"/",
+		);
 	});
 
 	it("preserves a save-to-collection intent through authentication", () => {

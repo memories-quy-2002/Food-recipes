@@ -1,12 +1,22 @@
-import React, { useState } from "react";
-import { BsArrowRight, BsEnvelope, BsEye, BsEyeSlash, BsLock } from "react-icons/bs";
+import { useState, type FormEvent, type ReactElement } from "react";
+import {
+	BsArrowRight,
+	BsEnvelope,
+	BsEye,
+	BsEyeSlash,
+	BsLock,
+} from "react-icons/bs";
 import useLoginForm from "@/features/auth/hooks/useLoginForm";
 import Button from "@/shared/ui/Button";
 
 const fieldClass =
 	"h-12 w-full border-0 bg-transparent px-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground/70 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
 
-const LoginForm = ({ onSignup }) => {
+export type LoginFormProps = {
+	onSignup: () => void;
+};
+
+const LoginForm = ({ onSignup }: LoginFormProps): ReactElement => {
 	const [showPassword, setShowPassword] = useState(false);
 	const [
 		formData,
@@ -19,28 +29,40 @@ const LoginForm = ({ onSignup }) => {
 		handleSubmit,
 	] = useLoginForm();
 
+	const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
+		handleSubmit(event);
+	};
+
 	return (
 		<form
 			action="/post/login"
 			method="POST"
 			noValidate
 			data-validated={validated ? "true" : "false"}
-			onSubmit={handleSubmit}
+			onSubmit={onSubmit}
 			className="grid gap-5"
 		>
 			<div className="mb-1">
-				<p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Log in</p>
+				<p className="text-xs font-black uppercase tracking-[0.14em] text-primary">
+					Log in
+				</p>
 				<h2 className="mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
 					Continue cooking
 				</h2>
 			</div>
 
 			<div>
-				<label htmlFor="login-email" className="mb-2 block text-sm font-black text-foreground">
+				<label
+					htmlFor="login-email"
+					className="mb-2 block text-sm font-black text-foreground"
+				>
 					Email address <span className="text-primary">*</span>
 				</label>
 				<div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-card px-3 shadow-sm transition focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/10">
-					<BsEnvelope className="shrink-0 text-muted-foreground" aria-hidden="true" />
+					<BsEnvelope
+						className="shrink-0 text-muted-foreground"
+						aria-hidden="true"
+					/>
 					<input
 						id="login-email"
 						className={fieldClass}
@@ -57,11 +79,17 @@ const LoginForm = ({ onSignup }) => {
 			</div>
 
 			<div>
-				<label htmlFor="login-password" className="mb-2 block text-sm font-black text-foreground">
+				<label
+					htmlFor="login-password"
+					className="mb-2 block text-sm font-black text-foreground"
+				>
 					Password <span className="text-primary">*</span>
 				</label>
 				<div className="flex min-h-12 items-center gap-3 rounded-xl border border-border bg-card px-3 shadow-sm transition focus-within:border-primary/60 focus-within:ring-4 focus-within:ring-primary/10">
-					<BsLock className="shrink-0 text-muted-foreground" aria-hidden="true" />
+					<BsLock
+						className="shrink-0 text-muted-foreground"
+						aria-hidden="true"
+					/>
 					<input
 						id="login-password"
 						className={fieldClass}
@@ -82,7 +110,11 @@ const LoginForm = ({ onSignup }) => {
 						onClick={() => setShowPassword((value) => !value)}
 						aria-label={showPassword ? "Hide password" : "Show password"}
 					>
-						{showPassword ? <BsEyeSlash aria-hidden="true" /> : <BsEye aria-hidden="true" />}
+						{showPassword ? (
+							<BsEyeSlash aria-hidden="true" />
+						) : (
+							<BsEye aria-hidden="true" />
+						)}
 					</Button>
 				</div>
 			</div>
@@ -101,21 +133,34 @@ const LoginForm = ({ onSignup }) => {
 			{errors.length > 0 && (
 				<div className="grid gap-2" role="alert">
 					{errors.map((error) => (
-						<p key={error} className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive">
+						<p
+							key={error}
+							className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive"
+						>
 							{error}
 						</p>
 					))}
 				</div>
 			)}
 
-			<Button type="submit" size="lg" className="h-13 w-full rounded-xl text-base font-black" disabled={isSubmitting}>
+			<Button
+				type="submit"
+				size="lg"
+				className="h-13 w-full rounded-xl text-base font-black"
+				disabled={isSubmitting}
+			>
 				<span>{isSubmitting ? "Signing in…" : "Log in"}</span>
 				<BsArrowRight aria-hidden="true" />
 			</Button>
 
 			<p className="text-center text-sm text-muted-foreground">
 				Don't have an account?{" "}
-				<Button type="button" variant="link" className="h-auto px-1 py-0 font-black text-primary" onClick={onSignup}>
+				<Button
+					type="button"
+					variant="link"
+					className="h-auto px-1 py-0 font-black text-primary"
+					onClick={onSignup}
+				>
 					Register
 				</Button>
 			</p>

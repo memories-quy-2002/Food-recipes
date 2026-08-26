@@ -1,20 +1,35 @@
-import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
+import type { ReactElement } from "react";
 import { useSelector } from "react-redux";
 import {
 	beginAuthIntent,
 	getAuthReturnPath,
 } from "@/features/auth/returnIntent";
+import type { RootState } from "@/app/store";
 
-const ProtectedRoute = ({ children }) => {
+export type ProtectedRouteProps = {
+	children: ReactElement;
+};
+
+const ProtectedRoute = ({
+	children,
+}: ProtectedRouteProps): ReactElement => {
 	const location = useLocation();
-	const { hydrated, local, session } = useSelector((state) => state.auth);
+	const { hydrated, local, session } = useSelector(
+		(state: RootState) => state.auth,
+	);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 
 	if (!hydrated) {
 		return (
-			<div className="flex min-h-[40vh] items-center justify-center px-6 py-16" role="status" aria-live="polite">
-				<p className="text-sm font-semibold text-muted-foreground">Checking your session…</p>
+			<div
+				className="flex min-h-[40vh] items-center justify-center px-6 py-16"
+				role="status"
+				aria-live="polite"
+			>
+				<p className="text-sm font-semibold text-muted-foreground">
+					Checking your session…
+				</p>
 			</div>
 		);
 	}

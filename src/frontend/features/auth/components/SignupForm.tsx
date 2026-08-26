@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState, type ReactElement, type ReactNode } from "react";
 import {
 	BsArrowRight,
 	BsCheckCircle,
@@ -8,6 +8,7 @@ import {
 	BsLock,
 	BsPerson,
 } from "react-icons/bs";
+import type { IconType } from "react-icons";
 import useSignupForm from "@/features/auth/hooks/useSignupForm";
 import Button from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
@@ -15,7 +16,14 @@ import { cn } from "@/shared/lib/utils";
 const fieldClass =
 	"h-12 w-full border-0 bg-transparent px-0 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground/70 focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60";
 
-const Field = ({ id, label, icon: Icon, children }) => (
+type FieldProps = {
+	id: string;
+	label: string;
+	icon: IconType;
+	children: ReactNode;
+};
+
+const Field = ({ id, label, icon: Icon, children }: FieldProps): ReactElement => (
 	<div>
 		<label htmlFor={id} className="mb-2 block text-sm font-black text-foreground">
 			{label} <span className="text-primary">*</span>
@@ -27,7 +35,11 @@ const Field = ({ id, label, icon: Icon, children }) => (
 	</div>
 );
 
-const SignupForm = ({ onLogin }) => {
+export type SignupFormProps = {
+	onLogin: () => void;
+};
+
+const SignupForm = ({ onLogin }: SignupFormProps): ReactElement => {
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 	const [
@@ -60,7 +72,10 @@ const SignupForm = ({ onLogin }) => {
 		{ label: "8 characters", passed: formData.password.length >= 8 },
 		{ label: "Uppercase letter", passed: /[A-Z]/.test(formData.password) },
 		{ label: "Number", passed: /[0-9]/.test(formData.password) },
-		{ label: "Special character", passed: /[^A-Za-z0-9]/.test(formData.password) },
+		{
+			label: "Special character",
+			passed: /[^A-Za-z0-9]/.test(formData.password),
+		},
 	];
 
 	return (
@@ -71,7 +86,9 @@ const SignupForm = ({ onLogin }) => {
 			className="grid gap-5"
 		>
 			<div className="mb-1">
-				<p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Sign up</p>
+				<p className="text-xs font-black uppercase tracking-[0.14em] text-primary">
+					Sign up
+				</p>
 				<h2 className="mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
 					Create your kitchen profile
 				</h2>
@@ -79,22 +96,77 @@ const SignupForm = ({ onLogin }) => {
 
 			<div className="grid gap-4 sm:grid-cols-2">
 				<Field id="signup-first" label="First name" icon={BsPerson}>
-					<input id="signup-first" className={fieldClass} type="text" name="first" required aria-required="true" placeholder="First name" autoComplete="given-name" value={formData.name.first} onChange={handleName} />
+					<input
+						id="signup-first"
+						className={fieldClass}
+						type="text"
+						name="first"
+						required
+						aria-required="true"
+						placeholder="First name"
+						autoComplete="given-name"
+						value={formData.name.first}
+						onChange={handleName}
+					/>
 				</Field>
 				<Field id="signup-last" label="Last name" icon={BsPerson}>
-					<input id="signup-last" className={fieldClass} type="text" name="last" required aria-required="true" placeholder="Last name" autoComplete="family-name" value={formData.name.last} onChange={handleName} />
+					<input
+						id="signup-last"
+						className={fieldClass}
+						type="text"
+						name="last"
+						required
+						aria-required="true"
+						placeholder="Last name"
+						autoComplete="family-name"
+						value={formData.name.last}
+						onChange={handleName}
+					/>
 				</Field>
 			</div>
 
 			<Field id="signup-email" label="Email address" icon={BsEnvelope}>
-				<input id="signup-email" className={fieldClass} type="email" name="email" required aria-required="true" placeholder="you@example.com" autoComplete="email" value={formData.email} onChange={handleChange} />
+				<input
+					id="signup-email"
+					className={fieldClass}
+					type="email"
+					name="email"
+					required
+					aria-required="true"
+					placeholder="you@example.com"
+					autoComplete="email"
+					value={formData.email}
+					onChange={handleChange}
+				/>
 			</Field>
 
 			<div>
 				<Field id="signup-password" label="Password" icon={BsLock}>
-					<input id="signup-password" className={fieldClass} type={showPassword ? "text" : "password"} name="password" required aria-required="true" placeholder="Password" autoComplete="new-password" value={formData.password} onChange={handleChange} />
-					<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Hide password" : "Show password"}>
-						{showPassword ? <BsEyeSlash aria-hidden="true" /> : <BsEye aria-hidden="true" />}
+					<input
+						id="signup-password"
+						className={fieldClass}
+						type={showPassword ? "text" : "password"}
+						name="password"
+						required
+						aria-required="true"
+						placeholder="Password"
+						autoComplete="new-password"
+						value={formData.password}
+						onChange={handleChange}
+					/>
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+						onClick={() => setShowPassword((value) => !value)}
+						aria-label={showPassword ? "Hide password" : "Show password"}
+					>
+						{showPassword ? (
+							<BsEyeSlash aria-hidden="true" />
+						) : (
+							<BsEye aria-hidden="true" />
+						)}
 					</Button>
 				</Field>
 				<div className="mt-3 flex items-center gap-3 text-xs font-bold text-muted-foreground">
@@ -105,30 +177,74 @@ const SignupForm = ({ onLogin }) => {
 								passwordStrength.score <= 1 && "bg-destructive",
 								passwordStrength.score === 2 && "bg-primary",
 								passwordStrength.score === 3 && "bg-amber-600",
-								passwordStrength.score === 4 && "bg-emerald-600"
+								passwordStrength.score === 4 && "bg-emerald-600",
 							)}
 							style={{ width: passwordStrength.width }}
 						/>
 					</div>
 					<span>{passwordStrength.label}</span>
 				</div>
-				<ul className="mt-3 flex flex-wrap gap-2" aria-label="Password requirements">
+				<ul
+					className="mt-3 flex flex-wrap gap-2"
+					aria-label="Password requirements"
+				>
 					{passwordChecks.map((check) => (
-						<li key={check.label} className={cn("rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground", check.passed && "bg-emerald-100 text-emerald-800")}>
+						<li
+							key={check.label}
+							className={cn(
+								"rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-muted-foreground",
+								check.passed && "bg-emerald-100 text-emerald-800",
+							)}
+						>
 							{check.label}
 						</li>
 					))}
 				</ul>
 			</div>
 
-			<Field id="signup-confirm-password" label="Confirm password" icon={BsLock}>
-				<input id="signup-confirm-password" className={fieldClass} type={showConfirmPassword ? "text" : "password"} name="confirmPassword" required aria-required="true" placeholder="Confirm password" autoComplete="new-password" value={formData.confirmPassword} onChange={handleChange} />
-				<Button type="button" variant="ghost" size="icon" className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground" onClick={() => setShowConfirmPassword((value) => !value)} aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}>
-					{showConfirmPassword ? <BsEyeSlash aria-hidden="true" /> : <BsEye aria-hidden="true" />}
+			<Field
+				id="signup-confirm-password"
+				label="Confirm password"
+				icon={BsLock}
+			>
+				<input
+					id="signup-confirm-password"
+					className={fieldClass}
+					type={showConfirmPassword ? "text" : "password"}
+					name="confirmPassword"
+					required
+					aria-required="true"
+					placeholder="Confirm password"
+					autoComplete="new-password"
+					value={formData.confirmPassword}
+					onChange={handleChange}
+				/>
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+					onClick={() => setShowConfirmPassword((value) => !value)}
+					aria-label={
+						showConfirmPassword
+							? "Hide confirm password"
+							: "Show confirm password"
+					}
+				>
+					{showConfirmPassword ? (
+						<BsEyeSlash aria-hidden="true" />
+					) : (
+						<BsEye aria-hidden="true" />
+					)}
 				</Button>
 			</Field>
 
-			<Button type="submit" size="lg" className="h-13 w-full rounded-xl text-base font-black" disabled={isSubmitting}>
+			<Button
+				type="submit"
+				size="lg"
+				className="h-13 w-full rounded-xl text-base font-black"
+				disabled={isSubmitting}
+			>
 				<span>{isSubmitting ? "Creating account…" : "Sign up"}</span>
 				<BsArrowRight aria-hidden="true" />
 			</Button>
@@ -143,7 +259,10 @@ const SignupForm = ({ onLogin }) => {
 			{errors.length > 0 && (
 				<div className="grid gap-2" role="alert">
 					{errors.map((error) => (
-						<p key={error} className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-center text-sm font-semibold text-destructive">
+						<p
+							key={error}
+							className="rounded-xl border border-destructive/25 bg-destructive/10 px-4 py-3 text-center text-sm font-semibold text-destructive"
+						>
 							{error}
 						</p>
 					))}
@@ -152,7 +271,12 @@ const SignupForm = ({ onLogin }) => {
 
 			<p className="text-center text-sm text-muted-foreground">
 				Already have an account?{" "}
-				<Button type="button" variant="link" className="h-auto px-1 py-0 font-black text-primary" onClick={onLogin}>
+				<Button
+					type="button"
+					variant="link"
+					className="h-auto px-1 py-0 font-black text-primary"
+					onClick={onLogin}
+				>
 					Log in
 				</Button>
 			</p>

@@ -1,23 +1,36 @@
-import React, { useEffect, useRef, useState } from "react";
+import {
+	useEffect,
+	useRef,
+	useState,
+	type ReactElement,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
 import {
 	clearAuthIntentIfUnchanged,
 	getAuthIntentSnapshot,
+	isSafeInternalPath,
 } from "@/features/auth/returnIntent";
 import Button from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
 
-const AccountForm = () => {
+const getRedirectPath = (state: unknown): string | null => {
+	if (typeof state !== "object" || state === null || !("from" in state)) {
+		return null;
+	}
+	return isSafeInternalPath(state.from) ? state.from : null;
+};
+
+const AccountForm = (): ReactElement => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const searchParams = new URLSearchParams(location.search);
-	const redirectPath = location.state?.from;
-	const intentSnapshot = useRef(getAuthIntentSnapshot());
-	const cleanupTimer = useRef(null);
+	const redirectPath = getRedirectPath(location.state);
+	const intentSnapshot = useRef<string | null>(getAuthIntentSnapshot());
+	const cleanupTimer = useRef<number | null>(null);
 	const [isSignup, setIsSignup] = useState(
-		searchParams.get("signup") === "true"
+		searchParams.get("signup") === "true",
 	);
 
 	useEffect(() => {
@@ -26,19 +39,19 @@ const AccountForm = () => {
 
 	useEffect(() => {
 		if (cleanupTimer.current !== null) {
-			clearTimeout(cleanupTimer.current);
+			window.clearTimeout(cleanupTimer.current);
 			cleanupTimer.current = null;
 		}
 
 		return () => {
-			cleanupTimer.current = setTimeout(() => {
+			cleanupTimer.current = window.setTimeout(() => {
 				cleanupTimer.current = null;
 				clearAuthIntentIfUnchanged(intentSnapshot.current);
 			}, 0);
 		};
 	}, []);
 
-	const onSignup = () => {
+	const onSignup = (): void => {
 		setIsSignup(true);
 		navigate("/account?signup=true", {
 			replace: true,
@@ -46,7 +59,7 @@ const AccountForm = () => {
 		});
 	};
 
-	const onLogin = () => {
+	const onLogin = (): void => {
 		setIsSignup(false);
 		navigate("/account?signup=false", {
 			replace: true,
@@ -75,7 +88,10 @@ const AccountForm = () => {
 						"Manage your cooking profile",
 					].map((item) => (
 						<li key={item} className="flex items-center gap-3">
-							<span className="size-2 rounded-full bg-secondary" aria-hidden="true" />
+							<span
+								className="size-2 rounded-full bg-secondary"
+								aria-hidden="true"
+							/>
 							{item}
 						</li>
 					))}
@@ -93,7 +109,10 @@ const AccountForm = () => {
 				</div>
 
 				{redirectPath && (
-					<div className="mb-5 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm text-foreground" role="status">
+					<div
+						className="mb-5 rounded-xl border border-accent/50 bg-accent/20 px-4 py-3 text-sm text-foreground"
+						role="status"
+					>
 						<strong className="block font-black">Sign in required</strong>
 						<p className="mt-1 leading-6">
 							Log in or create an account to continue to that page.
@@ -113,7 +132,8 @@ const AccountForm = () => {
 						variant="ghost"
 						className={cn(
 							"h-11 rounded-lg font-black",
-							!isSignup && "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
+							!isSignup &&
+								"bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
 						)}
 						onClick={onLogin}
 					>
@@ -126,7 +146,8 @@ const AccountForm = () => {
 						variant="ghost"
 						className={cn(
 							"h-11 rounded-lg font-black",
-							isSignup && "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground"
+							isSignup &&
+								"bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
 						)}
 						onClick={onSignup}
 					>

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import React, { useContext } from "react";
-import { cleanup, render, screen } from "@testing-library/react";
+import { useContext, type ReactElement } from "react";
+import { cleanup, render, screen, type RenderResult } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,32 +20,45 @@ vi.mock("@/features/auth/api/authSessionApi", () => ({
 	},
 }));
 
-const AuthSnapshot = () => {
+const refreshMock = vi.mocked(authSessionApi.refresh);
+const logoutMock = vi.mocked(authSessionApi.logout);
+
+const AuthSnapshot = (): ReactElement => {
 	const { auth } = useContext(AuthContext);
-	return <>
-		<output data-testid="auth-token">{auth.current.token}</output>
-		<output data-testid="auth-hydrated">{String(auth.current.hydrated)}</output>
-	</>;
+	return (
+		<>
+			<output data-testid="auth-token">{auth.current.token}</output>
+			<output data-testid="auth-hydrated">
+				{String(auth.current.hydrated)}
+			</output>
+		</>
+	);
 };
 
-const renderWithAuthStore = ({ authenticated = false } = {}) => {
+const renderWithAuthStore = (
+	{ authenticated = false }: { authenticated?: boolean } = {},
+): RenderResult => {
 	const store = configureStore({ reducer: { auth: authSlice.reducer } });
 	if (authenticated) {
-		store.dispatch(authSlice.actions.login({ user: { user_id: 7, full_name: "Local User" } }));
+		store.dispatch(
+			authSlice.actions.login({
+				user: { user_id: 7, full_name: "Local User" },
+			}),
+		);
 	}
 	return render(
 		<Provider store={store}>
 			<AuthProvider>
 				<AuthSnapshot />
 			</AuthProvider>
-		</Provider>
+		</Provider>,
 	);
 };
 
 afterEach(() => {
 	cleanup();
-	authSessionApi.refresh.mockReset();
-	authSessionApi.logout.mockReset();
+	refreshMock.mockReset();
+	logoutMock.mockReset();
 	clearAccessToken();
 	vi.clearAllMocks();
 	vi.restoreAllMocks();
@@ -54,7 +67,7 @@ afterEach(() => {
 describe("AuthProvider memory-token boundary", () => {
 	it("exposes the memory access token to current consumers", async () => {
 		setAccessToken("memory-token");
-		authSessionApi.refresh.mockResolvedValue({
+		refreshMock.mockResolvedValue({
 			user: { user_id: 7, full_name: "Local User" },
 			token: "memory-token",
 		});
@@ -62,14 +75,18 @@ describe("AuthProvider memory-token boundary", () => {
 		renderWithAuthStore({ authenticated: true });
 
 		expect(screen.getByTestId("auth-token")).toHaveTextContent("memory-token");
-		await vi.waitFor(() => expect(screen.getByTestId("auth-hydrated")).toHaveTextContent("true"));
+		await vi.waitFor(() =>
+			expect(screen.getByTestId("auth-hydrated")).toHaveTextContent("true"),
+		);
 	});
 
 	it("marks hydration complete after a refresh failure", async () => {
-		authSessionApi.refresh.mockRejectedValue(new Error("offline"));
+		refreshMock.mockRejectedValue(new Error("offline"));
 
 		renderWithAuthStore();
 
-		await vi.waitFor(() => expect(screen.getByTestId("auth-hydrated")).toHaveTextContent("true"));
+		await vi.waitFor(() =>
+			expect(screen.getByTestId("auth-hydrated")).toHaveTextContent("true"),
+		);
 	});
 });

@@ -1,7 +1,19 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { clearAccessToken } from "./authTokenStore";
+import { isAuthUser, type AuthUser } from "../api/authSessionApi";
 
-const parseStoredJson = (storage, key) => {
+export type AuthBucket = {
+	isAuthenticated: boolean;
+	user: AuthUser | null;
+};
+
+export type AuthStoreState = {
+	hydrated: boolean;
+	local: AuthBucket;
+	session: AuthBucket;
+};
+
+const parseStoredJson = (storage: Storage, key: string): unknown => {
 	try {
 		const value = storage.getItem(key);
 		return value ? JSON.parse(value) : null;
@@ -11,10 +23,11 @@ const parseStoredJson = (storage, key) => {
 	}
 };
 
-const getStoredAuth = (storage) => {
-	const user = parseStoredJson(storage, "user");
+const getStoredAuth = (storage: Storage): AuthBucket => {
+	const storedUser = parseStoredJson(storage, "user");
+	const user = isAuthUser(storedUser) ? storedUser : null;
 	const isAuthenticated =
-		storage.getItem("isAuthenticated") === "true" && Boolean(user);
+		storage.getItem("isAuthenticated") === "true" && user !== null;
 
 	return {
 		isAuthenticated,
@@ -22,18 +35,24 @@ const getStoredAuth = (storage) => {
 	};
 };
 
+const initialState: AuthStoreState = {
+	hydrated: false,
+	local: getStoredAuth(localStorage),
+	session: getStoredAuth(sessionStorage),
+};
+
+type AuthUserPayload = {
+	user: AuthUser;
+};
+
 const authSlice = createSlice({
 	name: "auth",
-	initialState: {
-		hydrated: false,
-		local: getStoredAuth(localStorage),
-		session: getStoredAuth(sessionStorage),
-	},
+	initialState,
 	reducers: {
-		setHydrated(state, action) {
-			state.hydrated = Boolean(action.payload);
+		setHydrated(state, action: PayloadAction<boolean>) {
+			state.hydrated = action.payload;
 		},
-		restoreSession(state, action) {
+		restoreSession(state, action: PayloadAction<AuthUserPayload>) {
 			const { user } = action.payload;
 			if (state.local.isAuthenticated) {
 				state.local = { ...state.local, user };
@@ -45,37 +64,37 @@ const authSlice = createSlice({
 				isAuthenticated: true,
 				user,
 			};
-			sessionStorage.setItem("isAuthenticated", true);
+			sessionStorage.setItem("isAuthenticated", "true");
 			sessionStorage.setItem("user", JSON.stringify(user));
 		},
-		updateUser(state, action) {
+		updateUser(state, action: PayloadAction<AuthUserPayload>) {
 			const { user } = action.payload;
 			if (state.local.isAuthenticated) {
-				state.local = { ...state.local, user: user };
+				state.local = { ...state.local, user };
 				localStorage.setItem("user", JSON.stringify(user));
 			} else {
-				state.session = { ...state.session, user: user };
+				state.session = { ...state.session, user };
 				sessionStorage.setItem("user", JSON.stringify(user));
 			}
 		},
-		login(state, action) {
+		login(state, action: PayloadAction<AuthUserPayload>) {
 			const { user } = action.payload;
 			state.local = {
 				...state.local,
 				isAuthenticated: true,
-				user: user,
+				user,
 			};
-			localStorage.setItem("isAuthenticated", true);
+			localStorage.setItem("isAuthenticated", "true");
 			localStorage.setItem("user", JSON.stringify(user));
 		},
-		loginSession(state, action) {
+		loginSession(state, action: PayloadAction<AuthUserPayload>) {
 			const { user } = action.payload;
 			state.session = {
 				...state.session,
 				isAuthenticated: true,
-				user: user,
+				user,
 			};
-			sessionStorage.setItem("isAuthenticated", true);
+			sessionStorage.setItem("isAuthenticated", "true");
 			sessionStorage.setItem("user", JSON.stringify(user));
 		},
 		logout(state) {
@@ -90,10 +109,10 @@ const authSlice = createSlice({
 				isAuthenticated: false,
 				user: null,
 			};
-			localStorage.setItem("isAuthenticated", false);
+			localStorage.setItem("isAuthenticated", "false");
 			localStorage.removeItem("user");
 			localStorage.removeItem("jwt");
-			sessionStorage.setItem("isAuthenticated", false);
+			sessionStorage.setItem("isAuthenticated", "false");
 			sessionStorage.removeItem("user");
 			sessionStorage.removeItem("jwt");
 		},

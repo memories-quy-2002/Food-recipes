@@ -1,9 +1,7 @@
-import React, { Suspense, lazy } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Suspense, lazy, type ReactElement } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import Account from "@/features/auth/Account";
-import About from "@/features/content/About";
-import News from "@/features/content/News";
 import ErrorPage from "@/features/content/ErrorPage";
 import Health from "@/features/diagnostics/Health";
 import Food from "@/features/food/Food";
@@ -20,12 +18,10 @@ import HistoryPage from "@/features/history/HistoryPage";
 const Recipe = lazy(() => import("@/features/recipes/Recipe"));
 const isLocalHealthEnabled = import.meta.env.DEV;
 
-const AppRoutes = () => (
+const AppRoutes = (): ReactElement => (
 	<Routes>
 		<Route path="/" element={<Home />} />
 		<Route path="/food" element={<Food />} />
-		<Route path="/news" element={<News />} />
-		<Route path="/about" element={<About />} />
 		{isLocalHealthEnabled && <Route path="/health" element={<Health />} />}
 		<Route path="/account" element={<Account />} />
 		<Route
@@ -106,14 +102,7 @@ const AppRoutes = () => (
 				</ProtectedRoute>
 			}
 		/>
-		<Route
-			path="/saved"
-			element={
-				<ProtectedRoute>
-					<Wishlist />
-				</ProtectedRoute>
-			}
-		/>
+		<Route path="/saved" element={<Navigate replace to="/wishlist" />} />
 		<Route
 			path="/food/add"
 			element={

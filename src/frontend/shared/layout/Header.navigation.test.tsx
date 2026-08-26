@@ -120,7 +120,12 @@ const renderMobile = (isAuthenticated: boolean, initialEntry = "/") => {
 				auth: {
 					current: {
 						isAuthenticated,
-						user: isAuthenticated ? { full_name: "Recipe Author" } : null,
+						hydrated: true,
+						user: isAuthenticated
+							? { user_id: 7, full_name: "Recipe Author" }
+							: null,
+						userId: isAuthenticated ? 7 : 0,
+						token: null,
 					},
 				},
 			}}
