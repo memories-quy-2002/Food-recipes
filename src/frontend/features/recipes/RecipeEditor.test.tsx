@@ -9,7 +9,7 @@ import type { AuthState } from "@/app/AuthProvider";
 import type { RecipeContextValue } from "@/app/RecipeProvider";
 import type { RecipeStatus } from "@/shared/api/contracts";
 import axios from "@/shared/api/axios";
-import RecipeEditor, { type RecipeEditorInput, type RecipeEditorProps } from "./RecipeEditor";
+import RecipeEditor, { normalizeStructuredIngredients, type RecipeEditorInput, type RecipeEditorProps } from "./RecipeEditor";
 
 vi.mock("@/shared/api/axios", () => ({
 	default: {
@@ -67,6 +67,50 @@ const savedRecipe = {
 	}],
 } satisfies RecipeEditorInput & { status: RecipeStatus };
 
+const expectedEditBasePayload = {
+	name: "Tomato pasta",
+	description: "A quick pasta dinner.",
+	mealId: 2,
+	categoryId: 1,
+	prepTimeMinutes: 15,
+	cookTimeMinutes: 20,
+	imageUrl: null,
+	ingredients: ["Tomatoes"],
+	instructions: ["Simmer and serve."],
+};
+
+const expectedEditIngredientsPayload = {
+	ingredients: [{
+		position: 0,
+		quantity: null,
+		quantityText: null,
+		unit: null,
+		name: "Tomatoes",
+		preparation: null,
+		originalText: null,
+	}],
+};
+
+const expectedEditNutritionPayload = {
+	servings: null,
+	calories: null,
+	protein: null,
+	carbohydrates: null,
+	fat: null,
+	fiber: null,
+	sugar: null,
+	sodium: null,
+};
+
+const expectedEditTagsPayload = { dietaryTags: [], allergenTags: [] };
+
+const expectEditPayloadRequests = (): void => {
+	expect(axios.patch).toHaveBeenCalledWith("/recipes/42", expectedEditBasePayload);
+	expect(axios.put).toHaveBeenNthCalledWith(1, "/recipes/42/ingredients", expectedEditIngredientsPayload);
+	expect(axios.put).toHaveBeenNthCalledWith(2, "/recipes/42/nutrition", expectedEditNutritionPayload);
+	expect(axios.put).toHaveBeenNthCalledWith(3, "/recipes/42/dietary-tags", expectedEditTagsPayload);
+};
+
 const renderEditor = (
 	props: RecipeEditorProps,
 	{ refreshRecipes = createRefreshRecipesMock() }: RenderEditorOptions = {},
@@ -110,6 +154,21 @@ describe("RecipeEditor", () => {
 		renderEditor({ mode: "create" });
 
 		expect(screen.getByRole("heading", { name: /create a new recipe/i })).toBeInTheDocument();
+	});
+
+	it("normalizes a blank legacy quantity to null", () => {
+		expect(normalizeStructuredIngredients([{
+		quantity: "",
+		name: "Tomatoes",
+	}])).toEqual([{
+		position: 0,
+		quantity: null,
+		quantityText: null,
+		unit: null,
+		name: "Tomatoes",
+		preparation: null,
+		originalText: null,
+	}]);
 	});
 
 	it("hydrates edit mode from an owner recipe without using the create draft", async () => {
@@ -216,7 +275,7 @@ describe("RecipeEditor", () => {
 			recipe: expect.objectContaining({ status: "draft" }),
 		})));
 		expect(axios.post).not.toHaveBeenCalled();
-		expect(axios.patch).toHaveBeenCalledWith("/recipes/42", expect.any(Object));
+		expectEditPayloadRequests();
 	});
 
 	it("saves a draft before publishing and navigates with the published response", async () => {
@@ -228,7 +287,7 @@ describe("RecipeEditor", () => {
 		await waitFor(() => expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({
 			recipe: expect.objectContaining({ status: "published" }),
 		})));
-		expect(axios.patch).toHaveBeenCalledWith("/recipes/42", expect.any(Object));
+		expectEditPayloadRequests();
 		expect(axios.post).toHaveBeenCalledWith("/recipes/42/publish");
 		expect(vi.mocked(axios.patch).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(axios.post).mock.invocationCallOrder[0]);
 	});

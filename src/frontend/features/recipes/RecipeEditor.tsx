@@ -38,7 +38,7 @@ const NUTRITION_FIELDS = ["servings", "calories", "protein", "carbohydrates", "f
 type NutritionField = (typeof NUTRITION_FIELDS)[number];
 type DurationUnit = "seconds" | "minutes" | "hours" | "days";
 type RecipeDuration = { number: string | number; unit: DurationUnit };
-type EditorStructuredIngredient = Omit<StructuredIngredient, "name"> & { name: string };
+type EditorStructuredIngredient = Omit<StructuredIngredient, "name" | "quantity"> & { name: string; quantity?: number | string | null };
 type EditorNutrition = Record<NutritionField, string | number | null>;
 type RecipeEditorSchema = ReturnType<typeof createRecipeFormSchema>;
 type EditorFormValues = z.output<RecipeEditorSchema>;
@@ -266,11 +266,17 @@ const getPositiveInteger = (value: unknown): number | undefined => {
 	return Number.isSafeInteger(number) && number > 0 ? number : undefined;
 };
 
-const normalizeStructuredIngredients = (ingredients: EditorStructuredIngredient[] | undefined, legacyIngredients: string[] = []): NormalizedStructuredIngredient[] => {
+const normalizeIngredientQuantity = (value: number | string | null | undefined): number | null => {
+	if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
+	const number = typeof value === "number" ? value : Number(value);
+	return Number.isFinite(number) ? number : null;
+};
+
+export const normalizeStructuredIngredients = (ingredients: EditorStructuredIngredient[] | undefined, legacyIngredients: string[] = []): NormalizedStructuredIngredient[] => {
 	const structured = (Array.isArray(ingredients) ? ingredients : [])
 		.map((ingredient, index) => ({
 			position: index,
-			quantity: ingredient.quantity == null ? null : Number(ingredient.quantity),
+			quantity: normalizeIngredientQuantity(ingredient.quantity),
 			quantityText: String(ingredient.quantityText || "").trim() || null,
 			unit: String(ingredient.unit || "").trim() || null,
 			name: String(ingredient.name || "").trim(),
