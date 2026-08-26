@@ -34,9 +34,17 @@ export type SavedRecipeEntry = {
 	savedAt: string | null;
 };
 
-type SavedRecipeResponseItem = {
-	recipe?: (WishlistRecipe & { savedAt?: string | null; saved_at?: string | null }) | null;
+type SavedRecipeResponseRecipe = Omit<Partial<RecipeSummary>, "recipe_id" | "recipe_name"> & {
+	recipe_id: number | string;
+	recipe_name?: string | null;
+	savedAt?: string | null;
+	saved_at?: string | null;
+};
+
+type SavedRecipeResponseItem = Omit<Partial<RecipeSummary>, "recipe_id" | "recipe_name"> & {
+	recipe?: SavedRecipeResponseRecipe | null;
 	recipe_id?: number | string | null;
+	recipe_name?: string | null;
 	savedAt?: string | null;
 	saved_at?: string | null;
 	dateAdded?: string | null;
@@ -59,16 +67,17 @@ const getApiErrorMessage = (error: unknown, fallback: string): string => {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === "object" && value !== null;
 
-const isWishlistRecipe = (value: unknown): value is WishlistRecipe =>
+const isWishlistRecipe = (value: unknown): value is SavedRecipeResponseRecipe =>
 	isRecord(value) &&
 	(typeof value.recipe_id === "number" || typeof value.recipe_id === "string") &&
-	(typeof value.recipe_name === "string" || value.recipe_name === undefined);
+	(typeof value.recipe_name === "string" || value.recipe_name === null || value.recipe_name === undefined);
 
-const asSavedRecipeResponseItem = (value: unknown): SavedRecipeResponseItem =>
-	isRecord(value) ? value : {};
+const isSavedRecipeResponseItem = (value: unknown): value is SavedRecipeResponseItem =>
+	isRecord(value) &&
+	(isWishlistRecipe(value) || ("recipe" in value && isWishlistRecipe(value.recipe)));
 
-export const normalizeSavedRecipe = (item: unknown): SavedRecipeEntry => {
-	const responseItem = asSavedRecipeResponseItem(item);
+export const normalizeSavedRecipe = (item: SavedRecipeResponseItem): SavedRecipeEntry => {
+	const responseItem = item;
 	const recipe = isWishlistRecipe(responseItem.recipe)
 		? responseItem.recipe
 		: isWishlistRecipe(responseItem)
@@ -110,7 +119,7 @@ export const byRecentlySaved = (a: SavedRecipeEntry, b: SavedRecipeEntry): numbe
 
 export const getSavedRecipeEntries = (
 	recipes: WishlistRecipe[],
-	wishlist: unknown[],
+	wishlist: SavedRecipeResponseItem[],
 ): SavedRecipeEntry[] =>
 	wishlist
 		.map(normalizeSavedRecipe)
@@ -127,7 +136,7 @@ export type SavedRecipeSort = "recent" | "name" | "rating";
 
 export const getVisibleSavedRecipes = (
 	recipes: WishlistRecipe[],
-	wishlist: unknown[],
+	wishlist: SavedRecipeResponseItem[],
 	searchTerm = "",
 	sortBy: SavedRecipeSort = "recent",
 ): WishlistRecipe[] => {
@@ -138,7 +147,7 @@ export const getVisibleSavedRecipes = (
 
 export const getVisibleSavedEntries = (
 	recipes: WishlistRecipe[],
-	wishlist: unknown[],
+	wishlist: SavedRecipeResponseItem[],
 	searchTerm = "",
 	sortBy: SavedRecipeSort = "recent",
 ): SavedRecipeEntry[] => {
@@ -163,7 +172,7 @@ export const getVisibleSavedEntries = (
 };
 
 const Wishlist = (): ReactElement => {
-	const [wishlist, setWishlist] = useState<unknown[]>([]);
+	const [wishlist, setWishlist] = useState<SavedRecipeResponseItem[]>([]);
 	const [showModal, setShowModal] = useState(false);
 	const [isRemoving, setIsRemoving] = useState(false);
 	const [removeError, setRemoveError] = useState<string | null>(null);
@@ -223,8 +232,8 @@ const Wishlist = (): ReactElement => {
 			try {
 				setIsLoadingWishlist(true);
 				setWishlistError(null);
-				const response = await axios.get(apiRoutes.userWishlist);
-				setWishlist(getArrayPayload(response.data, "wishlist"));
+				const response = await axios.get<unknown>(apiRoutes.userWishlist);
+				setWishlist(getArrayPayload(response.data, "wishlist", isSavedRecipeResponseItem));
 			} catch (err: unknown) {
 				console.error(err);
 				setWishlistError(getApiErrorMessage(err, "Unable to load your saved recipes."));
