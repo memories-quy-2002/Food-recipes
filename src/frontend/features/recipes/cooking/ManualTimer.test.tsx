@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import React from "react";
 import TestRenderer, { act, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import ManualTimer from "./ManualTimer";

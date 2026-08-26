@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 
-import React from "react";
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import PageHelmet from "./PageHelmet";

@@ -1,4 +1,3 @@
-import React from "react";
 import TestRenderer, { act, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
 import RecipeReviewList from "./RecipeReviewList";
