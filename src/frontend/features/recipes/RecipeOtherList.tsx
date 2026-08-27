@@ -24,8 +24,7 @@ const RecipeOtherList = ({ recipeId }: RecipeOtherListProps): React.ReactElement
 		<section className="mx-auto w-full max-w-[100rem] px-4 pb-14 sm:px-6 lg:px-8 lg:pb-20 2xl:max-w-[108rem]" aria-labelledby="related-recipes-heading">
 			<div className="mb-5 flex items-end justify-between gap-4">
 				<div>
-					<p className="text-xs font-extrabold uppercase tracking-[0.16em] text-primary">Keep exploring</p>
-					<h2 id="related-recipes-heading" className="mt-1 text-2xl font-black tracking-tight text-foreground sm:text-3xl">More recipes</h2>
+					<h2 id="related-recipes-heading" className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">More recipes</h2>
 				</div>
 				<Link to="/food" className="hidden min-h-11 items-center gap-2 text-sm font-bold text-primary underline-offset-4 hover:underline sm:inline-flex">
 					Browse all <ArrowRight className="size-4" aria-hidden="true" />

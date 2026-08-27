@@ -61,7 +61,7 @@ const CategorySection = ({
 		<section aria-labelledby="home-categories-heading">
 			<div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 				<div>
-					<p className="text-xs font-extrabold uppercase tracking-[0.16em] text-primary">Cook by mood</p>
+					<p className="sr-only">Cook by mood</p>
 					<h2 id="home-categories-heading" className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Browse categories</h2>
 				</div>
 				<Link className="inline-flex min-h-11 items-center gap-2 self-start rounded-full px-1 text-sm font-bold text-primary underline-offset-4 hover:underline sm:self-auto" to="/food">
@@ -79,7 +79,7 @@ const CategorySection = ({
 					<div className="flex size-10 items-center justify-center rounded-full bg-background/10"><LayoutGrid className="size-5" aria-hidden="true" /></div>
 					<div className="mt-5">
 						<h3 className="font-black">All categories</h3>
-						<p className="mt-1 text-xs leading-5 text-background/70">See every featured recipe.</p>
+						<p className="sr-only">See every featured recipe.</p>
 					</div>
 				</button>
 
@@ -97,7 +97,7 @@ const CategorySection = ({
 							<span className="absolute inset-0 bg-gradient-to-t from-foreground/90 via-foreground/25 to-transparent" aria-hidden="true" />
 							<span className="absolute inset-x-0 bottom-0 p-4 text-background">
 								<strong className="block text-base font-black">{name}</strong>
-								<span className="mt-0.5 block text-xs text-background/75">Filter featured recipes</span>
+								<span className="sr-only">Filter featured recipes</span>
 							</span>
 						</button>
 					);

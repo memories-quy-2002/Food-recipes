@@ -7,7 +7,9 @@ import {
 } from "@/features/history/api/cookingSessionApi";
 import type {
 	CookingSession,
+	CookingCompletionAction,
 	CookingSessionCompletionResponse,
+	CookingShoppingListResponse,
 } from "@/features/history/api/cookingSessionApi";
 
 const STORAGE_PREFIX = "food-recipes:cooking-session";
@@ -34,7 +36,7 @@ export type UseCookingSessionResult = {
 	error: string | null;
 	updateProgress: (currentStep: number) => void;
 	pause: () => Promise<void>;
-	complete: () => Promise<CookingSessionCompletionResponse | null>;
+	complete: (action?: CookingCompletionAction) => Promise<CookingSessionCompletionResponse | CookingShoppingListResponse | null>;
 	abandon: () => Promise<void>;
 };
 
@@ -248,15 +250,17 @@ export const useCookingSession = ({
 		writeStoredSession(storageKey, paused);
 	}, [storageKey, userId]);
 
-	const complete = useCallback(async (): Promise<CookingSessionCompletionResponse | null> => {
+	const complete = useCallback(async (action?: CookingCompletionAction): Promise<CookingSessionCompletionResponse | CookingShoppingListResponse | null> => {
 		const current = sessionRef.current;
 		if (userId && current?.session_id != null) {
-			const result = await completeCookingSession(current.session_id);
+			const result = await completeCookingSession(current.session_id, action);
+			if ("status" in result && result.status === "shopping_list_updated") return result;
 			removeStoredSession(storageKey);
 			sessionRef.current = null;
 			setSession(null);
 			return result;
 		}
+		if (userId) throw new Error("Cooking progress is not synced yet");
 
 		removeStoredSession(storageKey);
 		sessionRef.current = null;

@@ -1,4 +1,4 @@
-import { BsTrash3 } from "react-icons/bs";
+import { Eye, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { ReactElement } from "react";
 import convertImage from "@/shared/utils/convertImage";
@@ -64,16 +64,19 @@ const FavoriteRecipe = ({ recipe, savedAt, handleShowModal }: FavoriteRecipeProp
 					type="button"
 					className="wishlist__main__content__list__item__button"
 					onClick={() => navigate(`/recipe?id=${recipe.recipe_id}`)}
+					aria-label={`View ${recipe.recipe_name || "recipe"}`}
+					title="View recipe"
 				>
-					View
+					<Eye aria-hidden="true" />
 				</button>
 				<button
 					type="button"
 					className="wishlist__main__content__list__item__button wishlist__main__content__list__item__button--danger"
 					onClick={(event) => handleShowModal(event.currentTarget)}
 					aria-label={`Remove ${recipe.recipe_name}`}
+					title="Remove recipe"
 				>
-					<BsTrash3 />
+					<Trash2 aria-hidden="true" />
 				</button>
 			</div>
 		</li>

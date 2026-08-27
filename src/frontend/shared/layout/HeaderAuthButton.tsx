@@ -50,6 +50,7 @@ const HeaderAuthButton = ({
 	}, []);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const user = local.isAuthenticated ? local.user : session.user;
+	const accountLabel = user?.full_name || "Your account";
 	const dispatch = useDispatch<AppDispatch>();
 	const navigate = useNavigate();
 	const { showToast } = useToast();
@@ -100,15 +101,17 @@ const HeaderAuthButton = ({
 					<button
 						type="button"
 						ref={toggleRef}
-						className="flex min-h-11 max-w-52 items-center gap-2 rounded-full bg-muted p-1 pr-3 text-sm font-bold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						className="relative flex size-11 items-center justify-center rounded-full bg-muted p-1 text-sm font-bold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						aria-expanded={clicked}
 						aria-haspopup="menu"
-						aria-controls="header-auth-menu"
+						aria-controls={clicked ? "header-auth-menu" : undefined}
+						aria-label={`Open account menu for ${accountLabel}`}
+						title={accountLabel}
 						onClick={() => setClicked((value) => !value)}
 					>
 						{convertImage("avatar", "size-9 rounded-full object-cover")}
-						<span className="truncate">{user?.full_name || "Your account"}</span>
-						<ChevronDown className="size-4 shrink-0" />
+						<span className="sr-only">{accountLabel}</span>
+						<ChevronDown className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-card text-foreground" aria-hidden="true" />
 					</button>
 					{clicked && (
 						<div
@@ -139,8 +142,9 @@ const HeaderAuthButton = ({
 					)}
 				</>
 			) : (
-				<Button type="button" onClick={() => navigate("/account?signup=false")}>
-					Login / Sign up
+				<Button type="button" size="icon" aria-label="Login / Sign up" title="Login / Sign up" onClick={() => navigate("/account?signup=false")}>
+					<UserRound className="size-4" aria-hidden="true" />
+					<span className="sr-only">Login / Sign up</span>
 				</Button>
 			)}
 		</div>

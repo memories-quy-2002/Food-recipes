@@ -119,9 +119,7 @@ const RecipeCard = ({
 							{metadata.map(({ icon, label }, index) => (
 								<React.Fragment key={`${label}-${index}`}>
 									{index > 0 ? (
-										<span aria-hidden="true" className="text-border">
-											·
-										</span>
+										<span aria-hidden="true" className="size-1 shrink-0 rounded-full bg-border" />
 									) : null}
 									<span className="inline-flex items-center gap-1">
 										{icon}

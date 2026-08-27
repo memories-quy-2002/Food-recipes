@@ -19,6 +19,7 @@ export default [
 	{
 		ignores: [
 			"dist/**",
+			".vite/**",
 			".vite-verification/**",
 			"node_modules/**",
 			"coverage/**",

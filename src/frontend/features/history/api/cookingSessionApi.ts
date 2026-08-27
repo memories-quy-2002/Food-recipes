@@ -1,4 +1,5 @@
 import axios from "@/shared/api/axios";
+import { isAxiosError } from "axios";
 import { apiRoutes } from "@/shared/api/routes";
 
 export type CookingSessionStatus = "active" | "paused" | "completed" | "abandoned";
@@ -28,6 +29,25 @@ export type CookingSessionCompletionResponse = {
 	session: CookingSession;
 	history: CookingHistoryItem;
 };
+
+export type CookingShortage = {
+	position: number;
+	ingredient_name: string;
+	required_quantity: number;
+	required_unit: string;
+	available_quantity: number;
+	missing_quantity: number;
+	pantry_id: number | null;
+};
+
+export type CookingShoppingListResponse = {
+	status: "shopping_list_updated";
+	session: CookingSession;
+	shortages: CookingShortage[];
+	added_shopping_items: number;
+};
+
+export type CookingCompletionAction = "complete" | "shopping";
 
 export type CookingHistoryItem = {
 	history_id: number;
@@ -77,9 +97,27 @@ export const updateCookingSession = async (
 
 export const completeCookingSession = async (
 	sessionId: number,
-): Promise<CookingSessionCompletionResponse> => {
-	const response = await axios.post<CookingSessionCompletionResponse>(apiRoutes.cookingSessionComplete(sessionId));
+	action?: CookingCompletionAction,
+): Promise<CookingSessionCompletionResponse | CookingShoppingListResponse> => {
+	const response = await axios.post<CookingSessionCompletionResponse | CookingShoppingListResponse>(
+		apiRoutes.cookingSessionComplete(sessionId),
+		action ? { action } : undefined,
+	);
 	return response.data;
+};
+
+export const getCookingShortages = (error: unknown): CookingShortage[] | null => {
+	if (!isAxiosError(error)) return null;
+	const data = error.response?.data;
+	if (!data || typeof data !== "object" || !Array.isArray((data as { shortages?: unknown }).shortages)) return null;
+	return (data as { shortages: CookingShortage[] }).shortages;
+};
+
+export const getCookingCompletionErrorCode = (error: unknown): string | null => {
+	if (!isAxiosError(error)) return null;
+	const data = error.response?.data;
+	if (!data || typeof data !== "object" || typeof (data as { code?: unknown }).code !== "string") return null;
+	return (data as { code: string }).code;
 };
 
 export const abandonCookingSession = async (sessionId: number): Promise<{ message: string }> => {

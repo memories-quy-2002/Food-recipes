@@ -142,6 +142,7 @@ export class HomeFeedRepository implements HomeFeedRepositoryPort {
       LEFT JOIN pantry_items pantry
         ON pantry.user_id = ${userId}
         AND pantry.have = TRUE
+        AND (pantry.quantity IS NULL OR pantry.quantity > 0)
         AND (
           EXISTS (
             SELECT 1

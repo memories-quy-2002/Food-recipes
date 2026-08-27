@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import PantryPage from "./PantryPage";
 
 const mockPantry = vi.hoisted(() => ({
-	data: { items: [{ pantry_id: 4, name: "Eggs", have: true }] },
+	data: { items: [{ pantry_id: 4, name: "Eggs", have: true, quantity: 12, unit: "PIECE" }] },
 	add: vi.fn(),
 	update: vi.fn(),
 	remove: vi.fn(),
@@ -35,10 +35,11 @@ describe("PantryPage", () => {
 	});
 
 	it("adds an item and toggles whether it is available", () => {
-		renderPage();
+	renderPage();
 		fireEvent.change(screen.getByLabelText("Pantry item"), { target: { value: "Rice" } });
+		fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "2" } });
 		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
-		expect(mockPantry.add).toHaveBeenCalledWith({ name: "Rice", have: true }, expect.any(Object));
+		expect(mockPantry.add).toHaveBeenCalledWith({ name: "Rice", quantity: 2, unit: "PIECE", have: true }, expect.any(Object));
 
 		fireEvent.click(screen.getByRole("checkbox", { name: "Eggs available" }));
 		expect(mockPantry.update).toHaveBeenCalledWith({ pantryId: 4, input: { have: false } });

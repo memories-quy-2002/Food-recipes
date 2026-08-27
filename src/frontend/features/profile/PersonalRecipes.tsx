@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
+import { Archive, Eye, Pencil, RotateCcw, Send, Trash2 } from "lucide-react";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
 import { apiRoutes } from "@/shared/api/routes";
@@ -118,9 +119,8 @@ const PersonalRecipes = ({ user }: PersonalRecipesProps): ReactElement => {
 	return (
 		<div>
 			<header className="mb-6">
-				<p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">Your cookbook</p>
 				<h1 className="text-3xl font-black tracking-tight sm:text-4xl">Personal recipes</h1>
-				<p className="mt-3 text-muted-foreground">Create drafts, publish when ready, and archive recipes without losing your work.</p>
+				<p className="sr-only">Create drafts, publish when ready, and archive recipes without losing your work.</p>
 			</header>
 
 			<div className="mb-6 flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Recipe status filters">
@@ -133,8 +133,8 @@ const PersonalRecipes = ({ user }: PersonalRecipesProps): ReactElement => {
 
 			{isLoading ? <PageState title="Loading your recipes" message="Fetching recipes you have shared." /> : error ? <PageState type="error" title="Personal recipes could not load" message={error} actionLabel="Try again" onAction={fetchPersonalRecipes} /> : visibleRecipes.length === 0 ? <PageState type="empty" title={statusFilter === "all" ? "You have not created any recipes yet" : `No ${statusFilter} recipes yet.`} message="Start with one recipe image, a few ingredients, and the cooking steps." actionLabel="Add a recipe" onAction={() => navigate("/food/add")} /> : <>
 				<div className="mb-6 grid grid-cols-2 gap-3">
-					<Card className="p-4 text-center"><strong className="block text-2xl font-black">{visibleRecipes.length}</strong><span className="text-sm text-muted-foreground">{statusFilter === "all" ? "Total recipes" : statusLabel(statusFilter)}</span></Card>
-					<Card className="p-4 text-center"><strong className="block text-2xl font-black">{recentCount}</strong><span className="text-sm text-muted-foreground">Added in 7 days</span></Card>
+					<Card className="p-4 text-center"><strong className="block text-2xl font-black">{visibleRecipes.length}</strong><span className="text-sm text-muted-foreground">{statusFilter === "all" ? "Total" : statusLabel(statusFilter)}</span></Card>
+					<Card className="p-4 text-center"><strong className="block text-2xl font-black">{recentCount}</strong><span className="text-sm text-muted-foreground">Last 7 days</span></Card>
 				</div>
 				<ul className="grid gap-4">
 					{visibleRecipes.map((recipe) => {
@@ -148,12 +148,12 @@ const PersonalRecipes = ({ user }: PersonalRecipesProps): ReactElement => {
 								<div className="flex min-w-0 flex-col gap-4 p-4 sm:p-5">
 									<div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate text-lg font-bold">{recipe.recipe_name || "Untitled draft"}</h2><p className="mt-1 text-sm text-muted-foreground">{recipe.category_name || "No category"} · {recipe.meal_name || "No meal"}</p></div><Badge variant={status === "published" ? "success" : status === "archived" ? "secondary" : "warning"}>{statusLabel(status)}</Badge></div>
 									<div className="mt-auto flex flex-wrap justify-end gap-2">
-										{canEdit && <Button variant="outline" size="sm" onClick={() => navigate(`/food/edit?id=${recipe.recipe_id}`)} aria-label={`Edit recipe ${recipeLabel}`}>Edit</Button>}
-										{status === "published" && <Button variant="outline" size="sm" onClick={() => navigate(`/recipe/?id=${recipe.recipe_id}`)} aria-label={`View recipe ${recipeLabel}`}>View</Button>}
-										{status === "draft" && <Button size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "publish")} aria-label={`Publish recipe ${recipeLabel}`}>Publish</Button>}
-										{status === "published" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "archive")} aria-label={`Archive recipe ${recipeLabel}`}>Archive</Button>}
-										{status === "archived" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "restore")} aria-label={`Restore recipe ${recipeLabel}`}>Restore</Button>}
-										<Button variant="destructive" size="sm" onClick={() => { setShowModal(true); setRecipeId(recipe.recipe_id); }} aria-label={`Delete recipe ${recipeLabel}`}>Delete</Button>
+										{canEdit && <Button variant="outline" size="sm" onClick={() => navigate(`/food/edit?id=${recipe.recipe_id}`)} aria-label={`Edit recipe ${recipeLabel}`}><Pencil className="size-4" aria-hidden="true" />Edit</Button>}
+										{status === "published" && <Button variant="outline" size="sm" onClick={() => navigate(`/recipe/?id=${recipe.recipe_id}`)} aria-label={`View recipe ${recipeLabel}`}><Eye className="size-4" aria-hidden="true" />View</Button>}
+										{status === "draft" && <Button size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "publish")} aria-label={`Publish recipe ${recipeLabel}`}><Send className="size-4" aria-hidden="true" />Publish</Button>}
+										{status === "published" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "archive")} aria-label={`Archive recipe ${recipeLabel}`}><Archive className="size-4" aria-hidden="true" />Archive</Button>}
+										{status === "archived" && <Button variant="secondary" size="sm" disabled={isBusy} onClick={() => handleLifecycleAction(recipe, "restore")} aria-label={`Restore recipe ${recipeLabel}`}><RotateCcw className="size-4" aria-hidden="true" />Restore</Button>}
+										<Button variant="destructive" size="sm" onClick={() => { setShowModal(true); setRecipeId(recipe.recipe_id); }} aria-label={`Delete recipe ${recipeLabel}`}><Trash2 className="size-4" aria-hidden="true" />Delete</Button>
 									</div>
 								</div>
 							</Card>

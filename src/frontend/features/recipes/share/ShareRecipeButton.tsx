@@ -50,7 +50,7 @@ const ShareRecipeButton = ({ recipeId, recipeName, description, className }: Sha
 
 	return (
 		<>
-			<Button type="button" size="lg" variant="outline" className={className} onClick={handleShare} disabled={isPending} aria-busy={isPending} aria-label="Share recipe">
+			<Button type="button" size="icon" variant="outline" className={`size-11 h-11 ${className || ""}`} style={{ fontSize: 0 }} onClick={handleShare} disabled={isPending} aria-busy={isPending} aria-label="Share recipe" title="Share recipe">
 				<Share2 className="size-4" aria-hidden="true" />
 				{isPending ? "Sharing…" : "Share"}
 			</Button>

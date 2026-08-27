@@ -23,6 +23,6 @@ export default defineConfig({
 		emptyOutDir: true,
 	},
 	test: {
-		exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**"],
+		exclude: ["**/node_modules/**", "**/dist/**", "**/.vite/**", "**/e2e/**"],
 	},
 });

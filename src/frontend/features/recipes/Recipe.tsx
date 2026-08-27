@@ -14,7 +14,11 @@ import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
 import { useCookingSession } from "@/features/recipes/cooking/useCookingSession";
 import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
-import { useCreateCookingHistoryMutation } from "@/features/history/api/historyQueries";
+import type {
+	CookingCompletionAction,
+	CookingSessionCompletionResponse,
+	CookingShoppingListResponse,
+} from "@/features/history/api/cookingSessionApi";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -24,6 +28,8 @@ import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
 import PrivateRecipeNotes from "@/features/recipes/notes/PrivateRecipeNotes";
 import { recordRecentlyViewedRecipe } from "@/features/recipes/recentlyViewed";
+import PrintRecipeButton from "@/features/recipes/share/PrintRecipeButton";
+import ShareRecipeButton from "@/features/recipes/share/ShareRecipeButton";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
@@ -86,7 +92,7 @@ type CookingSessionControls = {
 	error: string | null;
 	updateProgress: (stepIndex: number) => void;
 	pause: () => Promise<void>;
-	complete: () => Promise<unknown>;
+	complete: (action?: CookingCompletionAction) => Promise<CookingSessionCompletionResponse | CookingShoppingListResponse | null>;
 };
 
 type CollectionDialogProps = {
@@ -150,7 +156,6 @@ const Recipe = (): React.ReactElement => {
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
-	const cookingHistoryMutation = useCreateCookingHistoryMutation();
 	const collectionsQuery = useCollectionsQuery(isAuthenticated);
 	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
@@ -188,7 +193,7 @@ const Recipe = (): React.ReactElement => {
 		userId: isAuthenticated ? userId : 0,
 		recipeId: recipe?.recipe_id,
 		mealPlanItemId: planningContext?.planItemId,
-		servings: planningContext?.servings,
+		servings: planningContext?.servings ?? recipe?.nutrition?.servings ?? 1,
 	});
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef<unknown>(null);
@@ -396,20 +401,18 @@ const Recipe = (): React.ReactElement => {
 		addIngredientsMutation.mutate(recipe.recipe_id);
 	};
 
-	const handleCookingComplete = async () => {
-		if (!recipe || cookingHistoryMutation.isPending) return;
-		const completedSession = await cookingSession.complete();
+	const handleCookingComplete = async (action?: CookingCompletionAction): Promise<CookingSessionCompletionResponse | CookingShoppingListResponse | null> => {
+		if (!recipe) return null;
+		const completedSession = await cookingSession.complete(action);
 		if (completedSession) {
-			showToast({ title: "Cooking history saved" });
-			return;
+			if ("status" in completedSession && completedSession.status === "shopping_list_updated") {
+				showToast({ title: "Missing ingredients added to shopping list" });
+			} else {
+				showToast({ title: "Cooking history saved" });
+			}
+			return completedSession;
 		}
-		if (isAuthenticated) {
-			await cookingHistoryMutation.mutateAsync({
-				recipeId: Number(recipe.recipe_id),
-				...(planningContext?.planItemId ? { mealPlanItemId: planningContext.planItemId } : {}),
-				...(planningContext?.servings ? { servings: planningContext.servings } : {}),
-			});
-		}
+		return null;
 	};
 
 	const handleAddToPlan = () => {
@@ -608,6 +611,17 @@ const Recipe = (): React.ReactElement => {
 							onAddIngredients={handleAddIngredientsToShoppingList}
 							isAddingIngredients={addIngredientsMutation.isPending}
 						/>
+					</div>
+					<div className="recipe-print__utilities mx-auto flex w-full max-w-[100rem] justify-end px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]" data-print-hidden>
+				<div className="flex items-center gap-1 rounded-xl border border-border/70 bg-card/80 p-1 shadow-sm" role="group" aria-label="Recipe utilities">
+							<ShareRecipeButton
+								recipeId={recipe.recipe_id}
+								recipeName={recipe.recipe_name ?? "Recipe"}
+								description={recipe.recipe_description || ""}
+								className="border-transparent bg-transparent text-foreground shadow-none hover:bg-muted/50 hover:text-foreground"
+							/>
+							<PrintRecipeButton className="border-transparent bg-transparent text-foreground shadow-none hover:bg-muted/50 hover:text-foreground" />
+						</div>
 					</div>
 					<div className="recipe-print__dialogs" data-print-hidden>
 						<AddToPlanDialog

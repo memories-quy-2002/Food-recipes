@@ -11,7 +11,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
-    seed: 'corepack pnpm@11.18.0 exec ts-node --transpile-only prisma/seed.ts',
+    seed: 'pnpm exec ts-node --transpile-only prisma/seed.ts',
   },
   datasource: {
     url: resolveDatabaseUrl(),

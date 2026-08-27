@@ -27,7 +27,6 @@ const Footer = (): ReactElement => {
 						</span>
 						food / recipes
 					</Link>
-					<h2 className="mt-4 text-sm font-black">About us</h2>
 					<p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
 						{about}
 					</p>
@@ -90,7 +89,7 @@ const Footer = (): ReactElement => {
 									rel="noopener noreferrer"
 									aria-label={`Visit Food Recipes on ${label}`}
 								>
-									<Icon size={20} />
+									<Icon size={20} aria-hidden="true" />
 								</a>
 							</li>
 						))}

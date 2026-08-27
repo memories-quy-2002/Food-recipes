@@ -4,6 +4,7 @@ import {
 	useRef,
 	type ReactElement,
 } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -65,7 +66,7 @@ const HeaderToggle = ({
 	const navigate = useNavigate();
 	const { pathname } = useLocation();
 	const authContext = useContext(AuthContext);
-	const { user, isAuthenticated } = getAuthSnapshot(authContext);
+	const { isAuthenticated } = getAuthSnapshot(authContext);
 	const drawerRef = useRef<HTMLElement | null>(null);
 	const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 	const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -134,6 +135,84 @@ const HeaderToggle = ({
 			"flex min-h-12 w-full items-center rounded-xl px-3 py-2 text-left text-base font-bold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
 			active && "bg-accent text-accent-foreground",
 		);
+	const mobileNavigation = show ? (
+		<div className="fixed inset-0 z-[100]" role="presentation">
+			<button
+				type="button"
+				aria-label="Close navigation menu"
+				tabIndex={-1}
+				className="absolute inset-0 bg-black/40"
+				onClick={handleClose}
+			/>
+			<aside
+				id="mobile-navigation"
+				ref={drawerRef}
+				className="fixed inset-y-0 right-0 w-[min(22rem,90vw)] overflow-y-auto bg-card p-5 shadow-2xl"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="mobile-navigation-title"
+			>
+				<div className="flex items-start justify-between gap-4 border-b border-border pb-5">
+					<div>
+						<h2 id="mobile-navigation-title" className="text-xl font-black">
+							Menu
+						</h2>
+					</div>
+					<Button
+						ref={closeButtonRef}
+						variant="ghost"
+						size="icon"
+						aria-label="Close navigation menu"
+						onClick={handleClose}
+					>
+						<X className="size-5" aria-hidden="true" />
+					</Button>
+				</div>
+				<nav className="mt-4" aria-label="Mobile primary navigation">
+					<ul className="grid gap-1">
+						{items.map(({ title, href }) => {
+							const active = isNavigationItemActive(pathname, href, items);
+							return (
+								<li key={href}>
+									<Link
+										className={itemClass(active)}
+										aria-current={active ? "page" : undefined}
+										to={href}
+										onClick={handleClose}
+									>
+										{title}
+									</Link>
+								</li>
+							);
+						})}
+						<li className="mt-3 border-t border-border pt-3">
+							{isAuthenticated ? (
+								<button
+									type="button"
+									className={itemClass()}
+									onClick={handleSignOut}
+								>
+									Sign out
+								</button>
+							) : (
+								<button
+									type="button"
+									className={itemClass()}
+									onClick={() => handleNavigate("/account?signup=false")}
+								>
+									Login / Sign up
+								</button>
+							)}
+						</li>
+					</ul>
+				</nav>
+			</aside>
+		</div>
+	) : null;
+	const renderedMobileNavigation =
+		mobileNavigation && typeof document !== "undefined" && document.body
+			? createPortal(mobileNavigation, document.body)
+			: mobileNavigation;
 
 	return (
 		<div className="ml-auto lg:hidden">
@@ -146,87 +225,9 @@ const HeaderToggle = ({
 				aria-controls="mobile-navigation"
 				onClick={handleShow}
 			>
-				<Menu className="size-5" />
+				<Menu className="size-5" aria-hidden="true" />
 			</Button>
-			{show && (
-				<div className="fixed inset-0 z-50" role="presentation">
-					<button
-						type="button"
-						aria-label="Close navigation menu"
-						tabIndex={-1}
-						className="absolute inset-0 bg-black/40"
-						onClick={handleClose}
-					/>
-					<aside
-						id="mobile-navigation"
-						ref={drawerRef}
-						className="absolute inset-y-0 right-0 w-[min(22rem,90vw)] overflow-y-auto bg-card p-5 shadow-2xl"
-						role="dialog"
-						aria-modal="true"
-						aria-label="Mobile navigation"
-					>
-						<div className="flex items-start justify-between gap-4 border-b border-border pb-5">
-							<div>
-								<p className="text-xs font-black uppercase tracking-[0.18em] text-primary">
-									Food Recipes
-								</p>
-								<strong className="mt-1 block text-lg">
-									{isAuthenticated
-										? `Welcome ${user?.full_name || "back"}`
-										: "Welcome"}
-								</strong>
-							</div>
-							<Button
-								ref={closeButtonRef}
-								variant="ghost"
-								size="icon"
-								aria-label="Close navigation menu"
-								onClick={handleClose}
-							>
-								<X className="size-5" />
-							</Button>
-						</div>
-						<nav className="mt-4" aria-label="Mobile primary navigation">
-							<ul className="grid gap-1">
-								{items.map(({ title, href }) => {
-									const active = isNavigationItemActive(pathname, href, items);
-									return (
-										<li key={href}>
-											<Link
-												className={itemClass(active)}
-												aria-current={active ? "page" : undefined}
-												to={href}
-												onClick={handleClose}
-											>
-												{title}
-											</Link>
-										</li>
-									);
-								})}
-								<li className="mt-3 border-t border-border pt-3">
-									{isAuthenticated ? (
-										<button
-											type="button"
-											className={itemClass()}
-											onClick={handleSignOut}
-										>
-											Sign out
-										</button>
-									) : (
-										<button
-											type="button"
-											className={itemClass()}
-											onClick={() => handleNavigate("/account?signup=false")}
-										>
-											Login / Sign up
-										</button>
-									)}
-								</li>
-							</ul>
-						</nav>
-					</aside>
-				</div>
-			)}
+			{renderedMobileNavigation}
 		</div>
 	);
 };

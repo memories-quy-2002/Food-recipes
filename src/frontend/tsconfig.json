@@ -22,5 +22,6 @@
 		"**/*.tsx",
 		"vite-env.d.ts",
 		"vite.config.mts"
-	]
+	],
+	"exclude": [".vite/**"]
 }

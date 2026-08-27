@@ -375,9 +375,8 @@ const Wishlist = (): ReactElement => {
 			/>
 			<div className="wishlist__hero">
 				<div>
-					<span>Saved recipes</span>
 					<h1>Saved Recipes</h1>
-					<p>
+					<p className="sr-only">
 						Keep your go-to dishes close, search your saved list, and
 						open recipes when you are ready to cook.
 					</p>

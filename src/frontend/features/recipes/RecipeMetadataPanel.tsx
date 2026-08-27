@@ -51,14 +51,14 @@ const RecipeMetadataPanel = ({ metadata }: RecipeMetadataPanelProps): React.Reac
 	const hasMetadata = Boolean(nutrition || allergens.length);
 
 	return (
-		<section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8" aria-labelledby="recipe-metadata-title">
+		<section className="rounded-xl border border-border bg-card p-5 sm:p-7 lg:p-8" aria-labelledby="recipe-metadata-title">
 			<div className="flex items-start gap-3">
 				<div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
 					<ShieldAlert className="size-5" aria-hidden="true" />
 				</div>
 				<div>
 					<h2 id="recipe-metadata-title" className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Nutrition and allergens</h2>
-					<p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">Use this information as practical guidance, not medical advice. Always verify ingredient labels for allergies.</p>
+					<p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">Practical guidance only. Always check ingredient labels for allergies.</p>
 				</div>
 			</div>
 
@@ -70,7 +70,7 @@ const RecipeMetadataPanel = ({ metadata }: RecipeMetadataPanelProps): React.Reac
 			) : (
 				<div className="mt-6 grid gap-6">
 					{nutrition ? (
-						<div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
+						<div className="rounded-xl border border-border bg-background p-4 sm:p-5">
 							<div className="flex flex-col gap-1 border-b border-border pb-4 sm:flex-row sm:items-end sm:justify-between">
 								<strong className="text-xl font-black text-foreground">{nutrition.calories_per_serving === null ? "Calories not provided" : `${nutrition.calories_per_serving} kcal`} <span className="text-sm font-semibold text-muted-foreground">per serving</span></strong>
 								<span className="text-xs font-bold text-muted-foreground">{sourceLabel(nutrition.source)}</span>
@@ -88,7 +88,7 @@ const RecipeMetadataPanel = ({ metadata }: RecipeMetadataPanelProps): React.Reac
 						</div>
 					) : null}
 
-					<div className="rounded-2xl border border-border bg-background p-4 sm:p-5">
+					<div className="rounded-xl border border-border bg-background p-4 sm:p-5">
 						<h3 className="text-lg font-black text-foreground">Declared allergens</h3>
 						{allergens.length ? (
 							<ul className="mt-4 space-y-2">

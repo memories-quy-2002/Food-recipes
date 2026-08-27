@@ -192,10 +192,30 @@ model PantryItem {
   userId    Int      @map("user_id")
   name      String   @db.VarChar(255)
   have      Boolean  @default(true)
+  quantity  Decimal? @db.Decimal(12, 3)
+  unit      String?  @db.VarChar(20)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
 
   @@index([userId, have], map: "pantry_items_user_have_idx")
   @@map("pantry_items")
+}
+
+model CookingIngredientUsage {
+  id                  Int      @id @default(autoincrement()) @map("usage_id")
+  historyId           Int      @map("history_id")
+  userId              Int      @map("user_id")
+  pantryId            Int?     @map("pantry_id")
+  ingredientPosition  Int      @map("ingredient_position")
+  ingredientName      String   @map("ingredient_name") @db.VarChar(255)
+  requiredQuantity    Decimal  @map("required_quantity") @db.Decimal(12, 3)
+  unit                String   @db.VarChar(20)
+  deductedQuantity    Decimal  @map("deducted_quantity") @db.Decimal(12, 3)
+  missingQuantity     Decimal  @map("missing_quantity") @db.Decimal(12, 3)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([historyId, ingredientPosition], map: "cooking_ingredient_usage_history_position_key")
+  @@index([userId, createdAt], map: "cooking_ingredient_usage_user_created_idx")
+  @@map("cooking_ingredient_usage")
 }
 
 model MealPlan {

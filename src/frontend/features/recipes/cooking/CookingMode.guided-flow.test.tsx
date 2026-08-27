@@ -1,4 +1,6 @@
 import React from "react";
+import { AxiosError } from "axios";
+import { MemoryRouter } from "react-router-dom";
 import TestRenderer, { act, type ReactTestChild, type ReactTestInstance, type ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it, vi } from "vitest";
 import CookingMode, { getCookingInstructions } from "./CookingMode";
@@ -14,7 +16,7 @@ const recipe = {
 };
 
 type CookingModeRenderProps = Partial<
-	Pick<React.ComponentProps<typeof CookingMode>, "planningContext" | "onBackToPlan" | "initialStepIndex">
+	Pick<React.ComponentProps<typeof CookingMode>, "planningContext" | "onBackToPlan" | "initialStepIndex" | "onComplete">
 >;
 
 const createRenderer = (element: React.ReactElement): ReactTestRenderer => {
@@ -27,7 +29,11 @@ const createRenderer = (element: React.ReactElement): ReactTestRenderer => {
 };
 
 const renderCookingMode = (props: CookingModeRenderProps = {}): ReactTestRenderer =>
-	createRenderer(<CookingMode recipe={recipe} onExit={vi.fn()} {...props} />);
+	createRenderer(
+		<MemoryRouter>
+			<CookingMode recipe={recipe} onExit={vi.fn()} {...props} />
+		</MemoryRouter>,
+	);
 
 const getNodeText = (node: ReactTestInstance): string =>
 	node.children
@@ -48,8 +54,20 @@ const clickButton = (renderer: ReactTestRenderer, name: string): void => {
 	act(() => onClick());
 };
 
+const clickButtonAsync = async (renderer: ReactTestRenderer, name: string): Promise<void> => {
+	const onClick = findButton(renderer, name).props["onClick"];
+	if (typeof onClick !== "function") throw new Error(`Button is not clickable: ${name}`);
+	await act(async () => {
+		onClick();
+		await Promise.resolve();
+	});
+};
+
 const findText = (renderer: ReactTestRenderer, text: string): ReactTestInstance | undefined =>
 	renderer.root.findAll((node: ReactTestInstance) => node.children.join("") === text)[0];
+
+const hasText = (renderer: ReactTestRenderer, text: string): boolean =>
+	renderer.root.findAll((node: ReactTestInstance) => getNodeText(node).includes(text)).length > 0;
 
 describe("cooking mode guided flow", () => {
 	it("shows planned meal context and offers a return to plan after completion", () => {
@@ -153,5 +171,41 @@ describe("cooking mode guided flow", () => {
 			await Promise.resolve();
 		});
 		expect(onExit).toHaveBeenCalledTimes(1);
+	});
+
+	it("asks how to resolve missing pantry ingredients before finishing", async () => {
+		const onComplete = vi.fn<(action?: "complete" | "shopping") => Promise<unknown> | unknown>();
+		const shortageError = Object.assign(new AxiosError("Pantry shortage"), {
+			response: {
+				data: {
+					code: "COOKING_PANTRY_SHORTAGE",
+					shortages: [{
+						position: 1,
+						ingredient_name: "rice",
+						required_quantity: 500,
+						required_unit: "GRAM",
+						available_quantity: 300,
+						missing_quantity: 200,
+						pantry_id: 1,
+					}],
+				},
+			},
+		});
+		onComplete.mockRejectedValueOnce(shortageError).mockResolvedValueOnce({
+			status: "shopping_list_updated",
+			shortages: [],
+			added_shopping_items: 1,
+		});
+		const renderer = renderCookingMode({ onComplete });
+
+		clickButton(renderer, "Next step");
+		await clickButtonAsync(renderer, "Finish cooking");
+		expect(findText(renderer, "Some ingredients are missing")).toBeTruthy();
+		expect(hasText(renderer, "missing 200 g")).toBe(true);
+
+		await clickButtonAsync(renderer, "Stop and add to shopping list");
+		expect(onComplete).toHaveBeenNthCalledWith(1, undefined);
+		expect(onComplete).toHaveBeenNthCalledWith(2, "shopping");
+		expect(hasText(renderer, "Your pantry was not changed.")).toBe(true);
 	});
 });
