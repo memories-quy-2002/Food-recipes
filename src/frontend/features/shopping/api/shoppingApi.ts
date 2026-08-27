@@ -20,6 +20,25 @@ export type AddRecipeIngredientsResponse = {
 	items: ShoppingListItem[];
 };
 
+export type PreparedIngredient = {
+	position: number;
+	ingredient_name: string;
+	required_quantity: number | null;
+	required_unit: string | null;
+	available_quantity: number | null;
+	missing_quantity: number | null;
+	pantry_id: number | null;
+	status: "available" | "missing" | "needs_details";
+};
+
+export type PrepareRecipeResponse = {
+	recipe_id: number;
+	recipe_name: string;
+	servings: number;
+	ingredients: PreparedIngredient[];
+	added_shopping_items: number;
+};
+
 export type AddShoppingItemInput = {
 	label: string;
 	quantity?: string;
@@ -89,6 +108,17 @@ export const addRecipeIngredientsFromRecipes = async (
 	const response = await axios.post<AddRecipeIngredientsResponse>(
 		apiRoutes.shoppingListFromRecipe,
 		{ recipeIds },
+	);
+	return response.data;
+};
+
+export const prepareRecipeIngredients = async (
+	recipeId: number,
+	servings?: number,
+): Promise<PrepareRecipeResponse> => {
+	const response = await axios.post<PrepareRecipeResponse>(
+		apiRoutes.shoppingListPrepare,
+		{ recipeId, ...(servings ? { servings } : {}) },
 	);
 	return response.data;
 };

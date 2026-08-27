@@ -20,6 +20,7 @@ describe('PlanningService', () => {
     updateShoppingItem: jest.fn(),
     deleteShoppingItem: jest.fn(),
     recipeIngredients: jest.fn(),
+    prepareRecipeIngredients: jest.fn(),
     clearCompletedShoppingItems: jest.fn(),
   };
 
@@ -64,6 +65,28 @@ describe('PlanningService', () => {
     const service = new PlanningService(repository);
 
     await expect(service.addRecipeIngredients(7, 999)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('delegates meal preparation to the owned pantry-aware repository flow', async () => {
+    const prepared = {
+      recipe_id: 15,
+      recipe_name: 'Pasta',
+      servings: 4,
+      ingredients: [{ ingredient_name: 'tomatoes', status: 'missing' }],
+      added_shopping_items: 1,
+    } as never;
+    repository.prepareRecipeIngredients.mockResolvedValue(prepared);
+    const service = new PlanningService(repository);
+
+    await expect(service.prepareRecipeIngredients(7, 15, 4)).resolves.toBe(prepared);
+    expect(repository.prepareRecipeIngredients).toHaveBeenCalledWith(7, 15, 4);
+  });
+
+  it('rejects preparation for a recipe that is not published or does not exist', async () => {
+    repository.prepareRecipeIngredients.mockResolvedValue(null);
+    const service = new PlanningService(repository);
+
+    await expect(service.prepareRecipeIngredients(7, 999)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('consolidates compatible structured ingredients across recipes', async () => {

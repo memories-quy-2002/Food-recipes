@@ -2,13 +2,14 @@ import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post
 import { ApiBearerAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
-import { ApiErrorResponseDto, MealPlanItemResponseDto, MealPlanResponseDto, MessageResponseDto, ShoppingListItemResponseDto, ShoppingListResponseDto } from '../../common/swagger/response.schemas';
+import { ApiErrorResponseDto, MealPlanItemResponseDto, MealPlanResponseDto, MessageResponseDto, PrepareRecipeResponseDto, ShoppingListItemResponseDto, ShoppingListResponseDto } from '../../common/swagger/response.schemas';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { AddMealPlanItemDto } from './dto/add-meal-plan-item.dto';
 import { AddShoppingListItemDto } from './dto/add-shopping-list-item.dto';
 import { DateRangeDto } from './dto/date-range.dto';
 import { MealPlanQueryDto } from './dto/meal-plan-query.dto';
+import { PrepareRecipeIngredientsDto } from './dto/prepare-recipe-ingredients.dto';
 import { UpdateMealPlanItemDto } from './dto/update-meal-plan-item.dto';
 import { UpdateShoppingListItemDto } from './dto/update-shopping-list-item.dto';
 import { AddRecipeIngredientsDto } from './dto/add-recipe-ingredients.dto';
@@ -85,6 +86,14 @@ export class PlanningController {
     return dto.recipeIds?.length
       ? this.service.addRecipeIngredientsFromRecipes(user.id, dto.recipeIds)
       : this.service.addRecipeIngredients(user.id, dto.recipeId!);
+  }
+
+  @Post('shopping-list/prepare')
+  @ApiOperation({ summary: 'Compare a recipe with the owned pantry and add missing ingredients' })
+  @ApiOkResponse({ type: PrepareRecipeResponseDto })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto })
+  prepareRecipe(@CurrentUser() user: AuthUser, @Body() dto: PrepareRecipeIngredientsDto) {
+    return this.service.prepareRecipeIngredients(user.id, dto.recipeId, dto.servings);
   }
 
   @Delete('shopping-list/completed')

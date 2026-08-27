@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import { spawn } from 'node:child_process';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../src/generated/prisma/client';
 
 const RESET_CONFIRMATION = 'RESET_FOOD_RECIPES_PRODUCTION';
 const BACKUP_CONFIRMATION = 'BACKUP_VERIFIED';

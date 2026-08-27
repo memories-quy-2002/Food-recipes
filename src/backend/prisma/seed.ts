@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 import { hash } from 'bcryptjs';
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
@@ -1006,6 +1006,9 @@ const seed = async (): Promise<void> => {
       await client.passwordResetToken.deleteMany({ where: { userId: { in: existingUserIds } } });
       await client.emailVerificationToken.deleteMany({ where: { userId: { in: existingUserIds } } });
       await client.recipeNote.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.cookingIngredientUsage.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.cookingHistory.deleteMany({ where: { userId: { in: existingUserIds } } });
+      await client.cookingSession.deleteMany({ where: { userId: { in: existingUserIds } } });
       await client.pantryItem.deleteMany({ where: { userId: { in: existingUserIds } } });
       await client.shoppingListItem.deleteMany({ where: { userId: { in: existingUserIds } } });
       await client.mealPlan.deleteMany({ where: { userId: { in: existingUserIds } } });
@@ -1259,6 +1262,40 @@ const seed = async (): Promise<void> => {
       });
     }
 
+    const homecookId = requireUserId('demo.homecook@foodrecipes.local');
+    const activeRecipeId = requireRecipeId('Avocado Toast with Chili');
+    const activePlanItem = await client.mealPlanItem.findFirst({
+      where: { planId: mealPlan.id, recipeId: activeRecipeId },
+      orderBy: { id: 'asc' },
+    });
+    if (!activePlanItem) throw new Error('Missing demo meal-plan item for the active cooking session');
+
+    await client.cookingSession.create({
+      data: {
+        userId: homecookId,
+        recipeId: activeRecipeId,
+        mealPlanItemId: activePlanItem.id,
+        servings: activePlanItem.servings,
+        currentStep: 1,
+        status: 'paused',
+        startedAt: addDays(today, -1),
+        lastActiveAt: today,
+        pausedAt: today,
+      },
+    });
+
+    const completedRecipeId = requireRecipeId('Roasted Pumpkin Soup');
+    await client.cookingHistory.create({
+      data: {
+        userId: homecookId,
+        recipeId: completedRecipeId,
+        servings: 4,
+        startedAt: addDays(today, -3),
+        completedAt: addDays(today, -3),
+        createdAt: addDays(today, -3),
+      },
+    });
+
     const shoppingListItems = [
       { label: 'rice noodles', quantity: '250 g', recipeName: 'Classic Vietnamese Pho', checked: false },
       { label: 'fresh cilantro', quantity: '1 bunch', recipeName: null, checked: false },
@@ -1339,6 +1376,8 @@ const seed = async (): Promise<void> => {
       pantryItems: demoPantryItems.length,
       mealPlans: 1,
       mealPlanItems: mealPlanItems.length,
+      activeCookingSessions: 1,
+      completedCookingHistory: 1,
       shoppingListItems: shoppingListItems.length,
       notes: demoNoteDefinitions.length,
       reviewReports: 2,

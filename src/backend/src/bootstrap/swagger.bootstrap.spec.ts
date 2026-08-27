@@ -113,6 +113,7 @@ describe('Swagger document', () => {
       'PATCH /api/v1/users/me/shopping-list/items/{itemId}',
       'DELETE /api/v1/users/me/shopping-list/items/{itemId}',
       'POST /api/v1/users/me/shopping-list/from-recipe',
+      'POST /api/v1/users/me/shopping-list/prepare',
       'DELETE /api/v1/users/me/shopping-list/completed',
       'GET /api/v1/users/me/recipes/{recipeId}/note',
       'PATCH /api/v1/users/me/recipes/{recipeId}/note',

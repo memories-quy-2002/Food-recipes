@@ -23,6 +23,7 @@ yarn.lock
 build/
 dist/
 out/
+src/backend/src/generated/prisma/
 .next/
 .vercel/
 storybook-static/

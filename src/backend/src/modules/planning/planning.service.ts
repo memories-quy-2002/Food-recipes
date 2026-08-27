@@ -128,6 +128,12 @@ export class PlanningService {
     return { recipes: recipes.filter(Boolean).map((recipe) => recipe!.name), items };
   }
 
+  async prepareRecipeIngredients(userId: number, recipeId: number, servings?: number) {
+    const result = await this.repository.prepareRecipeIngredients(userId, recipeId, servings);
+    if (!result) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
+    return result;
+  }
+
   async clearCompletedShoppingItems(userId: number) {
     const removed = await this.repository.clearCompletedShoppingItems(userId);
     return { removed };

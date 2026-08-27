@@ -26,6 +26,7 @@ export type MealPlanItem = {
 	planned_date: string;
 	slot: MealSlot;
 	servings: number;
+	cooking_status?: "planned" | "cooking" | "completed";
 	created_at: string;
 };
 

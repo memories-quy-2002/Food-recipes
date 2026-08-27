@@ -1,5 +1,5 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import type { Request, Response } from 'express';
 import type { RequestWithContext } from '../middleware/request-context.middleware';
 import { captureSentryException } from '../../bootstrap/instrument';

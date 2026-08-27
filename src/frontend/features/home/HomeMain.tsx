@@ -272,6 +272,7 @@ const HomeMain = (): ReactElement => {
 				<>
 					<PersonalizedHomeFeed
 						isAuthenticated={isAuthenticated}
+						userId={userId}
 						wishlist={wishlist}
 						onClickFavorite={handleClickFavorite}
 					/>

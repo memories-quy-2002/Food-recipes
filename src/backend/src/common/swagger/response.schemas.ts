@@ -539,6 +539,9 @@ export class MealPlanItemResponseDto {
 
   @ApiProperty({ example: 4 })
   servings!: number;
+
+  @ApiProperty({ enum: ['planned', 'cooking', 'completed'] })
+  cooking_status!: 'planned' | 'cooking' | 'completed';
 }
 
 export class MealPlanResponseDto {
@@ -581,6 +584,49 @@ export class ShoppingListItemResponseDto {
 export class ShoppingListResponseDto {
   @ApiProperty({ type: [ShoppingListItemResponseDto] })
   items!: ShoppingListItemResponseDto[];
+}
+
+export class PreparedIngredientResponseDto {
+  @ApiProperty()
+  position!: number;
+
+  @ApiProperty()
+  ingredient_name!: string;
+
+  @ApiProperty({ type: Number, nullable: true })
+  required_quantity!: number | null;
+
+  @ApiProperty({ type: String, nullable: true })
+  required_unit!: string | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  available_quantity!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  missing_quantity!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true })
+  pantry_id!: number | null;
+
+  @ApiProperty({ enum: ['available', 'missing', 'needs_details'] })
+  status!: 'available' | 'missing' | 'needs_details';
+}
+
+export class PrepareRecipeResponseDto {
+  @ApiProperty()
+  recipe_id!: number;
+
+  @ApiProperty()
+  recipe_name!: string;
+
+  @ApiProperty()
+  servings!: number;
+
+  @ApiProperty({ type: [PreparedIngredientResponseDto] })
+  ingredients!: PreparedIngredientResponseDto[];
+
+  @ApiProperty()
+  added_shopping_items!: number;
 }
 
 export class CookingHistoryItemDto {

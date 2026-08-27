@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '../src/generated/prisma/client';
 
 const databaseUrl = process.env.DATABASE_URL?.trim();
 
@@ -18,13 +18,18 @@ type CountRow = { count: number | bigint };
 const firstCount = (rows: CountRow[]): number => Number(rows[0]?.count ?? 0);
 
 const verify = async (): Promise<void> => {
-  const [users, categories, meals, recipes, wishlist, ratings, linked, orphaned] = await Promise.all([
+  const [users, categories, meals, recipes, wishlist, ratings, pantryItems, mealPlans, mealPlanItems, activeCookingSessions, cookingHistory, linked, orphaned] = await Promise.all([
     prisma.user.count(),
     prisma.category.count(),
     prisma.meal.count(),
     prisma.recipe.count(),
     prisma.wishlist.count(),
     prisma.rating.count(),
+    prisma.pantryItem.count(),
+    prisma.mealPlan.count(),
+    prisma.mealPlanItem.count(),
+    prisma.cookingSession.count({ where: { status: { in: ['active', 'paused'] } } }),
+    prisma.cookingHistory.count(),
     prisma.$queryRaw<CountRow[]>(Prisma.sql`
       SELECT COUNT(*)::int AS count
       FROM recipes r
@@ -51,17 +56,27 @@ const verify = async (): Promise<void> => {
     recipes,
     wishlist,
     ratings,
+    pantryItems,
+    mealPlans,
+    mealPlanItems,
+    activeCookingSessions,
+    cookingHistory,
     fullyLinkedRecipes: firstCount(linked),
     orphanRecipes: firstCount(orphaned),
   };
 
   const expected = {
-    users: 3,
-    categories: 3,
-    meals: 3,
+    users: 4,
+    categories: 5,
+    meals: 4,
     recipes: 25,
-    wishlist: 25,
-    ratings: 25,
+    wishlist: 13,
+    ratings: 40,
+    pantryItems: 8,
+    mealPlans: 1,
+    mealPlanItems: 6,
+    activeCookingSessions: 1,
+    cookingHistory: 1,
     fullyLinkedRecipes: 25,
     orphanRecipes: 0,
   };
