@@ -1,5 +1,5 @@
 import React from "react";
-import { BookmarkPlus, CalendarDays, ChefHat, Clock3, Heart, ShoppingBasket, Users } from "lucide-react";
+import { BookmarkPlus, CalendarDays, ChefHat, Clock3, Heart, PackageCheck, ShoppingBasket, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { MouseEventHandler, ReactNode } from "react";
 import type { RecipeDetail } from "@/shared/api/contracts";
@@ -45,6 +45,8 @@ export type RecipeContainerSummaryProps = {
 	onSaveToCollection?: () => void;
 	onAddIngredients?: () => void;
 	isAddingIngredients?: boolean;
+	onPrepareMeal?: () => void;
+	isPreparingMeal?: boolean;
 };
 
 const RecipeContainerSummary = ({
@@ -56,6 +58,8 @@ const RecipeContainerSummary = ({
 	onSaveToCollection,
 	onAddIngredients,
 	isAddingIngredients = false,
+	onPrepareMeal,
+	isPreparingMeal = false,
 }: RecipeContainerSummaryProps): React.ReactElement => {
 	const tags = [...new Set([recipe.category_name, recipe.meal_name].filter(Boolean))];
 	const difficulty = recipe.difficulty ?? recipe.difficulty_level ?? "Everyday";
@@ -95,6 +99,7 @@ const RecipeContainerSummary = ({
 					<Button asChild size="lg" className="h-auto min-h-12 rounded-lg bg-primary px-5 py-3 font-black text-primary-foreground shadow-md hover:bg-primary/90 sm:col-span-2"><Link to={`/recipe/cooking?id=${recipe.recipe_id}`}>Start cooking</Link></Button>
 					<Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-secondary bg-secondary px-5 py-3 font-black text-secondary-foreground hover:bg-secondary/90" onClick={onClickFavorite} aria-label={favorite ? "Remove recipe from saved" : "Save recipe"} aria-pressed={favorite}><span aria-hidden="true"><Heart className="size-4" fill={favorite ? "currentColor" : "none"} /></span>{favorite ? "Saved" : "Save"}</Button>
 					{onAddToPlan ? <Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-muted/60 bg-transparent px-5 py-3 font-black text-background hover:bg-muted/20 hover:text-background" onClick={onAddToPlan} disabled={isAddingToPlan} aria-busy={isAddingToPlan} aria-label={isAddingToPlan ? "Adding recipe to meal plan" : "Add recipe to meal plan"} title="Add to meal plan"><CalendarDays className="size-4" aria-hidden="true" />{isAddingToPlan ? "Adding…" : "Add to meal plan"}</Button> : null}
+					{onPrepareMeal ? <Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-primary/50 bg-primary/10 px-5 py-3 font-black text-background hover:bg-primary/20 hover:text-background sm:col-span-2" onClick={onPrepareMeal} disabled={isPreparingMeal} aria-busy={isPreparingMeal} aria-label={isPreparingMeal ? "Checking pantry for this meal" : "Prepare this meal"} title="Compare ingredients with your pantry"><PackageCheck className="size-4" aria-hidden="true" />{isPreparingMeal ? "Checking pantry…" : "Prepare this meal"}</Button> : null}
 					{onAddIngredients ? <Button type="button" size="lg" variant="outline" className="h-auto min-h-12 rounded-lg border-muted/60 bg-transparent px-5 py-3 font-black text-background hover:bg-muted/20 hover:text-background sm:col-span-2" onClick={onAddIngredients} disabled={isAddingIngredients} aria-busy={isAddingIngredients} aria-label={isAddingIngredients ? "Adding ingredients to shopping list" : "Add ingredients to shopping list"} title="Add ingredients to shopping list"><ShoppingBasket className="size-4" aria-hidden="true" />{isAddingIngredients ? "Adding ingredients…" : "Add ingredients to shopping list"}</Button> : null}
 				</div>
 

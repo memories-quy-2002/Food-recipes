@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  HomeFeedRecipe,
   HomeFeedRepositoryPort,
   HOME_FEED_REPOSITORY,
 } from './home-feed.repository';
+import type { HomeFeedRecipe, KitchenState } from './home-feed.repository';
 
 export type HomeFeedSectionKey =
   | 'continue'
@@ -23,6 +23,7 @@ export type HomeFeedSection = {
 export type HomeFeedResponse = {
   personalized: boolean;
   sections: HomeFeedSection[];
+  kitchen?: KitchenState;
 };
 
 const section = (
@@ -55,17 +56,19 @@ export class HomeFeedService {
   }
 
   async getPersonalizedFeed(userId: number): Promise<HomeFeedResponse> {
-    const [planned, pantry, recommended, saved, quick, popular] = await Promise.all([
+    const [planned, pantry, recommended, saved, quick, popular, kitchen] = await Promise.all([
       this.repository.listPlanned(userId, 6),
       this.repository.listFromPantry(userId, 8),
       this.repository.listRecommended(userId, 8),
       this.repository.listSaved(userId, 6),
       this.repository.listQuick(8),
       this.repository.listPopular(8),
+      this.repository.getKitchenState(userId),
     ]);
 
     return {
       personalized: true,
+      kitchen,
       sections: [
         section('continue', 'On your plan this week', 'Keep momentum with meals already planned for the next seven days.', planned),
         section('pantry', 'From your pantry', 'Recipes ranked by the ingredients you already have marked as available.', pantry),

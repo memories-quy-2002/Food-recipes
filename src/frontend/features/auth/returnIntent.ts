@@ -1,11 +1,14 @@
 const STORAGE_KEY = "food-recipes:auth-intent";
 const INTENT_TTL_MS = 10 * 60 * 1000;
 
-export type AuthIntentAction = "saveRecipe" | "saveToCollection";
+export type AuthIntentAction = "saveRecipe" | "saveToCollection" | "addToPlan" | "addIngredients" | "prepareMeal";
 
 const ALLOWED_ACTIONS = new Set<AuthIntentAction>([
 	"saveRecipe",
 	"saveToCollection",
+	"addToPlan",
+	"addIngredients",
+	"prepareMeal",
 ]);
 
 export type AuthIntent = {
@@ -30,7 +33,7 @@ const isRecord = (value: unknown): value is RecordValue =>
 	typeof value === "object" && value !== null;
 
 const isAuthIntentAction = (value: unknown): value is AuthIntentAction =>
-	value === "saveRecipe" || value === "saveToCollection";
+	value === "saveRecipe" || value === "saveToCollection" || value === "addToPlan" || value === "addIngredients" || value === "prepareMeal";
 
 const isStoredRecipeId = (value: unknown): value is string =>
 	typeof value === "string" && value.length > 0;
@@ -65,7 +68,7 @@ const isAuthIntent = (value: unknown): value is AuthIntent => {
 	}
 	return !(
 		value.action &&
-		["saveRecipe", "saveToCollection"].includes(value.action) &&
+		["saveRecipe", "saveToCollection", "addToPlan", "addIngredients", "prepareMeal"].includes(value.action) &&
 		!value.recipeId
 	);
 };
@@ -157,6 +160,39 @@ export const isMatchingSaveToCollectionIntent = (
 ): boolean =>
 	isAuthIntent(intent) &&
 	intent.action === "saveToCollection" &&
+	isSafeInternalPath(currentPath) &&
+	intent.returnTo === currentPath &&
+	String(intent.recipeId) === String(recipeId);
+
+export const isMatchingAddToPlanIntent = (
+	intent: unknown,
+	currentPath: unknown,
+	recipeId: string | number,
+): boolean =>
+	isAuthIntent(intent) &&
+	intent.action === "addToPlan" &&
+	isSafeInternalPath(currentPath) &&
+	intent.returnTo === currentPath &&
+	String(intent.recipeId) === String(recipeId);
+
+export const isMatchingAddIngredientsIntent = (
+	intent: unknown,
+	currentPath: unknown,
+	recipeId: string | number,
+): boolean =>
+	isAuthIntent(intent) &&
+	intent.action === "addIngredients" &&
+	isSafeInternalPath(currentPath) &&
+	intent.returnTo === currentPath &&
+	String(intent.recipeId) === String(recipeId);
+
+export const isMatchingPrepareMealIntent = (
+	intent: unknown,
+	currentPath: unknown,
+	recipeId: string | number,
+): boolean =>
+	isAuthIntent(intent) &&
+	intent.action === "prepareMeal" &&
 	isSafeInternalPath(currentPath) &&
 	intent.returnTo === currentPath &&
 	String(intent.recipeId) === String(recipeId);

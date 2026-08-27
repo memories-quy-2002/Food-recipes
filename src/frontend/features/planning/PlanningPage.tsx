@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, CalendarDays, List, ShoppingBasket } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
@@ -15,8 +15,21 @@ import WeekNavigator from "./components/WeekNavigator";
 type DialogState = { date: string; slot: MealSlot; item?: MealPlanItem };
 type PlanningView = "calendar" | "agenda";
 
+const PLANNING_VIEW_STORAGE_KEY = "food-recipes:planning-view";
+
+const readStoredWeek = (): WeekRange => {
+	if (typeof window === "undefined") return getWeekRange(new Date());
+	try {
+		const stored = JSON.parse(window.localStorage.getItem(PLANNING_VIEW_STORAGE_KEY) || "null") as { from?: unknown } | null;
+		if (typeof stored?.from !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(stored.from)) return getWeekRange(new Date());
+		return getWeekRange(new Date(`${stored.from}T00:00:00`));
+	} catch {
+		return getWeekRange(new Date());
+	}
+};
+
 const PlanningPage = () => {
-	const [visibleWeek, setVisibleWeek] = useState<WeekRange>(() => getWeekRange(new Date()));
+	const [visibleWeek, setVisibleWeek] = useState<WeekRange>(readStoredWeek);
 	const [dialogState, setDialogState] = useState<DialogState | null>(null);
 	const [planningView, setPlanningView] = useState<PlanningView>("calendar");
 	const mealPlanQuery = useMealPlanForWeekQuery(visibleWeek);
@@ -29,6 +42,9 @@ const PlanningPage = () => {
 	const isMealMutationPending = addMealMutation.isPending || updateMealMutation.isPending;
 	const mutationError = addMealMutation.error || updateMealMutation.error ? "We could not save this meal. Try again." : null;
 	const moveWeek = (offset: number) => setVisibleWeek((range) => shiftWeek(range.from, offset));
+	useEffect(() => {
+		window.localStorage.setItem(PLANNING_VIEW_STORAGE_KEY, JSON.stringify({ from: visibleWeek.from }));
+	}, [visibleWeek.from]);
 	const createPlan = () => createPlanMutation.mutate({ name: "This week", from: visibleWeek.from, to: visibleWeek.to });
 	const handleMealSubmit = (input: AddMealPlanItemInput, itemId?: number) => {
 		if (!activePlan) return;

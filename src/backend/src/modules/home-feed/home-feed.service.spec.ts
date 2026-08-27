@@ -9,6 +9,7 @@ describe('HomeFeedService', () => {
     listPlanned: jest.fn(),
     listFromPantry: jest.fn(),
     listRecommended: jest.fn(),
+    getKitchenState: jest.fn(),
   };
 
   beforeEach(() => {
@@ -19,6 +20,13 @@ describe('HomeFeedService', () => {
     repository.listPlanned.mockResolvedValue([]);
     repository.listFromPantry.mockResolvedValue([]);
     repository.listRecommended.mockResolvedValue([]);
+    repository.getKitchenState.mockResolvedValue({
+      active_session: null,
+      next_meal: null,
+      shopping: { open_items: 0, completed_items: 0 },
+      pantry: { available_items: 0 },
+      progress: { saved_recipes: 0, planned_meals: 0, completed_cooks: 0 },
+    });
   });
 
   it('builds a public feed from quick and popular catalog sections', async () => {
@@ -64,5 +72,19 @@ describe('HomeFeedService', () => {
     expect(repository.listFromPantry).toHaveBeenCalledWith(42, 8);
     expect(repository.listRecommended).toHaveBeenCalledWith(42, 8);
     expect(repository.listSaved).toHaveBeenCalledWith(42, 6);
+    expect(repository.getKitchenState).toHaveBeenCalledWith(42);
+  });
+
+  it('returns the owned kitchen state alongside the personalized feed', async () => {
+    const kitchen = {
+      active_session: { session_id: 3, recipe_id: 15, recipe_name: 'Pasta', current_step: 2, total_steps: 5, status: 'paused' as const },
+      next_meal: null,
+      shopping: { open_items: 2, completed_items: 1 },
+      pantry: { available_items: 4 },
+      progress: { saved_recipes: 1, planned_meals: 1, completed_cooks: 0 },
+    } as never;
+    repository.getKitchenState.mockResolvedValue(kitchen);
+
+    await expect(new HomeFeedService(repository).getPersonalizedFeed(42)).resolves.toMatchObject({ kitchen });
   });
 });

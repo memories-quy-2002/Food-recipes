@@ -5,8 +5,9 @@ import type { HomeFeedSection, HomeFeedSectionKey, RecipeSummary } from "@/share
 import { useHomeFeedQuery } from "./api/useHomeFeedQuery";
 import type { WishlistItem } from "./main/FoodCardList";
 import RecipeCard from "@/shared/ui/RecipeCard";
+import KitchenCommandCenter from "./KitchenCommandCenter";
 
-const HOME_FEED_SECTION_LIMIT = 1;
+const HOME_FEED_SECTION_LIMIT = 3;
 const HOME_FEED_RECIPE_LIMIT = 4;
 
 const sectionIcons: Record<HomeFeedSectionKey, LucideIcon> = {
@@ -59,12 +60,14 @@ const HomeFeedSection = ({
 
 export type PersonalizedHomeFeedProps = {
 	isAuthenticated: boolean;
+	userId?: number | string;
 	wishlist: WishlistItem[];
 	onClickFavorite: (recipeId: number) => void | Promise<void>;
 };
 
 const PersonalizedHomeFeed = ({
 	isAuthenticated,
+	userId,
 	wishlist,
 	onClickFavorite,
 }: PersonalizedHomeFeedProps): ReactElement => {
@@ -102,6 +105,7 @@ const PersonalizedHomeFeed = ({
 
 	return (
 		<section aria-labelledby="home-feed-title" className="space-y-8">
+			{isAuthenticated && data?.kitchen ? <KitchenCommandCenter kitchen={data.kitchen} userId={userId} /> : null}
 			<div className="rounded-3xl border border-border bg-card p-6 shadow-sm sm:p-8">
 				<div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 					<div>

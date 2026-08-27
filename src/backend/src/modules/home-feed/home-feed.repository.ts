@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 
 export type HomeFeedRecipe = {
@@ -22,6 +22,38 @@ export type HomeFeedRecipe = {
   dietary_tags: string[];
 };
 
+export type KitchenActiveSession = {
+  session_id: number;
+  recipe_id: number;
+  recipe_name: string;
+  meal_plan_item_id: number | null;
+  planned_date: Date | string | null;
+  slot: string | null;
+  servings: number;
+  current_step: number;
+  total_steps: number;
+  status: 'active' | 'paused';
+  updated_at: Date;
+};
+
+export type KitchenNextMeal = {
+  item_id: number;
+  plan_id: number;
+  recipe_id: number;
+  recipe_name: string;
+  planned_date: Date | string;
+  slot: string;
+  servings: number;
+};
+
+export type KitchenState = {
+  active_session: KitchenActiveSession | null;
+  next_meal: KitchenNextMeal | null;
+  shopping: { open_items: number; completed_items: number };
+  pantry: { available_items: number };
+  progress: { saved_recipes: number; planned_meals: number; completed_cooks: number };
+};
+
 export interface HomeFeedRepositoryPort {
   listPopular(limit: number): Promise<HomeFeedRecipe[]>;
   listQuick(limit: number): Promise<HomeFeedRecipe[]>;
@@ -29,6 +61,7 @@ export interface HomeFeedRepositoryPort {
   listPlanned(userId: number, limit: number): Promise<HomeFeedRecipe[]>;
   listFromPantry(userId: number, limit: number): Promise<HomeFeedRecipe[]>;
   listRecommended(userId: number, limit: number): Promise<HomeFeedRecipe[]>;
+  getKitchenState(userId: number): Promise<KitchenState>;
 }
 
 export const HOME_FEED_REPOSITORY = Symbol('HOME_FEED_REPOSITORY');
@@ -225,6 +258,96 @@ export class HomeFeedRepository implements HomeFeedRepositoryPort {
       LIMIT ${limit}
     `);
     return normalizeRows(rows);
+  }
+
+  async getKitchenState(userId: number): Promise<KitchenState> {
+    const [activeRows, nextMealRows, shoppingRows, pantryRows, progressRows] = await Promise.all([
+      this.prisma.$queryRaw<KitchenActiveSession[]>(Prisma.sql`
+        SELECT s.session_id, s.recipe_id, r.recipe_name, s.meal_plan_item_id,
+               i.planned_date, i.slot, s.servings, s.current_step,
+               GREATEST(COALESCE(array_length(r.instructions, 1), 0), 0)::int AS total_steps,
+               s.status, s.updated_at
+        FROM cooking_sessions s
+        JOIN recipes r ON r.recipe_id = s.recipe_id
+        LEFT JOIN meal_plan_items i ON i.item_id = s.meal_plan_item_id
+        WHERE s.user_id = ${userId}
+          AND s.status IN ('active', 'paused')
+        ORDER BY s.updated_at DESC, s.session_id DESC
+        LIMIT 1
+      `),
+      this.prisma.$queryRaw<KitchenNextMeal[]>(Prisma.sql`
+        SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name,
+               i.planned_date, i.slot, i.servings
+        FROM meal_plan_items i
+        JOIN meal_plans p ON p.plan_id = i.plan_id
+        JOIN recipes r ON r.recipe_id = i.recipe_id
+        WHERE p.user_id = ${userId}
+          AND r.status = 'published'
+          AND i.planned_date >= CURRENT_DATE
+        ORDER BY i.planned_date ASC,
+                 CASE i.slot WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END,
+                 i.item_id ASC
+        LIMIT 1
+      `),
+      this.prisma.$queryRaw<{ open_items: number; completed_items: number }[]>(Prisma.sql`
+        SELECT COUNT(*) FILTER (WHERE checked = FALSE)::int AS open_items,
+               COUNT(*) FILTER (WHERE checked = TRUE)::int AS completed_items
+        FROM shopping_list_items
+        WHERE user_id = ${userId}
+      `),
+      this.prisma.$queryRaw<{ available_items: number }[]>(Prisma.sql`
+        SELECT COUNT(*) FILTER (WHERE have = TRUE AND (quantity IS NULL OR quantity > 0))::int AS available_items
+        FROM pantry_items
+        WHERE user_id = ${userId}
+      `),
+      this.prisma.$queryRaw<{ saved_recipes: number; planned_meals: number; completed_cooks: number }[]>(Prisma.sql`
+        SELECT
+          (SELECT COUNT(*)::int FROM wishlist WHERE user_id = ${userId}) AS saved_recipes,
+          (SELECT COUNT(*)::int
+           FROM meal_plan_items i
+           JOIN meal_plans p ON p.plan_id = i.plan_id
+           WHERE p.user_id = ${userId} AND i.planned_date >= CURRENT_DATE) AS planned_meals,
+          (SELECT COUNT(*)::int FROM cooking_history WHERE user_id = ${userId}) AS completed_cooks
+      `),
+    ]);
+
+    const activeSession = activeRows[0];
+    const shopping = shoppingRows[0] ?? { open_items: 0, completed_items: 0 };
+    const pantry = pantryRows[0] ?? { available_items: 0 };
+    const progress = progressRows[0] ?? { saved_recipes: 0, planned_meals: 0, completed_cooks: 0 };
+
+    return {
+      active_session: activeSession
+        ? {
+            ...activeSession,
+            session_id: Number(activeSession.session_id),
+            recipe_id: Number(activeSession.recipe_id),
+            meal_plan_item_id: activeSession.meal_plan_item_id === null ? null : Number(activeSession.meal_plan_item_id),
+            servings: Number(activeSession.servings),
+            current_step: Number(activeSession.current_step),
+            total_steps: Number(activeSession.total_steps),
+          }
+        : null,
+      next_meal: nextMealRows[0]
+        ? {
+            ...nextMealRows[0],
+            item_id: Number(nextMealRows[0].item_id),
+            plan_id: Number(nextMealRows[0].plan_id),
+            recipe_id: Number(nextMealRows[0].recipe_id),
+            servings: Number(nextMealRows[0].servings),
+          }
+        : null,
+      shopping: {
+        open_items: Number(shopping.open_items),
+        completed_items: Number(shopping.completed_items),
+      },
+      pantry: { available_items: Number(pantry.available_items) },
+      progress: {
+        saved_recipes: Number(progress.saved_recipes),
+        planned_meals: Number(progress.planned_meals),
+        completed_cooks: Number(progress.completed_cooks),
+      },
+    };
   }
 
   private async listCatalogRecipes(

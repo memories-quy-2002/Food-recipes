@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
+	prepareRecipeIngredients,
 	addShoppingItem,
 	clearCompletedShoppingItems,
 	deleteShoppingItem,
@@ -23,7 +24,10 @@ export const useShoppingListQuery = () =>
 	});
 
 const invalidateShoppingList = async (queryClient: ReturnType<typeof useQueryClient>) => {
-	await queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.all });
+	await Promise.all([
+		queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.all }),
+		queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
+	]);
 };
 
 export const useAddShoppingItemMutation = () => {
@@ -84,5 +88,23 @@ export const useAddRecipeIngredientsFromRecipesMutation = () => {
 		mutationFn: (recipeIds: number[]) => addRecipeIngredientsFromRecipes(recipeIds),
 		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Planned ingredients imported" }); },
 		onError: () => showToast({ title: "Couldn’t import planned ingredients", message: "Please try again.", type: "error" }),
+	});
+};
+
+export const usePrepareRecipeIngredientsMutation = () => {
+	const queryClient = useQueryClient();
+	const { showToast } = useToast();
+	return useMutation({
+		mutationFn: ({ recipeId, servings }: { recipeId: number; servings?: number }) =>
+			prepareRecipeIngredients(recipeId, servings),
+		onSuccess: async (result) => {
+			await invalidateShoppingList(queryClient);
+			showToast({
+				title: result.added_shopping_items
+					? `${result.added_shopping_items} missing ingredient${result.added_shopping_items === 1 ? "" : "s"} added`
+					: "This meal is ready to prepare",
+			});
+		},
+		onError: () => showToast({ title: "Couldn’t prepare this meal", message: "Please try again.", type: "error" }),
 	});
 };

@@ -7,6 +7,7 @@ import {
 	clearCompletedShoppingItems,
 	deleteShoppingItem,
 	listShoppingItems,
+	prepareRecipeIngredients,
 	updateShoppingItem,
 } from "./shoppingApi";
 
@@ -77,6 +78,17 @@ describe("shopping list API", () => {
 
 		expect(mockedAxios.post).toHaveBeenCalledWith("/users/me/shopping-list/from-recipe", {
 			recipeIds: [15, 16],
+		});
+	});
+
+	it("prepares a recipe against the pantry through the server-owned route", async () => {
+		mockedAxios.post.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 2 } });
+
+		await prepareRecipeIngredients(15, 4);
+
+		expect(mockedAxios.post).toHaveBeenCalledWith("/users/me/shopping-list/prepare", {
+			recipeId: 15,
+			servings: 4,
 		});
 	});
 });

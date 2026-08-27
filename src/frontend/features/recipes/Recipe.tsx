@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { isAxiosError } from "axios";
 import axios from "@/shared/api/axios";
@@ -13,12 +14,16 @@ import RecipeContent from "@/features/recipes/RecipeContent";
 import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
 import { useCookingSession } from "@/features/recipes/cooking/useCookingSession";
-import { useAddRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import { clearCookingToolsState, getCookingToolsStorageKey } from "@/features/recipes/cooking/cookingToolsStorage";
+import { useAddRecipeIngredientsMutation, usePrepareRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import type { PrepareRecipeResponse } from "@/features/shopping/api/shoppingApi";
+import PreparationSummary from "@/features/shopping/PreparationSummary";
 import type {
 	CookingCompletionAction,
 	CookingSessionCompletionResponse,
 	CookingShoppingListResponse,
 } from "@/features/history/api/cookingSessionApi";
+import { historyQueryKeys } from "@/features/history/api/historyQueries";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -34,6 +39,9 @@ import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
 	isMatchingSaveToCollectionIntent,
+	isMatchingAddToPlanIntent,
+	isMatchingAddIngredientsIntent,
+	isMatchingPrepareMealIntent,
 } from "@/features/auth/returnIntent";
 import {
 	useAddRecipeToCollectionMutation,
@@ -153,9 +161,11 @@ const Recipe = (): React.ReactElement => {
 	const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
 	const [collectionDialogError, setCollectionDialogError] = useState<string | null>(null);
 	const [pendingCollectionId, setPendingCollectionId] = useState<number | null>(null);
+	const [preparationResult, setPreparationResult] = useState<PrepareRecipeResponse | null>(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
+	const prepareRecipeMutation = usePrepareRecipeIngredientsMutation();
 	const collectionsQuery = useCollectionsQuery(isAuthenticated);
 	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
@@ -188,6 +198,9 @@ const Recipe = (): React.ReactElement => {
 					returnTo: safeReturnTo,
 			  }
 			: null;
+	const cookingToolsStorageKey = recipe
+		? getCookingToolsStorageKey(isAuthenticated ? userId : 0, recipe.recipe_id)
+		: null;
 	const cookingSession: CookingSessionControls = useCookingSession({
 		enabled: isCookingMode && Boolean(recipe),
 		userId: isAuthenticated ? userId : 0,
@@ -195,6 +208,14 @@ const Recipe = (): React.ReactElement => {
 		mealPlanItemId: planningContext?.planItemId,
 		servings: planningContext?.servings ?? recipe?.nutrition?.servings ?? 1,
 	});
+	const queryClient = useQueryClient();
+	const refreshKitchenQueries = async (): Promise<void> => {
+		await Promise.all([
+			queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
+			queryClient.invalidateQueries({ queryKey: historyQueryKeys.all }),
+			queryClient.invalidateQueries({ queryKey: ["planning"] }),
+		]);
+	};
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef<unknown>(null);
 	const favoriteLoadKey =
@@ -393,12 +414,27 @@ const Recipe = (): React.ReactElement => {
 
 	const handleAddIngredientsToShoppingList = () => {
 		if (!isAuthenticated) {
+			beginAuthIntent({ returnTo: currentPath, action: "addIngredients", recipeId: recipe?.recipe_id });
 			navigate("/account?signup=false", { state: { from: currentPath } });
 			return;
 		}
 		if (!recipe || addIngredientsMutation.isPending) return;
 
 		addIngredientsMutation.mutate(recipe.recipe_id);
+	};
+
+	const handlePrepareMeal = () => {
+		if (!isAuthenticated) {
+			beginAuthIntent({ returnTo: currentPath, action: "prepareMeal", recipeId: recipe?.recipe_id });
+			navigate("/account?signup=false", { state: { from: currentPath } });
+			return;
+		}
+		if (!recipe || prepareRecipeMutation.isPending) return;
+		setPreparationResult(null);
+		prepareRecipeMutation.mutate(
+			{ recipeId: recipe.recipe_id, servings: Number(recipe.nutrition?.servings ?? 1) },
+			{ onSuccess: setPreparationResult },
+		);
 	};
 
 	const handleCookingComplete = async (action?: CookingCompletionAction): Promise<CookingSessionCompletionResponse | CookingShoppingListResponse | null> => {
@@ -408,15 +444,25 @@ const Recipe = (): React.ReactElement => {
 			if ("status" in completedSession && completedSession.status === "shopping_list_updated") {
 				showToast({ title: "Missing ingredients added to shopping list" });
 			} else {
+				clearCookingToolsState(cookingToolsStorageKey);
 				showToast({ title: "Cooking history saved" });
 			}
+			await refreshKitchenQueries();
 			return completedSession;
 		}
+		clearCookingToolsState(cookingToolsStorageKey);
+		await refreshKitchenQueries();
 		return null;
+	};
+
+	const handleCookingPause = async (): Promise<void> => {
+		await cookingSession.pause();
+		await queryClient.invalidateQueries({ queryKey: ["home-feed"] });
 	};
 
 	const handleAddToPlan = () => {
 		if (!isAuthenticated) {
+			beginAuthIntent({ returnTo: currentPath, action: "addToPlan", recipeId: recipe?.recipe_id });
 			navigate("/account?signup=false", { state: { from: currentPath } });
 			return;
 		}
@@ -476,8 +522,29 @@ const Recipe = (): React.ReactElement => {
 			navigate(currentPath, { replace: true, state: null });
 			setCollectionDialogError(null);
 			setIsCollectionDialogOpen(true);
+			return;
 		}
-	}, [currentPath, favorite, handleClickFavorite, isAuthenticated, isFavoriteLoaded, location.state, navigate, recipe]);
+
+		if (isMatchingAddToPlanIntent(intent, currentPath, recipe.recipe_id)) {
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			setIsAddToPlanOpen(true);
+			return;
+		}
+
+		if (isMatchingAddIngredientsIntent(intent, currentPath, recipe.recipe_id)) {
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			handleAddIngredientsToShoppingList();
+			return;
+		}
+
+		if (isMatchingPrepareMealIntent(intent, currentPath, recipe.recipe_id)) {
+			processedAuthIntent.current = intent;
+			navigate(currentPath, { replace: true, state: null });
+			handlePrepareMeal();
+		}
+	}, [currentPath, favorite, handleAddIngredientsToShoppingList, handleClickFavorite, handlePrepareMeal, isAuthenticated, isFavoriteLoaded, location.state, navigate, recipe]);
 	useEffect(() => {
 		fetchRecipe();
 	}, [fetchRecipe]);
@@ -581,17 +648,20 @@ const Recipe = (): React.ReactElement => {
 			) : recipe && isCookingMode ? (
 				<CookingMode
 					recipe={{
-					recipe_id: recipe.recipe_id,
-					recipe_name: recipe.recipe_name ?? undefined,
-					instructions: recipe.instructions ?? undefined,
-				}}
+						recipe_id: recipe.recipe_id,
+						recipe_name: recipe.recipe_name ?? undefined,
+						instructions: recipe.instructions ?? undefined,
+						structured_ingredients: recipe.structured_ingredients ?? undefined,
+						ingredients: recipe.ingredients ?? undefined,
+					}}
 					planningContext={planningContext || undefined}
 					onComplete={handleCookingComplete}
 					initialStepIndex={cookingSession.session?.current_step ?? 0}
 					isSessionReady={cookingSession.isReady}
 					sessionError={cookingSession.error}
 					onStepChange={cookingSession.updateProgress}
-					onPause={cookingSession.pause}
+					onPause={handleCookingPause}
+					toolsStorageKey={cookingToolsStorageKey}
 					onBackToPlan={
 						planningContext
 							? () => navigate(planningContext.returnTo || "/planning")
@@ -607,10 +677,13 @@ const Recipe = (): React.ReactElement => {
 							favorite={favorite}
 							onClickFavorite={handleClickFavorite}
 							onSaveToCollection={handleSaveToCollection}
-							onAddToPlan={handleAddToPlan}
-							onAddIngredients={handleAddIngredientsToShoppingList}
+								onAddToPlan={handleAddToPlan}
+								onPrepareMeal={handlePrepareMeal}
+								isPreparingMeal={prepareRecipeMutation.isPending}
+								onAddIngredients={handleAddIngredientsToShoppingList}
 							isAddingIngredients={addIngredientsMutation.isPending}
 						/>
+						{preparationResult && <div className="mx-auto w-full max-w-[100rem] px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]"><PreparationSummary result={preparationResult} /></div>}
 					</div>
 					<div className="recipe-print__utilities mx-auto flex w-full max-w-[100rem] justify-end px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]" data-print-hidden>
 				<div className="flex items-center gap-1 rounded-xl border border-border/70 bg-card/80 p-1 shadow-sm" role="group" aria-label="Recipe utilities">

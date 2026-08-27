@@ -7,6 +7,7 @@ import {
 	getAuthReturnPath,
 	isSafeInternalPath,
 	isMatchingSaveRecipeIntent,
+	isMatchingPrepareMealIntent,
 	type AuthIntent,
 } from "./returnIntent";
 
@@ -134,5 +135,13 @@ describe("authentication return intent", () => {
 			action: "saveToCollection",
 			recipeId: "7",
 		});
+	});
+
+	it("preserves preparation intent so a guest can continue after signing in", () => {
+		beginAuthIntent({ returnTo: "/recipe?id=7", action: "prepareMeal", recipeId: 7 });
+
+		const intent = consumeAuthIntent();
+		expect(intent).not.toBeNull();
+		expect(isMatchingPrepareMealIntent(intent, "/recipe?id=7", 7)).toBe(true);
 	});
 });

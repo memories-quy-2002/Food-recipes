@@ -1,6 +1,6 @@
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { Link } from "react-router-dom";
-import { Cookie, GripVertical, Moon, Pencil, Play, Plus, Sun, Sunrise, Trash2, type LucideIcon } from "lucide-react";
+import { CheckCircle2, Cookie, GripVertical, Moon, Pencil, Play, Plus, Sun, Sunrise, Trash2, type LucideIcon } from "lucide-react";
 import Button from "@/shared/ui/Button";
 import type { MealPlanItem, MealSlot as MealSlotName } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
@@ -27,6 +27,12 @@ const SLOT_META: Record<MealSlotName, { shortLabel: string; Icon: LucideIcon }> 
 const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1);
 const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
 
+const statusMeta = {
+	planned: { label: "Planned", className: "bg-muted text-muted-foreground" },
+	cooking: { label: "Cooking", className: "bg-primary/10 text-primary" },
+	completed: { label: "Completed", className: "bg-secondary text-secondary-foreground" },
+} as const;
+
 const SlotBadge = ({ slot }: { slot: MealSlotName }) => {
 	const { shortLabel, Icon } = SLOT_META[slot];
 
@@ -52,6 +58,8 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 	});
 	const style = { opacity: isDragging ? 0.45 : undefined };
 	const addLabel = `Add recipe to ${fullWeekday(day)} ${slot}`;
+	const cookingStatus = item?.cooking_status ?? "planned";
+	const status = statusMeta[cookingStatus];
 
 	if (!item) {
 		return (
@@ -94,10 +102,13 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 			>
 				<div className="flex items-center justify-between gap-2">
 					<SlotBadge slot={slot} />
-					<span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground" title={`${item.servings} servings`}>
+					<div className="flex items-center gap-2">
+						<span className={`inline-flex min-h-7 items-center gap-1 rounded-full px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] ${status.className}`}><CheckCircle2 className="size-3" aria-hidden="true" />{status.label}</span>
+						<span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground" title={`${item.servings} servings`}>
 						<span aria-hidden="true">{item.servings}×</span>
 						<span className="sr-only">{item.servings} servings</span>
-					</span>
+						</span>
+					</div>
 				</div>
 
 				<Link
@@ -115,13 +126,13 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 					<Link
 						className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						to={`/recipe/cooking?id=${item.recipe_id}&planItemId=${item.item_id}&date=${encodeURIComponent(item.planned_date.slice(0, 10))}&slot=${item.slot}&servings=${item.servings}&returnTo=%2Fplanning`}
-						aria-label={`Start cooking ${item.recipe_name}`}
-						title={`Start cooking ${item.recipe_name}`}
+						aria-label={`${cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"} ${item.recipe_name}`}
+						title={`${cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"} ${item.recipe_name}`}
 						onPointerDown={stopDragStart}
 						onKeyDown={stopDragStart}
 					>
 						<Play className="size-4 fill-current" aria-hidden="true" />
-						<span className="sr-only">Start cooking</span>
+						<span className="sr-only">{cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"}</span>
 					</Link>
 					<div className="flex items-center gap-1">
 						<Button

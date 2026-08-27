@@ -1,13 +1,39 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MealPlanSlot } from './dto/add-meal-plan-item.dto';
+import {
+  calculateInventoryConsumption,
+  formatInventoryQuantity,
+  normalizeIngredientName,
+  normalizePantryUnit,
+  type InventoryPantryItem,
+  type InventoryRecipeIngredient,
+} from '../pantry/pantry-inventory';
 
 export type MealPlanRecord = { plan_id: number; name: string; start_date: Date | string; end_date: Date | string; created_at: Date; updated_at: Date };
-export type MealPlanItemRecord = { item_id: number; plan_id: number; recipe_id: number; recipe_name: string; planned_date: Date | string; slot: MealPlanSlot; servings: number; created_at: Date };
+export type MealPlanItemRecord = { item_id: number; plan_id: number; recipe_id: number; recipe_name: string; planned_date: Date | string; slot: MealPlanSlot; servings: number; cooking_status: 'planned' | 'cooking' | 'completed'; created_at: Date };
 export type ShoppingListItemRecord = { item_id: number; label: string; quantity: string | null; source_recipe_id: number | null; source_recipe_name: string | null; checked: boolean; created_at: Date; updated_at: Date };
 export type StructuredShoppingIngredient = { name: string; quantity: number | null; unit: string | null; note: string | null; position: number; recipe_id?: number };
 export type RecipeIngredientsRecord = { name: string; ingredients: string[]; structuredIngredients?: StructuredShoppingIngredient[] };
+export type PreparedIngredientStatus = 'available' | 'missing' | 'needs_details';
+export type PreparedIngredientRecord = {
+  position: number;
+  ingredient_name: string;
+  required_quantity: number | null;
+  required_unit: string | null;
+  available_quantity: number | null;
+  missing_quantity: number | null;
+  pantry_id: number | null;
+  status: PreparedIngredientStatus;
+};
+export type PrepareRecipeIngredientsRecord = {
+  recipe_id: number;
+  recipe_name: string;
+  servings: number;
+  ingredients: PreparedIngredientRecord[];
+  added_shopping_items: number;
+};
 
 export interface PlanningRepositoryPort {
   listPlans(userId: number, from?: string, to?: string): Promise<MealPlanRecord[]>;
@@ -26,6 +52,7 @@ export interface PlanningRepositoryPort {
   updateShoppingItem(userId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null>;
   deleteShoppingItem(userId: number, itemId: number): Promise<boolean>;
   recipeIngredients(recipeId: number): Promise<RecipeIngredientsRecord | null>;
+  prepareRecipeIngredients(userId: number, recipeId: number, servings?: number): Promise<PrepareRecipeIngredientsRecord | null>;
   clearCompletedShoppingItems(userId: number): Promise<number>;
 }
 
@@ -79,7 +106,19 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   async listPlanItems(userId: number, planId: number): Promise<MealPlanItemRecord[]> {
     return this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
-      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings, i.created_at
+      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+             CASE
+               WHEN EXISTS (
+                 SELECT 1 FROM cooking_sessions cs
+                 WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')
+               ) THEN 'cooking'
+               WHEN EXISTS (
+                 SELECT 1 FROM cooking_history ch
+                 WHERE ch.meal_plan_item_id = i.item_id
+               ) THEN 'completed'
+               ELSE 'planned'
+             END AS cooking_status,
+             i.created_at
       FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id JOIN recipes r ON r.recipe_id = i.recipe_id
       WHERE p.user_id = ${userId} AND i.plan_id = ${planId}
       ORDER BY i.planned_date ASC, CASE i.slot WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END, i.item_id ASC
@@ -88,7 +127,19 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   async findPlanItem(userId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null> {
     const rows = await this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
-      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings, i.created_at
+      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+             CASE
+               WHEN EXISTS (
+                 SELECT 1 FROM cooking_sessions cs
+                 WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')
+               ) THEN 'cooking'
+               WHEN EXISTS (
+                 SELECT 1 FROM cooking_history ch
+                 WHERE ch.meal_plan_item_id = i.item_id
+               ) THEN 'completed'
+               ELSE 'planned'
+             END AS cooking_status,
+             i.created_at
       FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id JOIN recipes r ON r.recipe_id = i.recipe_id
       WHERE p.user_id = ${userId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
     `);
@@ -185,6 +236,128 @@ export class PlanningRepository implements PlanningRepositoryPort {
     })) };
   }
 
+  async prepareRecipeIngredients(userId: number, recipeId: number, servings?: number): Promise<PrepareRecipeIngredientsRecord | null> {
+    const [recipeRows, structuredRows, nutritionRows, pantryRows] = await Promise.all([
+      this.prisma.$queryRaw<{ recipe_id: number; recipe_name: string; ingredients: string[] | null }[]>(Prisma.sql`
+        SELECT recipe_id, recipe_name, ingredients
+        FROM recipes
+        WHERE recipe_id = ${recipeId} AND status = 'published'
+      `),
+      this.prisma.$queryRaw<Array<InventoryRecipeIngredient & { quantity_text: string | null; unit_text: string | null }>>(Prisma.sql`
+        SELECT position, name, quantity, quantity_text, unit, unit_text
+        FROM recipe_ingredients
+        WHERE recipe_id = ${recipeId}
+        ORDER BY position ASC, ingredient_id ASC
+      `),
+      this.prisma.$queryRaw<{ servings: number | null }[]>(Prisma.sql`
+        SELECT servings FROM recipe_nutrition WHERE recipe_id = ${recipeId}
+      `),
+      this.prisma.$queryRaw<Array<InventoryPantryItem & { unit: string | null; quantity: number | string | null }>>(Prisma.sql`
+        SELECT pantry_id, name, have, quantity, unit
+        FROM pantry_items
+        WHERE user_id = ${userId}
+      `),
+    ]);
+
+    const recipe = recipeRows[0];
+    if (!recipe) return null;
+
+    const pantryItems: InventoryPantryItem[] = pantryRows.map((item) => ({
+      pantry_id: Number(item.pantry_id),
+      name: item.name,
+      have: item.have,
+      quantity: item.quantity === null ? null : Number(item.quantity),
+      unit: normalizePantryUnit(item.unit),
+    }));
+    const effectiveServings = servings ?? Number(nutritionRows[0]?.servings ?? 1);
+    let ingredients: PreparedIngredientRecord[];
+
+    if (structuredRows.length) {
+      const calculation = calculateInventoryConsumption(
+        structuredRows,
+        pantryItems,
+        effectiveServings,
+        Number(nutritionRows[0]?.servings ?? 1),
+      );
+      const consumptions = new Map(calculation.consumptions.map((item) => [item.position, item]));
+      ingredients = structuredRows.map((ingredient) => {
+        const consumption = consumptions.get(ingredient.position);
+        if (consumption) {
+          return {
+            position: consumption.position,
+            ingredient_name: consumption.ingredient_name,
+            required_quantity: consumption.required_quantity,
+            required_unit: consumption.required_unit,
+            available_quantity: consumption.available_quantity,
+            missing_quantity: consumption.missing_quantity,
+            pantry_id: consumption.pantry_id,
+            status: consumption.missing_quantity > 0 ? 'missing' : 'available',
+          };
+        }
+        return {
+          position: Number(ingredient.position),
+          ingredient_name: ingredient.name.trim(),
+          required_quantity: null,
+          required_unit: normalizePantryUnit(ingredient.unit ?? ingredient.unit_text),
+          available_quantity: null,
+          missing_quantity: null,
+          pantry_id: null,
+          status: 'needs_details',
+        };
+      });
+    } else {
+      const availablePantry = pantryItems.filter((item) => item.have && (item.quantity === null || item.quantity > 0));
+      ingredients = (recipe.ingredients ?? [])
+        .map((name, position) => name.trim())
+        .filter(Boolean)
+        .map((name, position) => {
+          const normalizedName = normalizeIngredientName(name);
+          const pantryItem = availablePantry.find((item) => {
+            const pantryName = normalizeIngredientName(item.name);
+            return normalizedName === pantryName || normalizedName.includes(pantryName) || pantryName.includes(normalizedName);
+          });
+          return {
+            position,
+            ingredient_name: name,
+            required_quantity: null,
+            required_unit: null,
+            available_quantity: null,
+            missing_quantity: pantryItem ? 0 : null,
+            pantry_id: pantryItem?.pantry_id ?? null,
+            status: pantryItem ? 'available' : 'needs_details',
+          };
+        });
+    }
+
+    let addedShoppingItems = 0;
+    for (const ingredient of ingredients.filter((item) => item.status !== 'available')) {
+      const quantity = ingredient.missing_quantity !== null && ingredient.missing_quantity > 0 && ingredient.required_unit
+        ? `${formatInventoryQuantity(ingredient.missing_quantity)} ${this.unitLabel(ingredient.required_unit)}`
+        : null;
+      const inserted = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
+        INSERT INTO shopping_list_items (user_id, label, quantity, source_recipe_id)
+        SELECT ${userId}, ${ingredient.ingredient_name}, ${quantity}, ${recipeId}
+        WHERE NOT EXISTS (
+          SELECT 1 FROM shopping_list_items
+          WHERE user_id = ${userId}
+            AND checked = FALSE
+            AND LOWER(TRIM(label)) = LOWER(TRIM(${ingredient.ingredient_name}))
+            AND COALESCE(quantity, '') = COALESCE(${quantity}, '')
+        )
+        RETURNING item_id
+      `);
+      addedShoppingItems += inserted.length;
+    }
+
+    return {
+      recipe_id: Number(recipe.recipe_id),
+      recipe_name: recipe.recipe_name,
+      servings: effectiveServings,
+      ingredients,
+      added_shopping_items: addedShoppingItems,
+    };
+  }
+
   clearCompletedShoppingItems(userId: number): Promise<number> {
     return this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE user_id = ${userId} AND checked = TRUE`);
   }
@@ -200,5 +373,13 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   private dateText(value: Date | string): string {
     return value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
+  }
+
+  private unitLabel(unit: string): string {
+    const labels: Record<string, string> = {
+      GRAM: 'g', KILOGRAM: 'kg', MILLILITER: 'ml', LITER: 'l',
+      TEASPOON: 'tsp', TABLESPOON: 'tbsp', CUP: 'cup', PIECE: 'piece',
+    };
+    return labels[unit] ?? unit.toLowerCase();
   }
 }

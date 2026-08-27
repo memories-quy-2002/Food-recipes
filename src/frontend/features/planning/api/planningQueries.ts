@@ -66,7 +66,10 @@ export const useSavedRecipeIdsQuery = () =>
 	});
 
 const invalidatePlanning = async (queryClient: ReturnType<typeof useQueryClient>) => {
-	await queryClient.invalidateQueries({ queryKey: planningQueryKeys.all });
+	await Promise.all([
+		queryClient.invalidateQueries({ queryKey: planningQueryKeys.all }),
+		queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
+	]);
 };
 
 export const useCreateMealPlanMutation = () => {

@@ -158,6 +158,39 @@ export type HomeFeedSection = {
 export type HomeFeedResponse = {
 	personalized: boolean;
 	sections: HomeFeedSection[];
+	kitchen?: KitchenState;
+};
+
+export type KitchenActiveSession = {
+	session_id: number;
+	recipe_id: number;
+	recipe_name: string;
+	meal_plan_item_id: number | null;
+	planned_date: string | null;
+	slot: string | null;
+	servings: number;
+	current_step: number;
+	total_steps: number;
+	status: "active" | "paused";
+	updated_at: string;
+};
+
+export type KitchenNextMeal = {
+	item_id: number;
+	plan_id: number;
+	recipe_id: number;
+	recipe_name: string;
+	planned_date: string;
+	slot: string;
+	servings: number;
+};
+
+export type KitchenState = {
+	active_session: KitchenActiveSession | null;
+	next_meal: KitchenNextMeal | null;
+	shopping: { open_items: number; completed_items: number };
+	pantry: { available_items: number };
+	progress: { saved_recipes: number; planned_meals: number; completed_cooks: number };
 };
 
 export type ApiErrorResponse = {

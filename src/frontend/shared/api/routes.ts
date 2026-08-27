@@ -49,6 +49,7 @@ type ApiRoutes = {
 	shoppingListItems: string;
 	shoppingListItem: (itemId: ApiRouteId) => string;
 	shoppingListFromRecipe: string;
+	shoppingListPrepare: string;
 	shoppingListCompleted: string;
 	cookingHistory: string;
 	cookingSession: string;
@@ -107,6 +108,7 @@ const apiRoutes: ApiRoutes = {
 	shoppingListItems: "/users/me/shopping-list/items",
 	shoppingListItem: (itemId) => `/users/me/shopping-list/items/${itemId}`,
 	shoppingListFromRecipe: "/users/me/shopping-list/from-recipe",
+	shoppingListPrepare: "/users/me/shopping-list/prepare",
 	shoppingListCompleted: "/users/me/shopping-list/completed",
 	cookingHistory: "/users/me/cooking-history",
 	cookingSession: "/users/me/cooking-session",
