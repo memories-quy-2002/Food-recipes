@@ -17,7 +17,7 @@ const PrintRecipeButton = ({ className }: PrintRecipeButtonProps): React.ReactEl
 
 	return (
 		<>
-			<Button type="button" size="icon" variant="outline" className={`size-11 ${className || ""}`} style={{ fontSize: 0 }} onClick={handlePrint} aria-label="Print recipe" title="Print recipe">
+			<Button type="button" size="icon" variant="outline" className={`size-11 h-11 ${className || ""}`} style={{ fontSize: 0 }} onClick={handlePrint} aria-label="Print recipe" title="Print recipe">
 				<Printer className="size-4" aria-hidden="true" />
 				Print
 			</Button>

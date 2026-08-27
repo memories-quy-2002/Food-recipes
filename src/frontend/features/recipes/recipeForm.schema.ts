@@ -148,8 +148,9 @@ export const createRecipeFormSchema = ({ categories = [], meals = [], isPublishi
 
 	return isPublishing
 		? schema.superRefine((value, context) => {
-			const unquantifiedIngredients = value.structuredIngredients.filter((ingredient) => Boolean(ingredient.name.trim()) && (!hasPositiveIngredientQuantity(ingredient) || !hasSupportedIngredientUnit(ingredient.unit)));
-			if (!value.structuredIngredients.some((ingredient) => ingredient.name.trim()) || unquantifiedIngredients.length > 0) {
+			const structuredIngredients = value.structuredIngredients.filter((ingredient) => Boolean(ingredient.name.trim()));
+			const unquantifiedIngredients = structuredIngredients.filter((ingredient) => !hasPositiveIngredientQuantity(ingredient) || !hasSupportedIngredientUnit(ingredient.unit));
+			if (structuredIngredients.length > 0 && unquantifiedIngredients.length > 0) {
 				context.addIssue({ code: z.ZodIssueCode.custom, path: ["structuredIngredients"], message: "Every ingredient needs a positive quantity and unit before publishing." });
 			}
 				if (!value.recipeImage) {
