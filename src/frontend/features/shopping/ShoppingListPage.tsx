@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
+import { Pencil, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import { getWeekRange } from "@/features/planning/api/planningDates";
 import { useMealPlanForWeekQuery } from "@/features/planning/api/planningQueries";
@@ -36,7 +37,7 @@ const ShoppingListPage = () => {
 	const items = shoppingQuery.data?.items ?? [];
 	const activeItems = items.filter((item) => !item.checked);
 	const completedItems = items.filter((item) => item.checked);
-	const availablePantryNames = (pantryQuery.data?.items ?? []).filter((item) => item.have).map((item) => item.name);
+	const availablePantryNames = (pantryQuery.data?.items ?? []).filter((item) => item.have && (item.quantity === null || item.quantity > 0)).map((item) => item.name);
 	const plannedRecipeIds = [...new Set((mealPlanQuery.data?.items ?? []).map((item) => item.recipe_id))];
 	const actionError =
 		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || plannedIngredientsMutation.isError
@@ -150,7 +151,7 @@ const ShoppingListPage = () => {
 						<div className="shopping-list__item-copy">
 							<strong>{item.label}</strong>
 							{item.quantity && <span>{item.quantity}</span>}
-							{!item.checked && isShoppingItemInPantry(item.label, availablePantryNames) && <span className="shopping-list__availability" aria-label={`${item.label} is already in your pantry`}>In pantry</span>}
+							{!item.checked && isShoppingItemInPantry(item.label, availablePantryNames) && <span className="shopping-list__availability">In pantry</span>}
 							{item.source_recipe_id && (
 								<Link className="shopping-list__source" to={`/recipe?id=${item.source_recipe_id}`}>
 									From {item.source_recipe_name || "Imported recipe"}
@@ -158,13 +159,11 @@ const ShoppingListPage = () => {
 							)}
 						</div>
 						<div className="shopping-list__item-actions">
-							<button type="button" className="shopping-list__button shopping-list__button--quiet" onClick={() => startEditing(item)}>
-								<span className="shopping-list__button-label">Edit</span>
-								<span className="shopping-list__sr-only"> {item.label}</span>
+							<button type="button" className="shopping-list__button shopping-list__button--quiet shopping-list__button--icon" onClick={() => startEditing(item)} aria-label={`Edit ${item.label}`} title="Edit item">
+								<Pencil className="size-4" aria-hidden="true" />
 							</button>
-							<button type="button" className="shopping-list__button shopping-list__button--danger" onClick={() => deleteMutation.mutate(item.item_id)}>
-								<span className="shopping-list__button-label">Delete</span>
-								<span className="shopping-list__sr-only"> {item.label}</span>
+							<button type="button" className="shopping-list__button shopping-list__button--danger shopping-list__button--icon" onClick={() => deleteMutation.mutate(item.item_id)} aria-label={`Delete ${item.label}`} title="Delete item">
+								<Trash2 className="size-4" aria-hidden="true" />
 							</button>
 						</div>
 					</>
@@ -184,7 +183,6 @@ const ShoppingListPage = () => {
 			<main className="shopping-list-page__main" aria-labelledby="shopping-list-title">
 				<header className="shopping-list-page__header">
 					<div>
-						<p className="shopping-list-page__eyebrow">Your kitchen run</p>
 						<h1 id="shopping-list-title">Shopping List</h1>
 						<p>Keep the next shop clear, flexible, and close to the recipes you actually want to cook.</p>
 					</div>
@@ -198,7 +196,6 @@ const ShoppingListPage = () => {
 
 				<section className="shopping-list__layout" aria-label="Shopping list workspace">
 					<section className="shopping-list__add-card" aria-labelledby="shopping-list-add-title">
-						<p className="shopping-list-page__eyebrow">Add by hand</p>
 						<h2 id="shopping-list-add-title">What do you need?</h2>
 						<p>Keep quantities in the form you use at the market—“a handful” is perfectly valid.</p>
 						<form onSubmit={submitItem}>
@@ -233,7 +230,6 @@ const ShoppingListPage = () => {
 					<section className="shopping-list__items-card" aria-labelledby="shopping-list-items-title">
 						<div className="shopping-list__card-heading">
 							<div>
-								<p className="shopping-list-page__eyebrow">The running list</p>
 								<h2 id="shopping-list-items-title">Ready when you are</h2>
 							</div>
 							<span className="shopping-list__count">{activeItems.length} to buy</span>

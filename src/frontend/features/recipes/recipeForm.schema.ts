@@ -1,6 +1,12 @@
 import { z } from "zod";
 
 const DURATION_UNITS = ["seconds", "minutes", "hours", "days"] as const;
+const RECIPE_INGREDIENT_UNITS = new Set([
+	"g", "gram", "grams", "kg", "kilogram", "kilograms",
+	"ml", "milliliter", "milliliters", "l", "liter", "liters", "litre", "litres",
+	"tsp", "teaspoon", "teaspoons", "tbsp", "tablespoon", "tablespoons",
+	"cup", "cups", "pc", "pcs", "piece", "pieces",
+]);
 type RecipeCatalogItem = Record<string, unknown>;
 type RecipeFormSchemaOptions = {
 	categories?: RecipeCatalogItem[];
@@ -32,6 +38,19 @@ const meaningfulListSchema = (message: string) => z.array(z.string()).refine(
 	(values) => values.some((value) => value.trim().length > 0),
 	{ message }
 );
+
+const hasPositiveIngredientQuantity = (ingredient: { quantity?: number | null; quantityText?: string }) => {
+	if (typeof ingredient.quantity === "number") return Number.isFinite(ingredient.quantity) && ingredient.quantity > 0;
+	const value = String(ingredient.quantityText || "").trim().replace(",", ".");
+	const parsed = value.match(/^(\d+(?:\.\d+)?)\s+(\d+)\/(\d+)$/) || value.match(/^(\d+)\/(\d+)$/);
+	if (parsed) {
+		const denominator = Number(parsed[parsed.length - 1]);
+		return denominator > 0;
+	}
+	return Number.isFinite(Number(value)) && Number(value) > 0;
+};
+
+const hasSupportedIngredientUnit = (unit: string): boolean => RECIPE_INGREDIENT_UNITS.has(unit.trim().toLowerCase());
 
 const durationSchema = (message: string) =>
 	z.object({
@@ -129,6 +148,10 @@ export const createRecipeFormSchema = ({ categories = [], meals = [], isPublishi
 
 	return isPublishing
 		? schema.superRefine((value, context) => {
+			const unquantifiedIngredients = value.structuredIngredients.filter((ingredient) => Boolean(ingredient.name.trim()) && (!hasPositiveIngredientQuantity(ingredient) || !hasSupportedIngredientUnit(ingredient.unit)));
+			if (!value.structuredIngredients.some((ingredient) => ingredient.name.trim()) || unquantifiedIngredients.length > 0) {
+				context.addIssue({ code: z.ZodIssueCode.custom, path: ["structuredIngredients"], message: "Every ingredient needs a positive quantity and unit before publishing." });
+			}
 				if (!value.recipeImage) {
 					context.addIssue({
 						code: z.ZodIssueCode.custom,

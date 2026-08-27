@@ -58,6 +58,66 @@ async function authenticateAsTestUser(page) {
 	await page.route("**/users/me/ratings", (route) =>
 		route.fulfill(json({ ratings: [] }))
 	);
+	let cookingSession = null;
+	await page.route("**/users/me/cooking-session**", async (route) => {
+		const request = route.request();
+		const url = new URL(request.url());
+		const path = url.pathname.slice(url.pathname.indexOf("/users/me/cooking-session"));
+		const method = request.method();
+
+		if (method === "GET" && path === "/users/me/cooking-session") {
+			return route.fulfill(json({ session: cookingSession }));
+		}
+		if (method === "POST" && path === "/users/me/cooking-session") {
+			const body = JSON.parse(request.postData() || "{}");
+			cookingSession = cookingSession
+				? { ...cookingSession, status: "active", paused_at: null }
+				: {
+						session_id: 31,
+						user_id: 7,
+						recipe_id: body.recipeId,
+						recipe_name: recipe.recipe_name,
+						meal_plan_item_id: body.mealPlanItemId ?? null,
+						planned_date: "2026-08-24",
+						slot: "dinner",
+						servings: body.servings ?? 1,
+						current_step: 0,
+						status: "active",
+						started_at: "2026-08-24T17:00:00.000Z",
+						last_active_at: "2026-08-24T17:00:00.000Z",
+						paused_at: null,
+						completed_at: null,
+						created_at: "2026-08-24T17:00:00.000Z",
+						updated_at: "2026-08-24T17:00:00.000Z",
+					};
+			return route.fulfill(json({ session: cookingSession }, 201));
+		}
+		if (method === "PATCH" && path === "/users/me/cooking-session/31") {
+			const body = JSON.parse(request.postData() || "{}");
+			cookingSession = { ...cookingSession, ...(body.currentStep === undefined ? {} : { current_step: body.currentStep }), ...(body.status ? { status: body.status } : {}) };
+			return route.fulfill(json({ session: cookingSession }));
+		}
+		if (method === "POST" && path === "/users/me/cooking-session/31/complete") {
+			cookingSession = { ...cookingSession, status: "completed", completed_at: "2026-08-24T17:35:00.000Z" };
+			return route.fulfill(json({
+				session: cookingSession,
+				history: {
+					history_id: 21,
+					user_id: 7,
+					recipe_id: recipe.recipe_id,
+					recipe_name: recipe.recipe_name,
+					meal_plan_item_id: cookingSession.meal_plan_item_id,
+					planned_date: cookingSession.planned_date,
+					slot: cookingSession.slot,
+					servings: cookingSession.servings,
+					started_at: cookingSession.started_at,
+					completed_at: cookingSession.completed_at,
+					created_at: cookingSession.completed_at,
+				},
+			}));
+		}
+		return route.fallback();
+	});
 	await page.route("**/users/me/cooking-history", async (route) => {
 		if (route.request().method() === "POST") {
 			const body = JSON.parse(route.request().postData() || "{}");

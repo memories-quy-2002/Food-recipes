@@ -1,11 +1,11 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingBasket, Trash2 } from "lucide-react";
+import { Check, Pencil, Search, ShoppingBasket, Trash2, X } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
-import type { PantryItem } from "./api/pantryApi";
+import { PANTRY_UNITS, type PantryItem, type PantryUnit } from "./api/pantryApi";
 import {
 	useCreatePantryItemMutation,
 	useDeletePantryItemMutation,
@@ -13,12 +13,30 @@ import {
 	useUpdatePantryItemMutation,
 } from "./api/pantryQueries";
 
+const unitLabels: Record<string, string> = {
+	GRAM: "g",
+	KILOGRAM: "kg",
+	MILLILITER: "ml",
+	LITER: "l",
+	TEASPOON: "tsp",
+	TABLESPOON: "tbsp",
+	CUP: "cup",
+	PIECE: "piece",
+};
+
+const unitLabel = (value: string | null) => value ? unitLabels[value] ?? value.toLowerCase() : "unit not set";
+
 const PantryPage = () => {
 	const pantryQuery = usePantryQuery();
 	const createMutation = useCreatePantryItemMutation();
 	const updateMutation = useUpdatePantryItemMutation();
 	const deleteMutation = useDeletePantryItemMutation();
 	const [name, setName] = useState("");
+	const [quantity, setQuantity] = useState("");
+	const [unit, setUnit] = useState<PantryUnit>("PIECE");
+	const [editingId, setEditingId] = useState<number | null>(null);
+	const [editingQuantity, setEditingQuantity] = useState("");
+	const [editingUnit, setEditingUnit] = useState<PantryUnit>("PIECE");
 	const [error, setError] = useState<string | null>(null);
 	const items = pantryQuery.data?.items ?? [];
 	const availableItems = items.filter((item) => item.have);
@@ -27,35 +45,78 @@ const PantryPage = () => {
 	const submit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		const nextName = name.trim();
+		const nextQuantity = Number(quantity);
 		if (!nextName) {
 			setError("Add an item name before saving.");
 			return;
 		}
+		if (!quantity.trim() || !Number.isFinite(nextQuantity) || nextQuantity < 0) {
+			setError("Add a valid quantity before saving.");
+			return;
+		}
 		setError(null);
 		createMutation.mutate(
-			{ name: nextName, have: true },
+			{ name: nextName, quantity: nextQuantity, unit, have: true },
 			{
-				onSuccess: () => setName(""),
+				onSuccess: () => { setName(""); setQuantity(""); setUnit("PIECE"); },
 				onError: () => setError("We could not add that pantry item. Try again."),
 			},
 		);
 	};
 
+	const startEditing = (item: PantryItem) => {
+		setEditingId(item.pantry_id);
+		setEditingQuantity(item.quantity === null ? "" : String(item.quantity));
+		setEditingUnit(item.unit && PANTRY_UNITS.includes(item.unit as PantryUnit) ? item.unit as PantryUnit : "PIECE");
+		setError(null);
+	};
+
+	const saveEditing = (event: FormEvent<HTMLFormElement>, item: PantryItem) => {
+		event.preventDefault();
+		const nextQuantity = Number(editingQuantity);
+		if (!editingQuantity.trim() || !Number.isFinite(nextQuantity) || nextQuantity < 0) {
+			setError("Add a valid quantity before saving.");
+			return;
+		}
+		setError(null);
+		updateMutation.mutate(
+			{ pantryId: item.pantry_id, input: { quantity: nextQuantity, unit: editingUnit } },
+			{ onSuccess: () => setEditingId(null) },
+		);
+	};
+
 	const renderItem = (item: PantryItem) => (
-		<li key={item.pantry_id} className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2">
-			<label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
-				<input
-					type="checkbox"
-					checked={item.have}
-					aria-label={`${item.name} available`}
-					className="size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-					onChange={() => updateMutation.mutate({ pantryId: item.pantry_id, input: { have: !item.have } })}
-				/>
-				<span className={item.have ? "truncate font-semibold text-foreground" : "truncate font-semibold text-muted-foreground line-through"}>{item.name}</span>
-			</label>
-			<Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteMutation.mutate(item.pantry_id)} aria-label={`Delete ${item.name}`}>
-				<Trash2 className="size-4" aria-hidden="true" />
-			</Button>
+		<li key={item.pantry_id} className="rounded-xl border border-border bg-background px-3 py-2">
+			<div className="flex min-h-14 items-center justify-between gap-3">
+				<label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+					<input
+						type="checkbox"
+						checked={item.have}
+						aria-label={`${item.name} available`}
+						className="size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						onChange={() => updateMutation.mutate({ pantryId: item.pantry_id, input: { have: !item.have } })}
+					/>
+					<span className="min-w-0 truncate">
+						<span className={item.have ? "block truncate font-semibold text-foreground" : "block truncate font-semibold text-muted-foreground line-through"}>{item.name}</span>
+						<span className="block text-xs text-muted-foreground">{item.quantity === null ? "Quantity not set" : `${item.quantity} ${unitLabel(item.unit)}`}</span>
+					</span>
+				</label>
+				<div className="flex shrink-0 items-center gap-1">
+					<Button variant="ghost" size="icon" onClick={() => editingId === item.pantry_id ? setEditingId(null) : startEditing(item)} aria-label={`${editingId === item.pantry_id ? "Cancel editing" : "Edit"} ${item.name}`}>
+						{editingId === item.pantry_id ? <X className="size-4" aria-hidden="true" /> : <Pencil className="size-4" aria-hidden="true" />}
+					</Button>
+					<Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteMutation.mutate(item.pantry_id)} aria-label={`Delete ${item.name}`}>
+						<Trash2 className="size-4" aria-hidden="true" />
+					</Button>
+				</div>
+			</div>
+			{editingId === item.pantry_id && <form className="mt-2 grid gap-2 border-t border-border pt-3 sm:grid-cols-[1fr_1fr_auto]" onSubmit={(event) => saveEditing(event, item)} aria-label={`Edit ${item.name}`}>
+				<label className="sr-only" htmlFor={`quantity-${item.pantry_id}`}>Quantity</label>
+				<Input id={`quantity-${item.pantry_id}`} type="number" min="0" step="0.001" value={editingQuantity} onChange={(event) => setEditingQuantity(event.target.value)} />
+				<label className="sr-only" htmlFor={`unit-${item.pantry_id}`}>Unit</label>
+				<select id={`unit-${item.pantry_id}`} className="min-h-12 rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20" value={editingUnit} onChange={(event) => setEditingUnit(event.target.value as PantryUnit)}>{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select>
+				<Button type="submit" size="icon" aria-label={`Save ${item.name}`}><Check className="size-4" aria-hidden="true" /></Button>
+			</form>}
 		</li>
 	);
 
@@ -65,28 +126,29 @@ const PantryPage = () => {
 			<div className="mx-auto w-full max-w-6xl">
 				<header className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 					<div className="max-w-2xl">
-						<p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-primary">Kitchen inventory</p>
 						<h1 id="pantry-title" className="text-4xl font-black tracking-tight sm:text-5xl">Know what you already have</h1>
-						<p className="mt-3 text-base leading-7 text-muted-foreground">Keep a lightweight inventory so shopping and meal planning start with what is already in your kitchen.</p>
+						<p className="sr-only">Keep an inventory with quantities so cooking can update what is already in your kitchen.</p>
 					</div>
-					<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button asChild variant="outline" className="flex-1"><Link to="/food"><Search className="size-4" aria-hidden="true" />Find pantry recipes</Link></Button><Button asChild variant="outline" className="flex-1"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Open shopping list</Link></Button></div>
+					<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"><Button asChild variant="outline" className="flex-1"><Link to="/food"><Search className="size-4" aria-hidden="true" />Find recipes</Link></Button><Button asChild variant="outline" className="flex-1"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Shopping list</Link></Button></div>
 				</header>
 
 				<Card className="mb-6 p-4 sm:p-5">
-					<div className="mb-4"><h2 className="text-xl font-black">Add an ingredient</h2><p className="mt-1 text-sm text-muted-foreground">Quantities are optional here — this list is about availability.</p></div>
+					<div className="mb-4"><h2 className="text-xl font-black">Add an ingredient</h2><p className="text-sm text-muted-foreground">Add a quantity and unit so the app can update your stock after cooking.</p></div>
 					<form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-						<div className="grid flex-1 gap-2"><label htmlFor="pantry-item" className="text-sm font-bold">Pantry item</label><Input id="pantry-item" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. olive oil" /></div>
-						<Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending}>{createMutation.isPending ? "Adding…" : "Add pantry item"}</Button>
+						<div className="grid flex-1 gap-2"><label htmlFor="pantry-item" className="text-sm font-bold">Pantry item</label><Input id="pantry-item" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. rice" /></div>
+						<div className="grid gap-2 sm:w-32"><label htmlFor="pantry-quantity" className="text-sm font-bold">Quantity</label><Input id="pantry-quantity" type="number" min="0" step="0.001" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="e.g. 2" /></div>
+						<div className="grid gap-2 sm:w-36"><label htmlFor="pantry-unit" className="text-sm font-bold">Unit</label><select id="pantry-unit" className="min-h-12 rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20" value={unit} onChange={(event) => setUnit(event.target.value as PantryUnit)}>{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select></div>
+						<Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending}>{createMutation.isPending ? "Adding..." : "Add pantry item"}</Button>
 					</form>
 					{error && <p className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive" role="alert">{error}</p>}
 				</Card>
 
 				{pantryQuery.isPending ? (
-					<Card className="p-8 text-center" role="status">Loading your pantry…</Card>
+					<Card className="p-8 text-center" role="status">Loading your pantry...</Card>
 				) : pantryQuery.isError ? (
 					<Card className="p-6 text-center" role="alert"><h2 className="text-xl font-bold">Pantry could not load</h2><p className="mt-2 text-muted-foreground">We could not fetch your pantry. Try again.</p><Button className="mt-4" onClick={() => pantryQuery.refetch()}>Try again</Button></Card>
 				) : items.length === 0 ? (
-					<Card className="p-8 text-center"><h2 className="text-xl font-bold">Your pantry is empty</h2><p className="mt-2 text-muted-foreground">Add ingredients you already have so you can compare them with your shopping list.</p></Card>
+					<Card className="p-8 text-center"><h2 className="text-xl font-bold">Your pantry is empty</h2><p className="mt-2 text-muted-foreground">Add ingredients you already have so cooking can keep your stock accurate.</p></Card>
 				) : (
 					<section className="grid gap-5 md:grid-cols-2" aria-label="Pantry ingredients">
 						<Card className="p-4 sm:p-5"><div className="mb-4 flex items-center justify-between"><h2 className="text-lg font-black">Already have</h2><span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-black text-emerald-800">{availableItems.length}</span></div><ul className="grid gap-2">{availableItems.length ? availableItems.map(renderItem) : <li className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">Nothing marked as available.</li>}</ul></Card>

@@ -29,6 +29,7 @@ describe("PersonalRecipes lifecycle controls", () => {
 
 		expect(await screen.findByText("Draft")).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: "Publish recipe Soup" })).toBeInTheDocument();
+		expect(screen.getByText("Publish")).toBeInTheDocument();
 
 		await user.click(screen.getByRole("button", { name: "Published" }));
 		expect(screen.getByText("No published recipes yet.")).toBeInTheDocument();

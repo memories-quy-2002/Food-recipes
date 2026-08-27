@@ -846,7 +846,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 			<div className="mx-auto w-full max-w-6xl">
 				<div className="add__surface overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
 					<div className="border-b border-border bg-secondary/45 p-5 sm:p-7 lg:p-9">
-						<div className="mb-4 flex flex-wrap items-center gap-2" aria-label="Recipe status">
+						<div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Recipe status">
 							<span className="rounded-full bg-primary px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-primary-foreground">{isCreateMode ? "Draft" : "Editing"}</span>
 							<span className="text-sm font-semibold text-muted-foreground" aria-live="polite">
 								{draftStatus === "saving"
@@ -943,6 +943,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 									>
 										<Form.Label>Description</Form.Label>
 										<textarea
+											id="formRecipeDescription"
 											className="flex min-h-12 min-h-36 w-full resize-y rounded-xl border border-input bg-background px-4 py-3.5 text-base leading-6 text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground/80 focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
 											rows={5}
 											{...register("recipeDescription", { onChange: handleInputChange })}
@@ -1110,22 +1111,31 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 								</p>
 							</div>
 							<Form.Group
-								controlId="formRecipeIngredients"
 								className="mb-7 grid gap-4 rounded-2xl border border-border bg-muted/20 p-4 sm:p-5"
 							>
-								<Form.Label>Structured ingredients</Form.Label>
-								<p className="mt-2 text-sm leading-6 text-muted-foreground">Add quantities and units when known. Nutrition is entered manually below.</p>
+								<h2 className="text-base font-black text-foreground">Structured ingredients</h2>
+								<p className="mt-2 text-sm leading-6 text-muted-foreground">Every ingredient needs a positive quantity and supported unit, such as g, kg, ml, tsp, tbsp, cup, or piece.</p>
 								{(formRecipe.structuredIngredients || []).map((ingredient, index) => (
 									<div key={index} className="mb-3 grid gap-2 sm:grid-cols-[auto_0.7fr_0.8fr_1.5fr_1.2fr_auto] sm:items-center">
 										<span aria-hidden="true">{index + 1}.</span>
-										<Form.Control aria-label={`Ingredient ${index + 1} quantity`} placeholder="Qty" value={ingredient.quantityText || ""} onChange={(event) => handleStructuredChange(index, "quantityText", event.target.value)} />
-										<Form.Control aria-label={`Ingredient ${index + 1} unit`} placeholder="Unit" value={ingredient.unit || ""} onChange={(event) => handleStructuredChange(index, "unit", event.target.value)} />
-										<Form.Control aria-label={`Ingredient ${index + 1} name`} placeholder="Ingredient name" value={ingredient.name || ""} onChange={(event) => handleStructuredChange(index, "name", event.target.value)} />
-										<Form.Control aria-label={`Ingredient ${index + 1} preparation`} placeholder="Preparation (optional)" value={ingredient.preparation || ""} onChange={(event) => handleStructuredChange(index, "preparation", event.target.value)} />
+										<Form.Control id={`formRecipeIngredient-${index}-quantity`} aria-label={`Ingredient ${index + 1} quantity`} placeholder="Qty" value={ingredient.quantityText || ""} onChange={(event) => handleStructuredChange(index, "quantityText", event.target.value)} />
+										<Form.Control id={`formRecipeIngredient-${index}-unit`} aria-label={`Ingredient ${index + 1} unit`} placeholder="g, kg, ml..." list="recipe-unit-options" value={ingredient.unit || ""} onChange={(event) => handleStructuredChange(index, "unit", event.target.value)} />
+										<Form.Control id={`formRecipeIngredient-${index}-name`} aria-label={`Ingredient ${index + 1} name`} placeholder="Ingredient name" value={ingredient.name || ""} onChange={(event) => handleStructuredChange(index, "name", event.target.value)} />
+										<Form.Control id={`formRecipeIngredient-${index}-preparation`} aria-label={`Ingredient ${index + 1} preparation`} placeholder="Preparation (optional)" value={ingredient.preparation || ""} onChange={(event) => handleStructuredChange(index, "preparation", event.target.value)} />
 										<Button variant="destructive" type="button" onClick={() => handleDeleteStructuredIngredient(index)} disabled={(formRecipe.structuredIngredients || []).length <= 1}>Remove</Button>
 									</div>
 								))}
 								<Button variant="outline" type="button" onClick={handleAddStructuredIngredient}>+ Add ingredient</Button>
+								<datalist id="recipe-unit-options">
+									<option value="g" />
+									<option value="kg" />
+									<option value="ml" />
+									<option value="l" />
+									<option value="tsp" />
+									<option value="tbsp" />
+									<option value="cup" />
+									<option value="piece" />
+								</datalist>
 								{formRecipe.recipeIngredients.some((ingredient) => ingredient.trim()) && (
 									<div className="rounded-xl border border-border bg-background px-3 py-3 text-sm leading-6 text-muted-foreground" role="status">
 										<strong className="text-foreground">Older draft notes preserved</strong>
@@ -1157,7 +1167,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 										return <Button key={tag} type="button" variant={isSelected ? "secondary" : "outline"} className={`capitalize ${isSelected ? "border-primary ring-1 ring-primary/30" : ""}`} aria-pressed={isSelected} onClick={() => handleToggleTag("dietaryTags", tag)}>{isSelected && <span aria-hidden="true">✓</span>}{tag}</Button>;
 									})}
 								</div>
-								<div className="mt-6 border-t border-border pt-5" aria-labelledby="allergen-label">
+								<div className="mt-6 border-t border-border pt-5" role="group" aria-labelledby="allergen-label">
 									<h3 id="allergen-label" className="text-sm font-black uppercase tracking-[0.12em] text-foreground">Allergen tags</h3>
 									<p className="mt-1 text-sm leading-6 text-muted-foreground">Mark ingredients that may be relevant to your guests.</p>
 									<div className="mt-4 flex flex-wrap gap-2" role="group" aria-labelledby="allergen-label">

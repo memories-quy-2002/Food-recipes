@@ -69,7 +69,7 @@ const FoodCardList = ({
 		<section aria-labelledby="featured-recipes-heading">
 			<div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
 				<div>
-					<p className="text-xs font-extrabold uppercase tracking-[0.16em] text-primary">{activeModeMeta.eyebrow}</p>
+					<p className="sr-only">{activeModeMeta.eyebrow}</p>
 					<h2 id="featured-recipes-heading" className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{activeModeMeta.title}</h2>
 				</div>
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-center">

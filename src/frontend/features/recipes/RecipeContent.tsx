@@ -62,13 +62,7 @@ const RecipeContent = ({
 					<RecipeMetadataPanel metadata={recipe.metadata} />
 				</aside>
 			</div>
-			<section data-testid="recipe-community" className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7">
-				<div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-					<div>
-						<p className="text-xs font-black uppercase tracking-[0.14em] text-primary">Community</p>
-						<h2 className="mt-1 text-2xl font-black tracking-tight text-foreground sm:text-3xl">Reviews and cooking notes</h2>
-					</div>
-				</div>
+			<section data-testid="recipe-community" className="space-y-6" aria-label="Community reviews">
 				<RecipeRating
 					ratingScore={ratingScore}
 					review={review}

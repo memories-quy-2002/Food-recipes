@@ -6,62 +6,50 @@ Approved direction for implementation planning.
 
 ## Goal
 
-Upgrade the pantry from a binary ingredient checklist into an optional, owner-scoped inventory that can record quantity, unit, and expiry while preserving the current simple availability workflow.
-
-## Current context
-
-- `PantryItem` currently stores `name` and `have` only.
-- The frontend supports add, toggle available/needed, delete, loading, empty, and error states.
-- Personalized home feed and pantry suggestions already use available pantry names for conservative text matching.
-- Structured recipe ingredients already expose quantity/unit where available.
+Upgrade the pantry from a binary ingredient checklist into an owner-scoped inventory that records a usable quantity and unit, then connects that stock to cooking completion.
 
 ## Product behavior
 
-1. Keep `name` and `have` backward-compatible. Existing items remain valid after migration.
-2. Add optional `quantity`, `unit`, and `expiresOn` fields. Quantity is a non-negative decimal; unit is a short user-entered label such as `kg`, `bottle`, or `pieces`.
-3. Allow users to add and edit pantry items in a compact form. Name is required; quantity, unit, and expiry are optional.
-4. Display status groups: available, expiring within seven days, expired, and needed. Expired items are not considered available for recipe matching.
-5. Allow users to mark an item as needed without deleting its quantity/history. Keep the current checkbox behavior.
-6. Show a clear “Use in shopping list” action for needed or expired items; this adds a shopping-list line without silently removing the pantry item.
-7. Personalized feed and pantry-match queries only match `have = true` items whose expiry is null or today/future. No quantity deduction occurs automatically.
-8. On mobile, the item editor is a labelled dialog or inline form with touch targets of at least 44px.
+1. Pantry entries require a name, quantity, and supported unit for new or edited stock. Existing legacy rows remain readable until the user supplies quantity and unit.
+2. Supported units are grams, kilograms, milliliters, liters, teaspoons, tablespoons, cups, and pieces. Compatible units can be converted for comparison and deduction.
+3. Recipe ingredients used by inventory must have a positive numeric quantity and supported unit. Ambiguous values such as “a little” are rejected for published recipes and seeded data.
+4. The selected cooking servings scale every recipe ingredient requirement. For example, a recipe quantity of 500 g for two base servings requires 1,000 g for four servings.
+5. On cooking completion, the server calculates stock requirements inside one transaction. If stock is sufficient, it deducts the required quantities and records ingredient usage.
+6. If stock is insufficient, completion pauses for confirmation and shows available, required, and missing quantities for each shortage.
+7. “Continue anyway” completes the cooking session, deducts only the available quantity, and records the missing quantity in the ingredient usage log. It does not add anything to Shopping list.
+8. “Stop and add to shopping list” leaves Pantry and cooking history unchanged, adds each missing quantity to Shopping list, and keeps the cooking session resumable.
+9. The server enforces ownership for Pantry, cooking sessions, history, usage logs, and Shopping list rows. Repeated confirmation requests are safe because completion and deduction happen transactionally.
+10. Pantry-driven suggestions preserve legacy available rows with a null quantity, while numeric cooking requirements only use entries marked available with a positive quantity. Legacy rows remain visible for manual correction but cannot satisfy numeric cooking requirements.
 
 ## Data model and API
 
-Add an additive migration and Prisma fields:
+Add an additive migration:
 
 ```prisma
 quantity  Decimal?  @db.Decimal(12, 3)
-unit      String?   @db.VarChar(64)
-expiresOn DateTime? @map("expires_on") @db.Date
+unit      String?   @db.VarChar(20)
 ```
 
-The existing `users/me/pantry` routes remain the API boundary. Extend `CreatePantryItemDto`, `UpdatePantryItemDto`, and response contracts. Validation rules:
+Add `CookingIngredientUsage` with the history, user, recipe ingredient position/name, required quantity/unit, deducted quantity, missing quantity, and optional Pantry item reference. Keep quantity nullable on `PantryItem` so old rows survive migration; new UI writes both quantity and unit.
 
-- `quantity` is null or `0 <= quantity <= 1000000`.
-- `unit` is null or trimmed length is 1–64.
-- `expiresOn` is null or an ISO date in `YYYY-MM-DD` form.
-- Names remain trimmed and 1–255 characters.
+Extend the Pantry DTOs and response contracts with quantity/unit. Extend cooking completion with an optional action: `complete` or `shopping`. A completion request without an action performs the stock check and returns a shortage confirmation error when needed.
 
-Update the repository projections and the home-feed pantry predicate. Add a small shopping-list mutation helper that creates a line using the pantry display name and optional quantity/unit; ownership remains enforced by the existing shopping-list module.
+## Validation and failure behavior
 
-## Error and security behavior
-
-- Every read and mutation is scoped to the authenticated JWT user.
-- Invalid quantity, unit, or date returns field-level `400` validation errors.
-- Missing or foreign pantry IDs return the existing not-found shape.
-- Expired state is derived from the server date, not trusted from the client.
-- The UI never presents an expired item as a safe ingredient or allergen-free claim.
+- Quantity is null for legacy rows or a non-negative decimal up to 1,000,000; cooking requirements must be positive.
+- Quantity and unit are an atomic pair when supplied. Units are normalized against the supported unit list.
+- A published recipe cannot be created or published with missing/ambiguous ingredient quantities.
+- An invalid or legacy-only recipe cannot be completed through inventory; the user receives an actionable validation error.
+- Unit conversion only occurs between compatible mass, volume, or count units. Incompatible units are treated as unavailable rather than guessed.
+- All Pantry and completion operations use the authenticated user ID and preserve unrelated users’ data.
 
 ## Testing and acceptance criteria
 
-- Migration validation proves old pantry rows remain readable with null optional fields.
-- Backend tests cover create/update validation, owner isolation, expired filtering for matching, and shopping-list handoff.
-- Frontend tests cover add/edit/toggle/delete, status grouping, date and quantity validation, loading/error/empty states, and accessible dialog labels.
-- Home-feed tests prove expired pantry items do not influence pantry matches.
-- Playwright covers adding an item with quantity/expiry, editing it, marking it needed, and sending it to the shopping list on desktop and mobile.
-- Axe and keyboard checks cover the pantry editor and status controls.
+- Migration validation proves old Pantry rows remain readable with null quantity/unit.
+- Backend tests cover quantity/unit validation, servings scaling, unit conversion, shortage calculation, transactional completion, partial deduction, usage logging, Shopping list handoff, and ownership.
+- Frontend tests cover adding/editing stock, displaying quantities, completion shortage confirmation, both user choices, and the resumable-session behavior.
+- Recipe validation tests cover rejection of unquantified values such as “a little”.
 
 ## Out of scope
 
-- Barcode scanning, OCR, automatic quantity deduction, unit conversion, grocery pricing, push reminders, or medical/allergen inference.
+Barcode scanning, OCR, expiry tracking, grocery pricing, push reminders, automatic replenishment, and allergen inference.

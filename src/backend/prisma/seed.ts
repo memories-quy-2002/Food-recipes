@@ -15,6 +15,10 @@ const prisma = new PrismaClient({
 });
 
 const DEMO_PASSWORD = 'DemoPass123!';
+// The demo graph contains many dependent writes; Prisma's default interactive
+// transaction timeout of 5 seconds is too short for a remote production DB.
+const SEED_TRANSACTION_MAX_WAIT_MS = 30_000;
+const SEED_TRANSACTION_TIMEOUT_MS = 5 * 60_000;
 type RecipeStatus = 'draft' | 'published' | 'archived';
 
 const demoUsers = [
@@ -606,19 +610,127 @@ const structuredIngredientOverrides: Record<string, StructuredIngredientSeed[]> 
     structuredIngredient('broccoli', 300, 'GRAM'),
     structuredIngredient('rice', 2, 'CUP', 'cooked'),
   ],
+  'Mango Coconut Chia Pudding': [
+    structuredIngredient('coconut milk', 400, 'MILLILITER'),
+    structuredIngredient('chia seeds', 60, 'GRAM'),
+    structuredIngredient('mango', 1, 'PIECE', 'ripe'),
+    structuredIngredient('maple syrup', 1, 'TABLESPOON'),
+    structuredIngredient('coconut flakes', 20, 'GRAM', 'toasted'),
+  ],
+  'Banana Oat Pancakes': [
+    structuredIngredient('banana', 1, 'PIECE', 'ripe'),
+    structuredIngredient('rolled oats', 100, 'GRAM'),
+    structuredIngredient('egg', 1, 'PIECE'),
+    structuredIngredient('milk', 120, 'MILLILITER'),
+    structuredIngredient('cinnamon', 1, 'TEASPOON'),
+    structuredIngredient('baking powder', 1, 'TEASPOON'),
+  ],
+  'Berry Yogurt Parfait': [
+    structuredIngredient('Greek yogurt', 400, 'GRAM'),
+    structuredIngredient('mixed berries', 150, 'GRAM'),
+    structuredIngredient('granola', 80, 'GRAM'),
+    structuredIngredient('honey', 1, 'TABLESPOON'),
+  ],
+  'Garlic Butter Shrimp Pasta': [
+    structuredIngredient('spaghetti', 250, 'GRAM'),
+    structuredIngredient('peeled shrimp', 300, 'GRAM'),
+    structuredIngredient('garlic', 4, 'PIECE', 'minced'),
+    structuredIngredient('butter', 30, 'GRAM'),
+    structuredIngredient('lemon', 1, 'PIECE'),
+    structuredIngredient('parsley', 15, 'GRAM'),
+    structuredIngredient('parmesan', 30, 'GRAM'),
+  ],
+  'Tomato Basil Bruschetta': [
+    structuredIngredient('baguette', 1, 'PIECE'),
+    structuredIngredient('ripe tomatoes', 3, 'PIECE'),
+    structuredIngredient('basil', 15, 'GRAM'),
+    structuredIngredient('garlic', 2, 'PIECE'),
+    structuredIngredient('olive oil', 2, 'TABLESPOON'),
+    structuredIngredient('balsamic vinegar', 1, 'TABLESPOON'),
+  ],
+  'Chicken Caesar Wrap': [
+    structuredIngredient('chicken breasts', 2, 'PIECE'),
+    structuredIngredient('large tortillas', 2, 'PIECE'),
+    structuredIngredient('romaine lettuce', 80, 'GRAM'),
+    structuredIngredient('parmesan', 40, 'GRAM'),
+    structuredIngredient('Caesar dressing', 60, 'MILLILITER'),
+    structuredIngredient('black pepper', 1, 'TEASPOON'),
+  ],
+  'Vietnamese Fresh Spring Rolls': [
+    structuredIngredient('rice paper wrappers', 12, 'PIECE'),
+    structuredIngredient('shrimp', 200, 'GRAM'),
+    structuredIngredient('rice vermicelli', 150, 'GRAM'),
+    structuredIngredient('lettuce', 80, 'GRAM'),
+    structuredIngredient('mint', 15, 'GRAM'),
+    structuredIngredient('cucumber', 1, 'PIECE'),
+    structuredIngredient('peanut dipping sauce', 100, 'MILLILITER'),
+  ],
+  'Chocolate Banana Smoothie Bowl': [
+    structuredIngredient('frozen bananas', 2, 'PIECE'),
+    structuredIngredient('cocoa powder', 2, 'TABLESPOON'),
+    structuredIngredient('milk', 100, 'MILLILITER'),
+    structuredIngredient('peanut butter', 2, 'TABLESPOON'),
+    structuredIngredient('almonds', 20, 'GRAM'),
+    structuredIngredient('cacao nibs', 10, 'GRAM'),
+  ],
+  'Apple Cinnamon Crumble': [
+    structuredIngredient('apples', 5, 'PIECE'),
+    structuredIngredient('rolled oats', 100, 'GRAM'),
+    structuredIngredient('flour', 80, 'GRAM'),
+    structuredIngredient('brown sugar', 80, 'GRAM'),
+    structuredIngredient('cinnamon', 1, 'TEASPOON'),
+    structuredIngredient('butter', 60, 'GRAM'),
+    structuredIngredient('lemon juice', 1, 'TABLESPOON'),
+  ],
+  'Strawberry Shortcake Cups': [
+    structuredIngredient('strawberries', 400, 'GRAM'),
+    structuredIngredient('sponge cake', 200, 'GRAM'),
+    structuredIngredient('whipping cream', 250, 'MILLILITER'),
+    structuredIngredient('sugar', 2, 'TABLESPOON'),
+    structuredIngredient('vanilla extract', 1, 'TEASPOON'),
+  ],
+  'Sesame Peanut Noodles': [
+    structuredIngredient('wheat noodles', 250, 'GRAM'),
+    structuredIngredient('peanut butter', 3, 'TABLESPOON'),
+    structuredIngredient('soy sauce', 2, 'TABLESPOON'),
+    structuredIngredient('sesame oil', 1, 'TABLESPOON'),
+    structuredIngredient('rice vinegar', 1, 'TABLESPOON'),
+    structuredIngredient('carrot', 1, 'PIECE'),
+    structuredIngredient('cucumber', 1, 'PIECE'),
+    structuredIngredient('scallions', 2, 'PIECE'),
+  ],
+  'Crispy Potato Tacos': [
+    structuredIngredient('potatoes', 500, 'GRAM'),
+    structuredIngredient('corn tortillas', 8, 'PIECE'),
+    structuredIngredient('cabbage', 100, 'GRAM'),
+    structuredIngredient('lime', 1, 'PIECE'),
+    structuredIngredient('cilantro', 15, 'GRAM'),
+    structuredIngredient('chipotle sauce', 4, 'TABLESPOON'),
+    structuredIngredient('cumin', 1, 'TEASPOON'),
+    structuredIngredient('cotija cheese', 80, 'GRAM'),
+  ],
+  'Blueberry Lemon Muffins': [
+    structuredIngredient('flour', 200, 'GRAM'),
+    structuredIngredient('blueberries', 150, 'GRAM'),
+    structuredIngredient('lemon', 1, 'PIECE'),
+    structuredIngredient('milk', 120, 'MILLILITER'),
+    structuredIngredient('egg', 1, 'PIECE'),
+    structuredIngredient('butter', 80, 'GRAM'),
+    structuredIngredient('sugar', 100, 'GRAM'),
+  ],
+  'Dark Chocolate Energy Bites': [
+    structuredIngredient('dates', 150, 'GRAM'),
+    structuredIngredient('rolled oats', 100, 'GRAM'),
+    structuredIngredient('peanut butter', 2, 'TABLESPOON'),
+    structuredIngredient('dark chocolate', 50, 'GRAM'),
+    structuredIngredient('cocoa', 2, 'TABLESPOON'),
+    structuredIngredient('coconut', 30, 'GRAM'),
+  ],
 };
 
-const fallbackStructuredIngredients = (recipe: (typeof demoRecipes)[number]): StructuredIngredientSeed[] =>
-  recipe.ingredients.map((originalText) => ({
-    name: originalText.replace(/^\s*\d+(?:\.\d+)?\s*(?:g|kg|ml|l)?\s*/i, '').trim(),
-    quantity: null,
-    quantityText: null,
-    unit: null,
-    unitText: null,
-    preparation: null,
-    originalText,
-    note: null,
-  }));
+const fallbackStructuredIngredients = (recipe: (typeof demoRecipes)[number]): StructuredIngredientSeed[] => {
+  throw new Error(`Missing quantified structured ingredients for seed recipe: ${recipe.name}`);
+};
 
 const dietaryTagsByRecipe: Record<string, string[]> = {
   'Classic Vietnamese Pho': ['high-protein'],
@@ -758,14 +870,14 @@ const demoCollectionDefinitions = [
 ] as const;
 
 const demoPantryItems = [
-  { name: 'rice', have: true },
-  { name: 'avocado', have: true },
-  { name: 'garlic', have: true },
-  { name: 'cucumber', have: true },
-  { name: 'tofu', have: true },
-  { name: 'tomatoes', have: true },
-  { name: 'lemon', have: true },
-  { name: 'salmon', have: false },
+  { name: 'rice', quantity: 2, unit: 'CUP', have: true },
+  { name: 'avocado', quantity: 2, unit: 'PIECE', have: true },
+  { name: 'garlic', quantity: 10, unit: 'PIECE', have: true },
+  { name: 'cucumber', quantity: 3, unit: 'PIECE', have: true },
+  { name: 'tofu', quantity: 800, unit: 'GRAM', have: true },
+  { name: 'tomatoes', quantity: 6, unit: 'PIECE', have: true },
+  { name: 'lemon', quantity: 3, unit: 'PIECE', have: true },
+  { name: 'salmon', quantity: 2, unit: 'PIECE', have: false },
 ] as const;
 
 const demoNoteDefinitions = [
@@ -1113,7 +1225,7 @@ const seed = async (): Promise<void> => {
 
     for (const item of demoPantryItems) {
       await client.pantryItem.create({
-        data: { userId: requireUserId('demo.homecook@foodrecipes.local'), name: item.name, have: item.have, updatedAt: today },
+        data: { userId: requireUserId('demo.homecook@foodrecipes.local'), name: item.name, quantity: item.quantity, unit: item.unit, have: item.have, updatedAt: today },
       });
     }
 
@@ -1231,6 +1343,9 @@ const seed = async (): Promise<void> => {
       notes: demoNoteDefinitions.length,
       reviewReports: 2,
     };
+  }, {
+    maxWait: SEED_TRANSACTION_MAX_WAIT_MS,
+    timeout: SEED_TRANSACTION_TIMEOUT_MS,
   });
 
   console.log('Seeded demo graph:');

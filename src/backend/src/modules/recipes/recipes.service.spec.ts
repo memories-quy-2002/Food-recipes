@@ -111,6 +111,26 @@ describe('RecipesService', () => {
     expect(repository.createDraft).toHaveBeenCalledWith(12, { name: 'Draft' });
   });
 
+  it('rejects creating a published recipe without quantified structured ingredients', async () => {
+    const service = new RecipesService(repository, metadataService);
+
+    await expect(
+      service.create(12, {
+        name: 'Unquantified recipe',
+        mealId: 1,
+        categoryId: 2,
+        prepTimeMinutes: 10,
+        cookTimeMinutes: 10,
+        ingredients: ['a little salt'],
+        instructions: ['Mix'],
+        imageUrl: 'https://example.test/recipe.jpg',
+      }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'RECIPE_INGREDIENTS_QUANTITY_REQUIRED' }),
+    });
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
   it('rejects publishing when the aggregate misses a required publish field', async () => {
     repository.findByIdForOwner.mockResolvedValue({
       recipe_id: 4,

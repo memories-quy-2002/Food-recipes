@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPantryItem, deletePantryItem, listPantry, updatePantryItem } from "./pantryApi";
+import { createPantryItem, deletePantryItem, listPantry, updatePantryItem, type PantryUnit } from "./pantryApi";
 import { useToast } from "@/app/ToastProvider";
 
 export const pantryQueryKeys = { all: ["pantry"] as const };
@@ -17,7 +17,7 @@ export const useCreatePantryItemMutation = () => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
 	return useMutation({
-		mutationFn: (input: { name: string; have?: boolean }) => createPantryItem(input),
+		mutationFn: (input: { name: string; quantity: number; unit: PantryUnit; have?: boolean }) => createPantryItem(input),
 		onSuccess: async () => { await invalidatePantry(queryClient); showToast({ title: "Pantry item added" }); },
 		onError: () => showToast({ title: "Couldn’t add that pantry item", message: "Please try again.", type: "error" }),
 	});
@@ -27,7 +27,7 @@ export const useUpdatePantryItemMutation = () => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
 	return useMutation({
-		mutationFn: ({ pantryId, input }: { pantryId: number; input: { name?: string; have?: boolean } }) => updatePantryItem(pantryId, input),
+		mutationFn: ({ pantryId, input }: { pantryId: number; input: { name?: string; quantity?: number | null; unit?: PantryUnit | null; have?: boolean } }) => updatePantryItem(pantryId, input),
 		onSuccess: async () => { await invalidatePantry(queryClient); showToast({ title: "Pantry updated" }); },
 		onError: () => showToast({ title: "Couldn’t update your pantry", message: "Please try again.", type: "error" }),
 	});

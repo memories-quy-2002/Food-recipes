@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { CreateRecipeDraftDto } from './dto/create-recipe-draft.dto';
+import { normalizePantryUnit, parseQuantityText } from '../pantry/pantry-inventory';
 import { RecipeQueryDto } from './dto/recipe-query.dto';
 import {
   MAX_RECIPE_INGREDIENTS,
@@ -56,6 +57,7 @@ export class RecipesService {
   }
 
   async create(userId: number, dto: CreateRecipeDto): Promise<{ recipe: RecipeRecord }> {
+    this.assertQuantifiedCreateIngredients(dto.structuredIngredients);
     if (dto.metadata) validateRecipeMetadata(dto.metadata);
     const recipe = await this.repository.create(userId, dto);
     if (dto.metadata) {
@@ -104,7 +106,7 @@ export class RecipesService {
     userId: number,
     dto: ReplaceRecipeIngredientsDto,
   ): Promise<{ recipe: RecipeRecord }> {
-    await this.requireEditableOwner(id, userId);
+    const recipe = await this.requireEditableOwner(id, userId);
     if (!Array.isArray(dto.ingredients) || dto.ingredients.length > MAX_RECIPE_INGREDIENTS) {
       throw new BadRequestException({
         code: 'RECIPE_INGREDIENTS_INVALID',
@@ -128,6 +130,9 @@ export class RecipesService {
           message: 'Ingredient quantity must be zero or greater',
         });
       }
+    }
+    if (recipe.status === 'published') {
+      this.assertQuantifiedIngredients(dto.ingredients);
     }
     return { recipe: await this.repository.replaceIngredients(id, dto.ingredients) };
   }
@@ -196,6 +201,10 @@ export class RecipesService {
     const hasStructuredIngredient = recipe.structured_ingredients?.some(
       (ingredient) => ingredient.name?.trim(),
     );
+    const unquantifiedIngredients = (recipe.structured_ingredients ?? []).filter((ingredient) => {
+      const quantity = ingredient.quantity ?? parseQuantityText(ingredient.quantity_text);
+      return !ingredient.name?.trim() || quantity === null || quantity <= 0 || !normalizePantryUnit(ingredient.unit ?? ingredient.unit_text);
+    });
     const hasLegacyIngredient = recipe.ingredients?.some((ingredient) => ingredient?.trim());
     const hasInstruction = recipe.instructions?.some((instruction) => instruction?.trim());
     if (
@@ -214,6 +223,13 @@ export class RecipesService {
         code: 'RECIPE_PUBLISH_REQUIREMENTS_NOT_MET',
         message:
           'Publishing requires name, category, meal, positive preparation and cooking times, an ingredient, an instruction, and an image',
+      });
+    }
+    if (!recipe.structured_ingredients?.length || unquantifiedIngredients.length) {
+      throw new BadRequestException({
+        code: 'RECIPE_INGREDIENTS_QUANTITY_REQUIRED',
+        message: 'Every recipe ingredient must have a positive quantity and a supported unit before publishing',
+        ingredient_names: unquantifiedIngredients.map((ingredient) => ingredient.name).filter(Boolean),
       });
     }
     return { recipe: await this.repository.publish(id) };
@@ -266,6 +282,41 @@ export class RecipesService {
       throw new BadRequestException({
         code: 'RECIPE_ARCHIVED_READ_ONLY',
         message: 'Archived recipes are read-only; restore the recipe before editing',
+      });
+    }
+  }
+
+  private assertQuantifiedCreateIngredients(
+    ingredients: CreateRecipeDto['structuredIngredients'],
+  ): void {
+    if (!ingredients?.length) {
+      throw new BadRequestException({
+        code: 'RECIPE_INGREDIENTS_QUANTITY_REQUIRED',
+        message: 'Every published recipe ingredient must have a positive quantity and a supported unit',
+      });
+    }
+    this.assertQuantifiedIngredients(ingredients);
+  }
+
+  private assertQuantifiedIngredients(
+    ingredients: Array<{
+      name?: string | null;
+      quantity?: number | null;
+      quantityText?: string | null;
+      unit?: string | null;
+      unit_text?: string | null;
+    }>,
+  ): void {
+    const invalid = ingredients.filter((ingredient) => {
+      const quantity = ingredient.quantity ?? parseQuantityText(ingredient.quantityText);
+      return !ingredient.name?.trim() || quantity === null || quantity <= 0 ||
+        !normalizePantryUnit(ingredient.unit ?? ingredient.unit_text);
+    });
+    if (invalid.length) {
+      throw new BadRequestException({
+        code: 'RECIPE_INGREDIENTS_QUANTITY_REQUIRED',
+        message: 'Every recipe ingredient must have a positive quantity and a supported unit',
+        ingredient_names: invalid.map((ingredient) => ingredient.name).filter(Boolean),
       });
     }
   }

@@ -33,6 +33,7 @@ const CarouselNavBar = ({
 	return (
 		<div
 			className="absolute bottom-2 left-4 right-4 z-10 flex items-center gap-2 sm:bottom-6 sm:left-8 sm:right-auto lg:bottom-10 lg:left-14 xl:left-20 2xl:left-24"
+			role="group"
 			aria-label="Featured meal controls"
 		>
 			<Button

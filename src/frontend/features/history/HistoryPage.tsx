@@ -38,9 +38,8 @@ const HistoryPage = () => {
 			<div className="mx-auto w-full max-w-[96rem] space-y-8">
 				<header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
 					<div className="max-w-3xl">
-						<p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-primary">Your kitchen memory</p>
 						<h1 id="history-title" className="text-balance text-4xl font-black tracking-[-0.035em] sm:text-5xl">Cooked, remembered, ready to repeat.</h1>
-						<p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Keep a simple record of finished recipes, then use it to plan the next meal that fits your kitchen.</p>
+						<p className="sr-only">Keep a simple record of finished recipes, then use it to plan the next meal that fits your kitchen.</p>
 					</div>
 					<div className="flex flex-col gap-2 sm:flex-row">
 						<Button asChild variant="outline"><Link to="/planning"><CalendarCheck2 className="size-4" aria-hidden="true" />Plan next meals</Link></Button>
@@ -78,7 +77,7 @@ const HistoryPage = () => {
 					</Card>
 				) : (
 					<section aria-labelledby="history-list-title">
-						<div className="mb-4 flex items-end justify-between gap-4"><div><p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Recent cooks</p><h2 id="history-list-title" className="mt-1 text-2xl font-black sm:text-3xl">Your cooking history</h2></div><span className="text-sm font-semibold text-muted-foreground" role="status" aria-live="polite">{items.length} saved cook{items.length === 1 ? "" : "s"}</span></div>
+						<div className="mb-4 flex items-end justify-between gap-4"><div><p className="sr-only">Recent cooks</p><h2 id="history-list-title" className="text-2xl font-black sm:text-3xl">Your cooking history</h2></div><span className="text-sm font-semibold text-muted-foreground" role="status" aria-live="polite">{items.length} saved cook{items.length === 1 ? "" : "s"}</span></div>
 						<ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 							{items.map((item) => (
 								<li key={item.history_id}>

@@ -13,6 +13,8 @@ type ErrorBody = {
   statusCode?: number;
   code?: string;
   message?: string | string[];
+  shortages?: unknown;
+  ingredient_names?: string[];
 };
 
 @Catch()
@@ -50,6 +52,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       statusCode,
       code: body.code ?? this.defaultCode(statusCode),
       message,
+      ...(body.shortages === undefined ? {} : { shortages: body.shortages }),
+      ...(body.ingredient_names === undefined ? {} : { ingredient_names: body.ingredient_names }),
       requestId: request.requestId ?? request.header('X-Request-ID') ?? null,
     });
   }

@@ -676,6 +676,13 @@
 				width: 100%;
 			}
 
+			&__header > button {
+				align-self: flex-end;
+				width: 2.75rem;
+				min-width: 2.75rem;
+				padding-inline: 0;
+			}
+
 			&__header > button,
 			&__actions button {
 				flex: 1;

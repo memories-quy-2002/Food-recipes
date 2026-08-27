@@ -34,8 +34,8 @@ const RecipeIngredientChecklist = ({ recipeIdentity, ingredients }: RecipeIngred
 
 	return (
 		<div className="mt-5">
-			<p className="text-sm leading-6 text-muted-foreground">
-				Check ingredients as you gather them. Progress stays local to this page.
+			<p className="text-sm text-muted-foreground">
+				Check off as you gather.
 			</p>
 			<ul className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="Ingredients checklist">
 				{ingredientList.map((ingredient, index) => {

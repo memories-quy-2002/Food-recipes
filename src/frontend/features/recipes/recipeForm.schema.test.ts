@@ -109,6 +109,17 @@ describe("recipe form schema", () => {
 		expect(result.success).toBe(true);
 	});
 
+	it("rejects ambiguous quantities and unsupported units before publishing", () => {
+		const result = createRecipeFormSchema({ ...taxonomy, isPublishing: true }).safeParse({
+			...validValues,
+			recipeIngredients: [""],
+			recipeImage: { type: "image/jpeg" },
+			structuredIngredients: [{ quantityText: "a little", unit: "handful", name: "salt", preparation: "" }],
+		});
+
+		expect(result.success).toBe(false);
+	});
+
 	it("rejects structured rows without names and negative nutrition values", () => {
 		const result = createRecipeFormSchema(taxonomy).safeParse({
 			...validValues,

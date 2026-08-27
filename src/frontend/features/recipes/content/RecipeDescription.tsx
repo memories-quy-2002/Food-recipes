@@ -116,7 +116,7 @@ type SectionCardProps = {
 };
 
 const SectionCard = ({ title, description, descriptionRole, children, id, className = "" }: SectionCardProps): React.ReactElement => (
-	<section id={id} className={`rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8 ${className}`}>
+	<section id={id} className={`rounded-xl border border-border bg-card p-5 sm:p-7 lg:p-8 ${className}`}>
 		<div className="max-w-3xl">
 			<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">{title}</h2>
 			{description ? <p className="mt-2 text-sm leading-6 text-muted-foreground sm:text-base" role={descriptionRole}>{description}</p> : null}
@@ -198,14 +198,14 @@ const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactEleme
 		<div className="space-y-6">
 			<section data-recipe-section="decision-strip" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" aria-label="Recipe timing and servings">
 				{timing.map(([label, value]) => (
-					<div key={label} className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+					<div key={label} className="rounded-xl border border-border bg-card p-4 sm:p-5">
 						<div className="flex items-center gap-2 text-muted-foreground"><Clock3 className="size-4" aria-hidden="true" /><span className="text-xs font-extrabold uppercase tracking-[0.14em]">{label}</span></div>
 						<p className="mt-2 text-xl font-black text-foreground">{formatRecipeDuration(value)}</p>
 					</div>
 				))}
-				<div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+				<div className="rounded-xl border border-border bg-card p-4 sm:p-5">
 					<div className="flex items-center gap-2 text-muted-foreground"><Users className="size-4" aria-hidden="true" /><span className="text-xs font-extrabold uppercase tracking-[0.14em]">Servings</span></div>
-					<div className="mt-2 flex items-center gap-2" aria-label="Adjust servings">
+					<div className="mt-2 flex items-center gap-2" role="group" aria-label="Adjust servings">
 						<Button variant="outline" size="icon" className="size-11 rounded-full" aria-label="Decrease servings" onClick={() => adjustServings(-1)} disabled={servings === MIN_SERVINGS}><Minus className="size-4" aria-hidden="true" /></Button>
 						<span className="min-w-10 text-center text-xl font-black" aria-live="polite">{servings}</span>
 						<Button variant="outline" size="icon" className="size-11 rounded-full" aria-label="Increase servings" onClick={() => adjustServings(1)} disabled={servings === MAX_SERVINGS}><Plus className="size-4" aria-hidden="true" /></Button>
@@ -225,8 +225,8 @@ const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactEleme
 					title="Ingredients"
 					descriptionRole="note"
 					description={structuredIngredients.length > 0
-						? "Quantities are scaled with your serving count. Free-text notes stay exactly as written."
-						: "Ingredients are shown as written because this recipe has unsupported ingredient data for automatic scaling."}
+						? "Quantities are scaled with servings. Notes stay as written."
+						: "Ingredients are shown as written; unsupported data will not scale."}
 				>
 					<RecipeIngredientChecklist
 						key={`${recipeIdentity ?? "recipe"}:${getIngredientSignature(displayedIngredients)}`}
@@ -235,7 +235,7 @@ const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactEleme
 					/>
 				</SectionCard>
 
-				<SectionCard id="instructions" title="Instructions" description="Work through one step at a time. You can switch to Cooking Mode from the recipe hero for a focused view.">
+				<SectionCard id="instructions" title="Instructions">
 					{instructions.length > 0 ? (
 						<ol className="mt-6 space-y-3">
 							{instructions.map((instruction, index) => (
@@ -250,7 +250,7 @@ const RecipeDescription = ({ recipe }: RecipeDescriptionProps): React.ReactEleme
 			</div>
 
 			{hasManualNutrition || hasDietaryInformation ? (
-				<section id="nutrition" data-recipe-section="nutrition-dietary" className="grid gap-6 rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:grid-cols-2 lg:p-8" aria-label="Nutrition and dietary information">
+				<section id="nutrition" data-recipe-section="nutrition-dietary" className="grid gap-6 rounded-xl border border-border bg-card p-5 sm:p-7 lg:grid-cols-2 lg:p-8" aria-label="Nutrition and dietary information">
 					{hasManualNutrition ? (
 						<div>
 							<h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Nutrition per serving</h2>

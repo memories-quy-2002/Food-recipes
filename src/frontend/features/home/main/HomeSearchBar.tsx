@@ -130,17 +130,11 @@ const HomeSearchBar = ({
 			<div className="mx-auto flex size-11 items-center justify-center rounded-full bg-secondary text-primary">
 				<Sparkles className="size-5" aria-hidden="true" />
 			</div>
-			<p className="mt-4 text-xs font-extrabold uppercase tracking-[0.18em] text-primary sm:text-sm">
-				Recipe index
-			</p>
-			<h1 className="mx-auto mt-3 max-w-3xl text-balance text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl">
+			<h1 className="mx-auto mt-4 max-w-3xl text-balance text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl">
 				Search the recipe index.
 			</h1>
-			<p className="mx-auto mt-4 max-w-2xl text-pretty text-sm leading-6 text-muted-foreground sm:text-base">
-				Search by recipe, category, or meal type. Pick an idea and get to cooking faster.
-			</p>
 
-			<div className="relative mx-auto mt-7 w-full max-w-2xl text-left">
+			<div className="relative mx-auto mt-6 w-full max-w-2xl text-left">
 				<Search className="pointer-events-none absolute left-4 top-[14px] z-10 size-5 text-muted-foreground" aria-hidden="true" />
 				<input
 					type="search"
@@ -159,7 +153,7 @@ const HomeSearchBar = ({
 				/>
 
 				{quickFilters.length > 0 ? (
-					<div className="mt-3 flex flex-wrap justify-center gap-2" aria-label="Popular recipe filters">
+					<div className="mt-3 flex flex-wrap justify-center gap-2" role="group" aria-label="Popular recipe filters">
 						{quickFilters.map((label) => (
 							<Button
 								key={label}

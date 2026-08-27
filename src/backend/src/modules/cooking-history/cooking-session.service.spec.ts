@@ -106,7 +106,7 @@ describe('CookingSessionService', () => {
     const service = new CookingSessionService(repository);
 
     await expect(service.complete(7, 31)).resolves.toEqual(completion);
-    expect(repository.complete).toHaveBeenCalledWith(7, 31);
+    expect(repository.complete).toHaveBeenCalledWith(7, 31, undefined);
   });
 
   it('rejects completion, updates, and abandonment of missing sessions', async () => {
@@ -118,5 +118,35 @@ describe('CookingSessionService', () => {
     await expect(service.complete(7, 31)).rejects.toBeInstanceOf(NotFoundException);
     await expect(service.update(7, 31, { currentStep: 1 })).rejects.toBeInstanceOf(NotFoundException);
     await expect(service.abandon(7, 31)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('returns a shortage conflict before changing a session', async () => {
+    repository.complete.mockResolvedValue({
+      status: 'needs_confirmation',
+      shortages: [{
+        position: 1,
+        ingredient_name: 'rice',
+        required_quantity: 500,
+        required_unit: 'GRAM',
+        available_quantity: 300,
+        missing_quantity: 200,
+        pantry_id: 8,
+      }],
+    });
+    const service = new CookingSessionService(repository);
+
+    await expect(service.complete(7, 31)).rejects.toMatchObject({
+      response: { code: 'COOKING_PANTRY_SHORTAGE', shortages: [{ missing_quantity: 200 }] },
+    });
+    expect(repository.complete).toHaveBeenCalledWith(7, 31, undefined);
+  });
+
+  it('passes the shopping decision through without completing the session', async () => {
+    const handoff = { status: 'shopping_list_updated' as const, session, shortages: [], added_shopping_items: 1 };
+    repository.complete.mockResolvedValue(handoff);
+    const service = new CookingSessionService(repository);
+
+    await expect(service.complete(7, 31, { action: 'shopping' })).resolves.toEqual(handoff);
+    expect(repository.complete).toHaveBeenCalledWith(7, 31, 'shopping');
   });
 });

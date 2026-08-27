@@ -7,7 +7,12 @@ export type ProfileUser = AuthUser & {
 	address?: string | null;
 };
 
-export type ProfilePage = "" | "password" | "recipes" | "reviews";
+export type ProfilePage =
+	| "overview"
+	| "personal-info"
+	| "password"
+	| "recipes"
+	| "reviews";
 
 export type PersonalRecipe = Partial<RecipeSummary> & {
 	recipe_id: number;

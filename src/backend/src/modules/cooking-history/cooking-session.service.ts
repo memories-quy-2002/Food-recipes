@@ -1,5 +1,6 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ActiveCookingSessionQueryDto } from './dto/active-cooking-session-query.dto';
+import { CompleteCookingSessionDto } from './dto/complete-cooking-session.dto';
 import { StartCookingSessionDto } from './dto/start-cooking-session.dto';
 import { UpdateCookingSessionDto } from './dto/update-cooking-session.dto';
 import {
@@ -7,6 +8,7 @@ import {
   CookingSessionRecord,
   CookingSessionRepositoryPort,
   CompletedCookingSessionResult,
+  ShoppingListHandoffResult,
 } from './cooking-session.repository';
 
 @Injectable()
@@ -51,9 +53,26 @@ export class CookingSessionService {
     return { session };
   }
 
-  async complete(userId: number, sessionId: number): Promise<CompletedCookingSessionResult> {
-    const result = await this.repository.complete(userId, sessionId);
+  async complete(userId: number, sessionId: number, dto?: CompleteCookingSessionDto): Promise<CompletedCookingSessionResult | ShoppingListHandoffResult> {
+    const result = await this.repository.complete(userId, sessionId, dto?.action);
     if (!result) throw this.sessionNotFound();
+    if ('status' in result) {
+      if (result.status === 'needs_confirmation') {
+        throw new ConflictException({
+          code: 'COOKING_PANTRY_SHORTAGE',
+          message: 'Some ingredients are missing from your pantry',
+          shortages: result.shortages,
+        });
+      }
+      if (result.status === 'invalid_recipe') {
+        throw new BadRequestException({
+          code: 'COOKING_RECIPE_INGREDIENTS_UNQUANTIFIED',
+          message: 'Add a quantity and unit to every recipe ingredient before cooking',
+          ingredient_names: result.ingredient_names,
+        });
+      }
+      return result;
+    }
     return result;
   }
 

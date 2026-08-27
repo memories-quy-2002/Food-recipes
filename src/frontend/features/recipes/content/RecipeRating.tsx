@@ -12,7 +12,7 @@ type ReviewMessage = {
 };
 
 const Notice = ({ children }: { children: React.ReactNode }): React.ReactElement => (
-	<div className="rounded-2xl border border-border bg-muted/60 px-5 py-4 text-sm leading-6 text-muted-foreground" role="note">
+	<div className="rounded-xl border border-border bg-muted/60 px-5 py-4 text-sm leading-6 text-muted-foreground" role="note">
 		{children}
 	</div>
 );
@@ -46,9 +46,9 @@ const RecipeRating = ({
 	isDeletingReview, onSubmit, onDelete, onStarClick, onToggleReview, onReviewChange,
 }: RecipeRatingProps): React.ReactElement => (
 	<section className="space-y-6" aria-labelledby="recipe-reviews-title">
-		<div className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8">
+		<div className="rounded-xl border border-border bg-card p-5 sm:p-7 lg:p-8">
 			<h2 id="recipe-reviews-title" className="text-2xl font-black tracking-tight sm:text-3xl">Ratings & reviews</h2>
-			<p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">Share what worked for you and help the next cook decide.</p>
+			<p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">Rate the recipe or leave a note for other cooks.</p>
 			<div className="mt-6">
 				{isRecipeAuthor ? (
 					<Notice><strong className="font-black">You cannot review your own recipe.</strong> Other cooks can rate and review it here.</Notice>
@@ -93,7 +93,7 @@ const RecipeRating = ({
 			</div>
 		</div>
 
-		{isLoadingReviews ? <div className="rounded-2xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">Loading reviews…</div> : reviewsError ? <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-5 py-5 text-sm text-destructive" role="alert">{reviewsError}</div> : <RecipeReviewList reviewList={reviewList} />}
+		{isLoadingReviews ? <div className="rounded-xl border border-border bg-card px-5 py-8 text-sm text-muted-foreground">Loading reviews…</div> : reviewsError ? <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-5 py-5 text-sm text-destructive" role="alert">{reviewsError}</div> : <RecipeReviewList reviewList={reviewList} />}
 	</section>
 );
 

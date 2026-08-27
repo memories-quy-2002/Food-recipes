@@ -34,7 +34,7 @@ const RecipeReviewList = ({ reviewList }: RecipeReviewListProps): React.ReactEle
 	const goTo = (page: number): void => setCurrentPage(Math.min(Math.max(page, 1), Math.max(totalPages, 1)));
 
 	return (
-		<section className="rounded-2xl border border-border bg-card p-5 shadow-sm sm:p-7 lg:p-8" aria-labelledby="all-reviews-heading">
+		<section className="rounded-xl border border-border bg-card p-5 sm:p-7 lg:p-8" aria-labelledby="all-reviews-heading">
 			<h3 id="all-reviews-heading" className="text-xl font-black tracking-tight text-foreground sm:text-2xl">All reviews <span className="text-muted-foreground">({numberReviews})</span></h3>
 
 			{numberReviews === 0 ? (
@@ -50,7 +50,7 @@ const RecipeReviewList = ({ reviewList }: RecipeReviewListProps): React.ReactEle
 										<strong className="truncate text-sm font-black text-foreground">{review.full_name || "Anonymous cook"}</strong>
 										<time className="text-xs text-muted-foreground" dateTime={review.date_added || undefined}>{formatTimestamp(review.date_added)}</time>
 									</div>
-									<div className="mt-2 flex items-center gap-1 text-primary" aria-label={`Rated ${review.score || 0} out of 5`}>{ratingStar(review.score, "currentColor")}</div>
+									<div className="mt-2 flex items-center gap-1 text-primary" role="img" aria-label={`Rated ${review.score || 0} out of 5`}>{ratingStar(review.score, "currentColor")}</div>
 									<p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground sm:text-base">{review.review || "No written review."}</p>
 								</div>
 							</div>

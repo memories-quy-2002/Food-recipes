@@ -96,6 +96,12 @@ export class PantryItemDto {
   @ApiProperty({ example: true })
   have!: boolean;
 
+  @ApiProperty({ type: Number, nullable: true, example: 2.5 })
+  quantity!: number | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'KILOGRAM' })
+  unit!: string | null;
+
   @ApiProperty({ type: String, format: 'date-time' })
   updated_at!: string;
 }
@@ -677,6 +683,43 @@ export class CookingSessionCompletionResponseDto {
 
   @ApiProperty({ type: CookingHistoryItemDto })
   history!: CookingHistoryItemDto;
+}
+
+export class CookingShortageDto {
+  @ApiProperty({ example: 1 })
+  position!: number;
+
+  @ApiProperty({ example: 'rice' })
+  ingredient_name!: string;
+
+  @ApiProperty({ example: 500 })
+  required_quantity!: number;
+
+  @ApiProperty({ example: 'GRAM' })
+  required_unit!: string;
+
+  @ApiProperty({ example: 300 })
+  available_quantity!: number;
+
+  @ApiProperty({ example: 200 })
+  missing_quantity!: number;
+
+  @ApiProperty({ type: Number, nullable: true, example: 8 })
+  pantry_id!: number | null;
+}
+
+export class CookingSessionShoppingListResponseDto {
+  @ApiProperty({ example: 'shopping_list_updated' })
+  status!: 'shopping_list_updated';
+
+  @ApiProperty({ type: CookingSessionDto })
+  session!: CookingSessionDto;
+
+  @ApiProperty({ type: [CookingShortageDto] })
+  shortages!: CookingShortageDto[];
+
+  @ApiProperty({ example: 2 })
+  added_shopping_items!: number;
 }
 
 export class UploadGrantResponseDto {
