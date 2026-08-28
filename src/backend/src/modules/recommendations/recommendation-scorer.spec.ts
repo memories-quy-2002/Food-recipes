@@ -149,15 +149,15 @@ describe('RecommendationScorer', () => {
     expect(highProtein.reasons.join(' ')).toMatch(/high-protein/i);
   });
 
-  it('rewards a preferred cuisine explicitly present in the recipe name', () => {
+  it('rewards a preferred cuisine phrase explicitly present in the recipe name', () => {
     const context = createContext({
       preferences: {
         ...createContext().preferences,
-        preferredCuisines: new Set(['japanese']),
+        preferredCuisines: new Set(['new orleans']),
       },
     });
     const matchingRecipe = scorer.score(
-      createCandidate({ recipeName: 'Japanese Ramen' }),
+      createCandidate({ recipeName: 'New Orleans Gumbo' }),
       context,
     );
     const nonMatchingRecipe = scorer.score(
@@ -166,6 +166,27 @@ describe('RecommendationScorer', () => {
     );
 
     expect(matchingRecipe.breakdown.preference).toBeGreaterThan(
+      nonMatchingRecipe.breakdown.preference,
+    );
+  });
+
+  it('does not reward a non-cuisine fragment inside the recipe name', () => {
+    const context = createContext({
+      preferences: {
+        ...createContext().preferences,
+        preferredCuisines: new Set(['japanese']),
+      },
+    });
+    const fragmentMatch = scorer.score(
+      createCandidate({ recipeName: 'Japanesecake' }),
+      context,
+    );
+    const nonMatchingRecipe = scorer.score(
+      createCandidate({ recipeName: 'Italian Pasta' }),
+      context,
+    );
+
+    expect(fragmentMatch.breakdown.preference).toBe(
       nonMatchingRecipe.breakdown.preference,
     );
   });

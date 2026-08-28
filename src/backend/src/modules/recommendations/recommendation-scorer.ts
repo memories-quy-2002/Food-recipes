@@ -45,6 +45,19 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const normalizeText = (value: string | null | undefined): string => value?.trim().toLowerCase() ?? '';
 
+const normalizeCuisineText = (value: string | null | undefined): string =>
+  normalizeText(value).replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+
+const containsCuisinePhrase = (
+  recipeName: string | null | undefined,
+  cuisine: string | null | undefined,
+): boolean => {
+  const normalizedRecipeName = normalizeCuisineText(recipeName);
+  const normalizedCuisine = normalizeCuisineText(cuisine);
+  return Boolean(normalizedRecipeName && normalizedCuisine) &&
+    ` ${normalizedRecipeName} `.includes(` ${normalizedCuisine} `);
+};
+
 const normalizeAllergen = (value: string | null | undefined): string =>
   normalizeText(value).replace(/[_\s]+/g, ' ');
 
@@ -155,7 +168,7 @@ const preferenceFit = (candidate: RecommendationCandidate, context: Recommendati
 
   if (context.preferences.preferredCuisines.size) {
     const cuisineMatch = [...context.preferences.preferredCuisines].some((cuisine) =>
-      matches(candidate.recipeName, cuisine),
+      containsCuisinePhrase(candidate.recipeName, cuisine),
     );
     signals.push(cuisineMatch ? 1 : 0.25);
   }
