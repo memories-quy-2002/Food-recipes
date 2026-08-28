@@ -24,6 +24,7 @@ import { SentryModule } from '@sentry/nestjs/setup';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { HouseholdsModule } from './modules/households/households.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { HouseholdsModule } from './modules/households/households.module';
     PreferencesModule,
     RecommendationsModule,
     HouseholdsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

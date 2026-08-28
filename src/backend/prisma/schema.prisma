@@ -60,6 +60,35 @@ model HouseholdInvite {
   @@map("household_invites")
 }
 
+model Notification {
+  id         Int       @id @default(autoincrement()) @map("notification_id")
+  userId     Int       @map("user_id")
+  kind       String    @db.VarChar(64)
+  title      String    @db.VarChar(160)
+  body       String?   @db.VarChar(500)
+  actionPath String?   @map("action_path") @db.VarChar(255)
+  dedupeKey  String    @map("dedupe_key") @db.VarChar(255)
+  readAt     DateTime? @map("read_at") @db.Timestamp(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([userId, dedupeKey], map: "notifications_user_dedupe_key")
+  @@index([userId, readAt, createdAt], map: "notifications_user_read_created_idx")
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  userId             Int      @id @map("user_id")
+  pantryExpiry       Boolean  @default(true) @map("pantry_expiry")
+  mealReminder       Boolean  @default(true) @map("meal_reminder")
+  resumeCooking      Boolean  @default(true) @map("resume_cooking")
+  weeklyPlan         Boolean  @default(true) @map("weekly_plan")
+  householdActivity  Boolean  @default(true) @map("household_activity")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("notification_preferences")
+}
+
 model UserFoodPreference {
   userId                Int      @id @map("user_id")
   diet                  String?  @db.VarChar(32)
