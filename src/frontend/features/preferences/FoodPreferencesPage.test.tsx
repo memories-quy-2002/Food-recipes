@@ -98,6 +98,35 @@ describe("FoodPreferencesPage", () => {
 		);
 	});
 
+	it("blocks minimum protein values with more precision than the API accepts", async () => {
+		const user = userEvent.setup();
+		renderPage();
+
+		const protein = screen.getByLabelText("Minimum protein (g)");
+		await user.clear(protein);
+		await user.type(protein, "30.123");
+		await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+		expect(mockSaveMutation.mutate).not.toHaveBeenCalled();
+		expect(screen.getByText("Minimum protein must have no more than 2 decimal places.")).toBeInTheDocument();
+		expect(protein).toHaveAttribute("aria-invalid", "true");
+	});
+
+	it("moves focus to the first invalid control after an invalid submit", async () => {
+		const user = userEvent.setup();
+		renderPage();
+
+		const servings = screen.getByLabelText("Default servings");
+		const protein = screen.getByLabelText("Minimum protein (g)");
+		await user.clear(servings);
+		await user.type(servings, "25");
+		await user.clear(protein);
+		await user.type(protein, "30.123");
+		await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+		expect(servings).toHaveFocus();
+	});
+
 	it("keeps the edited draft visible when saving fails", async () => {
 		const user = userEvent.setup();
 		mockSaveMutation.mutate.mockImplementation(
@@ -114,6 +143,38 @@ describe("FoodPreferencesPage", () => {
 		expect(screen.getByRole("alert")).toHaveTextContent(
 			"Your preferences could not be saved.",
 		);
+	});
+
+	it("submits the valid payload and displays the saved preferences", async () => {
+		const user = userEvent.setup();
+		const savedPreferences = {
+			...preferences,
+			diet: "vegetarian",
+			defaultServings: 4,
+		};
+		mockSaveMutation.mutate.mockImplementation(
+			(
+				_input: FoodPreferences,
+				options?: { onSuccess?: (value: FoodPreferences) => void },
+			) => options?.onSuccess?.(savedPreferences),
+		);
+		renderPage();
+
+		await user.selectOptions(screen.getByLabelText("Diet"), "vegetarian");
+		const servings = screen.getByLabelText("Default servings");
+		await user.clear(servings);
+		await user.type(servings, "4");
+		await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+		expect(mockSaveMutation.mutate).toHaveBeenCalledWith(
+			{ ...preferences, diet: "vegetarian", defaultServings: 4 },
+			expect.objectContaining({
+				onSuccess: expect.any(Function),
+				onError: expect.any(Function),
+			}),
+		);
+		expect(screen.getByLabelText("Diet")).toHaveValue("vegetarian");
+		expect(servings).toHaveValue(4);
 	});
 
 	it("keeps the page constrained for narrow mobile viewports", () => {

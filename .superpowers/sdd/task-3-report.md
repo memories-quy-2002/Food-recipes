@@ -129,3 +129,59 @@ The pre-existing untracked files were preserved and not modified:
 
 - The production build still reports oversized generated chunks; resolving that would be a separate bundle/code-splitting task.
 - The current frontend test environment validates responsive constraints through DOM/class assertions rather than a real browser viewport measurement; the layout classes are designed for 360px and below-no-overflow behavior.
+
+## Fix Wave: Task 3 Review
+
+Applied only the requested Critical/Important correctness fixes. The optional Minor items were not implemented.
+
+### Fixes
+
+- Scoped the preferences query key to the authenticated user's ID with `preferencesQueryKeys.forUser(userId)`, using the existing `AuthContext` and disabling the query until a positive user ID exists. Existing prefix invalidation remains in place for successful saves.
+- Added the backend-matching two-decimal-place validation for `minProteinGrams`. Values such as `30.123` now block submission with the existing field-error presentation.
+- Added a form ref and post-validation effect that focuses the first rendered control with `aria-invalid="true"` after an invalid submit.
+- Added a valid-submit regression test that verifies the complete normalized mutation payload and applies the returned saved preferences to the form.
+
+### TDD Evidence
+
+Added the four regression behaviors before the production changes:
+
+- `features/preferences/api/preferencesQueries.test.ts`: authenticated-user cache isolation.
+- `features/preferences/FoodPreferencesPage.test.tsx`: excessive protein precision, first-invalid focus, and successful valid submission.
+
+RED command:
+
+```text
+pnpm test -- FoodPreferencesPage.test.tsx features/preferences/api/preferencesQueries.test.ts
+```
+
+RED result: 2 test files ran; 3 tests failed and 7 tests passed. The failures were the expected missing behavior: `30.123` was submitted, focus remained on the submit button, and the second authenticated user received the first user's cached result.
+
+GREEN command:
+
+```text
+pnpm test -- FoodPreferencesPage.test.tsx features/preferences/api/preferencesQueries.test.ts
+```
+
+GREEN result: 2 test files passed; 10 tests passed.
+
+### Fix Verification
+
+```text
+pnpm check
+```
+
+Result: application source TypeScript-only check passed, ESLint passed, TypeScript typecheck passed, 108 test files passed, and 349 tests passed.
+
+```text
+pnpm build
+```
+
+Result: Vite production build succeeded. The existing warning about generated chunks larger than 500 kB remains and is unrelated to this fix wave.
+
+```text
+git diff --check
+```
+
+Result: passed with no whitespace errors.
+
+Self-review confirmed that only the four requested correctness areas changed, the mutation still invalidates the preferences query family, the existing UI language is unchanged, and both pre-existing untracked docs remain untouched.

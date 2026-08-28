@@ -1,5 +1,6 @@
 import {
 	useEffect,
+	useRef,
 	useState,
 	type ChangeEvent,
 	type FormEvent,
@@ -140,11 +141,18 @@ const validateNumber = (
 	max: number,
 	wholeNumber: boolean,
 	rangeUnit = label.toLowerCase(),
+	maxDecimalPlaces?: number,
 ): string | undefined => {
 	if (!value.trim()) return `${label} is required.`;
 	const number = Number(value);
 	if (!Number.isFinite(number) || (wholeNumber && !Number.isInteger(number))) {
 		return `${label} must be a valid ${wholeNumber ? "whole number" : "number"}.`;
+	}
+	if (
+		maxDecimalPlaces !== undefined &&
+		(String(number).split(".")[1]?.length ?? 0) > maxDecimalPlaces
+	) {
+		return `${label} must have no more than ${maxDecimalPlaces} decimal places.`;
 	}
 	if (number < min || number > max) return `Use between ${min} and ${max} ${rangeUnit}.`;
 	return undefined;
@@ -157,9 +165,10 @@ const validateOptionalNumber = (
 	max: number,
 	wholeNumber: boolean,
 	rangeUnit?: string,
+	maxDecimalPlaces?: number,
 ): string | undefined =>
 	value.trim()
-		? validateNumber(value, label, min, max, wholeNumber, rangeUnit)
+		? validateNumber(value, label, min, max, wholeNumber, rangeUnit, maxDecimalPlaces)
 		: undefined;
 
 const validateForm = (formData: PreferencesForm): FieldErrors => {
@@ -207,6 +216,7 @@ const validateForm = (formData: PreferencesForm): FieldErrors => {
 				300,
 				false,
 				"grams of protein",
+				2,
 			),
 		],
 	];
@@ -226,10 +236,16 @@ const FoodPreferencesPage = (): ReactElement => {
 	const [chipDraft, setChipDraft] = useState<ChipDraft>(emptyChipDraft);
 	const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
 	const [saveError, setSaveError] = useState<string | null>(null);
+	const formRef = useRef<HTMLFormElement>(null);
 
 	useEffect(() => {
 		if (preferencesQuery.data) setFormData(toFormData(preferencesQuery.data));
 	}, [preferencesQuery.data]);
+
+	useEffect(() => {
+		if (Object.keys(fieldErrors).length === 0) return;
+		formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
+	}, [fieldErrors]);
 
 	const clearError = (field: PreferencesField): void => {
 		setFieldErrors((current) => {
@@ -344,6 +360,7 @@ const FoodPreferencesPage = (): ReactElement => {
 
 				<section className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6 lg:p-8">
 					<form
+						ref={formRef}
 						onSubmit={handleSubmit}
 						className="grid min-w-0 gap-8"
 						aria-label="Food preferences"
