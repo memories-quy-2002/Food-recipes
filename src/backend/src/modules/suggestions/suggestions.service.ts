@@ -1,4 +1,6 @@
 import { BadRequestException, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { RecommendationService } from '../recommendations/recommendation.service';
+import type { RecommendationServicePort } from '../recommendations/recommendation.service';
 import { CreateSuggestionDto } from './dto/create-suggestion.dto';
 import { SuggestionResult, SuggestionsRepositoryPort, SUGGESTIONS_REPOSITORY } from './suggestions.repository';
 
@@ -13,7 +15,10 @@ const MAX_SUGGESTION_TEXT = 80;
 
 @Injectable()
 export class SuggestionsService {
-  constructor(@Inject(SUGGESTIONS_REPOSITORY) private readonly repository: SuggestionsRepositoryPort) {}
+  constructor(
+    @Inject(SUGGESTIONS_REPOSITORY) private readonly repository: SuggestionsRepositoryPort,
+    @Inject(RecommendationService) private readonly recommendationService: RecommendationServicePort,
+  ) {}
 
   async suggest(dto: CreateSuggestionDto, userId?: number): Promise<SuggestionResponse> {
     let suggestions: SuggestionResult[];
@@ -26,11 +31,11 @@ export class SuggestionsService {
         break;
       case 'personalized':
         if (!userId) throw new UnauthorizedException({ code: 'SUGGESTIONS_AUTH_REQUIRED', message: 'Sign in for personalized suggestions' });
-        suggestions = await this.repository.findPersonalized(userId);
+        suggestions = await this.byRecommendations(userId, dto.intent);
         break;
       case 'meal_plan':
         if (!userId) throw new UnauthorizedException({ code: 'SUGGESTIONS_AUTH_REQUIRED', message: 'Sign in for meal-plan suggestions' });
-        suggestions = await this.repository.findForMealPlan(userId);
+        suggestions = await this.byRecommendations(userId, dto.intent);
         break;
       default:
         throw new BadRequestException({ code: 'SUGGESTION_INTENT_INVALID', message: 'Suggestion intent is not supported' });
@@ -70,6 +75,25 @@ export class SuggestionsService {
       throw new BadRequestException({ code: 'SUGGESTION_INGREDIENT_REQUIRED', message: 'Enter an ingredient to compare' });
     }
     return this.repository.findBySubstituteIngredient(recipeId as number, normalizedIngredient);
+  }
+
+  private async byRecommendations(
+    userId: number,
+    intent: Extract<CreateSuggestionDto['intent'], 'personalized' | 'meal_plan'>,
+  ): Promise<SuggestionResult[]> {
+    const ranked = await this.recommendationService.recommend(userId, {
+      limit: 6,
+      surface: intent === 'personalized' ? 'suggestions' : 'meal-plan',
+    });
+    const recipes = await this.repository.findByRecipeIds(ranked.map(({ recipeId }) => recipeId));
+    const recipesById = new Map(recipes.map((recipe) => [recipe.recipe_id, recipe]));
+
+    return ranked.flatMap((recommendation) => {
+      const recipe = recipesById.get(recommendation.recipeId);
+      return recipe
+        ? [{ ...recipe, match_score: recommendation.score, reason: recommendation.reasons.join(' ') }]
+        : [];
+    });
   }
 
   private normalizeList(values: string[] | undefined): string[] {

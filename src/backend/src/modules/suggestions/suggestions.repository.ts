@@ -15,6 +15,7 @@ export interface SuggestionsRepositoryPort {
   findByIngredients(ingredients: string[]): Promise<SuggestionResult[]>;
   findPersonalized(userId: number): Promise<SuggestionResult[]>;
   findForMealPlan(userId: number): Promise<SuggestionResult[]>;
+  findByRecipeIds(recipeIds: number[]): Promise<SuggestionResult[]>;
   findBySubstituteIngredient(recipeId: number, ingredient: string): Promise<SuggestionResult[]>;
 }
 
@@ -86,6 +87,19 @@ export class SuggestionsRepository implements SuggestionsRepositoryPort {
       )
       ORDER BY r.recipe_id ASC
       LIMIT 6
+    `);
+    return normalizeRows(rows);
+  }
+
+  async findByRecipeIds(recipeIds: number[]): Promise<SuggestionResult[]> {
+    if (!recipeIds.length) return [];
+    const rows = await this.prisma.$queryRaw<SuggestionResult[]>(Prisma.sql`
+      SELECT ${recipeProjection},
+        0::float8 AS match_score,
+        '' AS reason
+      FROM recipes r
+      WHERE r.status = 'published'
+        AND r.recipe_id IN (${Prisma.join(recipeIds)})
     `);
     return normalizeRows(rows);
   }
