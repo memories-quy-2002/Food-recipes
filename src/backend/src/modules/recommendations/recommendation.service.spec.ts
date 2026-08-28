@@ -1,4 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import {
   RecommendationContext,
@@ -7,6 +8,7 @@ import {
 import {
   RecommendationCandidate,
   RecommendationCandidatesRepository,
+  RECOMMENDATION_CANDIDATES_REPOSITORY,
 } from './recommendation-candidates.repository';
 import {
   RecommendationScore,
@@ -16,7 +18,11 @@ import {
   RECOMMENDATION_CONTEXT,
   RecommendationService,
 } from './recommendation.service';
-import { RECOMMENDATION_CANDIDATES_REPOSITORY } from './recommendation-candidates.repository';
+import { RecommendationsModule } from './recommendations.module';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { PreferencesService } from '../preferences/preferences.service';
+import { PantryService } from '../pantry/pantry.service';
+import { CookingHistoryService } from '../cooking-history/cooking-history.service';
 
 const context: RecommendationContext = {
   userId: 7,
@@ -40,6 +46,7 @@ const context: RecommendationContext = {
 const candidate = (recipeId: number, authorId = 42): RecommendationCandidate => ({
   recipeId,
   authorId,
+  recipeName: null,
   status: 'published',
   categoryId: null,
   mealId: null,
@@ -185,9 +192,13 @@ describe('RecommendationService', () => {
     ]);
   });
 
-  it('caps results at eight and rejects invalid input at the service boundary', async () => {
+  it('caps only Home results at eight and rejects invalid input at the service boundary', async () => {
     const contextService = { build: jest.fn().mockResolvedValue(context) };
-    const candidatesRepository = { listPublished: jest.fn().mockResolvedValue([]) };
+    const candidatesRepository = {
+      listPublished: jest.fn().mockResolvedValue(
+        Array.from({ length: 10 }, (_, index) => candidate(index + 1)),
+      ),
+    };
     const scorer = { score: jest.fn() };
     const service = new RecommendationService(
       contextService as never,
@@ -195,7 +206,10 @@ describe('RecommendationService', () => {
       scorer as never,
     );
 
-    await expect(service.recommend(7, { limit: 99, surface: 'meal-plan' })).resolves.toEqual([]);
+    scorer.score.mockReturnValue(scored(0.5));
+    await expect(service.recommend(7, { limit: 99, surface: 'home' })).resolves.toHaveLength(8);
+    await expect(service.recommend(7, { limit: 99, surface: 'suggestions' })).resolves.toHaveLength(10);
+    await expect(service.recommend(7, { limit: 99, surface: 'meal-plan' })).resolves.toHaveLength(10);
     await expect(service.recommend(7, { limit: 0, surface: 'home' })).rejects.toBeInstanceOf(
       BadRequestException,
     );
@@ -213,6 +227,7 @@ describe('RecommendationCandidatesRepository', () => {
         {
           recipe_id: 15,
           author_id: 42,
+          recipe_name: 'Japanese Ramen',
           category_id: 3,
           meal_id: 4,
           status: 'published',
@@ -232,6 +247,7 @@ describe('RecommendationCandidatesRepository', () => {
     await expect(repository.listPublished(500)).resolves.toMatchObject([
       {
         recipeId: 15,
+        recipeName: 'Japanese Ramen',
         averageRating: 4.5,
         structuredIngredients: [{ name: 'chicken' }],
       },
@@ -248,17 +264,36 @@ describe('RecommendationCandidatesRepository', () => {
 });
 
 describe('RecommendationModule DI', () => {
-  it('can resolve the recommendation service through its module providers', async () => {
+  it('resolves actual provider bindings and the exported recommendation service', async () => {
+    const consumerToken = Symbol('RECOMMENDATION_CONSUMER');
     const module = await Test.createTestingModule({
+      imports: [RecommendationsModule],
       providers: [
-        RecommendationService,
-        { provide: RECOMMENDATION_CONTEXT, useValue: { build: jest.fn() } },
-        { provide: RECOMMENDATION_CANDIDATES_REPOSITORY, useValue: { listPublished: jest.fn() } },
-        RecommendationScorer,
+        {
+          provide: consumerToken,
+          inject: [RecommendationService],
+          useFactory: (service: RecommendationService) => service,
+        },
       ],
-    }).compile();
+    })
+      .overrideProvider(ConfigService)
+      .useValue({ get: jest.fn().mockReturnValue('15m'), getOrThrow: jest.fn().mockReturnValue('test-secret') })
+      .overrideProvider(PrismaService)
+      .useValue({})
+      .overrideProvider(PreferencesService)
+      .useValue({})
+      .overrideProvider(PantryService)
+      .useValue({})
+      .overrideProvider(CookingHistoryService)
+      .useValue({})
+      .compile();
 
     expect(module.get(RecommendationService)).toBeInstanceOf(RecommendationService);
+    expect(module.get(consumerToken)).toBe(module.get(RecommendationService));
+    expect(module.get(RECOMMENDATION_CONTEXT)).toBe(module.get(RecommendationContextService));
+    expect(module.get(RECOMMENDATION_CANDIDATES_REPOSITORY)).toBe(
+      module.get(RecommendationCandidatesRepository),
+    );
     await module.close();
   });
 });

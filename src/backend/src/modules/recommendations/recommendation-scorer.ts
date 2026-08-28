@@ -45,6 +45,9 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const normalizeText = (value: string | null | undefined): string => value?.trim().toLowerCase() ?? '';
 
+const normalizeAllergen = (value: string | null | undefined): string =>
+  normalizeText(value).replace(/[_\s]+/g, ' ');
+
 const clamp = (value: number): number =>
   Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
 
@@ -60,7 +63,10 @@ const ingredientNames = (candidate: RecommendationCandidate): string[] => [
   ...candidate.legacyIngredients,
 ];
 
-const matches = (left: string, right: string): boolean => {
+const matches = (
+  left: string | null | undefined,
+  right: string | null | undefined,
+): boolean => {
   const normalizedLeft = normalizeText(left);
   const normalizedRight = normalizeText(right);
   return Boolean(normalizedLeft && normalizedRight) &&
@@ -132,7 +138,6 @@ const preferenceFit = (candidate: RecommendationCandidate, context: Recommendati
   const diet = context.preferences.diet;
   const tags = new Set([
     ...candidate.dietaryTags.map(normalizeText),
-    ...((candidate.cuisineTags ?? []).map(normalizeText)),
     normalizeText(candidate.categoryName),
     normalizeText(candidate.mealName),
   ]);
@@ -149,7 +154,9 @@ const preferenceFit = (candidate: RecommendationCandidate, context: Recommendati
   }
 
   if (context.preferences.preferredCuisines.size) {
-    const cuisineMatch = [...context.preferences.preferredCuisines].some((cuisine) => tags.has(cuisine));
+    const cuisineMatch = [...context.preferences.preferredCuisines].some((cuisine) =>
+      matches(candidate.recipeName, cuisine),
+    );
     signals.push(cuisineMatch ? 1 : 0.25);
   }
 
@@ -170,7 +177,10 @@ const hardExclusion = (
   if (options.excludeOwnRecipe !== false && candidate.authorId === context.userId) {
     return 'Excluded because it is your own recipe.';
   }
-  if (candidate.allergenTags.some((allergen) => context.preferences.avoidedAllergens.has(normalizeText(allergen)))) {
+  const avoidedAllergens = new Set(
+    [...context.preferences.avoidedAllergens].map(normalizeAllergen),
+  );
+  if (candidate.allergenTags.some((allergen) => avoidedAllergens.has(normalizeAllergen(allergen)))) {
     return 'Excluded because it contains an avoided allergen.';
   }
   if (context.preferences.strictDislikes && ingredientNames(candidate).some((ingredient) =>

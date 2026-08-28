@@ -66,7 +66,10 @@ export class RecommendationService {
       });
     }
 
-    const limit = Math.min(input.limit, MAX_RECOMMENDATIONS);
+    const limit = Math.min(
+      input.limit,
+      input.surface === 'home' ? MAX_RECOMMENDATIONS : RECOMMENDATION_CANDIDATE_LIMIT,
+    );
     const [context, candidates] = await Promise.all([
       this.contextService.build(userId),
       this.candidatesRepository.listPublished(RECOMMENDATION_CANDIDATE_LIMIT),

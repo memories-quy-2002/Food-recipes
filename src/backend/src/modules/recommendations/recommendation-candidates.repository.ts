@@ -22,6 +22,7 @@ export type RecommendationStructuredIngredient = {
 export type RecommendationCandidate = {
   recipeId: number;
   authorId: number;
+  recipeName: string | null;
   status: RecipeStatus;
   categoryId: number | null;
   mealId: number | null;
@@ -35,12 +36,12 @@ export type RecommendationCandidate = {
   allergenTags: string[];
   structuredIngredients: RecommendationStructuredIngredient[];
   legacyIngredients: string[];
-  cuisineTags?: string[];
 };
 
 type RecommendationCandidateRow = {
   recipe_id: number | bigint;
   author_id: number | bigint;
+  recipe_name: string | null;
   status: string;
   category_id: number | bigint | null;
   meal_id: number | bigint | null;
@@ -123,6 +124,7 @@ export class RecommendationCandidatesRepository {
       SELECT
         r.recipe_id,
         r.user_id AS author_id,
+        r.recipe_name,
         r.status,
         r.category_id,
         r.meal_id,
@@ -176,6 +178,7 @@ export class RecommendationCandidatesRepository {
     return rows.map((row) => ({
       recipeId: Number(row.recipe_id),
       authorId: Number(row.author_id),
+      recipeName: row.recipe_name,
       status: row.status as RecipeStatus,
       categoryId: row.category_id === null ? null : Number(row.category_id),
       mealId: row.meal_id === null ? null : Number(row.meal_id),

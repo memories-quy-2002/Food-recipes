@@ -34,6 +34,7 @@ const createCandidate = (
 ): RecommendationCandidate => ({
   recipeId: 15,
   authorId: 42,
+  recipeName: null,
   status: 'published',
   categoryId: 3,
   mealId: 4,
@@ -79,6 +80,21 @@ describe('RecommendationScorer', () => {
     expect(result.excluded).toBe(true);
     expect(result.score).toBe(0);
     expect(result.reasons.join(' ')).toMatch(/allergen/i);
+  });
+
+  it('excludes allergen aliases with spaces and underscores symmetrically', () => {
+    const result = scorer.score(
+      createCandidate({ allergenTags: ['tree_nuts'] }),
+      createContext({
+        preferences: {
+          ...createContext().preferences,
+          avoidedAllergens: new Set(['tree nuts']),
+        },
+      }),
+    );
+
+    expect(result.excluded).toBe(true);
+    expect(result.score).toBe(0);
   });
 
   it('excludes a disliked ingredient when strict dislikes are enabled', () => {
@@ -131,6 +147,27 @@ describe('RecommendationScorer', () => {
 
     expect(highProtein.score).toBeGreaterThan(lowProtein.score);
     expect(highProtein.reasons.join(' ')).toMatch(/high-protein/i);
+  });
+
+  it('rewards a preferred cuisine explicitly present in the recipe name', () => {
+    const context = createContext({
+      preferences: {
+        ...createContext().preferences,
+        preferredCuisines: new Set(['japanese']),
+      },
+    });
+    const matchingRecipe = scorer.score(
+      createCandidate({ recipeName: 'Japanese Ramen' }),
+      context,
+    );
+    const nonMatchingRecipe = scorer.score(
+      createCandidate({ recipeName: 'Italian Pasta' }),
+      context,
+    );
+
+    expect(matchingRecipe.breakdown.preference).toBeGreaterThan(
+      nonMatchingRecipe.breakdown.preference,
+    );
   });
 
   it('rewards a recipe within the preferred weekday cooking time', () => {
