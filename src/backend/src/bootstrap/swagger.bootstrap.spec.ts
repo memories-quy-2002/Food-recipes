@@ -132,6 +132,8 @@ describe('Swagger document', () => {
       'POST /api/v1/media/recipe-image/upload-url',
       'GET /api/v1/recipes/{recipeId}/metadata',
       'PUT /api/v1/recipes/{recipeId}/metadata',
+      'GET /api/v1/users/me/food-preferences',
+      'PUT /api/v1/users/me/food-preferences',
       'POST /api/v1/suggestions',
       'POST /api/v1/users/me/suggestions',
       'GET /api/v1/home-feed',
