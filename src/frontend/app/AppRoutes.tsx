@@ -17,6 +17,7 @@ import HistoryPage from "@/features/history/HistoryPage";
 import FoodPreferencesPage from "@/features/preferences/FoodPreferencesPage";
 import HouseholdsPage from "@/features/households/HouseholdsPage";
 import NotificationPreferencesPage from "@/features/notifications/NotificationPreferencesPage";
+import RecipeImportPage from "@/features/recipe-import/RecipeImportPage";
 
 const Recipe = lazy(() => import("@/features/recipes/Recipe"));
 const isLocalHealthEnabled = import.meta.env.DEV;
@@ -51,6 +52,7 @@ const AppRoutes = (): ReactElement => (
 			path="/profile/notifications"
 			element={<ProtectedRoute><NotificationPreferencesPage /></ProtectedRoute>}
 		/>
+		<Route path="/recipes/import" element={<ProtectedRoute><RecipeImportPage /></ProtectedRoute>} />
 		<Route
 			path="/recipe"
 			element={

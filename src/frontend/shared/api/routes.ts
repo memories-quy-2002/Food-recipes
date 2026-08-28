@@ -17,6 +17,8 @@ type ApiRoutes = {
 	userSuggestions: string;
 	userRecipes: string;
 	userRecipeDrafts: string;
+	recipeImportPreview: string;
+	recipeImportDrafts: string;
 	recipeIngredients: (recipeId: ApiRouteId) => string;
 	recipeNutrition: (recipeId: ApiRouteId) => string;
 	recipeDietaryTags: (recipeId: ApiRouteId) => string;
@@ -79,6 +81,8 @@ const apiRoutes: ApiRoutes = {
 	userSuggestions: "/users/me/suggestions",
 	userRecipes: "/users/me/recipes",
 	userRecipeDrafts: "/users/me/recipes/drafts",
+	recipeImportPreview: "/users/me/recipe-imports/preview",
+	recipeImportDrafts: "/users/me/recipe-imports/drafts",
 	recipeIngredients: (recipeId) => `/recipes/${recipeId}/ingredients`,
 	recipeNutrition: (recipeId) => `/recipes/${recipeId}/nutrition`,
 	recipeDietaryTags: (recipeId) => `/recipes/${recipeId}/dietary-tags`,
