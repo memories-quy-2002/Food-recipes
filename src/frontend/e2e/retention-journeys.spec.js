@@ -4,7 +4,7 @@ const user = { user_id: 7, full_name: "Retention User", email: "retention@exampl
 const recipe = {
 	recipe_id: 42, recipe_name: "Weeknight Pasta", recipe_description: "A quick dinner.", category_id: 2, category_name: "Main Course", meal_id: 3, meal_name: "Dinner", date_added: null,
 	prep_time_minutes: 15, cook_time_minutes: 20, total_time_minutes: 35, servings: 2, user_id: 7, status: "published", image_url: null,
-	ingredients: ["pasta"], instructions: ["Boil pasta."], structured_ingredients: [], dietary_tags: [], allergen_tags: [],
+	ingredients: ["pasta"], instructions: ["Boil pasta.", "Serve pasta."], structured_ingredients: [], dietary_tags: [], allergen_tags: [],
 };
 
 const json = (body, status = 200) => ({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -13,6 +13,7 @@ async function stubRetentionApi(page) {
 	const state = {
 		preferences: { diet: "", avoidedAllergens: [], dislikedIngredients: [], preferredCuisines: [], cookingSkill: "", maxWeekdayCookMinutes: 30, defaultServings: 2, maxCaloriesPerServing: 650, minProteinGrams: 0, strictDislikes: false },
 		shoppingItem: { item_id: 1, label: "pasta", quantity: "1 pack", source_recipe_id: 42, source_recipe_name: "Weeknight Pasta", checked: false },
+		cookingSession: null,
 		inviteSent: false,
 	};
 	await page.route("**/api/v1/**", async (route) => {
@@ -30,7 +31,7 @@ async function stubRetentionApi(page) {
 		}
 		if (path === "/meals") return route.fulfill(json({ meals: [{ id: 3, name: "Dinner", description: "Evening meals" }] }));
 		if (path === "/categories") return route.fulfill(json({ categories: [{ id: 2, name: "Main Course" }] }));
-		if (path === "/home-feed" || path === "/users/me/home-feed") return route.fulfill(json({ sections: [{ key: "recommended", title: "Recommended for you", description: "Personalized ideas.", recipes: [recipe] }] }));
+		if (path === "/home-feed" || path === "/users/me/home-feed") return route.fulfill(json({ personalized: true, sections: [{ key: "recommended", title: "Recommended for you", description: "Personalized ideas.", recipes: [recipe] }], kitchen: { active_session: state.cookingSession, next_meal: { item_id: 9, plan_id: 3, recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, planned_date: "2026-08-28", slot: "dinner", servings: 2 }, shopping: { open_items: 1, completed_items: 0 }, pantry: { available_items: 1 }, progress: { saved_recipes: 0, planned_meals: 1, completed_cooks: 0 } } }));
 		if (path === "/recipes" && method === "GET") return route.fulfill(json({ recipes: [recipe], pagination: { page: Number(new URL(request.url()).searchParams.get("page") || 1), limit: 100, total: 1, totalPages: 1, hasNext: false } }));
 		if (path === "/recipes/42" && method === "GET") return route.fulfill(json({ recipe }));
 		if (path === "/recipes/42/reviews") return route.fulfill(json({ reviews: [] }));
@@ -41,7 +42,22 @@ async function stubRetentionApi(page) {
 		if (path === "/users/me/meal-plans" && method === "GET") return route.fulfill(json({ plans: [] }));
 		if (path === "/users/me/meal-plans/generate-preview" && method === "POST") return route.fulfill(json({ previewToken: "preview-token", name: "This week", from: "2026-08-28", to: "2026-08-30", targetMeals: 1, items: [{ recipeId: 42, recipeName: recipe.recipe_name, date: "2026-08-28", slot: "dinner", servings: 2, locked: false, score: 1, reasons: ["Fits your preferences"] }] }));
 		if (path === "/users/me/meal-plans/from-preview" && method === "POST") return route.fulfill(json({ plan: { plan_id: 9, name: "This week", start_date: "2026-08-28", end_date: "2026-08-30" }, items: [] }));
-		if (path === "/users/me/cooking-session" && method === "GET") return route.fulfill(json({ session: null }));
+		if (path === "/users/me/shopping-list/prepare" && method === "POST") return route.fulfill(json({ recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, servings: 2, ingredients: [{ position: 1, ingredient_name: "pasta", required_quantity: 1, required_unit: "PIECE", available_quantity: 1, missing_quantity: 0, pantry_id: 4, status: "available" }], added_shopping_items: 0 }));
+		if (path === "/users/me/cooking-session" && method === "GET") return route.fulfill(json({ session: state.cookingSession }));
+		if (path === "/users/me/cooking-session" && method === "POST") {
+			const input = request.postDataJSON();
+			state.cookingSession = { session_id: 31, user_id: user.user_id, recipe_id: input.recipeId, recipe_name: recipe.recipe_name, meal_plan_item_id: input.mealPlanItemId ?? null, planned_date: "2026-08-28", slot: "dinner", servings: input.servings ?? 1, current_step: 0, total_steps: recipe.instructions.length, status: "active", started_at: "2026-08-28T17:00:00.000Z", last_active_at: "2026-08-28T17:00:00.000Z", paused_at: null, completed_at: null, created_at: "2026-08-28T17:00:00.000Z", updated_at: "2026-08-28T17:00:00.000Z" };
+			return route.fulfill(json({ session: state.cookingSession }, 201));
+		}
+		if (path === "/users/me/cooking-session/31" && method === "PATCH") {
+			const input = request.postDataJSON();
+			state.cookingSession = { ...state.cookingSession, ...(input.currentStep === undefined ? {} : { current_step: input.currentStep }), ...(input.status ? { status: input.status } : {}) };
+			return route.fulfill(json({ session: state.cookingSession }));
+		}
+		if (path === "/users/me/cooking-session/31/complete" && method === "POST") {
+			state.cookingSession = { ...state.cookingSession, status: "completed", completed_at: "2026-08-28T17:30:00.000Z" };
+			return route.fulfill(json({ session: state.cookingSession, history: { history_id: 21, user_id: user.user_id, recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, meal_plan_item_id: 9, planned_date: "2026-08-28", slot: "dinner", servings: 2, started_at: "2026-08-28T17:00:00.000Z", completed_at: "2026-08-28T17:30:00.000Z", created_at: "2026-08-28T17:30:00.000Z" } }));
+		}
 		if (path === "/users/me/cooking-history" && method === "GET") return route.fulfill(json({ items: [{ history_id: 21, recipe_id: 42, recipe_name: recipe.recipe_name, meal_plan_item_id: null, planned_date: null, slot: null, servings: 2, started_at: "2026-08-28T17:00:00.000Z", completed_at: "2026-08-28T17:30:00.000Z", created_at: "2026-08-28T17:30:00.000Z" }] }));
 		if (path === "/users/me/cooking-history/21/journal") {
 			if (method === "PUT") return route.fulfill(json({ journal: { journal_id: 3, history_id: 21, rating: 5, would_cook_again: true, notes: "Great", photos: [] } }));
@@ -93,6 +109,15 @@ test("generated plan can be reviewed and saved before cooking", async ({ page })
 	await expect(page.getByRole("heading", { name: "Weeknight Pasta" })).toBeVisible();
 	await page.getByRole("button", { name: "Save meal plan" }).click();
 	await expect(page.getByRole("button", { name: "Generate week" })).toBeVisible();
+	await page.goto("/");
+	await page.getByRole("button", { name: "Prepare this meal" }).click();
+	await expect(page.getByRole("status", { name: "Meal preparation status" })).toContainText("1 ready");
+	await page.getByRole("link", { name: "Start cooking" }).click();
+	const nextStepButton = page.getByRole("button", { name: "Next step" });
+	await expect(nextStepButton).toBeEnabled();
+	await nextStepButton.click();
+	await page.getByRole("button", { name: "Finish cooking" }).click();
+	await expect(page.getByRole("heading", { name: "Recipe complete" })).toBeVisible();
 });
 
 test("household invite unlocks the shared shopping scope", async ({ page }) => {
