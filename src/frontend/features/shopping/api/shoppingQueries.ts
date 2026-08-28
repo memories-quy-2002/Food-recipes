@@ -4,6 +4,7 @@ import { AuthContext } from "@/app/AuthProvider";
 import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
 import { cacheKeys } from "@/shared/offline/cacheKeys";
 import { offlineDb } from "@/shared/offline/offlineDb";
+import { offlineOperationQueue } from "@/shared/offline/operationQueue";
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
@@ -75,10 +76,22 @@ export const useUpdateShoppingItemMutation = (scope: KitchenScope = PERSONAL_KIT
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: ({ itemId, input }: { itemId: number; input: UpdateShoppingItemInput }) =>
-			updateShoppingItem(itemId, input, scope),
+		mutationFn: async ({ itemId, input }: { itemId: number; input: UpdateShoppingItemInput }) => {
+			if (scope.kind === "personal" && typeof navigator !== "undefined" && navigator.onLine === false && input.checked !== undefined) {
+				await offlineOperationQueue.enqueue({ id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${itemId}`, kind: "shopping-check", itemId, checked: input.checked, createdAt: new Date().toISOString() });
+				return { item: { item_id: itemId, label: "", quantity: null, source_recipe_id: null, source_recipe_name: null, checked: input.checked } };
+			}
+			return updateShoppingItem(itemId, input, scope);
+		},
+		onMutate: async ({ itemId, input }) => {
+			const cancelPromise = queryClient.cancelQueries({ queryKey: shoppingQueryKeys.forUser(userId, scope) });
+			const previous = queryClient.getQueryData<Awaited<ReturnType<typeof listShoppingItems>>>(shoppingQueryKeys.forUser(userId, scope));
+			if (input.checked !== undefined) queryClient.setQueryData(shoppingQueryKeys.forUser(userId, scope), (current: Awaited<ReturnType<typeof listShoppingItems>> | undefined) => current ? { ...current, items: current.items.map((item) => item.item_id === itemId ? { ...item, checked: input.checked! } : item) } : current);
+			await cancelPromise;
+			return { previous };
+		},
 		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Shopping list updated" }); },
-		onError: () => showToast({ title: "Couldn’t update your shopping list", message: "Please try again.", type: "error" }),
+		onError: (_error, _input, context) => { if (context?.previous) queryClient.setQueryData(shoppingQueryKeys.forUser(userId, scope), context.previous); showToast({ title: "Couldn’t update your shopping list", message: "Please try again.", type: "error" }); },
 	});
 };
 
