@@ -5,6 +5,7 @@ import { ApiInternalServerErrorResponse } from '../../common/swagger/api-interna
 import { ApiErrorResponseDto, MessageResponseDto, PantryItemResponseDto, PantryResponseDto } from '../../common/swagger/response.schemas';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
+import { HouseholdAccessService } from '../households/household-access.service';
 import { CreatePantryItemDto } from './dto/create-pantry-item.dto';
 import { UpdatePantryItemDto } from './dto/update-pantry-item.dto';
 import { PantryService, PantryServicePort } from './pantry.service';
@@ -38,4 +39,50 @@ export class PantryController {
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiNotFoundResponse({ type: ApiErrorResponseDto })
   remove(@CurrentUser() user: AuthUser, @Param('pantryId', ParseIntPipe) pantryId: number) { return this.service.remove(user.id, pantryId); }
+}
+
+@ApiTags('Household Pantry')
+@ApiBearerAuth()
+@ApiInternalServerErrorResponse()
+@UseGuards(JwtAuthGuard)
+@Controller({ path: 'households/:householdId/pantry', version: '1' })
+export class HouseholdPantryController {
+  constructor(
+    @Inject(PantryService) private readonly service: PantryServicePort,
+    private readonly access: HouseholdAccessService,
+  ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List a household pantry' })
+  @ApiOkResponse({ type: PantryResponseDto })
+  async list(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER', 'VIEWER']);
+    return this.service.listForHousehold(householdId);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Add an item to a household pantry' })
+  @ApiCreatedResponse({ type: PantryItemResponseDto })
+  async create(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Body() dto: CreatePantryItemDto) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
+    return this.service.createForHousehold(householdId, dto);
+  }
+
+  @Patch(':pantryId')
+  @ApiOperation({ summary: 'Update a household pantry item' })
+  @ApiOkResponse({ type: PantryItemResponseDto })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto })
+  async update(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('pantryId', ParseIntPipe) pantryId: number, @Body() dto: UpdatePantryItemDto) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
+    return this.service.updateForHousehold(householdId, pantryId, dto);
+  }
+
+  @Delete(':pantryId')
+  @ApiOperation({ summary: 'Delete a household pantry item' })
+  @ApiOkResponse({ type: MessageResponseDto })
+  @ApiNotFoundResponse({ type: ApiErrorResponseDto })
+  async remove(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('pantryId', ParseIntPipe) pantryId: number) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
+    return this.service.removeForHousehold(householdId, pantryId);
+  }
 }

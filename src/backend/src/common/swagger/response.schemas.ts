@@ -87,8 +87,11 @@ export class PantryItemDto {
   @ApiProperty({ example: 4 })
   pantry_id!: number;
 
-  @ApiProperty({ example: 7 })
-  user_id!: number;
+  @ApiProperty({ type: Number, nullable: true, example: 7 })
+  user_id!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 3 })
+  household_id!: number | null;
 
   @ApiProperty({ example: 'Eggs' })
   name!: string;

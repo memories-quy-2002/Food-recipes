@@ -30,6 +30,10 @@ export class PantryService {
     return { items: (await this.repository.list(userId)).map((item) => this.withExpiryStatus(item)) };
   }
 
+  async listForHousehold(householdId: number): Promise<{ items: PantryItemRecord[] }> {
+    return { items: (await this.repository.listForHousehold(householdId)).map((item) => this.withExpiryStatus(item)) };
+  }
+
   async create(userId: number, dto: CreatePantryItemDto): Promise<{ item: PantryItemRecord }> {
     const name = this.normalizeName(dto.name);
     const quantity = this.normalizeQuantity(dto.quantity);
@@ -40,6 +44,19 @@ export class PantryService {
     const storageLocation = this.normalizeStorageLocation(dto.storageLocation);
     this.validateQuantityUnit(quantity, unit);
     const item = await this.repository.create(userId, name, quantity, unit, dto.have ?? true, purchasedAt, openedAt, expiresAt, storageLocation);
+    return { item: this.withExpiryStatus(item) };
+  }
+
+  async createForHousehold(householdId: number, dto: CreatePantryItemDto): Promise<{ item: PantryItemRecord }> {
+    const name = this.normalizeName(dto.name);
+    const quantity = this.normalizeQuantity(dto.quantity);
+    const unit = this.normalizeUnit(dto.unit);
+    const purchasedAt = this.normalizeDate(dto.purchasedAt);
+    const openedAt = this.normalizeDate(dto.openedAt);
+    const expiresAt = this.normalizeDate(dto.expiresAt);
+    const storageLocation = this.normalizeStorageLocation(dto.storageLocation);
+    this.validateQuantityUnit(quantity, unit);
+    const item = await this.repository.createForHousehold(householdId, name, quantity, unit, dto.have ?? true, purchasedAt, openedAt, expiresAt, storageLocation);
     return { item: this.withExpiryStatus(item) };
   }
 
@@ -57,8 +74,27 @@ export class PantryService {
     return { item: this.withExpiryStatus(item) };
   }
 
+  async updateForHousehold(householdId: number, pantryId: number, dto: UpdatePantryItemDto): Promise<{ item: PantryItemRecord }> {
+    const name = dto.name === undefined ? undefined : this.normalizeName(dto.name);
+    const quantity = dto.quantity === undefined ? undefined : this.normalizeQuantity(dto.quantity);
+    const unit = dto.unit === undefined ? undefined : this.normalizeUnit(dto.unit);
+    const purchasedAt = this.normalizeDate(dto.purchasedAt);
+    const openedAt = this.normalizeDate(dto.openedAt);
+    const expiresAt = this.normalizeDate(dto.expiresAt);
+    const storageLocation = this.normalizeStorageLocation(dto.storageLocation);
+    if (dto.quantity !== undefined || dto.unit !== undefined) this.validateQuantityUnit(quantity ?? null, unit ?? null);
+    const item = await this.repository.updateForHousehold(householdId, pantryId, name, quantity, unit, dto.have, purchasedAt, openedAt, expiresAt, storageLocation);
+    if (!item) throw this.notFound();
+    return { item: this.withExpiryStatus(item) };
+  }
+
   async remove(userId: number, pantryId: number): Promise<{ message: string }> {
     if (!(await this.repository.remove(userId, pantryId))) throw this.notFound();
+    return { message: 'Pantry item removed' };
+  }
+
+  async removeForHousehold(householdId: number, pantryId: number): Promise<{ message: string }> {
+    if (!(await this.repository.removeForHousehold(householdId, pantryId))) throw this.notFound();
     return { message: 'Pantry item removed' };
   }
 
@@ -121,4 +157,4 @@ export class PantryService {
   }
 }
 
-export type PantryServicePort = Pick<PantryService, 'list' | 'create' | 'update' | 'remove'>;
+export type PantryServicePort = Pick<PantryService, 'list' | 'create' | 'update' | 'remove' | 'listForHousehold' | 'createForHousehold' | 'updateForHousehold' | 'removeForHousehold'>;

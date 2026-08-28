@@ -11,9 +11,9 @@ import {
   type InventoryRecipeIngredient,
 } from '../pantry/pantry-inventory';
 
-export type MealPlanRecord = { plan_id: number; name: string; start_date: Date | string; end_date: Date | string; created_at: Date; updated_at: Date };
+export type MealPlanRecord = { plan_id: number; user_id?: number | null; household_id?: number | null; name: string; start_date: Date | string; end_date: Date | string; created_at: Date; updated_at: Date };
 export type MealPlanItemRecord = { item_id: number; plan_id: number; recipe_id: number; recipe_name: string; planned_date: Date | string; slot: MealPlanSlot; servings: number; cooking_status: 'planned' | 'cooking' | 'completed'; created_at: Date };
-export type ShoppingListItemRecord = { item_id: number; label: string; quantity: string | null; source_recipe_id: number | null; source_recipe_name: string | null; checked: boolean; created_at: Date; updated_at: Date };
+export type ShoppingListItemRecord = { item_id: number; user_id?: number | null; household_id?: number | null; label: string; quantity: string | null; source_recipe_id: number | null; source_recipe_name: string | null; checked: boolean; created_at: Date; updated_at: Date };
 export type StructuredShoppingIngredient = { name: string; quantity: number | null; unit: string | null; note: string | null; position: number; recipe_id?: number };
 export type RecipeIngredientsRecord = { name: string; ingredients: string[]; structuredIngredients?: StructuredShoppingIngredient[] };
 export type PreparedIngredientStatus = 'available' | 'missing' | 'needs_details';
@@ -41,19 +41,34 @@ export interface PlanningRepositoryPort {
   createPlan(userId: number, name: string, from: string, to: string): Promise<MealPlanRecord>;
   updatePlan(userId: number, planId: number, name: string, from: string, to: string): Promise<MealPlanRecord | null>;
   deletePlan(userId: number, planId: number): Promise<boolean>;
+  listPlansForHousehold(householdId: number, from?: string, to?: string): Promise<MealPlanRecord[]>;
+  findPlanForHousehold(householdId: number, planId: number): Promise<MealPlanRecord | null>;
+  createPlanForHousehold(householdId: number, name: string, from: string, to: string): Promise<MealPlanRecord>;
+  updatePlanForHousehold(householdId: number, planId: number, name: string, from: string, to: string): Promise<MealPlanRecord | null>;
+  deletePlanForHousehold(householdId: number, planId: number): Promise<boolean>;
   listPlanItems(userId: number, planId: number): Promise<MealPlanItemRecord[]>;
   findPlanItem(userId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null>;
   recipeExists(recipeId: number): Promise<boolean>;
   addPlanItem(userId: number, planId: number, recipeId: number, date: string, slot: MealPlanSlot, servings: number): Promise<MealPlanItemRecord | null>;
   updatePlanItem(userId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null>;
   deletePlanItem(userId: number, planId: number, itemId: number): Promise<boolean>;
+  listPlanItemsForHousehold(householdId: number, planId: number): Promise<MealPlanItemRecord[]>;
+  findPlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null>;
+  addPlanItemForHousehold(householdId: number, planId: number, recipeId: number, date: string, slot: MealPlanSlot, servings: number): Promise<MealPlanItemRecord | null>;
+  updatePlanItemForHousehold(householdId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null>;
+  deletePlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<boolean>;
   listShoppingItems(userId: number): Promise<ShoppingListItemRecord[]>;
   addShoppingItem(userId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord>;
   updateShoppingItem(userId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null>;
   deleteShoppingItem(userId: number, itemId: number): Promise<boolean>;
+  listShoppingItemsForHousehold(householdId: number): Promise<ShoppingListItemRecord[]>;
+  addShoppingItemForHousehold(householdId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord>;
+  updateShoppingItemForHousehold(householdId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null>;
+  deleteShoppingItemForHousehold(householdId: number, itemId: number): Promise<boolean>;
   recipeIngredients(recipeId: number): Promise<RecipeIngredientsRecord | null>;
   prepareRecipeIngredients(userId: number, recipeId: number, servings?: number): Promise<PrepareRecipeIngredientsRecord | null>;
   clearCompletedShoppingItems(userId: number): Promise<number>;
+  clearCompletedShoppingItemsForHousehold(householdId: number): Promise<number>;
 }
 
 export const PLANNING_REPOSITORY = Symbol('PLANNING_REPOSITORY');
@@ -102,6 +117,47 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   async deletePlan(userId: number, planId: number): Promise<boolean> {
     return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM meal_plans WHERE user_id = ${userId} AND plan_id = ${planId}`)) > 0;
+  }
+
+  async listPlansForHousehold(householdId: number, from?: string, to?: string): Promise<MealPlanRecord[]> {
+    return this.prisma.$queryRaw<MealPlanRecord[]>(Prisma.sql`
+      SELECT plan_id, user_id, household_id, name, start_date, end_date, created_at, updated_at
+      FROM meal_plans
+      WHERE household_id = ${householdId}
+        ${from ? Prisma.sql`AND end_date >= ${from}::date` : Prisma.empty}
+        ${to ? Prisma.sql`AND start_date <= ${to}::date` : Prisma.empty}
+      ORDER BY start_date ASC, plan_id ASC
+    `);
+  }
+
+  async findPlanForHousehold(householdId: number, planId: number): Promise<MealPlanRecord | null> {
+    const rows = await this.prisma.$queryRaw<MealPlanRecord[]>(Prisma.sql`
+      SELECT plan_id, user_id, household_id, name, start_date, end_date, created_at, updated_at
+      FROM meal_plans WHERE household_id = ${householdId} AND plan_id = ${planId}
+    `);
+    return rows[0] ?? null;
+  }
+
+  async createPlanForHousehold(householdId: number, name: string, from: string, to: string): Promise<MealPlanRecord> {
+    const rows = await this.prisma.$queryRaw<MealPlanRecord[]>(Prisma.sql`
+      INSERT INTO meal_plans (user_id, household_id, name, start_date, end_date)
+      VALUES (NULL, ${householdId}, ${name}, ${from}::date, ${to}::date)
+      RETURNING plan_id, user_id, household_id, name, start_date, end_date, created_at, updated_at
+    `);
+    return rows[0];
+  }
+
+  async updatePlanForHousehold(householdId: number, planId: number, name: string, from: string, to: string): Promise<MealPlanRecord | null> {
+    const rows = await this.prisma.$queryRaw<MealPlanRecord[]>(Prisma.sql`
+      UPDATE meal_plans SET name = ${name}, start_date = ${from}::date, end_date = ${to}::date, updated_at = CURRENT_TIMESTAMP
+      WHERE household_id = ${householdId} AND plan_id = ${planId}
+      RETURNING plan_id, user_id, household_id, name, start_date, end_date, created_at, updated_at
+    `);
+    return rows[0] ?? null;
+  }
+
+  async deletePlanForHousehold(householdId: number, planId: number): Promise<boolean> {
+    return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM meal_plans WHERE household_id = ${householdId} AND plan_id = ${planId}`)) > 0;
   }
 
   async listPlanItems(userId: number, planId: number): Promise<MealPlanItemRecord[]> {
@@ -184,6 +240,70 @@ export class PlanningRepository implements PlanningRepositoryPort {
     `)) > 0;
   }
 
+  async listPlanItemsForHousehold(householdId: number, planId: number): Promise<MealPlanItemRecord[]> {
+    return this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
+      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+             CASE
+               WHEN EXISTS (SELECT 1 FROM cooking_sessions cs WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')) THEN 'cooking'
+               WHEN EXISTS (SELECT 1 FROM cooking_history ch WHERE ch.meal_plan_item_id = i.item_id) THEN 'completed'
+               ELSE 'planned'
+             END AS cooking_status,
+             i.created_at
+      FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id JOIN recipes r ON r.recipe_id = i.recipe_id
+      WHERE p.household_id = ${householdId} AND i.plan_id = ${planId}
+      ORDER BY i.planned_date ASC, CASE i.slot WHEN 'breakfast' THEN 1 WHEN 'lunch' THEN 2 WHEN 'dinner' THEN 3 ELSE 4 END, i.item_id ASC
+    `);
+  }
+
+  async findPlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null> {
+    const rows = await this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
+      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+             CASE
+               WHEN EXISTS (SELECT 1 FROM cooking_sessions cs WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')) THEN 'cooking'
+               WHEN EXISTS (SELECT 1 FROM cooking_history ch WHERE ch.meal_plan_item_id = i.item_id) THEN 'completed'
+               ELSE 'planned'
+             END AS cooking_status,
+             i.created_at
+      FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id JOIN recipes r ON r.recipe_id = i.recipe_id
+      WHERE p.household_id = ${householdId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
+    `);
+    return rows[0] ?? null;
+  }
+
+  async addPlanItemForHousehold(householdId: number, planId: number, recipeId: number, date: string, slot: MealPlanSlot, servings: number): Promise<MealPlanItemRecord | null> {
+    const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
+      INSERT INTO meal_plan_items (plan_id, recipe_id, planned_date, slot, servings)
+      SELECT p.plan_id, r.recipe_id, ${date}::date, ${slot}, ${servings}
+      FROM meal_plans p CROSS JOIN recipes r
+      WHERE p.plan_id = ${planId} AND p.household_id = ${householdId} AND r.recipe_id = ${recipeId}
+      RETURNING item_id
+    `);
+    return rows[0] ? this.findPlanItemForHousehold(householdId, planId, rows[0].item_id) : null;
+  }
+
+  async updatePlanItemForHousehold(householdId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null> {
+    const item = await this.findPlanItemForHousehold(householdId, planId, itemId);
+    if (!item) return null;
+    const nextRecipeId = recipeId ?? item.recipe_id;
+    const nextDate = date ?? this.dateText(item.planned_date);
+    const nextSlot = slot ?? item.slot;
+    const nextServings = servings ?? item.servings;
+    if (!(await this.recipeExists(nextRecipeId))) return null;
+    await this.prisma.$executeRaw(Prisma.sql`
+      UPDATE meal_plan_items SET recipe_id = ${nextRecipeId}, planned_date = ${nextDate}::date, slot = ${nextSlot}, servings = ${nextServings}
+      FROM meal_plans p
+      WHERE meal_plan_items.item_id = ${itemId} AND meal_plan_items.plan_id = ${planId} AND p.plan_id = meal_plan_items.plan_id AND p.household_id = ${householdId}
+    `);
+    return this.findPlanItemForHousehold(householdId, planId, itemId);
+  }
+
+  async deletePlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<boolean> {
+    return (await this.prisma.$executeRaw(Prisma.sql`
+      DELETE FROM meal_plan_items i USING meal_plans p
+      WHERE i.plan_id = p.plan_id AND p.household_id = ${householdId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
+    `)) > 0;
+  }
+
   async listShoppingItems(userId: number): Promise<ShoppingListItemRecord[]> {
     return this.prisma.$queryRaw<ShoppingListItemRecord[]>(Prisma.sql`
       SELECT i.item_id, i.label, i.quantity, i.source_recipe_id, r.recipe_name AS source_recipe_name,
@@ -217,6 +337,38 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   async deleteShoppingItem(userId: number, itemId: number): Promise<boolean> {
     return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE user_id = ${userId} AND item_id = ${itemId}`)) > 0;
+  }
+
+  async listShoppingItemsForHousehold(householdId: number): Promise<ShoppingListItemRecord[]> {
+    return this.prisma.$queryRaw<ShoppingListItemRecord[]>(Prisma.sql`
+      SELECT i.item_id, i.user_id, i.household_id, i.label, i.quantity, i.source_recipe_id, r.recipe_name AS source_recipe_name,
+             i.checked, i.created_at, i.updated_at
+      FROM shopping_list_items i LEFT JOIN recipes r ON r.recipe_id = i.source_recipe_id
+      WHERE i.household_id = ${householdId}
+      ORDER BY i.checked ASC, i.created_at ASC, i.item_id ASC
+    `);
+  }
+
+  async addShoppingItemForHousehold(householdId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord> {
+    const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
+      INSERT INTO shopping_list_items (user_id, household_id, label, quantity, source_recipe_id)
+      VALUES (NULL, ${householdId}, ${label}, ${quantity}, ${sourceRecipeId}) RETURNING item_id
+    `);
+    return (await this.findShoppingItemForHousehold(householdId, rows[0].item_id))!;
+  }
+
+  async updateShoppingItemForHousehold(householdId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null> {
+    const current = await this.findShoppingItemForHousehold(householdId, itemId);
+    if (!current) return null;
+    await this.prisma.$executeRaw(Prisma.sql`
+      UPDATE shopping_list_items SET label = ${label ?? current.label}, quantity = ${quantity === undefined ? current.quantity : quantity}, checked = ${checked ?? current.checked}, updated_at = CURRENT_TIMESTAMP
+      WHERE household_id = ${householdId} AND item_id = ${itemId}
+    `);
+    return this.findShoppingItemForHousehold(householdId, itemId);
+  }
+
+  async deleteShoppingItemForHousehold(householdId: number, itemId: number): Promise<boolean> {
+    return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE household_id = ${householdId} AND item_id = ${itemId}`)) > 0;
   }
 
   async recipeIngredients(recipeId: number): Promise<RecipeIngredientsRecord | null> {
@@ -362,12 +514,25 @@ export class PlanningRepository implements PlanningRepositoryPort {
     return this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE user_id = ${userId} AND checked = TRUE`);
   }
 
+  clearCompletedShoppingItemsForHousehold(householdId: number): Promise<number> {
+    return this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE household_id = ${householdId} AND checked = TRUE`);
+  }
+
   private findShoppingItem(userId: number, itemId: number): Promise<ShoppingListItemRecord | null> {
     return this.prisma.$queryRaw<ShoppingListItemRecord[]>(Prisma.sql`
       SELECT i.item_id, i.label, i.quantity, i.source_recipe_id, r.recipe_name AS source_recipe_name,
              i.checked, i.created_at, i.updated_at
       FROM shopping_list_items i LEFT JOIN recipes r ON r.recipe_id = i.source_recipe_id
       WHERE i.user_id = ${userId} AND i.item_id = ${itemId}
+    `).then((rows) => rows[0] ?? null);
+  }
+
+  private findShoppingItemForHousehold(householdId: number, itemId: number): Promise<ShoppingListItemRecord | null> {
+    return this.prisma.$queryRaw<ShoppingListItemRecord[]>(Prisma.sql`
+      SELECT i.item_id, i.user_id, i.household_id, i.label, i.quantity, i.source_recipe_id, r.recipe_name AS source_recipe_name,
+             i.checked, i.created_at, i.updated_at
+      FROM shopping_list_items i LEFT JOIN recipes r ON r.recipe_id = i.source_recipe_id
+      WHERE i.household_id = ${householdId} AND i.item_id = ${itemId}
     `).then((rows) => rows[0] ?? null);
   }
 

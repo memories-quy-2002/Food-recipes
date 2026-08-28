@@ -21,6 +21,10 @@ describe('PantryService', () => {
     create: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    listForHousehold: jest.fn(),
+    createForHousehold: jest.fn(),
+    updateForHousehold: jest.fn(),
+    removeForHousehold: jest.fn(),
   };
 
   beforeEach(() => jest.clearAllMocks());
