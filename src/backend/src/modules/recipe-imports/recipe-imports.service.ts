@@ -8,7 +8,7 @@ import { workflowTelemetry } from '../../common/telemetry/workflow-telemetry.ser
 @Injectable()
 export class RecipeImportsService {
   constructor(
-    private readonly fetcher: Pick<RecipeFetcherService, 'fetchHtml'>,
+    @Inject(RecipeFetcherService) private readonly fetcher: Pick<RecipeFetcherService, 'fetchHtml'>,
     @Inject(RecipesService) private readonly recipes: Pick<RecipesService, 'createDraft'>,
   ) {}
 
