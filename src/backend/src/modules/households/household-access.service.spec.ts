@@ -5,6 +5,18 @@ import type { HouseholdsRepositoryPort } from './households.repository';
 describe('HouseholdAccessService', () => {
   const repository: jest.Mocked<HouseholdsRepositoryPort> = {
     findMember: jest.fn(),
+    createHousehold: jest.fn(),
+    listForUser: jest.fn(),
+    findForUser: jest.fn(),
+    listMembers: jest.fn(),
+    createInvite: jest.fn(),
+    findInviteByHash: jest.fn(),
+    acceptInvite: jest.fn(),
+    findMemberById: jest.fn(),
+    countOwners: jest.fn(),
+    updateMemberRole: jest.fn(),
+    transferOwnership: jest.fn(),
+    deleteMember: jest.fn(),
   };
   const service = new HouseholdAccessService(repository);
 

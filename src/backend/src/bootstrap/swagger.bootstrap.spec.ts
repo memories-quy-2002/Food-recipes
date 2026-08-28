@@ -140,6 +140,13 @@ describe('Swagger document', () => {
       'POST /api/v1/users/me/suggestions',
       'GET /api/v1/home-feed',
       'GET /api/v1/users/me/home-feed',
+      'POST /api/v1/households',
+      'GET /api/v1/households',
+      'GET /api/v1/households/{householdId}',
+      'POST /api/v1/households/{householdId}/invites',
+      'POST /api/v1/household-invites/{token}/accept',
+      'PATCH /api/v1/households/{householdId}/members/{memberId}',
+      'DELETE /api/v1/households/{householdId}/members/{memberId}',
     ];
     const actualRoutes = Object.entries(document.paths).flatMap(([path, operations]) =>
       Object.keys(operations).map((method) => `${method.toUpperCase()} ${path}`),
