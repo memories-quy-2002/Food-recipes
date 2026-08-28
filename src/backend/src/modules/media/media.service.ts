@@ -6,6 +6,14 @@ import { CreateRecipeImageUploadDto, RECIPE_IMAGE_MIME_TYPES, RECIPE_IMAGE_MAX_B
 @Injectable()
 export class MediaService {
   async createRecipeImageGrant(user: AuthUser, dto: CreateRecipeImageUploadDto) {
+    return this.createImageGrant(user, dto, 'recipes');
+  }
+
+  async createJournalPhotoGrant(user: AuthUser, dto: CreateRecipeImageUploadDto) {
+    return this.createImageGrant(user, dto, 'journals');
+  }
+
+  private async createImageGrant(user: AuthUser, dto: CreateRecipeImageUploadDto, namespace: 'recipes' | 'journals') {
     if (!RECIPE_IMAGE_MIME_TYPES.includes(dto.contentType)) {
       throw new UnprocessableEntityException({ code: 'MEDIA_TYPE_NOT_ALLOWED', message: 'Only supported image MIME types may be uploaded' });
     }
@@ -23,7 +31,7 @@ export class MediaService {
     }
 
     const extension = dto.contentType.split('/')[1] === 'jpeg' ? 'jpg' : dto.contentType.split('/')[1];
-    const objectPath = `recipes/${user.id}/${randomUUID()}.${extension}`;
+    const objectPath = `${namespace}/${user.id}/${randomUUID()}.${extension}`;
     const expiresAt = Math.floor((Date.now() + 10 * 60 * 1000) / 1000);
     const payload = `${objectPath}|${expiresAt}|${dto.contentType}|${dto.size}`;
     const signature = createHmac('sha256', signerSecret).update(payload).digest('base64url');

@@ -86,7 +86,7 @@ const HistoryPage = () => {
 										<div className="flex items-start justify-between gap-3"><span className="inline-flex min-h-9 items-center gap-2 rounded-full bg-secondary px-3 text-xs font-black uppercase tracking-[0.12em] text-secondary-foreground"><Clock3 className="size-3.5" aria-hidden="true" />{item.meal_plan_item_id ? "Planned cook" : "Recipe cook"}</span><span className="text-xs font-semibold text-muted-foreground">{formatDate(item.completed_at)}</span></div>
 										<h3 className="mt-5 text-xl font-black leading-tight">{item.recipe_name}</h3>
 										<p className="mt-2 text-sm leading-6 text-muted-foreground">{item.servings} serving{item.servings === 1 ? "" : "s"}{item.slot ? ` · ${item.slot[0].toUpperCase()}${item.slot.slice(1)}` : ""}</p>
-										<div className="mt-auto flex flex-col gap-2 pt-6 sm:flex-row"><Button asChild variant="outline" className="sm:flex-1"><Link to={`/recipe?id=${item.recipe_id}`}>Review recipe</Link></Button><Button asChild className="sm:flex-1"><Link to={replayHref(item)}>Cook again</Link></Button></div>
+										<div className="mt-auto flex flex-col gap-2 pt-6"><Button asChild variant="outline"><Link to={`/history/journal?historyId=${item.history_id}`}>Write journal</Link></Button><div className="flex flex-col gap-2 sm:flex-row"><Button asChild variant="outline" className="sm:flex-1"><Link to={`/recipe?id=${item.recipe_id}`}>Review recipe</Link></Button><Button asChild className="sm:flex-1"><Link to={replayHref(item)}>Cook again</Link></Button></div></div>
 									</Card>
 								</li>
 							))}

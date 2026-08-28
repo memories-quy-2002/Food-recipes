@@ -14,13 +14,18 @@ export class JournalsService {
   async upsert(userId: number, historyId: number, dto: UpsertJournalDto) {
     await this.assertOwnedHistory(userId, historyId);
     const current = await this.repository.find(userId, historyId);
-    return {
-      journal: await this.repository.upsert(userId, historyId, {
+    const journal = await this.repository.upsert(userId, historyId, {
         rating: dto.rating ?? current?.rating ?? null,
         wouldCookAgain: dto.wouldCookAgain ?? current?.would_cook_again ?? null,
         notes: dto.notes === undefined ? current?.notes ?? null : dto.notes.trim() || null,
-      }),
-    };
+    });
+    if (dto.photos !== undefined) {
+      const allowedPrefix = `journals/${userId}/`;
+      const photos = dto.photos.filter((path) => path.startsWith(allowedPrefix)).slice(0, 10);
+      await this.repository.replacePhotos(userId, historyId, photos);
+      return { journal: (await this.repository.find(userId, historyId)) ?? journal };
+    }
+    return { journal };
   }
 
   private async assertOwnedHistory(userId: number, historyId: number) {

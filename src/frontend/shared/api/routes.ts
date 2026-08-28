@@ -67,6 +67,8 @@ type ApiRoutes = {
 	cookingSession: string;
 	cookingSessionItem: (sessionId: ApiRouteId) => string;
 	cookingSessionComplete: (sessionId: ApiRouteId) => string;
+	cookingJournal: (historyId: ApiRouteId) => string;
+	journalPhotoUpload: string;
 	databaseHealth: string;
 	serverHealth: string;
 };
@@ -133,6 +135,8 @@ const apiRoutes: ApiRoutes = {
 		`/users/me/cooking-session/${sessionId}`,
 	cookingSessionComplete: (sessionId) =>
 		`/users/me/cooking-session/${sessionId}/complete`,
+	cookingJournal: (historyId) => `/users/me/cooking-history/${historyId}/journal`,
+	journalPhotoUpload: "/media/journal-photo/upload-url",
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
 };

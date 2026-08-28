@@ -4,7 +4,7 @@ import { JournalsService } from './journals.service';
 
 describe('JournalsService', () => {
   const repository: jest.Mocked<JournalsRepositoryPort> = {
-    historyBelongsToUser: jest.fn(), find: jest.fn(), upsert: jest.fn(),
+    historyBelongsToUser: jest.fn(), find: jest.fn(), upsert: jest.fn(), replacePhotos: jest.fn(),
   };
   const service = new JournalsService(repository);
 
