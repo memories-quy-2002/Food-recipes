@@ -22,6 +22,7 @@ import { HomeFeedModule } from './modules/home-feed/home-feed.module';
 import { CookingHistoryModule } from './modules/cooking-history/cooking-history.module';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { PreferencesModule } from './modules/preferences/preferences.module';
+import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
     HomeFeedModule,
     CookingHistoryModule,
     PreferencesModule,
+    RecommendationsModule,
   ],
 })
 export class AppModule {}
