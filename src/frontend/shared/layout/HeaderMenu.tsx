@@ -9,6 +9,7 @@ import {
 	Plus,
 	ShoppingBasket,
 	Star,
+	Settings,
 	type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -28,6 +29,7 @@ const navigationIcons: Record<string, LucideIcon> = {
 	Planning: CalendarDays,
 	Shopping: ShoppingBasket,
 	History: Clock3,
+	Preferences: Settings,
 	"Add Recipe": Plus,
 	Health: Activity,
 };

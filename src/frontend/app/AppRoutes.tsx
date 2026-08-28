@@ -14,6 +14,7 @@ import PlanningPage from "@/features/planning/PlanningPage";
 import ShoppingListPage from "@/features/shopping/ShoppingListPage";
 import PantryPage from "@/features/pantry/PantryPage";
 import HistoryPage from "@/features/history/HistoryPage";
+import FoodPreferencesPage from "@/features/preferences/FoodPreferencesPage";
 
 const Recipe = lazy(() => import("@/features/recipes/Recipe"));
 const isLocalHealthEnabled = import.meta.env.DEV;
@@ -29,6 +30,14 @@ const AppRoutes = (): ReactElement => (
 			element={
 				<ProtectedRoute>
 					<Profile />
+				</ProtectedRoute>
+			}
+		/>
+		<Route
+			path="/profile/preferences"
+			element={
+				<ProtectedRoute>
+					<FoodPreferencesPage />
 				</ProtectedRoute>
 			}
 		/>

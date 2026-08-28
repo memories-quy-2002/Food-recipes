@@ -40,6 +40,7 @@ type ApiRoutes = {
 	authRefresh: string;
 	authLogout: string;
 	userProfile: string;
+	userFoodPreferences: string;
 	userPassword: string;
 	mealPlans: string;
 	mealPlan: (planId: ApiRouteId) => string;
@@ -98,6 +99,7 @@ const apiRoutes: ApiRoutes = {
 	authRefresh: "/auth/refresh",
 	authLogout: "/auth/logout",
 	userProfile: "/users/me/profile",
+	userFoodPreferences: "/users/me/food-preferences",
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",
 	mealPlan: (planId) => `/users/me/meal-plans/${planId}`,
