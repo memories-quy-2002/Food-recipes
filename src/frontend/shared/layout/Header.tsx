@@ -7,6 +7,7 @@ import HeaderToggle from "./HeaderToggle";
 import { getPrimaryNavigation } from "./navigation";
 import type { RootState } from "@/app/store";
 import HouseholdScopeSelector from "@/features/households/HouseholdScopeSelector";
+import NotificationCenter from "@/features/notifications/NotificationCenter";
 
 const Header = (): ReactElement => {
 	const [show, setShow] = useState(false);
@@ -23,6 +24,7 @@ const Header = (): ReactElement => {
 				<HeaderMenu items={items} />
 				<div className="ml-auto block min-w-0 shrink-0 sm:hidden"><HouseholdScopeSelector /></div>
 				<div className="ml-auto hidden shrink-0 sm:block"><HouseholdScopeSelector /></div>
+				{isAuthenticated && <NotificationCenter />}
 				<HeaderAuthButton auth={auth} />
 				<HeaderToggle
 					show={show}
