@@ -26,6 +26,7 @@ import { RecommendationsModule } from './modules/recommendations/recommendations
 import { HouseholdsModule } from './modules/households/households.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RecipeImportsModule } from './modules/recipe-imports/recipe-imports.module';
+import { JournalsModule } from './modules/journals/journals.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { RecipeImportsModule } from './modules/recipe-imports/recipe-imports.mod
     HouseholdsModule,
     NotificationsModule,
     RecipeImportsModule,
+    JournalsModule,
   ],
 })
 export class AppModule {}

@@ -394,6 +394,30 @@ model CookingHistory {
   @@map("cooking_history")
 }
 
+model CookingJournal {
+  id             Int      @id @default(autoincrement()) @map("journal_id")
+  historyId      Int      @unique @map("history_id")
+  userId         Int      @map("user_id")
+  rating         Int?     @db.SmallInt
+  wouldCookAgain Boolean? @map("would_cook_again")
+  notes          String?  @db.VarChar(4000)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@index([userId, updatedAt], map: "cooking_journals_user_updated_idx")
+  @@map("cooking_journals")
+}
+
+model CookingJournalPhoto {
+  id         Int      @id @default(autoincrement()) @map("photo_id")
+  journalId  Int      @map("journal_id")
+  objectPath String   @map("object_path") @db.VarChar(255)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([journalId, createdAt], map: "cooking_journal_photos_journal_created_idx")
+  @@map("cooking_journal_photos")
+}
+
 model CookingSession {
   id             Int       @id @default(autoincrement()) @map("session_id")
   userId         Int       @map("user_id")
