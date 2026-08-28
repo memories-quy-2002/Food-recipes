@@ -4,6 +4,7 @@ import Button from "@/shared/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/Card";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import { previewRecipeImport, saveImportedRecipeDraft, type RecipeImportPreview } from "./api/recipeImportApi";
+import { trackProductEvent } from "@/shared/analytics/productAnalytics";
 
 type EditablePreview = RecipeImportPreview & {
 	ingredientsText: string;
@@ -69,6 +70,7 @@ const RecipeImportPage = (): ReactElement => {
 				cookTimeMinutes: preview.cookTimeMinutes,
 				imageUrl: preview.imageUrl,
 			});
+			trackProductEvent("recipe_import_completed", { source: "jsonld", status: "draft" });
 			navigate("/profile");
 		} catch (requestError) {
 			setError(getErrorMessage(requestError, "Your draft could not be saved. Your edits are still here."));

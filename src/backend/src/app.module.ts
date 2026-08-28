@@ -27,6 +27,8 @@ import { HouseholdsModule } from './modules/households/households.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RecipeImportsModule } from './modules/recipe-imports/recipe-imports.module';
 import { JournalsModule } from './modules/journals/journals.module';
+import { PRODUCT_ANALYTICS } from './common/analytics/product-analytics.port';
+import { ProductAnalyticsService } from './common/analytics/product-analytics.service';
 
 @Module({
   imports: [
@@ -60,5 +62,6 @@ import { JournalsModule } from './modules/journals/journals.module';
     RecipeImportsModule,
     JournalsModule,
   ],
+  providers: [ProductAnalyticsService, { provide: PRODUCT_ANALYTICS, useExisting: ProductAnalyticsService }],
 })
 export class AppModule {}
