@@ -215,7 +215,7 @@ const HeaderToggle = ({
 			: mobileNavigation;
 
 	return (
-		<div className="ml-auto lg:hidden">
+		<div className="ml-auto xl:hidden">
 			<Button
 				variant="outline"
 				size="icon"

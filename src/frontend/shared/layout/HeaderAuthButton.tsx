@@ -95,7 +95,7 @@ const HeaderAuthButton = ({
 	};
 
 	return (
-		<div className="relative ml-auto hidden lg:block">
+		<div className="relative ml-auto hidden xl:block">
 			{isAuthenticated ? (
 				<>
 					<button

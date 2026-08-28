@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import GeneratedPlanPreview from "./GeneratedPlanPreview";
 import type { MealPlanPreview } from "./api/planningApi";
 
@@ -18,6 +18,8 @@ const preview: MealPlanPreview = {
 };
 
 describe("GeneratedPlanPreview", () => {
+	afterEach(cleanup);
+
 	it("keeps mobile actions explicit without relying on drag and drop", () => {
 		const onSwap = vi.fn();
 		const onToggleLock = vi.fn();
@@ -44,5 +46,21 @@ describe("GeneratedPlanPreview", () => {
 		expect(onToggleLock).toHaveBeenCalledWith(preview.items[0]);
 		expect(onRegenerate).toHaveBeenCalledOnce();
 		expect(onSave).toHaveBeenCalledOnce();
+	});
+
+	it("surfaces a server revalidation failure without discarding the preview", () => {
+		render(
+			<GeneratedPlanPreview
+				preview={preview}
+				onSwap={vi.fn()}
+				onToggleLock={vi.fn()}
+				onRegenerate={vi.fn()}
+				onSave={vi.fn()}
+				error="This preview could not be saved. Generate a new preview and try again."
+			/>,
+		);
+
+		expect(screen.getByRole("alert")).toBeTruthy();
+		expect(screen.getByRole("heading", { name: "Pasta" })).toBeTruthy();
 	});
 });

@@ -37,7 +37,7 @@ const navigationIcons: Record<string, LucideIcon> = {
 const HeaderMenu = ({ items }: HeaderMenuProps): ReactElement => {
 	const { pathname } = useLocation();
 	return (
-		<nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+		<nav className="ml-auto hidden items-center gap-1 xl:flex" aria-label="Primary navigation">
 			{items.map(({ title, href }) => {
 				const active = isNavigationItemActive(pathname, href, items);
 				const Icon = navigationIcons[title] ?? BookOpen;
