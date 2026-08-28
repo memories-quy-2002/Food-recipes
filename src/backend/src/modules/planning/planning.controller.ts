@@ -13,6 +13,8 @@ import { PrepareRecipeIngredientsDto } from './dto/prepare-recipe-ingredients.dt
 import { UpdateMealPlanItemDto } from './dto/update-meal-plan-item.dto';
 import { UpdateShoppingListItemDto } from './dto/update-shopping-list-item.dto';
 import { AddRecipeIngredientsDto } from './dto/add-recipe-ingredients.dto';
+import { FromMealPlanPreviewDto, GenerateMealPlanDto } from './dto/generate-meal-plan.dto';
+import { MealPlanGeneratorService } from './meal-plan-generator.service';
 import { PlanningService } from './planning.service';
 
 @ApiTags('Planning')
@@ -21,7 +23,22 @@ import { PlanningService } from './planning.service';
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'users/me', version: '1' })
 export class PlanningController {
-  constructor(@Inject(PlanningService) private readonly service: PlanningService) {}
+  constructor(
+    @Inject(PlanningService) private readonly service: PlanningService,
+    @Inject(MealPlanGeneratorService) private readonly generator: MealPlanGeneratorService,
+  ) {}
+
+  @Post('meal-plans/generate-preview')
+  @ApiOperation({ summary: 'Generate a non-persisted personalized meal plan preview' })
+  generateMealPlanPreview(@CurrentUser() user: AuthUser, @Body() dto: GenerateMealPlanDto) {
+    return this.generator.generatePreview(user.id, dto);
+  }
+
+  @Post('meal-plans/from-preview')
+  @ApiOperation({ summary: 'Persist a previously generated meal plan preview after revalidation' })
+  createMealPlanFromPreview(@CurrentUser() user: AuthUser, @Body() dto: FromMealPlanPreviewDto) {
+    return this.generator.createFromPreview(user.id, dto);
+  }
 
   @Get('meal-plans')
   @ApiOperation({ summary: 'List owned meal plans' })

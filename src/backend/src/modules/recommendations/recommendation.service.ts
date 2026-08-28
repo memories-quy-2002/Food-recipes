@@ -13,6 +13,7 @@ import {
   RecommendationScore,
   RecommendationScorer,
 } from './recommendation-scorer';
+import { RECOMMENDATION_CONTEXT } from './recommendations.tokens';
 
 export type RecommendationSurface = 'home' | 'suggestions' | 'meal-plan';
 
@@ -26,8 +27,6 @@ export type RecommendationServiceInput = {
   limit: number;
   surface: RecommendationSurface;
 };
-
-export const RECOMMENDATION_CONTEXT = Symbol('RECOMMENDATION_CONTEXT');
 
 const MAX_RECOMMENDATIONS = 8;
 const SURFACES: readonly RecommendationSurface[] = ['home', 'suggestions', 'meal-plan'];
@@ -94,3 +93,5 @@ export class RecommendationService {
 export interface RecommendationServicePort {
   recommend(userId: number, input: RecommendationServiceInput): Promise<RankedRecipe[]>;
 }
+
+export { RECOMMENDATION_CONTEXT } from './recommendations.tokens';

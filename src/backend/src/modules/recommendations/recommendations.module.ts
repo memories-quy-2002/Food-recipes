@@ -21,6 +21,13 @@ import { RECOMMENDATION_CONTEXT, RecommendationService } from './recommendation.
     RecommendationScorer,
     RecommendationService,
   ],
-  exports: [RecommendationService],
+  exports: [
+    RecommendationService,
+    RecommendationContextService,
+    RECOMMENDATION_CONTEXT,
+    RecommendationCandidatesRepository,
+    RECOMMENDATION_CANDIDATES_REPOSITORY,
+    RecommendationScorer,
+  ],
 })
 export class RecommendationsModule {}

@@ -101,6 +101,8 @@ describe('Swagger document', () => {
       'GET /api/v1/admin/review-reports',
       'PATCH /api/v1/admin/review-reports/{reportId}',
       'GET /api/v1/users/me/meal-plans',
+      'POST /api/v1/users/me/meal-plans/generate-preview',
+      'POST /api/v1/users/me/meal-plans/from-preview',
       'POST /api/v1/users/me/meal-plans',
       'GET /api/v1/users/me/meal-plans/{planId}',
       'PATCH /api/v1/users/me/meal-plans/{planId}',

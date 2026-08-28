@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { RecipeStatus } from '../recipes/dto/recipe-structure.dto';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { RECOMMENDATION_CANDIDATES_REPOSITORY } from './recommendations.tokens';
 
 export const RECOMMENDATION_CANDIDATE_LIMIT = 150;
 
@@ -200,4 +201,4 @@ export interface RecommendationCandidatesRepositoryPort {
   listPublished(limit?: number): Promise<RecommendationCandidate[]>;
 }
 
-export const RECOMMENDATION_CANDIDATES_REPOSITORY = Symbol('RECOMMENDATION_CANDIDATES_REPOSITORY');
+export { RECOMMENDATION_CANDIDATES_REPOSITORY } from './recommendations.tokens';
