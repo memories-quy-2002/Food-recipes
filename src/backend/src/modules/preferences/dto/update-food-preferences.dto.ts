@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 
 export const MAX_DISLIKED_INGREDIENTS = 32;
+export const MAX_AVOIDED_ALLERGENS = 32;
 export const MAX_PREFERRED_CUISINES = 16;
 
 export class UpdateFoodPreferencesDto {
@@ -23,9 +24,10 @@ export class UpdateFoodPreferencesDto {
   @MaxLength(32)
   diet?: string | null;
 
-  @ApiPropertyOptional({ type: [String], example: ['peanuts'] })
+  @ApiPropertyOptional({ type: [String], example: ['peanuts'], maxItems: MAX_AVOIDED_ALLERGENS })
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(MAX_AVOIDED_ALLERGENS)
   @IsString({ each: true })
   @MaxLength(32, { each: true })
   avoidedAllergens?: string[];

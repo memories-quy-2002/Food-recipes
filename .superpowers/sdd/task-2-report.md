@@ -125,3 +125,89 @@ Result: passed with no whitespace errors.
 
 - The pinned `corepack pnpm@11.18.0 check` command remains environment-blocked by the existing Corepack/pnpm version mismatch. The direct `pnpm run check` equivalent is green.
 - No live database integration test was added because the task brief requested the focused service/API test file and the existing backend verification suite is unit/contract based.
+
+## Important finding fixes
+
+### 1. Bounded avoided-allergen input
+
+- Added `MAX_AVOIDED_ALLERGENS = 32` to the preferences DTO.
+- Added `@ArrayMaxSize(MAX_AVOIDED_ALLERGENS)` and matching Swagger `maxItems` metadata to `avoidedAllergens`.
+- Kept the existing per-item allergen length limit and all other documented preference limits unchanged.
+- Added a focused test using 33 bounded-length allergen strings and asserting validation failure for `avoidedAllergens`.
+
+### 2. Transaction failure assertion
+
+- Added a deterministic repository test where the transactional avoided-allergen `createMany` write rejects.
+- The test asserts `repository.replace()` rejects with the write error and that the post-transaction preference read is not called, so no successful replacement is presented.
+- The test uses a callback mock for `$transaction`; it does not claim to verify database rollback behavior.
+
+### 3. Validation boundary for client actor IDs
+
+- Added a focused Nest HTTP test that creates the preferences controller application with the repository's `createValidationPipe()` configuration (`transform`, `whitelist`, and `forbidNonWhitelisted`).
+- A `PUT /api/v1/users/me/food-preferences` payload containing `userId: 99` now has an asserted `400` response, and the service replacement method is asserted not to run.
+- The test therefore validates rejection at the request boundary rather than relying on direct controller invocation or silently ignoring the client actor ID.
+
+## Fix TDD evidence
+
+### RED
+
+After adding the three focused tests and before adding the avoided-allergen array bound:
+
+```text
+corepack pnpm@11.18.0 test -- preferences --runInBand
+```
+
+Result: the new avoided-allergen test failed as expected (`Expected: true`, `Received: false`), while the transaction failure and HTTP validation-boundary tests passed against the already-correct existing behavior. Jest reported 1 failed test and 10 passed tests.
+
+### GREEN
+
+After adding `MAX_AVOIDED_ALLERGENS` and `@ArrayMaxSize`:
+
+```text
+corepack pnpm@11.18.0 test -- preferences --runInBand
+```
+
+Result:
+
+```text
+Test Suites: 1 passed, 1 total
+Tests:       11 passed, 11 total
+```
+
+## Fix verification
+
+```text
+corepack pnpm@11.18.0 check
+```
+
+Result: blocked before the check because this environment invokes pnpm `11.24.0` and rejects the repository's pinned `packageManager` value `11.18.0`.
+
+```text
+pnpm run check
+```
+
+Result:
+
+```text
+Test Suites: 39 passed, 39 total
+Tests:       185 passed, 185 total
+User food preferences migration validation passed.
+```
+
+```text
+pnpm run build
+```
+
+Result: production TypeScript build completed successfully.
+
+```text
+pnpm run prisma:validate
+```
+
+Result: Prisma reported that `prisma/schema.prisma` is valid.
+
+```text
+git diff --check
+```
+
+Result: passed with no whitespace errors.
