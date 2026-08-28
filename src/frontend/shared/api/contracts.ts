@@ -18,6 +18,9 @@ type RecipeSummaryBase = {
 	num_ratings?: number;
 	dietary_tags?: string[];
 	nutrition?: RecipeNutrition | null;
+	pantry_match_count?: number;
+	recommendation_score?: number;
+	reasons?: string[];
 };
 
 export type NestRecipeSummary = RecipeSummaryBase & {
@@ -142,8 +145,9 @@ export type RecipeListResponse = {
 
 export type HomeFeedSectionKey =
 	| "continue"
-	| "pantry"
+	| "use_soon"
 	| "recommended"
+	| "planned"
 	| "saved"
 	| "quick"
 	| "popular";
@@ -153,6 +157,10 @@ export type HomeFeedSection = {
 	title: string;
 	description: string;
 	recipes: RecipeSummary[];
+	context?: {
+		active_session?: KitchenActiveSession | null;
+		next_meal?: KitchenNextMeal | null;
+	};
 };
 
 export type HomeFeedResponse = {

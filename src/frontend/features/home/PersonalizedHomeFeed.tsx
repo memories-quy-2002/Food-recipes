@@ -12,11 +12,25 @@ const HOME_FEED_RECIPE_LIMIT = 4;
 
 const sectionIcons: Record<HomeFeedSectionKey, LucideIcon> = {
 	continue: CalendarDays,
-	pantry: Utensils,
+	use_soon: Utensils,
 	recommended: Sparkles,
+	planned: CalendarDays,
 	saved: Heart,
 	quick: Clock3,
 	popular: ChefHat,
+};
+
+const getRecommendationReason = (recipe: RecipeSummary): string =>
+	recipe.reasons?.find((reason) => reason.trim().length > 0) ??
+	"Picked from your kitchen signals.";
+
+const getPantryRelevance = (recipe: RecipeSummary): string => {
+	const pantryMatchCount = Number(recipe.pantry_match_count);
+	if (!Number.isFinite(pantryMatchCount) || pantryMatchCount < 1) {
+		return "No pantry ingredients matched yet";
+	}
+
+	return `Uses ${pantryMatchCount} ingredient${pantryMatchCount === 1 ? "" : "s"} from your pantry`;
 };
 
 type HomeFeedSectionProps = {
@@ -46,12 +60,23 @@ const HomeFeedSection = ({
 			</div>
 			<div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:gap-5">
 				{section.recipes.map((recipe: RecipeSummary) => (
-					<RecipeCard
-						key={recipe.recipe_id}
-						recipe={recipe}
-						favorite={wishlist.some((item) => Number(item.recipe?.recipe_id ?? item.recipe_id) === Number(recipe.recipe_id))}
-						onToggleFavorite={() => onClickFavorite(recipe.recipe_id)}
-					/>
+					<div key={recipe.recipe_id} className="min-w-0">
+						<RecipeCard
+							recipe={recipe}
+							favorite={wishlist.some((item) => Number(item.recipe?.recipe_id ?? item.recipe_id) === Number(recipe.recipe_id))}
+							onToggleFavorite={() => onClickFavorite(recipe.recipe_id)}
+						/>
+						{section.key === "recommended" ? (
+							<div className="-mt-px rounded-b-xl border-x border-b border-border bg-muted/40 px-4 pb-4 pt-3 sm:px-5">
+								<p className="text-xs font-black uppercase tracking-[0.12em] text-primary">Why this fits</p>
+								<p className="mt-1 text-sm font-semibold leading-5 text-foreground">{getRecommendationReason(recipe)}</p>
+								<p className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+									<Utensils className="size-3.5" aria-hidden="true" />
+									{getPantryRelevance(recipe)}
+								</p>
+							</div>
+						) : null}
+					</div>
 				))}
 			</div>
 		</section>
