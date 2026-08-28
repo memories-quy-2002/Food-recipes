@@ -6,6 +6,7 @@ import HeaderMenu from "./HeaderMenu";
 import HeaderToggle from "./HeaderToggle";
 import { getPrimaryNavigation } from "./navigation";
 import type { RootState } from "@/app/store";
+import HouseholdScopeSelector from "@/features/households/HouseholdScopeSelector";
 
 const Header = (): ReactElement => {
 	const [show, setShow] = useState(false);
@@ -20,6 +21,8 @@ const Header = (): ReactElement => {
 			<div className="mx-auto flex min-h-16 w-full max-w-[96rem] items-center gap-3 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-sm backdrop-blur sm:px-5 lg:min-h-[72px]">
 				<HeaderBrand />
 				<HeaderMenu items={items} />
+				<div className="ml-auto block min-w-0 shrink-0 sm:hidden"><HouseholdScopeSelector /></div>
+				<div className="ml-auto hidden shrink-0 sm:block"><HouseholdScopeSelector /></div>
 				<HeaderAuthButton auth={auth} />
 				<HeaderToggle
 					show={show}

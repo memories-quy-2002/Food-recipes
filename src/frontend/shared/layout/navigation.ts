@@ -14,6 +14,7 @@ export const getPrimaryNavigation = (
 	...(isAuthenticated ? [{ title: "Shopping", href: "/shopping-list" }] : []),
 	...(isAuthenticated ? [{ title: "History", href: "/history" }] : []),
 	...(isAuthenticated ? [{ title: "Preferences", href: "/profile/preferences" }] : []),
+	...(isAuthenticated ? [{ title: "Households", href: "/households" }] : []),
 	...(isAuthenticated ? [{ title: "Add Recipe", href: "/food/add" }] : []),
 	...(isDevelopment ? [{ title: "Health", href: "/health" }] : []),
 ];

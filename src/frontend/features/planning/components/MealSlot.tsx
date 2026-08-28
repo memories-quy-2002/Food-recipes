@@ -15,6 +15,7 @@ type MealSlotProps = {
 	onRemove: (item: MealPlanItem) => void;
 	onOpenRecipe?: (item: MealPlanItem) => void;
 	isRemoving?: boolean;
+	readOnly?: boolean;
 };
 
 const SLOT_META: Record<MealSlotName, { shortLabel: string; Icon: LucideIcon }> = {
@@ -49,12 +50,12 @@ const SlotBadge = ({ slot }: { slot: MealSlotName }) => {
 	);
 };
 
-const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false }: MealSlotProps) => {
+const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false, readOnly = false }: MealSlotProps) => {
 	const targetId = mealDropTargetId({ date: day.date, slot });
 	const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({ id: targetId });
 	const { attributes, listeners, setNodeRef: setDraggableNodeRef, isDragging } = useDraggable({
 		id: item ? mealItemId(item.item_id) : targetId,
-		disabled: !item,
+		disabled: !item || readOnly,
 	});
 	const style = { opacity: isDragging ? 0.45 : undefined };
 	const addLabel = `Add recipe to ${fullWeekday(day)} ${slot}`;
@@ -69,7 +70,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 			>
 				<div className="flex items-center justify-between gap-2">
 					<SlotBadge slot={slot} />
-					<button
+					{!readOnly && <button
 						type="button"
 						className="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-primary transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						onClick={() => onAdd(day.date, slot)}
@@ -77,7 +78,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 						title={addLabel}
 					>
 						<Plus className="size-4" aria-hidden="true" />
-					</button>
+					</button>}
 				</div>
 			</div>
 		);
@@ -135,7 +136,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 						<span className="sr-only">{cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"}</span>
 					</Link>
 					<div className="flex items-center gap-1">
-						<Button
+						{!readOnly && <Button
 							variant="ghost"
 							size="icon"
 							className="size-11"
@@ -146,8 +147,8 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 							title={`Change ${item.recipe_name}`}
 						>
 							<Pencil className="size-4" aria-hidden="true" />
-						</Button>
-						<Button
+						</Button>}
+						{!readOnly && <Button
 							variant="ghost"
 							size="icon"
 							className="size-11 text-destructive hover:bg-destructive/10 hover:text-destructive"
@@ -160,7 +161,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 							aria-busy={isRemoving}
 						>
 							<Trash2 className="size-4" aria-hidden="true" />
-						</Button>
+						</Button>}
 					</div>
 				</div>
 			</article>

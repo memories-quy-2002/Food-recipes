@@ -18,6 +18,7 @@ export type HouseholdRecord = {
   created_by: number;
   created_at: Date;
   updated_at: Date;
+  role?: HouseholdRole;
 };
 
 export type HouseholdInviteRecord = {
@@ -79,7 +80,7 @@ export class HouseholdsRepository implements HouseholdsRepositoryPort {
 
   listForUser(userId: number): Promise<HouseholdRecord[]> {
     return this.prisma.$queryRaw<HouseholdRecord[]>(Prisma.sql`
-      SELECT h.household_id, h.name, h.created_by, h.created_at, h.updated_at
+      SELECT h.household_id, h.name, h.created_by, h.created_at, h.updated_at, hm.role
       FROM households h
       JOIN household_members hm ON hm.household_id = h.household_id
       WHERE hm.user_id = ${userId}

@@ -16,16 +16,18 @@ import {
 } from "./api/shoppingQueries";
 import { isShoppingItemInPantry } from "./shoppingAvailability";
 import "./ShoppingList.scss";
+import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 const ShoppingListPage = () => {
-	const shoppingQuery = useShoppingListQuery();
-	const addMutation = useAddShoppingItemMutation();
-	const updateMutation = useUpdateShoppingItemMutation();
-	const deleteMutation = useDeleteShoppingItemMutation();
-	const clearMutation = useClearCompletedShoppingItemsMutation();
-	const plannedIngredientsMutation = useAddRecipeIngredientsFromRecipesMutation();
-	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()));
-	const pantryQuery = usePantryQuery();
+	const { scope, canEdit, scopeLabel } = useHouseholdScope();
+	const shoppingQuery = useShoppingListQuery(scope);
+	const addMutation = useAddShoppingItemMutation(scope);
+	const updateMutation = useUpdateShoppingItemMutation(scope);
+	const deleteMutation = useDeleteShoppingItemMutation(scope);
+	const clearMutation = useClearCompletedShoppingItemsMutation(scope);
+	const plannedIngredientsMutation = useAddRecipeIngredientsFromRecipesMutation(scope);
+	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()), {}, scope);
+	const pantryQuery = usePantryQuery(scope);
 	const [label, setLabel] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [editingItemId, setEditingItemId] = useState<number | null>(null);
@@ -45,7 +47,7 @@ const ShoppingListPage = () => {
 			: null;
 
 	const importPlannedIngredients = () => {
-		if (plannedRecipeIds.length === 0 || plannedIngredientsMutation.isPending) return;
+		if (!canEdit || plannedRecipeIds.length === 0 || plannedIngredientsMutation.isPending) return;
 		plannedIngredientsMutation.mutate(plannedRecipeIds, {
 			onSuccess: (response) => setMessage(`${response.items.length} planned ingredient${response.items.length === 1 ? "" : "s"} added to your shopping list.`),
 		});
@@ -53,6 +55,7 @@ const ShoppingListPage = () => {
 
 	const submitItem = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (!canEdit) return;
 		const nextLabel = label.trim();
 		if (!nextLabel) {
 			setFormError("Add an item name before saving.");
@@ -73,6 +76,7 @@ const ShoppingListPage = () => {
 	};
 
 	const startEditing = (item: ShoppingListItem) => {
+		if (!canEdit) return;
 		setEditingItemId(item.item_id);
 		setEditLabel(item.label);
 		setEditQuantity(item.quantity ?? "");
@@ -104,6 +108,7 @@ const ShoppingListPage = () => {
 	};
 
 	const toggleItem = (item: ShoppingListItem) => {
+		if (!canEdit) return;
 		updateMutation.mutate({ itemId: item.item_id, input: { checked: !item.checked } });
 	};
 
@@ -143,6 +148,7 @@ const ShoppingListPage = () => {
 							<input
 								type="checkbox"
 								checked={item.checked}
+								disabled={!canEdit}
 								onChange={() => toggleItem(item)}
 								aria-label={item.checked ? `Mark ${item.label} as not needed` : `Mark ${item.label} as purchased`}
 							/>
@@ -159,12 +165,12 @@ const ShoppingListPage = () => {
 							)}
 						</div>
 						<div className="shopping-list__item-actions">
-							<button type="button" className="shopping-list__button shopping-list__button--quiet shopping-list__button--icon" onClick={() => startEditing(item)} aria-label={`Edit ${item.label}`} title="Edit item">
+							{canEdit && <button type="button" className="shopping-list__button shopping-list__button--quiet shopping-list__button--icon" onClick={() => startEditing(item)} aria-label={`Edit ${item.label}`} title="Edit item">
 								<Pencil className="size-4" aria-hidden="true" />
-							</button>
-							<button type="button" className="shopping-list__button shopping-list__button--danger shopping-list__button--icon" onClick={() => deleteMutation.mutate(item.item_id)} aria-label={`Delete ${item.label}`} title="Delete item">
+							</button>}
+							{canEdit && <button type="button" className="shopping-list__button shopping-list__button--danger shopping-list__button--icon" onClick={() => deleteMutation.mutate(item.item_id)} aria-label={`Delete ${item.label}`} title="Delete item">
 								<Trash2 className="size-4" aria-hidden="true" />
-							</button>
+							</button>}
 						</div>
 					</>
 				)}
@@ -183,8 +189,10 @@ const ShoppingListPage = () => {
 			<main className="shopping-list-page__main" aria-labelledby="shopping-list-title">
 				<header className="shopping-list-page__header">
 					<div>
+						<p className="shopping-list-page__eyebrow">{scopeLabel}</p>
 						<h1 id="shopping-list-title">Shopping List</h1>
 						<p>Keep the next shop clear, flexible, and close to the recipes you actually want to cook.</p>
+						{!canEdit && <p role="status">You have read-only access to this kitchen.</p>}
 					</div>
 					<div className="shopping-list-page__header-links">
 						<Link className="shopping-list-page__secondary-link" to="/planning">Back to planning</Link>
@@ -198,7 +206,7 @@ const ShoppingListPage = () => {
 					<section className="shopping-list__add-card" aria-labelledby="shopping-list-add-title">
 						<h2 id="shopping-list-add-title">What do you need?</h2>
 						<p>Keep quantities in the form you use at the market—“a handful” is perfectly valid.</p>
-						<form onSubmit={submitItem}>
+						{canEdit && <form onSubmit={submitItem}>
 							<label>
 								<span>Item</span>
 								<input value={label} onChange={(event) => setLabel(event.target.value)} placeholder="e.g. lemons" />
@@ -212,8 +220,8 @@ const ShoppingListPage = () => {
 							</button>
 							{formError && <p className="shopping-list-page__inline-error" role="alert">{formError}</p>}
 							{actionError && <p className="shopping-list-page__inline-error" role="alert">{actionError}</p>}
-						</form>
-						<section className="shopping-list__planned-import" aria-labelledby="planned-import-title">
+						</form>}
+						{canEdit && <section className="shopping-list__planned-import" aria-labelledby="planned-import-title">
 							<h3 id="planned-import-title">From this week’s plan</h3>
 							{mealPlanQuery.isError ? (
 								<p role="alert">We could not read this week’s plan.</p>
@@ -224,7 +232,7 @@ const ShoppingListPage = () => {
 									{plannedIngredientsMutation.isPending ? "Importing…" : `Import ${plannedRecipeIds.length} planned recipe${plannedRecipeIds.length === 1 ? "" : "s"}`}
 								</button>
 							)}
-						</section>
+						</section>}
 					</section>
 
 					<section className="shopping-list__items-card" aria-labelledby="shopping-list-items-title">
@@ -273,7 +281,7 @@ const ShoppingListPage = () => {
 							</>
 						)}
 
-						{completedItems.length > 0 && !shoppingQuery.isPending && !shoppingQuery.isError && (
+						{canEdit && completedItems.length > 0 && !shoppingQuery.isPending && !shoppingQuery.isError && (
 							<div className="shopping-list__footer">
 								<button type="button" className="shopping-list__button shopping-list__button--quiet" onClick={() => clearMutation.mutate()} disabled={clearMutation.isPending} aria-busy={clearMutation.isPending}>
 									{clearMutation.isPending ? "Clearing..." : "Clear completed"}
