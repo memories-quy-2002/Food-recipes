@@ -3,6 +3,7 @@ import { RecipesService } from '../recipes/recipes.service';
 import { RecipeFetcherService } from './recipe-fetcher.service';
 import { parseRecipeJsonLd } from './recipe-jsonld.parser';
 import type { CreateRecipeDraftDto } from '../recipes/dto/create-recipe-draft.dto';
+import { workflowTelemetry } from '../../common/telemetry/workflow-telemetry.service';
 
 @Injectable()
 export class RecipeImportsService {
@@ -12,9 +13,10 @@ export class RecipeImportsService {
   ) {}
 
   async preview(url: string) {
-    const fetched = await this.fetcher.fetchHtml(url);
+    const fetched = await workflowTelemetry.run('recipe_import.fetch', { surface: 'recipe-import' }, () => this.fetcher.fetchHtml(url));
     try {
-      return { preview: { sourceUrl: fetched.url, ...parseRecipeJsonLd(fetched.html) } };
+      const parsed = await workflowTelemetry.run('recipe_import.parse', { surface: 'recipe-import' }, async () => parseRecipeJsonLd(fetched.html));
+      return { preview: { sourceUrl: fetched.url, ...parsed } };
     } catch {
       throw new UnprocessableEntityException({ code: 'RECIPE_IMPORT_UNSUPPORTED_PAGE', message: 'This page does not expose a supported recipe' });
     }

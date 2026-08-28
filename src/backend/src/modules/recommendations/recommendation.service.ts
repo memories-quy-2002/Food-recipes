@@ -14,6 +14,7 @@ import {
   RecommendationScorer,
 } from './recommendation-scorer';
 import { RECOMMENDATION_CONTEXT } from './recommendations.tokens';
+import { workflowTelemetry } from '../../common/telemetry/workflow-telemetry.service';
 
 export type RecommendationSurface = 'home' | 'suggestions' | 'meal-plan';
 
@@ -69,24 +70,26 @@ export class RecommendationService {
       input.limit,
       input.surface === 'home' ? MAX_RECOMMENDATIONS : RECOMMENDATION_CANDIDATE_LIMIT,
     );
-    const [context, candidates] = await Promise.all([
-      this.contextService.build(userId),
-      this.candidatesRepository.listPublished(RECOMMENDATION_CANDIDATE_LIMIT),
-    ]);
+    return workflowTelemetry.run('recommendation.compute', { surface: input.surface }, async () => {
+      const [context, candidates] = await Promise.all([
+        this.contextService.build(userId),
+        this.candidatesRepository.listPublished(RECOMMENDATION_CANDIDATE_LIMIT),
+      ]);
 
-    return candidates
-      .map((candidate) => ({
-        candidate,
-        result: scoreCandidate(candidate, context, this.scorer, input.surface),
-      }))
-      .filter(({ result }) => !result.excluded)
-      .sort((left, right) => right.result.score - left.result.score || left.candidate.recipeId - right.candidate.recipeId)
-      .slice(0, limit)
-      .map(({ candidate, result }) => ({
-        recipeId: candidate.recipeId,
-        score: result.score,
-        reasons: result.reasons,
-      }));
+      return candidates
+        .map((candidate) => ({
+          candidate,
+          result: scoreCandidate(candidate, context, this.scorer, input.surface),
+        }))
+        .filter(({ result }) => !result.excluded)
+        .sort((left, right) => right.result.score - left.result.score || left.candidate.recipeId - right.candidate.recipeId)
+        .slice(0, limit)
+        .map(({ candidate, result }) => ({
+          recipeId: candidate.recipeId,
+          score: result.score,
+          reasons: result.reasons,
+        }));
+    });
   }
 }
 

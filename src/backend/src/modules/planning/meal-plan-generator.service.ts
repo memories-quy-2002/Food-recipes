@@ -7,6 +7,7 @@ import { RECOMMENDATION_CANDIDATES_REPOSITORY, RECOMMENDATION_CONTEXT } from '..
 import type { MealPlanSlot } from './dto/add-meal-plan-item.dto';
 import type { FromMealPlanPreviewDto, GenerateMealPlanDto, MealPlanSlotRequestDto } from './dto/generate-meal-plan.dto';
 import { PLANNING_REPOSITORY, type MealPlanRecord, type MealPlanItemRecord, type PlanningRepositoryPort } from './planning.repository';
+import { workflowTelemetry } from '../../common/telemetry/workflow-telemetry.service';
 
 export type MealPlanPreviewItem = {
   recipeId: number;
@@ -72,6 +73,7 @@ export class MealPlanGeneratorService {
   ) {}
 
   async generatePreview(userId: number, dto: GenerateMealPlanDto): Promise<MealPlanPreview> {
+    const startedAt = Date.now();
     this.validateRange(dto.from, dto.to);
     const slots = this.requestedSlots(dto);
     if (slots.length !== dto.targetMeals) throw this.impossible();
@@ -123,6 +125,7 @@ export class MealPlanGeneratorService {
     this.pruneExpiredPreviews();
     const previewToken = randomBytes(32).toString('base64url');
     this.previews.set(previewToken, { userId, preview, expiresAt: Date.now() + PREVIEW_TTL_MS });
+    workflowTelemetry.record('meal_plan.generate', { surface: 'planner', candidate_count: candidates.length, result_count: items.length, duration: Date.now() - startedAt, status: 'ok' });
     return { previewToken, ...preview };
   }
 
