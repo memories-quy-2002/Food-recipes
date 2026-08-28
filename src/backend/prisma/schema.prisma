@@ -23,6 +23,55 @@ model User {
   @@map("accounts")
 }
 
+model UserFoodPreference {
+  userId                Int      @id @map("user_id")
+  diet                  String?  @db.VarChar(32)
+  cookingSkill          String?  @map("cooking_skill") @db.VarChar(16)
+  maxWeekdayCookMinutes Int?     @map("max_weekday_cook_minutes")
+  defaultServings       Int      @default(2) @map("default_servings")
+  maxCaloriesPerServing Int?     @map("max_calories_per_serving")
+  minProteinGrams       Float?   @map("min_protein_grams")
+  strictDislikes        Boolean  @default(false) @map("strict_dislikes")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+
+  @@map("user_food_preferences")
+}
+
+model UserAvoidedAllergen {
+  id        Int      @id @default(autoincrement()) @map("avoidance_id")
+  userId    Int      @map("user_id")
+  allergen  String   @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([userId, allergen])
+  @@index([userId])
+  @@map("user_avoided_allergens")
+}
+
+model UserDislikedIngredient {
+  id             Int      @id @default(autoincrement()) @map("dislike_id")
+  userId         Int      @map("user_id")
+  ingredientName String   @map("ingredient_name") @db.VarChar(255)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([userId, ingredientName])
+  @@index([userId])
+  @@map("user_disliked_ingredients")
+}
+
+model UserCuisinePreference {
+  id        Int      @id @default(autoincrement()) @map("preference_id")
+  userId    Int      @map("user_id")
+  cuisine   String   @db.VarChar(64)
+  weight    Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([userId, cuisine])
+  @@index([userId])
+  @@map("user_cuisine_preferences")
+}
+
 model Category {
   id   Int    @id @default(autoincrement()) @map("category_id")
   name String @map("category_name") @db.VarChar(255)
