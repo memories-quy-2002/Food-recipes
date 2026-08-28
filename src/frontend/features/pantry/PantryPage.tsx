@@ -5,7 +5,7 @@ import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
-import { PANTRY_UNITS, type PantryItem, type PantryUnit } from "./api/pantryApi";
+import { PANTRY_STORAGE_LOCATIONS, PANTRY_UNITS, type PantryExpiryStatus, type PantryItem, type PantryStorageLocation, type PantryUnit } from "./api/pantryApi";
 import {
 	useCreatePantryItemMutation,
 	useDeletePantryItemMutation,
@@ -26,6 +26,22 @@ const unitLabels: Record<string, string> = {
 
 const unitLabel = (value: string | null) => value ? unitLabels[value] ?? value.toLowerCase() : "unit not set";
 
+const storageLabel = (value: string | null | undefined) => value ? value[0].toUpperCase() + value.slice(1) : "Storage not set";
+
+const expiryText = (item: PantryItem): string => {
+	if (!item.expires_at || !item.expiry_status || item.expiry_status === "none") return "No expiry date set";
+	if (item.expiry_status === "expired") return `Expired · ${item.expires_at}. Check before using.`;
+	if (item.expiry_status === "use_soon") return `Use soon · Expires ${item.expires_at}`;
+	return `Expires ${item.expires_at}`;
+};
+
+const expiryClass: Record<PantryExpiryStatus, string> = {
+	none: "text-muted-foreground",
+	fresh: "text-emerald-700",
+	use_soon: "text-amber-800",
+	expired: "text-destructive",
+};
+
 const PantryPage = () => {
 	const pantryQuery = usePantryQuery();
 	const createMutation = useCreatePantryItemMutation();
@@ -34,9 +50,13 @@ const PantryPage = () => {
 	const [name, setName] = useState("");
 	const [quantity, setQuantity] = useState("");
 	const [unit, setUnit] = useState<PantryUnit>("PIECE");
+	const [expiresAt, setExpiresAt] = useState("");
+	const [storageLocation, setStorageLocation] = useState<PantryStorageLocation | "">("");
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [editingQuantity, setEditingQuantity] = useState("");
 	const [editingUnit, setEditingUnit] = useState<PantryUnit>("PIECE");
+	const [editingExpiresAt, setEditingExpiresAt] = useState("");
+	const [editingStorageLocation, setEditingStorageLocation] = useState<PantryStorageLocation | "">("");
 	const [error, setError] = useState<string | null>(null);
 	const items = pantryQuery.data?.items ?? [];
 	const availableItems = items.filter((item) => item.have);
@@ -56,9 +76,16 @@ const PantryPage = () => {
 		}
 		setError(null);
 		createMutation.mutate(
-			{ name: nextName, quantity: nextQuantity, unit, have: true },
 			{
-				onSuccess: () => { setName(""); setQuantity(""); setUnit("PIECE"); },
+				name: nextName,
+				quantity: nextQuantity,
+				unit,
+				have: true,
+				...(expiresAt ? { expiresAt } : {}),
+				...(storageLocation ? { storageLocation } : {}),
+			},
+			{
+				onSuccess: () => { setName(""); setQuantity(""); setUnit("PIECE"); setExpiresAt(""); setStorageLocation(""); },
 				onError: () => setError("We could not add that pantry item. Try again."),
 			},
 		);
@@ -68,6 +95,8 @@ const PantryPage = () => {
 		setEditingId(item.pantry_id);
 		setEditingQuantity(item.quantity === null ? "" : String(item.quantity));
 		setEditingUnit(item.unit && PANTRY_UNITS.includes(item.unit as PantryUnit) ? item.unit as PantryUnit : "PIECE");
+		setEditingExpiresAt(item.expires_at ?? "");
+		setEditingStorageLocation(item.storage_location && PANTRY_STORAGE_LOCATIONS.includes(item.storage_location as PantryStorageLocation) ? item.storage_location as PantryStorageLocation : "");
 		setError(null);
 	};
 
@@ -80,7 +109,15 @@ const PantryPage = () => {
 		}
 		setError(null);
 		updateMutation.mutate(
-			{ pantryId: item.pantry_id, input: { quantity: nextQuantity, unit: editingUnit } },
+			{
+				pantryId: item.pantry_id,
+				input: {
+					quantity: nextQuantity,
+					unit: editingUnit,
+					expiresAt: editingExpiresAt || null,
+					storageLocation: editingStorageLocation || null,
+				},
+			},
 			{ onSuccess: () => setEditingId(null) },
 		);
 	};
@@ -96,10 +133,12 @@ const PantryPage = () => {
 						className="size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						onChange={() => updateMutation.mutate({ pantryId: item.pantry_id, input: { have: !item.have } })}
 					/>
-					<span className="min-w-0 truncate">
-						<span className={item.have ? "block truncate font-semibold text-foreground" : "block truncate font-semibold text-muted-foreground line-through"}>{item.name}</span>
-						<span className="block text-xs text-muted-foreground">{item.quantity === null ? "Quantity not set" : `${item.quantity} ${unitLabel(item.unit)}`}</span>
-					</span>
+						<span className="min-w-0 truncate">
+							<span className={item.have ? "block truncate font-semibold text-foreground" : "block truncate font-semibold text-muted-foreground line-through"}>{item.name}</span>
+							<span className="block text-xs text-muted-foreground">{item.quantity === null ? "Quantity not set" : `${item.quantity} ${unitLabel(item.unit)}`}</span>
+							<span className={`block text-xs font-semibold ${expiryClass[item.expiry_status ?? "none"]}`}>{expiryText(item)}</span>
+							<span className="block text-xs text-muted-foreground">{storageLabel(item.storage_location)}</span>
+						</span>
 				</label>
 				<div className="flex shrink-0 items-center gap-1">
 					<Button variant="ghost" size="icon" onClick={() => editingId === item.pantry_id ? setEditingId(null) : startEditing(item)} aria-label={`${editingId === item.pantry_id ? "Cancel editing" : "Edit"} ${item.name}`}>
@@ -110,11 +149,16 @@ const PantryPage = () => {
 					</Button>
 				</div>
 			</div>
-			{editingId === item.pantry_id && <form className="mt-2 grid gap-2 border-t border-border pt-3 sm:grid-cols-[1fr_1fr_auto]" onSubmit={(event) => saveEditing(event, item)} aria-label={`Edit ${item.name}`}>
+			{item.expiry_status === "use_soon" && <Link className="mt-2 inline-flex min-h-11 items-center text-sm font-bold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" to="/food?useSoon=true" aria-label={`Find recipes using ${item.name}`}>Find recipes</Link>}
+			{editingId === item.pantry_id && <form className="mt-2 grid gap-2 border-t border-border pt-3 sm:grid-cols-[1fr_1fr_1fr_auto]" onSubmit={(event) => saveEditing(event, item)} aria-label={`Edit ${item.name}`}>
 				<label className="sr-only" htmlFor={`quantity-${item.pantry_id}`}>Quantity</label>
 				<Input id={`quantity-${item.pantry_id}`} type="number" min="0" step="0.001" value={editingQuantity} onChange={(event) => setEditingQuantity(event.target.value)} />
 				<label className="sr-only" htmlFor={`unit-${item.pantry_id}`}>Unit</label>
 				<select id={`unit-${item.pantry_id}`} className="min-h-12 rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20" value={editingUnit} onChange={(event) => setEditingUnit(event.target.value as PantryUnit)}>{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select>
+				<label className="sr-only" htmlFor={`expires-${item.pantry_id}`}>Expires on</label>
+				<Input id={`expires-${item.pantry_id}`} type="date" value={editingExpiresAt} onChange={(event) => setEditingExpiresAt(event.target.value)} />
+				<label className="sr-only" htmlFor={`storage-${item.pantry_id}`}>Storage location</label>
+				<select id={`storage-${item.pantry_id}`} className="min-h-12 rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20" value={editingStorageLocation} onChange={(event) => setEditingStorageLocation(event.target.value as PantryStorageLocation | "")}><option value="">Storage not set</option>{PANTRY_STORAGE_LOCATIONS.map((option) => <option key={option} value={option}>{storageLabel(option)}</option>)}</select>
 				<Button type="submit" size="icon" aria-label={`Save ${item.name}`}><Check className="size-4" aria-hidden="true" /></Button>
 			</form>}
 		</li>
@@ -134,10 +178,12 @@ const PantryPage = () => {
 
 				<Card className="mb-6 p-4 sm:p-5">
 					<div className="mb-4"><h2 className="text-xl font-black">Add an ingredient</h2><p className="text-sm text-muted-foreground">Add a quantity and unit so the app can update your stock after cooking.</p></div>
-					<form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+					<form onSubmit={submit} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_8rem_9rem_9rem_10rem_auto] lg:items-end">
 						<div className="grid flex-1 gap-2"><label htmlFor="pantry-item" className="text-sm font-bold">Pantry item</label><Input id="pantry-item" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. rice" /></div>
 						<div className="grid gap-2 sm:w-32"><label htmlFor="pantry-quantity" className="text-sm font-bold">Quantity</label><Input id="pantry-quantity" type="number" min="0" step="0.001" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="e.g. 2" /></div>
 						<div className="grid gap-2 sm:w-36"><label htmlFor="pantry-unit" className="text-sm font-bold">Unit</label><select id="pantry-unit" className="min-h-12 rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20" value={unit} onChange={(event) => setUnit(event.target.value as PantryUnit)}>{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select></div>
+						<div className="grid gap-2"><label htmlFor="pantry-expires" className="text-sm font-bold">Expires on</label><Input id="pantry-expires" type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></div>
+						<div className="grid gap-2"><label htmlFor="pantry-storage" className="text-sm font-bold">Storage location</label><select id="pantry-storage" className="min-h-12 rounded-xl border border-input bg-background px-4 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20" value={storageLocation} onChange={(event) => setStorageLocation(event.target.value as PantryStorageLocation | "")}><option value="">Storage not set</option>{PANTRY_STORAGE_LOCATIONS.map((option) => <option key={option} value={option}>{storageLabel(option)}</option>)}</select></div>
 						<Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending}>{createMutation.isPending ? "Adding..." : "Add pantry item"}</Button>
 					</form>
 					{error && <p className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive" role="alert">{error}</p>}

@@ -14,6 +14,10 @@ export const PANTRY_UNITS = [
 
 export type PantryUnit = (typeof PANTRY_UNITS)[number];
 
+export const PANTRY_STORAGE_LOCATIONS = ["pantry", "fridge", "freezer", "other"] as const;
+export type PantryStorageLocation = (typeof PANTRY_STORAGE_LOCATIONS)[number];
+export type PantryExpiryStatus = "none" | "fresh" | "use_soon" | "expired";
+
 export type PantryItem = {
 	pantry_id: number;
 	user_id?: number;
@@ -21,6 +25,11 @@ export type PantryItem = {
 	have: boolean;
 	quantity: number | null;
 	unit: PantryUnit | string | null;
+	purchased_at?: string | null;
+	opened_at?: string | null;
+	expires_at?: string | null;
+	storage_location?: PantryStorageLocation | string | null;
+	expiry_status?: PantryExpiryStatus;
 	updated_at?: string;
 };
 
@@ -32,12 +41,23 @@ export const listPantry = async (signal?: AbortSignal): Promise<PantryResponse> 
 	return response.data;
 };
 
-export const createPantryItem = async (input: { name: string; quantity: number; unit: PantryUnit; have?: boolean }): Promise<PantryItemResponse> => {
+export type PantryItemInput = {
+	name: string;
+	quantity?: number | null;
+	unit?: PantryUnit | null;
+	have?: boolean;
+	purchasedAt?: string | null;
+	openedAt?: string | null;
+	expiresAt?: string | null;
+	storageLocation?: PantryStorageLocation | null;
+};
+
+export const createPantryItem = async (input: PantryItemInput): Promise<PantryItemResponse> => {
 	const response = await axios.post<PantryItemResponse>(apiRoutes.pantry, input);
 	return response.data;
 };
 
-export const updatePantryItem = async (pantryId: number, input: { name?: string; quantity?: number | null; unit?: PantryUnit | null; have?: boolean }): Promise<PantryItemResponse> => {
+export const updatePantryItem = async (pantryId: number, input: Partial<PantryItemInput>): Promise<PantryItemResponse> => {
 	const response = await axios.patch<PantryItemResponse>(apiRoutes.pantryItem(pantryId), input);
 	return response.data;
 };
