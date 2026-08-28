@@ -86,3 +86,139 @@ It stopped before running the check because this environment's Corepack invoked 
 ## Concerns
 
 - The exact required `corepack pnpm@11.18.0 check` command remains environment-blocked by the installed Corepack/pnpm version mismatch. The direct backend check passed with all existing Jest suites green.
+
+## Fix: Task 1 review findings
+
+Date: 2026-08-28
+
+### Files changed
+
+- `.github/workflows/quality-gates.yml`
+- `src/backend/package.json`
+- `src/backend/test/ci-workflow.validation.mjs`
+- `src/backend/test/user-food-preferences-migration.validation.mjs`
+
+The Prisma schema and preference migration were not changed. The two untracked user documents were preserved and not staged.
+
+### TDD and covering test evidence
+
+RED, after temporarily removing only the `user_avoided_allergens` foreign-key line from the migration to prove the assertion was table-specific:
+
+```text
+corepack pnpm@11.18.0 exec node test/user-food-preferences-migration.validation.mjs
+```
+
+Output:
+
+```text
+AssertionError [ERR_ASSERTION]: user_avoided_allergens must reference accounts through user_id
+    at file:///E:/Code/Food-recipes/src/backend/test/user-food-preferences-migration.validation.mjs:32:10
+```
+
+The migration was restored unchanged before the green verification.
+
+RED, after adding the CI-contract expectation before adding the workflow entry:
+
+```text
+corepack pnpm@11.18.0 exec node test/ci-workflow.validation.mjs
+```
+
+Output:
+
+```text
+AssertionError [ERR_ASSERTION]: static must contain /user-food-preferences-migration\.validation.mjs/
+    at assertJobContains (file:///E:/Code/Food-recipes/src/backend/test/ci-workflow.validation.mjs:41:10)
+```
+
+GREEN focused migration validator:
+
+```text
+corepack pnpm@11.18.0 exec node test/user-food-preferences-migration.validation.mjs
+```
+
+Output:
+
+```text
+User food preferences migration validation passed.
+```
+
+GREEN CI workflow validator:
+
+```text
+corepack pnpm@11.18.0 exec node test/ci-workflow.validation.mjs
+```
+
+Output:
+
+```text
+CI workflow validation passed for master release flow, Node 24, quality gates, and guarded production baseline/migrations.
+```
+
+Backend quality gate:
+
+```text
+pnpm run check
+```
+
+Output:
+
+```text
+$ pnpm run typecheck && pnpm run test:ci && pnpm run test:preferences-migration
+$ tsc -p tsconfig.json --noEmit
+$ jest --runInBand
+
+Test Suites: 38 passed, 38 total
+Tests:       174 passed, 174 total
+Snapshots:   0 total
+Time:        25.431 s
+Ran all test suites.
+$ node test/user-food-preferences-migration.validation.mjs
+User food preferences migration validation passed.
+```
+
+Affected backend checks:
+
+```text
+pnpm run prisma:validate
+```
+
+Output:
+
+```text
+$ prisma validate --config prisma.config.ts
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma\schema.prisma.
+The schema at prisma\schema.prisma is valid 🚀
+```
+
+```text
+pnpm run build
+```
+
+Output:
+
+```text
+$ tsc -p tsconfig.build.json
+```
+
+The pinned environment command was also re-run:
+
+```text
+corepack pnpm@11.18.0 check
+```
+
+Output:
+
+```text
+[ERROR] This project is configured to use 11.18.0 of pnpm. Your current pnpm is v11.24.0
+Corepack invoked pnpm with this version, and pnpm does not switch versions when running under corepack.
+```
+
+### Self-review
+
+- Each table definition is extracted through its own closing `);` before checking the `user_id` foreign key, so a valid FK in another table cannot satisfy the assertion.
+- `test:preferences-migration` is part of the backend `check` script.
+- The static quality-gates job invokes the validator, and `ci-workflow.validation.mjs` requires that entry to remain present.
+- No schema or migration content remains changed by the temporary RED mutation.
+- `git diff --check` passed with no output.

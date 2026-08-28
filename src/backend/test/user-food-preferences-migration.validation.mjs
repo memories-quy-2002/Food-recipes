@@ -25,8 +25,15 @@ for (const table of [
   'user_disliked_ingredients',
   'user_cuisine_preferences',
 ]) {
-  assert.match(migration, new RegExp(`CREATE TABLE "${table}"`, 'i'));
-  assert.match(migration, new RegExp(`FOREIGN KEY \\("user_id"\\) REFERENCES "accounts"`, 'i'));
+  const tableDefinition = migration.match(
+    new RegExp(`CREATE TABLE "${table}" \\(([\\s\\S]*?)\\r?\\n\\);`, 'i'),
+  );
+  assert.ok(tableDefinition, `${table} table must exist`);
+  assert.match(
+    tableDefinition[1],
+    /FOREIGN KEY \("user_id"\) REFERENCES "accounts"/i,
+    `${table} must reference accounts through user_id`,
+  );
 }
 
 assert.match(migration, /user_food_preferences_default_servings_check[\s\S]*"default_servings" BETWEEN 1 AND 24/i);

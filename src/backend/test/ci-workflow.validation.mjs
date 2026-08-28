@@ -49,6 +49,7 @@ for (const validator of [
   'ci-workflow.validation.mjs',
   'prisma-baseline.validation.mjs',
   'recipe-duration-migration.validation.mjs',
+  'user-food-preferences-migration.validation.mjs',
   'docker-infrastructure.validation.mjs',
   'backend-product-security.validation.mjs',
   'production-demo-reset.validation.mjs',
