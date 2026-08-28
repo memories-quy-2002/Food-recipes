@@ -56,6 +56,7 @@ describe("GeneratedPlanPreview", () => {
 				onToggleLock={vi.fn()}
 				onRegenerate={vi.fn()}
 				onSave={vi.fn()}
+				onCancel={vi.fn()}
 				error="This preview could not be saved. Generate a new preview and try again."
 			/>,
 		);

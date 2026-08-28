@@ -1,4 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useContext } from "react";
+import { AuthContext } from "@/app/AuthProvider";
+import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
@@ -15,90 +18,115 @@ import { useToast } from "@/app/ToastProvider";
 
 export const shoppingQueryKeys = {
 	all: ["shopping-list"] as const,
+	forUser: (userId: number, scope: KitchenScope) =>
+		[...shoppingQueryKeys.all, userId, scopeKey(scope)] as const,
 };
 
-export const useShoppingListQuery = () =>
-	useQuery({
-		queryKey: shoppingQueryKeys.all,
-		queryFn: ({ signal }) => listShoppingItems(signal),
-	});
+export const useShoppingListQuery = (scope: KitchenScope = PERSONAL_KITCHEN) => {
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 
-const invalidateShoppingList = async (queryClient: ReturnType<typeof useQueryClient>) => {
+	return useQuery({
+		queryKey: shoppingQueryKeys.forUser(userId, scope),
+		queryFn: ({ signal }) => listShoppingItems(scope, signal),
+		enabled: userId > 0,
+	});
+};
+
+const invalidateShoppingList = async (
+	queryClient: ReturnType<typeof useQueryClient>,
+	userId: number,
+	scope: KitchenScope,
+) => {
 	await Promise.all([
-		queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.all }),
+		queryClient.invalidateQueries({ queryKey: shoppingQueryKeys.forUser(userId, scope) }),
 		queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
 	]);
 };
 
-export const useAddShoppingItemMutation = () => {
+export const useAddShoppingItemMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: (input: AddShoppingItemInput) => addShoppingItem(input),
-		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Item added to your shopping list" }); },
+		mutationFn: (input: AddShoppingItemInput) => addShoppingItem(input, scope),
+		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Item added to your shopping list" }); },
 		onError: () => showToast({ title: "Couldn’t add that item", message: "Please try again.", type: "error" }),
 	});
 };
 
-export const useUpdateShoppingItemMutation = () => {
+export const useUpdateShoppingItemMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
 		mutationFn: ({ itemId, input }: { itemId: number; input: UpdateShoppingItemInput }) =>
-			updateShoppingItem(itemId, input),
-		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Shopping list updated" }); },
+			updateShoppingItem(itemId, input, scope),
+		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Shopping list updated" }); },
 		onError: () => showToast({ title: "Couldn’t update your shopping list", message: "Please try again.", type: "error" }),
 	});
 };
 
-export const useDeleteShoppingItemMutation = () => {
+export const useDeleteShoppingItemMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: (itemId: number) => deleteShoppingItem(itemId),
-		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Item removed from your shopping list" }); },
+		mutationFn: (itemId: number) => deleteShoppingItem(itemId, scope),
+		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Item removed from your shopping list" }); },
 		onError: () => showToast({ title: "Couldn’t remove that item", message: "Please try again.", type: "error" }),
 	});
 };
 
-export const useClearCompletedShoppingItemsMutation = () => {
+export const useClearCompletedShoppingItemsMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: clearCompletedShoppingItems,
-		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Completed items cleared" }); },
+		mutationFn: () => clearCompletedShoppingItems(scope),
+		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Completed items cleared" }); },
 		onError: () => showToast({ title: "Couldn’t clear completed items", message: "Please try again.", type: "error" }),
 	});
 };
 
-export const useAddRecipeIngredientsMutation = () => {
+export const useAddRecipeIngredientsMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: (recipeId: number) => addRecipeIngredients(recipeId),
-		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Recipe ingredients added to your shopping list" }); },
+		mutationFn: (recipeId: number) => addRecipeIngredients(recipeId, scope),
+		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Recipe ingredients added to your shopping list" }); },
 		onError: () => showToast({ title: "Couldn’t add recipe ingredients", message: "Please try again.", type: "error" }),
 	});
 };
 
-export const useAddRecipeIngredientsFromRecipesMutation = () => {
+export const useAddRecipeIngredientsFromRecipesMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: (recipeIds: number[]) => addRecipeIngredientsFromRecipes(recipeIds),
-		onSuccess: async () => { await invalidateShoppingList(queryClient); showToast({ title: "Planned ingredients imported" }); },
+		mutationFn: (recipeIds: number[]) => addRecipeIngredientsFromRecipes(recipeIds, scope),
+		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Planned ingredients imported" }); },
 		onError: () => showToast({ title: "Couldn’t import planned ingredients", message: "Please try again.", type: "error" }),
 	});
 };
 
-export const usePrepareRecipeIngredientsMutation = () => {
+export const usePrepareRecipeIngredientsMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
 	return useMutation({
 		mutationFn: ({ recipeId, servings }: { recipeId: number; servings?: number }) =>
-			prepareRecipeIngredients(recipeId, servings),
+			prepareRecipeIngredients(recipeId, servings, scope),
 		onSuccess: async (result) => {
-			await invalidateShoppingList(queryClient);
+			await invalidateShoppingList(queryClient, userId, scope);
 			showToast({
 				title: result.added_shopping_items
 					? `${result.added_shopping_items} missing ingredient${result.added_shopping_items === 1 ? "" : "s"} added`

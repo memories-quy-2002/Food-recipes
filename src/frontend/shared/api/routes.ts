@@ -1,4 +1,11 @@
+import type { KitchenScope } from "@/features/households/householdScope";
+
 export type ApiRouteId = number | string;
+
+export type PantryApiRoutes = {
+	pantry: string;
+	pantryItem: (pantryId: ApiRouteId) => string;
+};
 
 type ApiRoutes = {
 	recipes: string;
@@ -124,6 +131,21 @@ const apiRoutes: ApiRoutes = {
 		`/users/me/cooking-session/${sessionId}/complete`,
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
+};
+
+export const createPantryRoutes = (scope: KitchenScope): PantryApiRoutes => {
+	if (scope.kind === "personal") {
+		return {
+			pantry: apiRoutes.pantry,
+			pantryItem: apiRoutes.pantryItem,
+		};
+	}
+
+	const pantry = `/households/${scope.householdId}/pantry`;
+	return {
+		pantry,
+		pantryItem: (pantryId) => `${pantry}/${pantryId}`,
+	};
 };
 
 export const getUserRecipeRatingRoute = (recipeId: ApiRouteId): string =>
