@@ -2,6 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext } from "react";
 import { AuthContext } from "@/app/AuthProvider";
 import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
+import { cacheKeys } from "@/shared/offline/cacheKeys";
+import { offlineDb } from "@/shared/offline/offlineDb";
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
@@ -28,7 +30,18 @@ export const useShoppingListQuery = (scope: KitchenScope = PERSONAL_KITCHEN) => 
 
 	return useQuery({
 		queryKey: shoppingQueryKeys.forUser(userId, scope),
-		queryFn: ({ signal }) => listShoppingItems(scope, signal),
+		queryFn: async ({ signal }) => {
+			try {
+				const result = await listShoppingItems(scope, signal);
+				await offlineDb.set(cacheKeys.shoppingList(userId, scope), result);
+				return result;
+			} catch (error) {
+				if (signal?.aborted) throw error;
+				const cached = await offlineDb.get<Awaited<ReturnType<typeof listShoppingItems>>>(cacheKeys.shoppingList(userId, scope));
+				if (cached) return cached;
+				throw error;
+			}
+		},
 		enabled: userId > 0,
 	});
 };
