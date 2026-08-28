@@ -3,31 +3,58 @@ import { CreatePantryItemDto } from './dto/create-pantry-item.dto';
 import { UpdatePantryItemDto } from './dto/update-pantry-item.dto';
 import { normalizePantryUnit } from './pantry-inventory';
 import { PANTRY_REPOSITORY, PantryItemRecord, PantryRepositoryPort } from './pantry.repository';
+import { PANTRY_STORAGE_LOCATIONS, PantryStorageLocation } from './pantry-storage';
+export type PantryExpiryStatus = 'none' | 'fresh' | 'use_soon' | 'expired';
+
+const utcDay = (value: Date | string): number => {
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+    if (match) return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  }
+  return Date.UTC(value instanceof Date ? value.getUTCFullYear() : new Date(value).getUTCFullYear(), value instanceof Date ? value.getUTCMonth() : new Date(value).getUTCMonth(), value instanceof Date ? value.getUTCDate() : new Date(value).getUTCDate());
+};
+
+export const getPantryExpiryStatus = (expiresAt: Date | string | null | undefined, today = new Date()): PantryExpiryStatus => {
+  if (!expiresAt) return 'none';
+  const difference = (utcDay(expiresAt) - utcDay(today)) / (24 * 60 * 60 * 1000);
+  if (!Number.isFinite(difference)) return 'none';
+  if (difference < 0) return 'expired';
+  return difference <= 3 ? 'use_soon' : 'fresh';
+};
 
 @Injectable()
 export class PantryService {
   constructor(@Inject(PANTRY_REPOSITORY) private readonly repository: PantryRepositoryPort) {}
 
   async list(userId: number): Promise<{ items: PantryItemRecord[] }> {
-    return { items: await this.repository.list(userId) };
+    return { items: (await this.repository.list(userId)).map((item) => this.withExpiryStatus(item)) };
   }
 
   async create(userId: number, dto: CreatePantryItemDto): Promise<{ item: PantryItemRecord }> {
     const name = this.normalizeName(dto.name);
     const quantity = this.normalizeQuantity(dto.quantity);
     const unit = this.normalizeUnit(dto.unit);
+    const purchasedAt = this.normalizeDate(dto.purchasedAt);
+    const openedAt = this.normalizeDate(dto.openedAt);
+    const expiresAt = this.normalizeDate(dto.expiresAt);
+    const storageLocation = this.normalizeStorageLocation(dto.storageLocation);
     this.validateQuantityUnit(quantity, unit);
-    return { item: await this.repository.create(userId, name, quantity, unit, dto.have ?? true) };
+    const item = await this.repository.create(userId, name, quantity, unit, dto.have ?? true, purchasedAt, openedAt, expiresAt, storageLocation);
+    return { item: this.withExpiryStatus(item) };
   }
 
   async update(userId: number, pantryId: number, dto: UpdatePantryItemDto): Promise<{ item: PantryItemRecord }> {
     const name = dto.name === undefined ? undefined : this.normalizeName(dto.name);
     const quantity = dto.quantity === undefined ? undefined : this.normalizeQuantity(dto.quantity);
     const unit = dto.unit === undefined ? undefined : this.normalizeUnit(dto.unit);
+    const purchasedAt = this.normalizeDate(dto.purchasedAt);
+    const openedAt = this.normalizeDate(dto.openedAt);
+    const expiresAt = this.normalizeDate(dto.expiresAt);
+    const storageLocation = this.normalizeStorageLocation(dto.storageLocation);
     if (dto.quantity !== undefined || dto.unit !== undefined) this.validateQuantityUnit(quantity ?? null, unit ?? null);
-    const item = await this.repository.update(userId, pantryId, name, quantity, unit, dto.have);
+    const item = await this.repository.update(userId, pantryId, name, quantity, unit, dto.have, purchasedAt, openedAt, expiresAt, storageLocation);
     if (!item) throw this.notFound();
-    return { item };
+    return { item: this.withExpiryStatus(item) };
   }
 
   async remove(userId: number, pantryId: number): Promise<{ message: string }> {
@@ -54,6 +81,33 @@ export class PantryService {
     const normalized = normalizePantryUnit(unit);
     if (!normalized) throw new BadRequestException({ code: 'PANTRY_UNIT_INVALID', message: 'Pantry unit is not supported' });
     return normalized;
+  }
+
+  private normalizeDate(value: string | null | undefined): string | null | undefined {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    const datePart = value.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+      throw new BadRequestException({ code: 'PANTRY_DATE_INVALID', message: 'Pantry dates must be valid ISO dates' });
+    }
+    const parsed = new Date(`${datePart}T00:00:00.000Z`);
+    if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== datePart) {
+      throw new BadRequestException({ code: 'PANTRY_DATE_INVALID', message: 'Pantry dates must be valid ISO dates' });
+    }
+    return datePart;
+  }
+
+  private normalizeStorageLocation(value: string | null | undefined): PantryStorageLocation | null | undefined {
+    if (value === undefined || value === null) return value;
+    const normalized = value.trim().toLowerCase();
+    if (!(PANTRY_STORAGE_LOCATIONS as readonly string[]).includes(normalized)) {
+      throw new BadRequestException({ code: 'PANTRY_STORAGE_LOCATION_INVALID', message: 'Pantry storage location is not supported' });
+    }
+    return normalized as PantryStorageLocation;
+  }
+
+  private withExpiryStatus(item: PantryItemRecord): PantryItemRecord {
+    return { ...item, expiry_status: getPantryExpiryStatus(item.expires_at) };
   }
 
   private validateQuantityUnit(quantity: number | null, unit: string | null): void {

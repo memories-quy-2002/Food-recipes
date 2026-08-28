@@ -181,6 +181,7 @@ export class HomeFeedRepository implements HomeFeedRepositoryPort {
         ON pantry.user_id = ${userId}
         AND pantry.have = TRUE
         AND (pantry.quantity IS NULL OR pantry.quantity > 0)
+        AND pantry.expires_at BETWEEN CURRENT_DATE AND CURRENT_DATE + 3
         AND (
           EXISTS (
             SELECT 1

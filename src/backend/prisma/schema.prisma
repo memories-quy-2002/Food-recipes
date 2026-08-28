@@ -239,13 +239,17 @@ model RecipeNote {
 }
 
 model PantryItem {
-  id        Int      @id @default(autoincrement()) @map("pantry_id")
-  userId    Int      @map("user_id")
-  name      String   @db.VarChar(255)
-  have      Boolean  @default(true)
-  quantity  Decimal? @db.Decimal(12, 3)
-  unit      String?  @db.VarChar(20)
-  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
+  id              Int       @id @default(autoincrement()) @map("pantry_id")
+  userId          Int       @map("user_id")
+  name            String    @db.VarChar(255)
+  have            Boolean   @default(true)
+  quantity        Decimal?  @db.Decimal(12, 3)
+  unit            String?   @db.VarChar(20)
+  purchasedAt     DateTime? @map("purchased_at") @db.Date
+  openedAt        DateTime? @map("opened_at") @db.Date
+  expiresAt       DateTime? @map("expires_at") @db.Date
+  storageLocation String?   @map("storage_location") @db.VarChar(32)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamp(6)
 
   @@index([userId, have], map: "pantry_items_user_have_idx")
   @@map("pantry_items")

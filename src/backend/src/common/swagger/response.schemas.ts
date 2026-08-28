@@ -102,6 +102,21 @@ export class PantryItemDto {
   @ApiProperty({ type: String, nullable: true, example: 'KILOGRAM' })
   unit!: string | null;
 
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  purchased_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  opened_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  expires_at!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'fridge' })
+  storage_location!: string | null;
+
+  @ApiProperty({ enum: ['none', 'fresh', 'use_soon', 'expired'] })
+  expiry_status!: 'none' | 'fresh' | 'use_soon' | 'expired';
+
   @ApiProperty({ type: String, format: 'date-time' })
   updated_at!: string;
 }
