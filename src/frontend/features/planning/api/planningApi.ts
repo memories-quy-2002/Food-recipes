@@ -51,6 +51,42 @@ export type AddMealPlanItemInput = {
 
 export type UpdateMealPlanItemInput = Partial<AddMealPlanItemInput>;
 
+export type MealPlanPreviewItem = {
+	recipeId: number;
+	recipeName: string;
+	date: string;
+	slot: MealSlot;
+	servings: number;
+	locked: boolean;
+	score: number;
+	reasons: string[];
+};
+
+export type MealPlanPreview = {
+	previewToken: string;
+	name: string;
+	from: string;
+	to: string;
+	targetMeals: number;
+	items: MealPlanPreviewItem[];
+};
+
+export type GenerateMealPlanInput = DateRange & {
+	name: string;
+	targetMeals: number;
+	slots?: Array<{ date: string; slot: MealSlot; servings: number }>;
+	lockedItems?: Array<{ date: string; slot: MealSlot; servings: number; recipeId: number }>;
+	excludedRecipeIds?: number[];
+};
+
+export type FromMealPlanPreviewInput = {
+	previewToken: string;
+	name?: string;
+	items?: MealPlanPreviewItem[];
+};
+
+export type MealPlanPreviewResponse = MealPlanPreview;
+
 export const listSavedRecipeIds = async (): Promise<number[]> => {
 	const response = await axios.get<{ wishlist?: SavedRecipeReference[] }>(apiRoutes.userWishlist);
 	const wishlist = response.data.wishlist ?? [];
@@ -118,6 +154,26 @@ export const deleteMealPlanItem = async (
 ): Promise<MessageResponse> => {
 	const response = await axios.delete<MessageResponse>(
 		apiRoutes.mealPlanItem(planId, itemId),
+	);
+	return response.data;
+};
+
+export const generateMealPlanPreview = async (
+	input: GenerateMealPlanInput,
+): Promise<MealPlanPreviewResponse> => {
+	const response = await axios.post<MealPlanPreviewResponse>(
+		apiRoutes.mealPlanGeneratePreview,
+		input,
+	);
+	return response.data;
+};
+
+export const createMealPlanFromPreview = async (
+	input: FromMealPlanPreviewInput,
+): Promise<MealPlanResponse> => {
+	const response = await axios.post<MealPlanResponse>(
+		apiRoutes.mealPlanFromPreview,
+		input,
 	);
 	return response.data;
 };

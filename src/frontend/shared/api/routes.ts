@@ -43,6 +43,8 @@ type ApiRoutes = {
 	userFoodPreferences: string;
 	userPassword: string;
 	mealPlans: string;
+	mealPlanGeneratePreview: string;
+	mealPlanFromPreview: string;
 	mealPlan: (planId: ApiRouteId) => string;
 	mealPlanItems: (planId: ApiRouteId) => string;
 	mealPlanItem: (planId: ApiRouteId, itemId: ApiRouteId) => string;
@@ -102,6 +104,8 @@ const apiRoutes: ApiRoutes = {
 	userFoodPreferences: "/users/me/food-preferences",
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",
+	mealPlanGeneratePreview: "/users/me/meal-plans/generate-preview",
+	mealPlanFromPreview: "/users/me/meal-plans/from-preview",
 	mealPlan: (planId) => `/users/me/meal-plans/${planId}`,
 	mealPlanItems: (planId) => `/users/me/meal-plans/${planId}/items`,
 	mealPlanItem: (planId, itemId) =>

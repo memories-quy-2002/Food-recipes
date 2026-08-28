@@ -9,6 +9,8 @@ import {
 	createMealPlan,
 	deleteMealPlanItem,
 	getMealPlan,
+	generateMealPlanPreview,
+	createMealPlanFromPreview,
 	listMealPlans,
 	listSavedRecipeIds,
 	updateMealPlanItem,
@@ -16,6 +18,9 @@ import {
 	type CreateMealPlanInput,
 	type DateRange,
 	type MealPlanResponse,
+	type GenerateMealPlanInput,
+	type FromMealPlanPreviewInput,
+	type MealPlanPreviewResponse,
 	type UpdateMealPlanItemInput,
 } from "./planningApi";
 import { useToast } from "@/app/ToastProvider";
@@ -64,6 +69,24 @@ export const useSavedRecipeIdsQuery = () =>
 		queryKey: planningQueryKeys.savedRecipeIds(),
 		queryFn: listSavedRecipeIds,
 	});
+
+export const useGenerateMealPlanPreviewMutation = () => {
+	const { showToast } = useToast();
+	return useMutation<MealPlanPreviewResponse, Error, GenerateMealPlanInput>({
+		mutationFn: generateMealPlanPreview,
+		onError: () => showToast({ title: "Couldn’t generate your meal plan", message: "Try adjusting the week or your locked meals.", type: "error" }),
+	});
+};
+
+export const useCreateMealPlanFromPreviewMutation = () => {
+	const queryClient = useQueryClient();
+	const { showToast } = useToast();
+	return useMutation<MealPlanResponse, Error, FromMealPlanPreviewInput>({
+		mutationFn: createMealPlanFromPreview,
+		onSuccess: async () => { await invalidatePlanning(queryClient); showToast({ title: "Meal plan saved" }); },
+		onError: () => showToast({ title: "This preview could not be saved", message: "Your recipes may have changed. Generate a new preview and try again.", type: "error" }),
+	});
+};
 
 const invalidatePlanning = async (queryClient: ReturnType<typeof useQueryClient>) => {
 	await Promise.all([

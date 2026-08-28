@@ -20,6 +20,8 @@ vi.mock("./api/planningQueries", () => ({
 	useAddMealPlanItemMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 	useUpdateMealPlanItemMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 	useDeleteMealPlanItemMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+	useGenerateMealPlanPreviewMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+	useCreateMealPlanFromPreviewMutation: () => ({ mutate: vi.fn(), isPending: false, error: null }),
 }));
 
 const renderPage = () => {
