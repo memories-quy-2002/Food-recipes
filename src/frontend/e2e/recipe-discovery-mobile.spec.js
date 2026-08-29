@@ -49,6 +49,7 @@ test("supports mobile filter sheet, URL chips, sort, and browser history", async
 	await expect(dialog.getByRole("button", { name: "Dinner" })).toHaveCount(1);
 	await dialog.getByRole("button", { name: "Dinner" }).click();
 	await expect(page).toHaveURL(/mealId=3/);
+	await expect(dialog.getByRole("button", { name: "Dinner" })).toHaveAttribute("aria-pressed", "true");
 	await dialog.getByLabel("Search recipes").fill("chicken");
 	await dialog.getByRole("button", { name: "Show results" }).click();
 

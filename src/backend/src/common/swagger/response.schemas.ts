@@ -87,8 +87,11 @@ export class PantryItemDto {
   @ApiProperty({ example: 4 })
   pantry_id!: number;
 
-  @ApiProperty({ example: 7 })
-  user_id!: number;
+  @ApiProperty({ type: Number, nullable: true, example: 7 })
+  user_id!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: 3 })
+  household_id!: number | null;
 
   @ApiProperty({ example: 'Eggs' })
   name!: string;
@@ -101,6 +104,21 @@ export class PantryItemDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'KILOGRAM' })
   unit!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  purchased_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  opened_at!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true })
+  expires_at!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'fridge' })
+  storage_location!: string | null;
+
+  @ApiProperty({ enum: ['none', 'fresh', 'use_soon', 'expired'] })
+  expiry_status!: 'none' | 'fresh' | 'use_soon' | 'expired';
 
   @ApiProperty({ type: String, format: 'date-time' })
   updated_at!: string;
@@ -584,6 +602,28 @@ export class ShoppingListItemResponseDto {
 export class ShoppingListResponseDto {
   @ApiProperty({ type: [ShoppingListItemResponseDto] })
   items!: ShoppingListItemResponseDto[];
+}
+
+export class ShoppingListPantryImportSkippedDto {
+  @ApiProperty({ example: 12 })
+  item_id!: number;
+
+  @ApiProperty({ example: 'Fresh herbs' })
+  label!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'a handful' })
+  quantity!: string | null;
+
+  @ApiProperty({ enum: ['quantity_or_unit_required', 'pantry_unit_conflict'] })
+  reason!: 'quantity_or_unit_required' | 'pantry_unit_conflict';
+}
+
+export class ShoppingListPantryImportResponseDto {
+  @ApiProperty({ example: 3 })
+  imported_items!: number;
+
+  @ApiProperty({ type: [ShoppingListPantryImportSkippedDto] })
+  skipped_items!: ShoppingListPantryImportSkippedDto[];
 }
 
 export class PreparedIngredientResponseDto {

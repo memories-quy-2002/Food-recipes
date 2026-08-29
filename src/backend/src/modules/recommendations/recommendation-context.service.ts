@@ -1,0 +1,133 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '../../generated/prisma/client';
+import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { CookingHistoryService, CookingHistoryServicePort } from '../cooking-history/cooking-history.service';
+import { PantryService, PantryServicePort } from '../pantry/pantry.service';
+import { PreferencesService, PreferencesServicePort } from '../preferences/preferences.service';
+
+export type RecommendationPantryItem = {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+  have: boolean;
+  expiresAt: Date | null;
+};
+
+export type RecommendationContext = {
+  userId: number;
+  preferences: {
+    diet: string | null;
+    avoidedAllergens: ReadonlySet<string>;
+    dislikedIngredients: ReadonlySet<string>;
+    preferredCuisines: ReadonlySet<string>;
+    strictDislikes: boolean;
+    maxWeekdayCookMinutes: number | null;
+    maxCaloriesPerServing: number | null;
+    minProteinGrams: number | null;
+  };
+  pantry: RecommendationPantryItem[];
+  likedCategoryIds: ReadonlySet<number>;
+  likedMealIds: ReadonlySet<number>;
+  recentlyCookedRecipeIds: ReadonlySet<number>;
+  repeatCookCounts: ReadonlyMap<number, number>;
+  asOf?: Date;
+};
+
+type LikedTaxonomyRow = {
+  category_id: number | bigint | null;
+  meal_id: number | bigint | null;
+};
+
+type PantryItemWithExpiry = {
+  name: string;
+  quantity: number | null;
+  unit: string | null;
+  have: boolean;
+  expiresAt?: Date | string | null;
+};
+
+const normalizeText = (value: string | null | undefined): string => value?.trim().toLowerCase() ?? '';
+
+const normalizeSet = (values: readonly string[]): ReadonlySet<string> =>
+  new Set(values.map(normalizeText).filter(Boolean));
+
+const parseDate = (value: Date | string | null | undefined): Date | null => {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+@Injectable()
+export class RecommendationContextService {
+  constructor(
+    @Inject(PreferencesService)
+    private readonly preferencesService: PreferencesServicePort,
+    @Inject(PantryService)
+    private readonly pantryService: PantryServicePort,
+    @Inject(CookingHistoryService)
+    private readonly cookingHistoryService: CookingHistoryServicePort,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  async build(userId: number): Promise<RecommendationContext> {
+    const [preferences, pantryResponse, historyResponse, likedTaxonomy] = await Promise.all([
+      this.preferencesService.get(userId),
+      this.pantryService.list(userId),
+      this.cookingHistoryService.list(userId),
+      this.prisma.$queryRaw<LikedTaxonomyRow[]>(Prisma.sql`
+        SELECT r.category_id, r.meal_id
+        FROM rating rt
+        JOIN recipes r ON r.recipe_id = rt.recipe_id
+        WHERE rt.user_id = ${userId}
+          AND rt.score >= 4
+      `),
+    ]);
+
+    const likedCategoryIds = new Set<number>();
+    const likedMealIds = new Set<number>();
+    for (const row of likedTaxonomy) {
+      if (row.category_id !== null) likedCategoryIds.add(Number(row.category_id));
+      if (row.meal_id !== null) likedMealIds.add(Number(row.meal_id));
+    }
+
+    const recentlyCookedRecipeIds = new Set<number>();
+    const repeatCookCounts = new Map<number, number>();
+    for (const item of historyResponse.items) {
+      const recipeId = Number(item.recipe_id);
+      recentlyCookedRecipeIds.add(recipeId);
+      repeatCookCounts.set(recipeId, (repeatCookCounts.get(recipeId) ?? 0) + 1);
+    }
+
+    return {
+      userId,
+      preferences: {
+        diet: normalizeText(preferences.diet) || null,
+        avoidedAllergens: normalizeSet(preferences.avoidedAllergens),
+        dislikedIngredients: normalizeSet(preferences.dislikedIngredients),
+        preferredCuisines: normalizeSet(preferences.preferredCuisines),
+        strictDislikes: preferences.strictDislikes,
+        maxWeekdayCookMinutes: preferences.maxWeekdayCookMinutes,
+        maxCaloriesPerServing: preferences.maxCaloriesPerServing,
+        minProteinGrams: preferences.minProteinGrams,
+      },
+      pantry: pantryResponse.items.map((item) => {
+        const pantryItem = item as PantryItemWithExpiry;
+        return {
+          name: pantryItem.name,
+          quantity: pantryItem.quantity,
+          unit: pantryItem.unit,
+          have: pantryItem.have,
+          expiresAt: parseDate(pantryItem.expiresAt),
+        };
+      }),
+      likedCategoryIds,
+      likedMealIds,
+      recentlyCookedRecipeIds,
+      repeatCookCounts,
+      asOf: new Date(),
+    };
+  }
+}
+
+export type RecommendationContextServicePort = Pick<RecommendationContextService, 'build'>;

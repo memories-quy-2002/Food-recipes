@@ -111,6 +111,21 @@ export const parseQuantityText = (value: string | null | undefined): number | nu
   return Number.isFinite(quantity) ? quantity : null;
 };
 
+export type ParsedShoppingListQuantity = {
+  quantity: number;
+  unit: PantryUnit;
+};
+
+export const parseShoppingListQuantity = (value: string | null | undefined): ParsedShoppingListQuantity | null => {
+  const match = value?.trim().match(/^((?:\d+(?:[.,]\d+)?\s+\d+\/\d+|\d+\/\d+|\d+(?:[.,]\d+)?))\s*([a-zA-Z]+)$/);
+  if (!match) return null;
+
+  const quantity = parseQuantityText(match[1]);
+  const unit = normalizePantryUnit(match[2]);
+  if (quantity === null || quantity <= 0 || !unit) return null;
+  return { quantity, unit };
+};
+
 export const convertQuantity = (
   quantity: number,
   fromUnit: PantryUnit,

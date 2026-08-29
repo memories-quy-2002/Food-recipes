@@ -57,6 +57,7 @@ jobs:
           node src/backend/test/ci-workflow.validation.mjs
           node src/backend/test/prisma-baseline.validation.mjs
           node src/backend/test/recipe-duration-migration.validation.mjs
+          node src/backend/test/user-food-preferences-migration.validation.mjs
           node src/backend/test/docker-infrastructure.validation.mjs
           node src/backend/test/backend-product-security.validation.mjs
           node src/backend/test/production-demo-reset.validation.mjs

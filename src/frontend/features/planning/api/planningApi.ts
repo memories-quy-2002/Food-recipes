@@ -1,5 +1,6 @@
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
+import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
 
 export const MEAL_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
 export type MealSlot = (typeof MEAL_SLOTS)[number];
@@ -51,6 +52,68 @@ export type AddMealPlanItemInput = {
 
 export type UpdateMealPlanItemInput = Partial<AddMealPlanItemInput>;
 
+export type MealPlanPreviewItem = {
+	recipeId: number;
+	recipeName: string;
+	date: string;
+	slot: MealSlot;
+	servings: number;
+	locked: boolean;
+	score: number;
+	reasons: string[];
+};
+
+export type MealPlanPreview = {
+	previewToken: string;
+	name: string;
+	from: string;
+	to: string;
+	targetMeals: number;
+	items: MealPlanPreviewItem[];
+};
+
+export type GenerateMealPlanInput = DateRange & {
+	name: string;
+	targetMeals: number;
+	slots?: Array<{ date: string; slot: MealSlot; servings: number }>;
+	lockedItems?: Array<{ date: string; slot: MealSlot; servings: number; recipeId: number }>;
+	excludedRecipeIds?: number[];
+};
+
+export type FromMealPlanPreviewInput = {
+	previewToken: string;
+	name?: string;
+	items?: MealPlanPreviewItem[];
+};
+
+export type MealPlanPreviewResponse = MealPlanPreview;
+
+type MealPlanApiRoutes = {
+	mealPlans: string;
+	mealPlan: (planId: number) => string;
+	mealPlanItems: (planId: number) => string;
+	mealPlanItem: (planId: number, itemId: number) => string;
+};
+
+const createMealPlanRoutes = (scope: KitchenScope): MealPlanApiRoutes => {
+	if (scope.kind === "personal") {
+		return {
+			mealPlans: apiRoutes.mealPlans,
+			mealPlan: apiRoutes.mealPlan,
+			mealPlanItems: apiRoutes.mealPlanItems,
+			mealPlanItem: apiRoutes.mealPlanItem,
+		};
+	}
+
+	const mealPlans = `/households/${scope.householdId}/meal-plans`;
+	return {
+		mealPlans,
+		mealPlan: (planId) => `${mealPlans}/${planId}`,
+		mealPlanItems: (planId) => `${mealPlans}/${planId}/items`,
+		mealPlanItem: (planId, itemId) => `${mealPlans}/${planId}/items/${itemId}`,
+	};
+};
+
 export const listSavedRecipeIds = async (): Promise<number[]> => {
 	const response = await axios.get<{ wishlist?: SavedRecipeReference[] }>(apiRoutes.userWishlist);
 	const wishlist = response.data.wishlist ?? [];
@@ -64,8 +127,9 @@ export const listSavedRecipeIds = async (): Promise<number[]> => {
 export const listMealPlans = async (
 	range?: DateRange,
 	signal?: AbortSignal,
+	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<MealPlanListResponse> => {
-	const response = await axios.get<MealPlanListResponse>(apiRoutes.mealPlans, {
+	const response = await axios.get<MealPlanListResponse>(createMealPlanRoutes(scope).mealPlans, {
 		params: range,
 		signal,
 	});
@@ -75,8 +139,9 @@ export const listMealPlans = async (
 export const getMealPlan = async (
 	planId: number,
 	signal?: AbortSignal,
+	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<MealPlanResponse> => {
-	const response = await axios.get<MealPlanResponse>(apiRoutes.mealPlan(planId), {
+	const response = await axios.get<MealPlanResponse>(createMealPlanRoutes(scope).mealPlan(planId), {
 		signal,
 	});
 	return response.data;
@@ -84,17 +149,19 @@ export const getMealPlan = async (
 
 export const createMealPlan = async (
 	input: CreateMealPlanInput,
+	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<MealPlanResponse> => {
-	const response = await axios.post<MealPlanResponse>(apiRoutes.mealPlans, input);
+	const response = await axios.post<MealPlanResponse>(createMealPlanRoutes(scope).mealPlans, input);
 	return response.data;
 };
 
 export const addMealPlanItem = async (
 	planId: number,
 	input: AddMealPlanItemInput,
+	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<MealPlanItemResponse> => {
 	const response = await axios.post<MealPlanItemResponse>(
-		apiRoutes.mealPlanItems(planId),
+		createMealPlanRoutes(scope).mealPlanItems(planId),
 		input,
 	);
 	return response.data;
@@ -104,9 +171,10 @@ export const updateMealPlanItem = async (
 	planId: number,
 	itemId: number,
 	input: UpdateMealPlanItemInput,
+	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<MealPlanItemResponse> => {
 	const response = await axios.patch<MealPlanItemResponse>(
-		apiRoutes.mealPlanItem(planId, itemId),
+		createMealPlanRoutes(scope).mealPlanItem(planId, itemId),
 		input,
 	);
 	return response.data;
@@ -115,9 +183,30 @@ export const updateMealPlanItem = async (
 export const deleteMealPlanItem = async (
 	planId: number,
 	itemId: number,
+	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<MessageResponse> => {
 	const response = await axios.delete<MessageResponse>(
-		apiRoutes.mealPlanItem(planId, itemId),
+		createMealPlanRoutes(scope).mealPlanItem(planId, itemId),
+	);
+	return response.data;
+};
+
+export const generateMealPlanPreview = async (
+	input: GenerateMealPlanInput,
+): Promise<MealPlanPreviewResponse> => {
+	const response = await axios.post<MealPlanPreviewResponse>(
+		apiRoutes.mealPlanGeneratePreview,
+		input,
+	);
+	return response.data;
+};
+
+export const createMealPlanFromPreview = async (
+	input: FromMealPlanPreviewInput,
+): Promise<MealPlanResponse> => {
+	const response = await axios.post<MealPlanResponse>(
+		apiRoutes.mealPlanFromPreview,
+		input,
 	);
 	return response.data;
 };

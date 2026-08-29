@@ -1,4 +1,12 @@
+import type { KitchenScope } from "@/features/households/householdScope";
+
 export type ApiRouteId = number | string;
+
+export type PantryApiRoutes = {
+	pantry: string;
+	pantryItem: (pantryId: ApiRouteId) => string;
+	pantryFromShoppingList: string;
+};
 
 type ApiRoutes = {
 	recipes: string;
@@ -10,6 +18,8 @@ type ApiRoutes = {
 	userSuggestions: string;
 	userRecipes: string;
 	userRecipeDrafts: string;
+	recipeImportPreview: string;
+	recipeImportDrafts: string;
 	recipeIngredients: (recipeId: ApiRouteId) => string;
 	recipeNutrition: (recipeId: ApiRouteId) => string;
 	recipeDietaryTags: (recipeId: ApiRouteId) => string;
@@ -30,6 +40,7 @@ type ApiRoutes = {
 	userRecipeNote: (recipeId: ApiRouteId) => string;
 	pantry: string;
 	pantryItem: (pantryId: ApiRouteId) => string;
+	pantryFromShoppingList: string;
 	userRatings: string;
 	userRecipeRating: (recipeId: ApiRouteId) => string;
 	userRecipeRatingDelete: (recipeId: ApiRouteId) => string;
@@ -40,8 +51,11 @@ type ApiRoutes = {
 	authRefresh: string;
 	authLogout: string;
 	userProfile: string;
+	userFoodPreferences: string;
 	userPassword: string;
 	mealPlans: string;
+	mealPlanGeneratePreview: string;
+	mealPlanFromPreview: string;
 	mealPlan: (planId: ApiRouteId) => string;
 	mealPlanItems: (planId: ApiRouteId) => string;
 	mealPlanItem: (planId: ApiRouteId, itemId: ApiRouteId) => string;
@@ -55,6 +69,8 @@ type ApiRoutes = {
 	cookingSession: string;
 	cookingSessionItem: (sessionId: ApiRouteId) => string;
 	cookingSessionComplete: (sessionId: ApiRouteId) => string;
+	cookingJournal: (historyId: ApiRouteId) => string;
+	journalPhotoUpload: string;
 	databaseHealth: string;
 	serverHealth: string;
 };
@@ -69,6 +85,8 @@ const apiRoutes: ApiRoutes = {
 	userSuggestions: "/users/me/suggestions",
 	userRecipes: "/users/me/recipes",
 	userRecipeDrafts: "/users/me/recipes/drafts",
+	recipeImportPreview: "/users/me/recipe-imports/preview",
+	recipeImportDrafts: "/users/me/recipe-imports/drafts",
 	recipeIngredients: (recipeId) => `/recipes/${recipeId}/ingredients`,
 	recipeNutrition: (recipeId) => `/recipes/${recipeId}/nutrition`,
 	recipeDietaryTags: (recipeId) => `/recipes/${recipeId}/dietary-tags`,
@@ -88,6 +106,7 @@ const apiRoutes: ApiRoutes = {
 	userRecipeNote: (recipeId) => `/users/me/recipes/${recipeId}/note`,
 	pantry: "/users/me/pantry",
 	pantryItem: (pantryId) => `/users/me/pantry/${pantryId}`,
+	pantryFromShoppingList: "/users/me/pantry/from-shopping-list",
 	userRatings: "/users/me/ratings",
 	userRecipeRating: (recipeId) => `/recipes/${recipeId}/rating`,
 	userRecipeRatingDelete: (recipeId) => `/recipes/${recipeId}/rating`,
@@ -98,8 +117,11 @@ const apiRoutes: ApiRoutes = {
 	authRefresh: "/auth/refresh",
 	authLogout: "/auth/logout",
 	userProfile: "/users/me/profile",
+	userFoodPreferences: "/users/me/food-preferences",
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",
+	mealPlanGeneratePreview: "/users/me/meal-plans/generate-preview",
+	mealPlanFromPreview: "/users/me/meal-plans/from-preview",
 	mealPlan: (planId) => `/users/me/meal-plans/${planId}`,
 	mealPlanItems: (planId) => `/users/me/meal-plans/${planId}/items`,
 	mealPlanItem: (planId, itemId) =>
@@ -116,8 +138,27 @@ const apiRoutes: ApiRoutes = {
 		`/users/me/cooking-session/${sessionId}`,
 	cookingSessionComplete: (sessionId) =>
 		`/users/me/cooking-session/${sessionId}/complete`,
+	cookingJournal: (historyId) => `/users/me/cooking-history/${historyId}/journal`,
+	journalPhotoUpload: "/media/journal-photo/upload-url",
 	databaseHealth: "/health/ready",
 	serverHealth: "/health/live",
+};
+
+export const createPantryRoutes = (scope: KitchenScope): PantryApiRoutes => {
+	if (scope.kind === "personal") {
+		return {
+			pantry: apiRoutes.pantry,
+			pantryItem: apiRoutes.pantryItem,
+			pantryFromShoppingList: apiRoutes.pantryFromShoppingList,
+		};
+	}
+
+	const pantry = `/households/${scope.householdId}/pantry`;
+	return {
+		pantry,
+		pantryItem: (pantryId) => `${pantry}/${pantryId}`,
+		pantryFromShoppingList: `${pantry}/from-shopping-list`,
+	};
 };
 
 export const getUserRecipeRatingRoute = (recipeId: ApiRouteId): string =>

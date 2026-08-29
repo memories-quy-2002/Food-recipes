@@ -23,7 +23,6 @@ import type {
 	CookingSessionCompletionResponse,
 	CookingShoppingListResponse,
 } from "@/features/history/api/cookingSessionApi";
-import { historyQueryKeys } from "@/features/history/api/historyQueries";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
@@ -35,6 +34,7 @@ import PrivateRecipeNotes from "@/features/recipes/notes/PrivateRecipeNotes";
 import { recordRecentlyViewedRecipe } from "@/features/recipes/recentlyViewed";
 import PrintRecipeButton from "@/features/recipes/share/PrintRecipeButton";
 import ShareRecipeButton from "@/features/recipes/share/ShareRecipeButton";
+import { refreshKitchenQueries } from "./recipeKitchenQueries";
 import {
 	beginAuthIntent,
 	isMatchingSaveRecipeIntent,
@@ -209,13 +209,6 @@ const Recipe = (): React.ReactElement => {
 		servings: planningContext?.servings ?? recipe?.nutrition?.servings ?? 1,
 	});
 	const queryClient = useQueryClient();
-	const refreshKitchenQueries = async (): Promise<void> => {
-		await Promise.all([
-			queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
-			queryClient.invalidateQueries({ queryKey: historyQueryKeys.all }),
-			queryClient.invalidateQueries({ queryKey: ["planning"] }),
-		]);
-	};
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
 	const processedAuthIntent = useRef<unknown>(null);
 	const favoriteLoadKey =
@@ -447,11 +440,11 @@ const Recipe = (): React.ReactElement => {
 				clearCookingToolsState(cookingToolsStorageKey);
 				showToast({ title: "Cooking history saved" });
 			}
-			await refreshKitchenQueries();
+			await refreshKitchenQueries(queryClient);
 			return completedSession;
 		}
 		clearCookingToolsState(cookingToolsStorageKey);
-		await refreshKitchenQueries();
+		await refreshKitchenQueries(queryClient);
 		return null;
 	};
 

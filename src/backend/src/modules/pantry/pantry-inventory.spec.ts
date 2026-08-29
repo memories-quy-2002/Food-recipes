@@ -1,4 +1,4 @@
-import { calculateInventoryConsumption, convertQuantity } from './pantry-inventory';
+import { calculateInventoryConsumption, convertQuantity, parseShoppingListQuantity } from './pantry-inventory';
 
 describe('pantry inventory calculations', () => {
   it('scales recipe amounts by servings and consumes only available stock', () => {
@@ -53,5 +53,15 @@ describe('pantry inventory calculations', () => {
 
     expect(result.invalid_ingredients).toEqual(['salt', 'pepper']);
     expect(result.consumptions).toHaveLength(0);
+  });
+
+  it('parses structured shopping quantities into pantry quantities', () => {
+    expect(parseShoppingListQuantity('1 1/2 cups')).toEqual({ quantity: 1.5, unit: 'CUP' });
+    expect(parseShoppingListQuantity('500 g')).toEqual({ quantity: 500, unit: 'GRAM' });
+  });
+
+  it('leaves free-form shopping quantities for manual pantry entry', () => {
+    expect(parseShoppingListQuantity('1 carton')).toBeNull();
+    expect(parseShoppingListQuantity(null)).toBeNull();
   });
 });

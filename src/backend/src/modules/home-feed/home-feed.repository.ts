@@ -20,6 +20,9 @@ export type HomeFeedRecipe = {
   overall_score: number;
   num_ratings: number;
   dietary_tags: string[];
+  pantry_match_count?: number;
+  recommendation_score?: number;
+  reasons?: string[];
 };
 
 export type KitchenActiveSession = {
@@ -61,6 +64,7 @@ export interface HomeFeedRepositoryPort {
   listPlanned(userId: number, limit: number): Promise<HomeFeedRecipe[]>;
   listFromPantry(userId: number, limit: number): Promise<HomeFeedRecipe[]>;
   listRecommended(userId: number, limit: number): Promise<HomeFeedRecipe[]>;
+  findPublishedByIds(recipeIds: number[]): Promise<HomeFeedRecipe[]>;
   getKitchenState(userId: number): Promise<KitchenState>;
 }
 
@@ -107,6 +111,7 @@ const normalizeRows = (rows: HomeFeedRecipe[]): HomeFeedRecipe[] =>
     overall_score: Number(row.overall_score ?? 0),
     num_ratings: Number(row.num_ratings ?? 0),
     dietary_tags: Array.isArray(row.dietary_tags) ? row.dietary_tags : [],
+    ...(row.pantry_match_count === undefined ? {} : { pantry_match_count: Number(row.pantry_match_count) }),
   }));
 
 @Injectable()
@@ -176,6 +181,7 @@ export class HomeFeedRepository implements HomeFeedRepositoryPort {
         ON pantry.user_id = ${userId}
         AND pantry.have = TRUE
         AND (pantry.quantity IS NULL OR pantry.quantity > 0)
+        AND pantry.expires_at BETWEEN CURRENT_DATE AND CURRENT_DATE + 3
         AND (
           EXISTS (
             SELECT 1
@@ -256,6 +262,21 @@ export class HomeFeedRepository implements HomeFeedRepositoryPort {
       num_ratings DESC,
       r.recipe_id DESC
       LIMIT ${limit}
+    `);
+    return normalizeRows(rows);
+  }
+
+  async findPublishedByIds(recipeIds: number[]): Promise<HomeFeedRecipe[]> {
+    if (!recipeIds.length) return [];
+    const rows = await this.prisma.$queryRaw<HomeFeedRecipe[]>(Prisma.sql`
+      SELECT ${recipeProjection}
+      FROM recipes r
+      JOIN meals m ON m.meal_id = r.meal_id
+      JOIN categories c ON c.category_id = r.category_id
+      LEFT JOIN rating rt ON rt.recipe_id = r.recipe_id
+      WHERE r.status = 'published'
+        AND r.recipe_id IN (${Prisma.join(recipeIds)})
+      GROUP BY ${recipeGroupBy}
     `);
     return normalizeRows(rows);
   }

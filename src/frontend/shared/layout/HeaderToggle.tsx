@@ -15,6 +15,7 @@ import { authSessionApi } from "@/features/auth/api/authSessionApi";
 import { cn } from "@/shared/lib/utils";
 import {
 	isNavigationItemActive,
+	type NavigationGroup,
 	type NavigationItem,
 } from "./navigation";
 import Button from "@/shared/ui/Button";
@@ -53,6 +54,8 @@ export type HeaderToggleProps = {
 	handleClose: () => void;
 	handleShow: () => void;
 	items: NavigationItem[];
+	moreGroups?: NavigationGroup[];
+	action?: NavigationItem;
 	auth?: AuthState;
 };
 
@@ -61,6 +64,8 @@ const HeaderToggle = ({
 	handleClose,
 	handleShow,
 	items,
+	moreGroups = [],
+	action,
 }: HeaderToggleProps): ReactElement => {
 	const dispatch = useDispatch<AppDispatch>();
 	const navigate = useNavigate();
@@ -132,8 +137,8 @@ const HeaderToggle = ({
 
 	const itemClass = (active = false): string =>
 		cn(
-			"flex min-h-12 w-full items-center rounded-xl px-3 py-2 text-left text-base font-bold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-			active && "bg-accent text-accent-foreground",
+			"flex min-h-11 w-full items-center rounded-xl px-3 py-2 text-left text-base font-semibold text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+			active && "bg-muted",
 		);
 	const mobileNavigation = show ? (
 		<div className="fixed inset-0 z-[100]" role="presentation">
@@ -169,7 +174,12 @@ const HeaderToggle = ({
 					</Button>
 				</div>
 				<nav className="mt-4" aria-label="Mobile primary navigation">
-					<ul className="grid gap-1">
+					<div className="grid gap-4">
+						<section>
+							<h3 className="mb-1 px-3 text-[0.68rem] font-black uppercase tracking-[0.14em] text-muted-foreground">
+								Explore
+							</h3>
+							<ul className="grid gap-1">
 						{items.map(({ title, href }) => {
 							const active = isNavigationItemActive(pathname, href, items);
 							return (
@@ -182,10 +192,54 @@ const HeaderToggle = ({
 									>
 										{title}
 									</Link>
-								</li>
-							);
+									</li>
+								);
 						})}
-						<li className="mt-3 border-t border-border pt-3">
+						{action && (
+							<li>
+								<Link
+									className={cn(itemClass(isNavigationItemActive(pathname, action.href, [action])), "bg-primary text-primary-foreground hover:bg-primary/90")}
+									aria-current={isNavigationItemActive(pathname, action.href, [action]) ? "page" : undefined}
+									to={action.href}
+									onClick={handleClose}
+								>
+									{action.title}
+								</Link>
+							</li>
+						)}
+							</ul>
+						</section>
+						{moreGroups.map((group) => (
+							<section key={group.label} className="border-t border-border pt-3">
+								<h3 className="mb-1 px-3 text-[0.68rem] font-black uppercase tracking-[0.14em] text-muted-foreground">
+									{group.label}
+								</h3>
+								<ul className="grid gap-1">
+									{group.items.map((item) => {
+										const active = isNavigationItemActive(
+											pathname,
+											item.href,
+											group.items,
+										);
+										return (
+											<li key={item.href}>
+												<Link
+													className={itemClass(active)}
+													aria-current={active ? "page" : undefined}
+													to={item.href}
+													onClick={handleClose}
+												>
+													{item.title}
+												</Link>
+											</li>
+										);
+									})}
+								</ul>
+							</section>
+						))}
+						<section className="border-t border-border pt-3">
+							<ul className="grid gap-1">
+						<li>
 							{isAuthenticated ? (
 								<button
 									type="button"
@@ -204,7 +258,9 @@ const HeaderToggle = ({
 								</button>
 							)}
 						</li>
-					</ul>
+							</ul>
+						</section>
+					</div>
 				</nav>
 			</aside>
 		</div>
@@ -215,7 +271,7 @@ const HeaderToggle = ({
 			: mobileNavigation;
 
 	return (
-		<div className="ml-auto lg:hidden">
+		<div className="ml-auto xl:hidden">
 			<Button
 				variant="outline"
 				size="icon"

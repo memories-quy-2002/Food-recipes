@@ -1,43 +1,187 @@
-# Task 3 Report: Refresh bootstrap, logout, and protected-route UX
+# Task 3 Report: Preferences Frontend
 
-## Status
+## Scope
 
-Implementation complete on `codex/auth-security-foundation`.
+- Branch: `feat/p0-p1-growth-retention`
+- Task: Preferences frontend
+- Route: `/profile/preferences`
+- API contract: `/api/v1/users/me/food-preferences` through the existing Axios base URL and auth interceptors
+- Commit subject: `feat(preferences): add food preference settings`
 
 ## Implementation
 
-- Added `authSessionApi.refresh()` and `.logout()` around the refresh-cookie API boundary; refresh validates `{ user, token }` and writes only the access token to the module memory store.
-- Added `authLogout` to the frontend route contract.
-- Added `hydrated`, `setHydrated`, and `restoreSession` to the auth slice while preserving the existing local/session user metadata shape.
-- Updated `AuthProvider` to bootstrap once per mounted provider, restore the returned user, handle failures, and expose hydration state through the auth context.
-- Updated `ProtectedRoute` to render an accessible session-check status before redirecting unauthenticated users.
-- Kept Axios refresh single-flight behavior and added a concurrent-401 test.
-- Routed desktop header, mobile navigation, and profile logout through the server endpoint, clearing local auth in `finally` even when the server is unavailable.
-- Removed the header's duplicate token validation/refresh path; it now renders the restored user metadata from auth state.
+The page is a protected standalone settings page rendered inside the existing application `Layout`. It uses the current `PageHelmet`, `Button`, `Input`, `Label`, card surface, Tailwind tokens, focus styles, and reduced-motion CSS rather than adding a new UI system.
 
-## TDD evidence
+API and query integration:
 
-Focused tests were written first and failed for the expected missing `authSessionApi`/hydration behavior. After implementation:
+- Added the `userFoodPreferences` route constant.
+- Added typed `getFoodPreferences` and `replaceFoodPreferences` Axios wrappers.
+- Added the `food-preferences` TanStack Query key, read query, and replace mutation.
+- Successful saves invalidate the preference query and show the existing success toast.
+- Failed saves use the existing error toast path while the page callback keeps the current draft visible.
+
+Settings page:
+
+- Supports diet, cooking skill, avoided allergens, disliked ingredients, preferred cuisines, strict dislikes, weekday cooking time, default servings, maximum calories, and minimum protein.
+- API values are converted to controlled form values, including nullable numeric and select fields.
+- Numeric ranges and list count/item-length bounds match the Task 2 API contract.
+- The form sends the complete normalized preference object and never adds a client-supplied actor ID.
+- Chip fields add values with Enter, remove values with individually named buttons, and remove the last value with Backspace when the chip input is empty.
+- Loading and fetch-error states use the shared `PageState` component.
+
+Routing and navigation:
+
+- Added `/profile/preferences` behind `ProtectedRoute`.
+- Added an authenticated `Preferences` primary navigation item with a settings icon. This makes the page reachable from both desktop navigation and the existing mobile navigation drawer.
+
+## TDD Evidence
+
+### RED
+
+Added these focused tests before the production modules existed:
+
+- `features/preferences/api/preferencesApi.test.ts`
+- `features/preferences/api/preferencesQueries.test.ts`
+- `features/preferences/FoodPreferencesPage.test.tsx`
+
+First run:
 
 ```text
-corepack pnpm@11.18.0 exec node_modules/.bin/vitest run features/auth/api/authSessionApi.test.js features/auth/components/ProtectedRoute.test.jsx app/AuthProvider.test.jsx shared/layout/HeaderAuthButton.test.jsx shared/api/apiClient.test.js shared/layout/Header.navigation.test.jsx
+pnpm test -- features/preferences
 ```
 
-Passed: 6 files, 27 tests.
+Result: failed as expected because `FoodPreferencesPage`, `preferencesApi`, and `preferencesQueries` did not exist. The initial query test also exposed a test-file JSX parsing issue; the test was corrected to use `createElement`, then the suites failed only on the missing feature modules.
+
+### GREEN
+
+After the minimum implementation was added:
 
 ```text
-corepack pnpm@11.18.0 exec node_modules/.bin/eslint app/AuthProvider.jsx app/AuthProvider.test.jsx features/auth/api/authSessionApi.js features/auth/api/authSessionApi.test.js features/auth/components/ProtectedRoute.jsx features/auth/components/ProtectedRoute.test.jsx features/auth/state/authSlice.jsx shared/api/apiClient.test.js shared/api/routes.js shared/layout/HeaderAuthButton.jsx shared/layout/HeaderAuthButton.test.jsx shared/layout/HeaderToggle.jsx features/profile/Profile.jsx
+pnpm test -- features/preferences
 ```
 
-Passed. Frontend `typecheck` and `git diff --check` passed. The static scan found no `localStorage`/`sessionStorage` JWT writes, old token adapter names, or Redux token-field consumers in `src/frontend`.
+Result: 3 test files passed, 8 tests passed.
 
-The first full Vitest pass exposed an existing route test fixture that did not include the new `hydrated` auth field. Updating that mock to the new auth-state contract fixed the regression. Final full Vitest verification passed:
+The requested focused command was then run independently:
 
 ```text
-Test Files  89 passed (89)
-Tests       286 passed (286)
+pnpm test -- FoodPreferencesPage.test.tsx
 ```
 
-Frontend production build, full ESLint, and typecheck also passed. Full Playwright and real-browser smoke remain deferred to Task 6.
+Result: 1 test file passed, 5 tests passed.
 
-A targeted Playwright guest journey was attempted after the preview build started, but it could not complete because the journey does not mock the new refresh bootstrap and no backend was running at `http://localhost:3000`. The refresh bootstrap now has a five-second timeout so an unavailable auth API cannot leave protected UI in an indefinite loading state. No browser pass is claimed; Task 6 must add the shared unauthenticated bootstrap fixture and rerun the journeys with the required API/runtime setup.
+## Verification
+
+```text
+pnpm check
+```
+
+Result:
+
+- Application source TypeScript-only check passed.
+- ESLint passed.
+- TypeScript typecheck passed.
+- 108 test files passed.
+- 345 tests passed.
+
+```text
+pnpm build
+```
+
+Result: Vite production build succeeded. Vite reports the existing warning that some generated chunks exceed 500 kB after minification; this did not fail the build and is unrelated to the preferences implementation.
+
+`git diff --check` passed with no whitespace errors.
+
+## Accessibility and Responsive Checks
+
+- The page has one named `main` landmark and a named preferences form.
+- Scalar controls use explicit `Label`/`htmlFor` associations.
+- Grouped settings use semantic `fieldset` and `legend` elements.
+- Chip inputs have explicit labels, helper text, `aria-invalid`, and `aria-describedby` references.
+- Numeric validation errors are visible, exposed as alerts, and referenced by the invalid control.
+- Save failures are visible in an alert and do not reset controlled draft values.
+- Chip remove buttons have unique accessible names and 44px touch targets.
+- Existing global `:focus-visible` styles remain in effect; the chip wrapper also exposes focus-within styling.
+- The page/form/card/grid surfaces use `min-w-0`, flexible columns, wrapping chips, and `overflow-x-hidden` on the page to avoid horizontal overflow at narrow widths.
+- Existing global `prefers-reduced-motion` rules apply to the page and no new motion behavior was introduced.
+
+## Changed Files
+
+Application files:
+
+- `src/frontend/app/AppRoutes.tsx`
+- `src/frontend/features/preferences/FoodPreferencesPage.tsx`
+- `src/frontend/features/preferences/FoodPreferencesPage.test.tsx`
+- `src/frontend/features/preferences/api/preferencesApi.ts`
+- `src/frontend/features/preferences/api/preferencesApi.test.ts`
+- `src/frontend/features/preferences/api/preferencesQueries.ts`
+- `src/frontend/features/preferences/api/preferencesQueries.test.ts`
+- `src/frontend/shared/api/routes.ts`
+- `src/frontend/shared/layout/HeaderMenu.tsx`
+- `src/frontend/shared/layout/navigation.ts`
+
+The pre-existing untracked files were preserved and not modified:
+
+- `docs/superpowers/plans/2026-08-28-food-recipes-p0-p1-growth-retention-plan.md`
+- `docs/superpowers/specs/2026-08-28-food-recipes-p0-p1-growth-retention-design.md`
+
+## Concerns
+
+- The production build still reports oversized generated chunks; resolving that would be a separate bundle/code-splitting task.
+- The current frontend test environment validates responsive constraints through DOM/class assertions rather than a real browser viewport measurement; the layout classes are designed for 360px and below-no-overflow behavior.
+
+## Fix Wave: Task 3 Review
+
+Applied only the requested Critical/Important correctness fixes. The optional Minor items were not implemented.
+
+### Fixes
+
+- Scoped the preferences query key to the authenticated user's ID with `preferencesQueryKeys.forUser(userId)`, using the existing `AuthContext` and disabling the query until a positive user ID exists. Existing prefix invalidation remains in place for successful saves.
+- Added the backend-matching two-decimal-place validation for `minProteinGrams`. Values such as `30.123` now block submission with the existing field-error presentation.
+- Added a form ref and post-validation effect that focuses the first rendered control with `aria-invalid="true"` after an invalid submit.
+- Added a valid-submit regression test that verifies the complete normalized mutation payload and applies the returned saved preferences to the form.
+
+### TDD Evidence
+
+Added the four regression behaviors before the production changes:
+
+- `features/preferences/api/preferencesQueries.test.ts`: authenticated-user cache isolation.
+- `features/preferences/FoodPreferencesPage.test.tsx`: excessive protein precision, first-invalid focus, and successful valid submission.
+
+RED command:
+
+```text
+pnpm test -- FoodPreferencesPage.test.tsx features/preferences/api/preferencesQueries.test.ts
+```
+
+RED result: 2 test files ran; 3 tests failed and 7 tests passed. The failures were the expected missing behavior: `30.123` was submitted, focus remained on the submit button, and the second authenticated user received the first user's cached result.
+
+GREEN command:
+
+```text
+pnpm test -- FoodPreferencesPage.test.tsx features/preferences/api/preferencesQueries.test.ts
+```
+
+GREEN result: 2 test files passed; 10 tests passed.
+
+### Fix Verification
+
+```text
+pnpm check
+```
+
+Result: application source TypeScript-only check passed, ESLint passed, TypeScript typecheck passed, 108 test files passed, and 349 tests passed.
+
+```text
+pnpm build
+```
+
+Result: Vite production build succeeded. The existing warning about generated chunks larger than 500 kB remains and is unrelated to this fix wave.
+
+```text
+git diff --check
+```
+
+Result: passed with no whitespace errors.
+
+Self-review confirmed that only the four requested correctness areas changed, the mutation still invalidates the preferences query family, the existing UI language is unchanged, and both pre-existing untracked docs remain untouched.

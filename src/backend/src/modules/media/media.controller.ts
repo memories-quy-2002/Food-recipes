@@ -5,6 +5,7 @@ import { ApiInternalServerErrorResponse } from '../../common/swagger/api-interna
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { CreateRecipeImageUploadDto } from './dto/create-recipe-image-upload.dto';
+import { CreateJournalPhotoUploadDto } from './dto/create-journal-photo-upload.dto';
 import { MediaService } from './media.service';
 import { UploadGrantResponseDto } from '../../common/swagger/response.schemas';
 
@@ -21,5 +22,12 @@ export class MediaController {
   @ApiCreatedResponse({ description: 'Upload grant created', type: UploadGrantResponseDto })
   createRecipeImageGrant(@CurrentUser() user: AuthUser, @Body() dto: CreateRecipeImageUploadDto) {
     return this.service.createRecipeImageGrant(user, dto);
+  }
+
+  @Post('journal-photo/upload-url')
+  @ApiOperation({ summary: 'Create a short-lived cooking journal photo upload grant' })
+  @ApiCreatedResponse({ description: 'Upload grant created', type: UploadGrantResponseDto })
+  createJournalPhotoGrant(@CurrentUser() user: AuthUser, @Body() dto: CreateJournalPhotoUploadDto) {
+    return this.service.createJournalPhotoGrant(user, dto);
   }
 }

@@ -21,6 +21,14 @@ import { SuggestionsModule } from './modules/suggestions/suggestions.module';
 import { HomeFeedModule } from './modules/home-feed/home-feed.module';
 import { CookingHistoryModule } from './modules/cooking-history/cooking-history.module';
 import { SentryModule } from '@sentry/nestjs/setup';
+import { PreferencesModule } from './modules/preferences/preferences.module';
+import { RecommendationsModule } from './modules/recommendations/recommendations.module';
+import { HouseholdsModule } from './modules/households/households.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { RecipeImportsModule } from './modules/recipe-imports/recipe-imports.module';
+import { JournalsModule } from './modules/journals/journals.module';
+import { PRODUCT_ANALYTICS } from './common/analytics/product-analytics.port';
+import { ProductAnalyticsService } from './common/analytics/product-analytics.service';
 
 @Module({
   imports: [
@@ -47,6 +55,13 @@ import { SentryModule } from '@sentry/nestjs/setup';
     SuggestionsModule,
     HomeFeedModule,
     CookingHistoryModule,
+    PreferencesModule,
+    RecommendationsModule,
+    HouseholdsModule,
+    NotificationsModule,
+    RecipeImportsModule,
+    JournalsModule,
   ],
+  providers: [ProductAnalyticsService, { provide: PRODUCT_ANALYTICS, useExisting: ProductAnalyticsService }],
 })
 export class AppModule {}

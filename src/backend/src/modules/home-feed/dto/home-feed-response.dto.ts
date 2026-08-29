@@ -51,20 +51,15 @@ export class HomeFeedRecipeDto {
 
   @ApiProperty({ type: [String] })
   dietary_tags!: string[];
-}
 
-export class HomeFeedSectionDto {
-  @ApiProperty({ enum: ['continue', 'pantry', 'recommended', 'saved', 'quick', 'popular'] })
-  key!: string;
+  @ApiProperty({ required: false })
+  pantry_match_count?: number;
 
-  @ApiProperty()
-  title!: string;
+  @ApiProperty({ required: false })
+  recommendation_score?: number;
 
-  @ApiProperty()
-  description!: string;
-
-  @ApiProperty({ type: [HomeFeedRecipeDto] })
-  recipes!: HomeFeedRecipeDto[];
+  @ApiProperty({ type: [String], required: false })
+  reasons?: string[];
 }
 
 export class HomeFeedActiveSessionDto {
@@ -123,6 +118,31 @@ export class HomeFeedNextMealDto {
 
   @ApiProperty()
   servings!: number;
+}
+
+export class HomeFeedSectionContextDto {
+  @ApiProperty({ type: () => HomeFeedActiveSessionDto, nullable: true, required: false })
+  active_session?: HomeFeedActiveSessionDto | null;
+
+  @ApiProperty({ type: () => HomeFeedNextMealDto, nullable: true, required: false })
+  next_meal?: HomeFeedNextMealDto | null;
+}
+
+export class HomeFeedSectionDto {
+  @ApiProperty({ enum: ['continue', 'use_soon', 'recommended', 'planned', 'saved', 'popular', 'quick'] })
+  key!: string;
+
+  @ApiProperty()
+  title!: string;
+
+  @ApiProperty()
+  description!: string;
+
+  @ApiProperty({ type: [HomeFeedRecipeDto] })
+  recipes!: HomeFeedRecipeDto[];
+
+  @ApiProperty({ type: HomeFeedSectionContextDto, required: false })
+  context?: HomeFeedSectionContextDto;
 }
 
 export class HomeFeedKitchenStateDto {

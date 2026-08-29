@@ -7,9 +7,14 @@ import TestRenderer, {
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import HeaderMenu from "./HeaderMenu";
+import HeaderMoreMenu from "./HeaderMoreMenu";
 import HeaderToggle from "./HeaderToggle";
 import { AuthContext } from "@/app/AuthProvider";
 import { getPrimaryNavigation } from "./navigation";
+import {
+	getMoreNavigation,
+	getRecipeAction,
+} from "./navigation";
 
 vi.mock("react-redux", () => ({
 	useDispatch: () => vi.fn(),
@@ -112,7 +117,9 @@ const invokeCallback = (callback: unknown, ...args: unknown[]): void => {
 
 const renderMobile = (isAuthenticated: boolean, initialEntry = "/") => {
 	const handleClose = vi.fn();
-	const items = getPrimaryNavigation(isAuthenticated, false);
+	const items = getPrimaryNavigation(isAuthenticated);
+	const moreGroups = getMoreNavigation(isAuthenticated, false);
+	const action = getRecipeAction(isAuthenticated);
 
 	const renderer = renderTree(
 		<AuthContext.Provider
@@ -135,6 +142,8 @@ const renderMobile = (isAuthenticated: boolean, initialEntry = "/") => {
 				handleClose={handleClose}
 				handleShow={vi.fn()}
 				items={items}
+				moreGroups={moreGroups}
+				action={action}
 			/>
 		</AuthContext.Provider>,
 		initialEntry
@@ -144,67 +153,109 @@ const renderMobile = (isAuthenticated: boolean, initialEntry = "/") => {
 };
 
 describe("primary navigation", () => {
-	it("uses user-facing recipe labels and keeps compatible routes", () => {
-		expect(getPrimaryNavigation(false, true)).toEqual([
-			{ title: "Home", href: "/" },
+	it("keeps the primary navigation focused on the three core destinations", () => {
+		expect(getPrimaryNavigation(false)).toEqual([
 			{ title: "Recipes", href: "/food" },
 			{ title: "Saved", href: "/wishlist" },
-			{ title: "Health", href: "/health" },
+		]);
+		expect(getPrimaryNavigation(true)).toEqual([
+			{ title: "Recipes", href: "/food" },
+			{ title: "Saved", href: "/wishlist" },
+			{ title: "Plan", href: "/planning" },
 		]);
 	});
 
-	it("shows Add Recipe only for authenticated users", () => {
-		expect(getPrimaryNavigation(true)).toContainEqual({
-			 title: "Add Recipe",
-			href: "/food/add",
-		});
-			expect(getPrimaryNavigation(true)).toContainEqual({
-				title: "Planning",
-				href: "/planning",
-			});
-			expect(getPrimaryNavigation(true)).toContainEqual({
-				title: "Shopping",
-				href: "/shopping-list",
-			});
-		expect(getPrimaryNavigation(false)).not.toContainEqual({
-			title: "Add Recipe",
-			href: "/food/add",
-		});
-		expect(getPrimaryNavigation(false)).not.toContainEqual({
-			title: "Planning",
-			href: "/planning",
-		});
-		expect(getPrimaryNavigation(false)).not.toContainEqual({
-			title: "Shopping",
-			href: "/shopping-list",
-		});
+	it("keeps secondary destinations available in grouped More navigation", () => {
+		expect(getMoreNavigation(true, false)).toEqual([
+			{
+				label: "Kitchen",
+				items: [
+					{ title: "Shopping list", href: "/shopping-list" },
+					{ title: "Cooking history", href: "/history" },
+				],
+			},
+			{
+				label: "Recipes",
+				items: [{ title: "Import recipe", href: "/recipes/import" }],
+			},
+			{
+				label: "Account",
+				items: [
+					{ title: "Preferences", href: "/profile/preferences" },
+					{ title: "Households", href: "/households" },
+					{ title: "Notifications", href: "/profile/notifications" },
+				],
+			},
+		]);
+		expect(getMoreNavigation(false, true)).toEqual([]);
 	});
 
-	it("renders desktop navigation items as links and activates only Add Recipe on /food/add", () => {
+	it("shows the recipe action only for authenticated users", () => {
+		expect(getRecipeAction(true)).toEqual({
+			title: "Add recipe",
+			href: "/food/add",
+		});
+		expect(getRecipeAction(false)).toBeUndefined();
+	});
+
+	it("renders compact desktop links and activates the recipe action on /food/add", () => {
 		const renderer = renderTree(
-			<HeaderMenu items={getPrimaryNavigation(true, false)} />,
+			<HeaderMenu
+				items={getPrimaryNavigation(true)}
+				moreGroups={getMoreNavigation(true, false)}
+				action={getRecipeAction(true)}
+			/>,
 			"/food/add"
 		);
 
 		expect(findLink(renderer, "Recipes").props.href).toBe("/food");
-		expect(findLink(renderer, "Add Recipe").props["aria-current"]).toBe("page");
+		expect(findLink(renderer, "Add recipe").props["aria-current"]).toBe("page");
 		expect(findLink(renderer, "Recipes").props["aria-current"]).toBeUndefined();
+	});
+
+	it("defers the full navigation to the wide desktop breakpoint", () => {
+		const renderer = renderTree(
+			<HeaderMenu
+				items={getPrimaryNavigation(true)}
+				moreGroups={getMoreNavigation(true, false)}
+				action={getRecipeAction(true)}
+			/>,
+		);
+
+		const navigation = renderer.root.findByProps({ "aria-label": "Primary navigation" });
+		expect(navigation.props.className).toContain("xl:flex");
+		expect(navigation.props.className).not.toContain("lg:flex");
 	});
 
 	it("keeps Recipes active for a nested recipe route", () => {
 		const renderer = renderTree(
-			<HeaderMenu items={getPrimaryNavigation(true, false)} />,
+			<HeaderMenu
+				items={getPrimaryNavigation(true)}
+				moreGroups={getMoreNavigation(true, false)}
+				action={getRecipeAction(true)}
+			/>,
 			"/food/recipe-123"
 		);
 
 		expect(findLink(renderer, "Recipes").props["aria-current"]).toBe("page");
-		expect(findLink(renderer, "Add Recipe").props["aria-current"]).toBeUndefined();
+		expect(findLink(renderer, "Add recipe").props["aria-current"]).toBeUndefined();
+	});
+
+	it("keeps grouped More links keyboard-accessible", () => {
+		const renderer = renderTree(
+			<HeaderMoreMenu groups={getMoreNavigation(true, false)} />,
+		);
+		const more = findNodeByProp(renderer, "button", "aria-label", "More navigation");
+		expect(more.props["aria-haspopup"]).toBe("menu");
+		act(() => invokeCallback(more.props.onClick));
+		expect(findLink(renderer, "Shopping list").props.href).toBe("/shopping-list");
+		expect(findLink(renderer, "Preferences").props.href).toBe("/profile/preferences");
 	});
 
 	it("renders mobile primary navigation as links and closes after activation", () => {
 		const { handleClose, renderer } = renderMobile(true, "/");
 
-		const addRecipe = findLink(renderer, "Add Recipe");
+		const addRecipe = findLink(renderer, "Add recipe");
 		expect(addRecipe.props.href).toBe("/food/add");
 		expect(addRecipe.props.tabIndex).toBeUndefined();
 		act(() =>
@@ -223,13 +274,13 @@ describe("primary navigation", () => {
 
 	it("shows mobile auth labels and marks Add Recipe active on /food/add", () => {
 		const authenticated = renderMobile(true, "/food/add");
-		expect(findLink(authenticated.renderer, "Add Recipe").props["aria-current"]).toBe("page");
+		expect(findLink(authenticated.renderer, "Add recipe").props["aria-current"]).toBe("page");
 		expect(findButton(authenticated.renderer, "Sign out")).toBeDefined();
 
 		authenticated.renderer.unmount();
 		const unauthenticated = renderMobile(false);
 		expect(findButton(unauthenticated.renderer, "Login / Sign up")).toBeDefined();
-		expect(findOptionalLink(unauthenticated.renderer, "Add Recipe")).toBeUndefined();
+		expect(findOptionalLink(unauthenticated.renderer, "Add recipe")).toBeUndefined();
 	});
 
 	it("exposes expanded state on the mobile menu toggle", () => {

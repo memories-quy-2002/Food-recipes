@@ -72,6 +72,13 @@ describe("Carousel accessibility", () => {
 		expect(region.props["aria-label"]).toBe("Featured meals");
 	});
 
+	it("uses the shared wide content width used by Home sections", () => {
+		const renderer = renderCarousel();
+		const region = getRegion(renderer);
+
+		expect(region.props.className).toContain("max-w-[112rem]");
+	});
+
 	it("pauses automatic rotation while keyboard focus is inside", () => {
 		vi.useFakeTimers();
 		const renderer = renderCarousel();

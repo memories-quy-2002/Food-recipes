@@ -31,4 +31,11 @@ describe('MediaService', () => {
     expect(result.uploadUrl).toContain('signature=');
     expect(new Date(result.expiresAt).getTime()).toBeGreaterThan(Date.now());
   });
+
+  it('scopes journal photo grants to the authenticated user', async () => {
+    process.env.SUPABASE_UPLOAD_GRANT_BASE_URL = 'https://uploads.example/sign';
+    process.env.SUPABASE_UPLOAD_GRANT_SECRET = 'a'.repeat(32);
+    const result = await new MediaService().createJournalPhotoGrant({ id: 7, email: 'ada@example.com' }, { filename: 'cook.png', contentType: 'image/png', size: 10 });
+    expect(result.objectPath).toMatch(/^journals\/7\//);
+  });
 });

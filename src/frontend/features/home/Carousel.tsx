@@ -96,7 +96,7 @@ const Carousel = ({ items }: CarouselProps): React.ReactElement => {
 
 	return (
 		<section
-			className="relative isolate mx-auto mt-4 w-[calc(100%-1.5rem)] max-w-[96rem] overflow-hidden rounded-3xl bg-foreground text-background shadow-xl shadow-foreground/15 sm:mt-6 sm:w-[calc(100%-2.5rem)] lg:mt-8 lg:w-[calc(100%-4rem)]"
+			className="relative isolate mx-auto mt-4 w-[calc(100%-1.5rem)] max-w-[112rem] overflow-hidden rounded-3xl bg-foreground text-background shadow-xl shadow-foreground/15 sm:mt-6 sm:w-[calc(100%-2.5rem)] lg:mt-8 lg:w-[calc(100%-4rem)]"
 			role="region"
 			aria-roledescription="carousel"
 			aria-label="Featured meals"

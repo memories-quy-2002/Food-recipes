@@ -1,5 +1,6 @@
 import axios from "@/shared/api/axios";
-import { apiRoutes } from "@/shared/api/routes";
+import { createPantryRoutes } from "@/shared/api/routes";
+import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
 
 export const PANTRY_UNITS = [
 	"GRAM",
@@ -14,6 +15,10 @@ export const PANTRY_UNITS = [
 
 export type PantryUnit = (typeof PANTRY_UNITS)[number];
 
+export const PANTRY_STORAGE_LOCATIONS = ["pantry", "fridge", "freezer", "other"] as const;
+export type PantryStorageLocation = (typeof PANTRY_STORAGE_LOCATIONS)[number];
+export type PantryExpiryStatus = "none" | "fresh" | "use_soon" | "expired";
+
 export type PantryItem = {
 	pantry_id: number;
 	user_id?: number;
@@ -21,28 +26,76 @@ export type PantryItem = {
 	have: boolean;
 	quantity: number | null;
 	unit: PantryUnit | string | null;
+	purchased_at?: string | null;
+	opened_at?: string | null;
+	expires_at?: string | null;
+	storage_location?: PantryStorageLocation | string | null;
+	expiry_status?: PantryExpiryStatus;
 	updated_at?: string;
 };
 
 export type PantryResponse = { items: PantryItem[] };
 export type PantryItemResponse = { item: PantryItem };
+export type ShoppingListPantryImportSkipped = {
+	item_id: number;
+	label: string;
+	quantity: string | null;
+	reason: "quantity_or_unit_required" | "pantry_unit_conflict";
+};
+export type ShoppingListPantryImportResponse = {
+	imported_items: number;
+	skipped_items: ShoppingListPantryImportSkipped[];
+};
 
-export const listPantry = async (signal?: AbortSignal): Promise<PantryResponse> => {
-	const response = await axios.get<PantryResponse>(apiRoutes.pantry, { signal });
+export const listPantry = async (
+	scope: KitchenScope = PERSONAL_KITCHEN,
+	signal?: AbortSignal,
+): Promise<PantryResponse> => {
+	const response = await axios.get<PantryResponse>(createPantryRoutes(scope).pantry, { signal });
 	return response.data;
 };
 
-export const createPantryItem = async (input: { name: string; quantity: number; unit: PantryUnit; have?: boolean }): Promise<PantryItemResponse> => {
-	const response = await axios.post<PantryItemResponse>(apiRoutes.pantry, input);
+export type PantryItemInput = {
+	name: string;
+	quantity?: number | null;
+	unit?: PantryUnit | null;
+	have?: boolean;
+	purchasedAt?: string | null;
+	openedAt?: string | null;
+	expiresAt?: string | null;
+	storageLocation?: PantryStorageLocation | null;
+};
+
+export const createPantryItem = async (
+	input: PantryItemInput,
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<PantryItemResponse> => {
+	const response = await axios.post<PantryItemResponse>(createPantryRoutes(scope).pantry, input);
 	return response.data;
 };
 
-export const updatePantryItem = async (pantryId: number, input: { name?: string; quantity?: number | null; unit?: PantryUnit | null; have?: boolean }): Promise<PantryItemResponse> => {
-	const response = await axios.patch<PantryItemResponse>(apiRoutes.pantryItem(pantryId), input);
+export const updatePantryItem = async (
+	pantryId: number,
+	input: Partial<PantryItemInput>,
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<PantryItemResponse> => {
+	const response = await axios.patch<PantryItemResponse>(createPantryRoutes(scope).pantryItem(pantryId), input);
 	return response.data;
 };
 
-export const deletePantryItem = async (pantryId: number): Promise<{ message: string }> => {
-	const response = await axios.delete<{ message: string }>(apiRoutes.pantryItem(pantryId));
+export const deletePantryItem = async (
+	pantryId: number,
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<{ message: string }> => {
+	const response = await axios.delete<{ message: string }>(createPantryRoutes(scope).pantryItem(pantryId));
+	return response.data;
+};
+
+export const importCheckedShoppingItems = async (
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<ShoppingListPantryImportResponse> => {
+	const response = await axios.post<ShoppingListPantryImportResponse>(
+		createPantryRoutes(scope).pantryFromShoppingList,
+	);
 	return response.data;
 };

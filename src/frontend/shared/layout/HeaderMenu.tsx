@@ -1,50 +1,41 @@
 import type { ReactElement } from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-	Activity,
-	BookOpen,
-	CalendarDays,
-	Clock3,
-	House,
-	Plus,
-	ShoppingBasket,
-	Star,
-	type LucideIcon,
-} from "lucide-react";
+import { Bookmark, BookOpen, CalendarDays, Plus } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
 import {
 	isNavigationItemActive,
+	type NavigationGroup,
 	type NavigationItem,
 } from "./navigation";
+import HeaderMoreMenu from "./HeaderMoreMenu";
 
 export type HeaderMenuProps = {
 	items: NavigationItem[];
+	moreGroups?: NavigationGroup[];
+	action?: NavigationItem;
 };
 
-const navigationIcons: Record<string, LucideIcon> = {
-	Home: House,
+const navigationIcons = {
 	Recipes: BookOpen,
-	Saved: Star,
-	Planning: CalendarDays,
-	Shopping: ShoppingBasket,
-	History: Clock3,
-	"Add Recipe": Plus,
-	Health: Activity,
+	Saved: Bookmark,
+	Plan: CalendarDays,
 };
 
-const HeaderMenu = ({ items }: HeaderMenuProps): ReactElement => {
+const HeaderMenu = ({ items, moreGroups = [], action }: HeaderMenuProps): ReactElement => {
 	const { pathname } = useLocation();
+	const activeItems = action ? [...items, action] : items;
 	return (
-		<nav className="ml-auto hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+		<nav className="ml-auto hidden items-center gap-1 xl:flex" aria-label="Primary navigation">
+			<div className="flex items-center gap-0.5">
 			{items.map(({ title, href }) => {
-				const active = isNavigationItemActive(pathname, href, items);
-				const Icon = navigationIcons[title] ?? BookOpen;
+				const active = isNavigationItemActive(pathname, href, activeItems);
+				const Icon = navigationIcons[title as keyof typeof navigationIcons] ?? BookOpen;
 				return (
 					<Link
 						key={href}
 						className={cn(
-							"inline-flex min-h-11 items-center gap-1.5 rounded-xl px-2.5 py-2 text-xs font-bold text-muted-foreground transition hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-							active && "bg-accent text-accent-foreground",
+							"inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+							active && "bg-muted text-foreground",
 						)}
 						aria-current={active ? "page" : undefined}
 						aria-label={title}
@@ -56,6 +47,20 @@ const HeaderMenu = ({ items }: HeaderMenuProps): ReactElement => {
 					</Link>
 				);
 			})}
+			</div>
+			<HeaderMoreMenu groups={moreGroups} />
+			{action && (
+				<Link
+					className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					aria-current={isNavigationItemActive(pathname, action.href, activeItems) ? "page" : undefined}
+					aria-label={action.title}
+					title={action.title}
+					to={action.href}
+				>
+					<Plus className="size-4" aria-hidden="true" />
+					{action.title}
+				</Link>
+			)}
 		</nav>
 	);
 };

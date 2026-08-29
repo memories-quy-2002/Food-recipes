@@ -19,5 +19,6 @@ import { CookingSessionService } from './cooking-session.service';
     { provide: COOKING_SESSION_REPOSITORY, useExisting: CookingSessionRepository },
     CookingSessionService,
   ],
+  exports: [CookingHistoryService],
 })
 export class CookingHistoryModule {}

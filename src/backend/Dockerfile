@@ -16,6 +16,8 @@ RUN apt-get update \
 FROM base AS dependencies
 
 COPY package.json pnpm-lock.yaml .npmrc pnpm-workspace.yaml ./
+COPY prisma.config.ts ./prisma.config.ts
+COPY prisma/schema.prisma ./prisma/schema.prisma
 
 RUN pnpm install --frozen-lockfile
 

@@ -62,6 +62,9 @@ const ProfileOverview = ({ user }: ProfileOverviewProps): ReactElement => {
 					<Button asChild variant="outline">
 						<Link to="/wishlist">View saved recipes</Link>
 					</Button>
+					<Button asChild variant="outline">
+						<Link to="/recipes/import">Import from URL</Link>
+					</Button>
 				</div>
 			</header>
 
