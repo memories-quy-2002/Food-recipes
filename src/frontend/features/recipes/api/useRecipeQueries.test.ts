@@ -231,4 +231,13 @@ describe("recipe query contracts", () => {
 		).resolves.toEqual(recipe);
 		expect(axios.get).toHaveBeenCalledWith("/recipes/7", { signal });
 	});
+
+	it("propagates recipe detail failures instead of serving a stale offline snapshot", async () => {
+		vi.mocked(axios.get).mockResolvedValueOnce({ data: { recipe } });
+		await fetchRecipe({ queryKey: recipeQueryKeys.detail(7), signal });
+
+		vi.mocked(axios.get).mockRejectedValueOnce(new Error("network unavailable"));
+
+		await expect(fetchRecipe({ queryKey: recipeQueryKeys.detail(7), signal })).rejects.toThrow("network unavailable");
+	});
 });

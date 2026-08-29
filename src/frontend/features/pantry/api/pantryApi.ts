@@ -36,6 +36,16 @@ export type PantryItem = {
 
 export type PantryResponse = { items: PantryItem[] };
 export type PantryItemResponse = { item: PantryItem };
+export type ShoppingListPantryImportSkipped = {
+	item_id: number;
+	label: string;
+	quantity: string | null;
+	reason: "quantity_or_unit_required" | "pantry_unit_conflict";
+};
+export type ShoppingListPantryImportResponse = {
+	imported_items: number;
+	skipped_items: ShoppingListPantryImportSkipped[];
+};
 
 export const listPantry = async (
 	scope: KitchenScope = PERSONAL_KITCHEN,
@@ -78,5 +88,14 @@ export const deletePantryItem = async (
 	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<{ message: string }> => {
 	const response = await axios.delete<{ message: string }>(createPantryRoutes(scope).pantryItem(pantryId));
+	return response.data;
+};
+
+export const importCheckedShoppingItems = async (
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<ShoppingListPantryImportResponse> => {
+	const response = await axios.post<ShoppingListPantryImportResponse>(
+		createPantryRoutes(scope).pantryFromShoppingList,
+	);
 	return response.data;
 };

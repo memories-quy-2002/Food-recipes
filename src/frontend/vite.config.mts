@@ -10,7 +10,6 @@ const frontendRoot = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
 	root: frontendRoot,
-	publicDir: "public",
 	cacheDir: ".vite",
 	plugins: [react(), tailwindcss()],
 	base: "/",

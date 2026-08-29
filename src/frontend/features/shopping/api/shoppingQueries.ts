@@ -2,9 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext } from "react";
 import { AuthContext } from "@/app/AuthProvider";
 import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
-import { cacheKeys } from "@/shared/offline/cacheKeys";
-import { offlineDb } from "@/shared/offline/offlineDb";
-import { offlineOperationQueue } from "@/shared/offline/operationQueue";
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
@@ -18,6 +15,8 @@ import {
 	type UpdateShoppingItemInput,
 } from "./shoppingApi";
 import { useToast } from "@/app/ToastProvider";
+import { pantryQueryKeys } from "@/features/pantry/api/pantryQueries";
+import { importCheckedShoppingItems } from "@/features/pantry/api/pantryApi";
 
 export const shoppingQueryKeys = {
 	all: ["shopping-list"] as const,
@@ -31,18 +30,7 @@ export const useShoppingListQuery = (scope: KitchenScope = PERSONAL_KITCHEN) => 
 
 	return useQuery({
 		queryKey: shoppingQueryKeys.forUser(userId, scope),
-		queryFn: async ({ signal }) => {
-			try {
-				const result = await listShoppingItems(scope, signal);
-				await offlineDb.set(cacheKeys.shoppingList(userId, scope), result);
-				return result;
-			} catch (error) {
-				if (signal?.aborted) throw error;
-				const cached = await offlineDb.get<Awaited<ReturnType<typeof listShoppingItems>>>(cacheKeys.shoppingList(userId, scope));
-				if (cached) return cached;
-				throw error;
-			}
-		},
+		queryFn: ({ signal }) => listShoppingItems(scope, signal),
 		enabled: userId > 0,
 	});
 };
@@ -76,13 +64,7 @@ export const useUpdateShoppingItemMutation = (scope: KitchenScope = PERSONAL_KIT
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: async ({ itemId, input }: { itemId: number; input: UpdateShoppingItemInput }) => {
-			if (scope.kind === "personal" && typeof navigator !== "undefined" && navigator.onLine === false && input.checked !== undefined) {
-				await offlineOperationQueue.enqueue({ id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${itemId}`, kind: "shopping-check", itemId, checked: input.checked, createdAt: new Date().toISOString() });
-				return { item: { item_id: itemId, label: "", quantity: null, source_recipe_id: null, source_recipe_name: null, checked: input.checked } };
-			}
-			return updateShoppingItem(itemId, input, scope);
-		},
+		mutationFn: ({ itemId, input }: { itemId: number; input: UpdateShoppingItemInput }) => updateShoppingItem(itemId, input, scope),
 		onMutate: async ({ itemId, input }) => {
 			const cancelPromise = queryClient.cancelQueries({ queryKey: shoppingQueryKeys.forUser(userId, scope) });
 			const previous = queryClient.getQueryData<Awaited<ReturnType<typeof listShoppingItems>>>(shoppingQueryKeys.forUser(userId, scope));
@@ -116,6 +98,32 @@ export const useClearCompletedShoppingItemsMutation = (scope: KitchenScope = PER
 		mutationFn: () => clearCompletedShoppingItems(scope),
 		onSuccess: async () => { await invalidateShoppingList(queryClient, userId, scope); showToast({ title: "Completed items cleared" }); },
 		onError: () => showToast({ title: "Couldn’t clear completed items", message: "Please try again.", type: "error" }),
+	});
+};
+
+export const useImportCheckedShoppingItemsMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
+	const queryClient = useQueryClient();
+	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
+	return useMutation({
+		mutationFn: () => importCheckedShoppingItems(scope),
+		onSuccess: async (result) => {
+			await Promise.all([
+				invalidateShoppingList(queryClient, userId, scope),
+				queryClient.invalidateQueries({ queryKey: pantryQueryKeys.forUser(userId, scope) }),
+			]);
+			showToast({
+				title: result.imported_items
+					? `${result.imported_items} purchased item${result.imported_items === 1 ? "" : "s"} added to your pantry`
+					: "No items were added to your pantry",
+				message: result.skipped_items.length
+					? `${result.skipped_items.length} item${result.skipped_items.length === 1 ? " needs" : "s need"} a numeric quantity and supported unit.`
+					: undefined,
+				type: result.skipped_items.length ? "error" : "success",
+			});
+		},
+		onError: () => showToast({ title: "Couldn’t add purchased items to your pantry", message: "Please try again.", type: "error" }),
 	});
 };
 

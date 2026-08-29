@@ -5,6 +5,7 @@ export type ApiRouteId = number | string;
 export type PantryApiRoutes = {
 	pantry: string;
 	pantryItem: (pantryId: ApiRouteId) => string;
+	pantryFromShoppingList: string;
 };
 
 type ApiRoutes = {
@@ -39,6 +40,7 @@ type ApiRoutes = {
 	userRecipeNote: (recipeId: ApiRouteId) => string;
 	pantry: string;
 	pantryItem: (pantryId: ApiRouteId) => string;
+	pantryFromShoppingList: string;
 	userRatings: string;
 	userRecipeRating: (recipeId: ApiRouteId) => string;
 	userRecipeRatingDelete: (recipeId: ApiRouteId) => string;
@@ -104,6 +106,7 @@ const apiRoutes: ApiRoutes = {
 	userRecipeNote: (recipeId) => `/users/me/recipes/${recipeId}/note`,
 	pantry: "/users/me/pantry",
 	pantryItem: (pantryId) => `/users/me/pantry/${pantryId}`,
+	pantryFromShoppingList: "/users/me/pantry/from-shopping-list",
 	userRatings: "/users/me/ratings",
 	userRecipeRating: (recipeId) => `/recipes/${recipeId}/rating`,
 	userRecipeRatingDelete: (recipeId) => `/recipes/${recipeId}/rating`,
@@ -146,6 +149,7 @@ export const createPantryRoutes = (scope: KitchenScope): PantryApiRoutes => {
 		return {
 			pantry: apiRoutes.pantry,
 			pantryItem: apiRoutes.pantryItem,
+			pantryFromShoppingList: apiRoutes.pantryFromShoppingList,
 		};
 	}
 
@@ -153,6 +157,7 @@ export const createPantryRoutes = (scope: KitchenScope): PantryApiRoutes => {
 	return {
 		pantry,
 		pantryItem: (pantryId) => `${pantry}/${pantryId}`,
+		pantryFromShoppingList: `${pantry}/from-shopping-list`,
 	};
 };
 

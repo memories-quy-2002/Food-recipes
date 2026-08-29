@@ -3,23 +3,61 @@ export type NavigationItem = {
 	href: string;
 };
 
+export type NavigationGroup = {
+	label: string;
+	items: NavigationItem[];
+};
+
 export const getPrimaryNavigation = (
 	isAuthenticated: boolean,
-	isDevelopment = import.meta.env.DEV,
 ): NavigationItem[] => [
-	{ title: "Home", href: "/" },
 	{ title: "Recipes", href: "/food" },
 	{ title: "Saved", href: "/wishlist" },
-	...(isAuthenticated ? [{ title: "Planning", href: "/planning" }] : []),
-	...(isAuthenticated ? [{ title: "Shopping", href: "/shopping-list" }] : []),
-	...(isAuthenticated ? [{ title: "History", href: "/history" }] : []),
-	...(isAuthenticated ? [{ title: "Preferences", href: "/profile/preferences" }] : []),
-	...(isAuthenticated ? [{ title: "Households", href: "/households" }] : []),
-	...(isAuthenticated ? [{ title: "Notifications", href: "/profile/notifications" }] : []),
-	...(isAuthenticated ? [{ title: "Add Recipe", href: "/food/add" }] : []),
-	...(isAuthenticated ? [{ title: "Import Recipe", href: "/recipes/import" }] : []),
-	...(isDevelopment ? [{ title: "Health", href: "/health" }] : []),
+	...(isAuthenticated ? [{ title: "Plan", href: "/planning" }] : []),
 ];
+
+export const getMoreNavigation = (
+	isAuthenticated: boolean,
+	isDevelopment = import.meta.env.DEV,
+): NavigationGroup[] => {
+	if (!isAuthenticated) return [];
+
+	const groups: NavigationGroup[] = [
+		{
+			label: "Kitchen",
+			items: [
+				{ title: "Shopping list", href: "/shopping-list" },
+				{ title: "Cooking history", href: "/history" },
+			],
+		},
+		{
+			label: "Recipes",
+			items: [{ title: "Import recipe", href: "/recipes/import" }],
+		},
+		{
+			label: "Account",
+			items: [
+				{ title: "Preferences", href: "/profile/preferences" },
+				{ title: "Households", href: "/households" },
+				{ title: "Notifications", href: "/profile/notifications" },
+			],
+		},
+	];
+
+	if (isDevelopment) {
+		groups.push({
+			label: "Developer",
+			items: [{ title: "Health", href: "/health" }],
+		});
+	}
+
+	return groups;
+};
+
+export const getRecipeAction = (
+	isAuthenticated: boolean,
+): NavigationItem | undefined =>
+	isAuthenticated ? { title: "Add recipe", href: "/food/add" } : undefined;
 
 export const isNavigationItemActive = (
 	pathname: string,

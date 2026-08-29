@@ -10,7 +10,7 @@ const HouseholdScopeSelector = () => {
 			<label className="sr-only" htmlFor="kitchen-scope">Kitchen scope</label>
 			<select
 				id="kitchen-scope"
-				className="min-h-11 max-w-[13rem] rounded-xl border border-input bg-background px-3 py-2 text-sm font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+				className="min-h-11 w-full max-w-[7rem] rounded-xl border border-input bg-background px-2.5 py-2 text-xs font-bold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:max-w-[13rem] sm:px-3 sm:text-sm"
 				value={scope.kind === "personal" ? "personal" : `household:${scope.householdId}`}
 				onChange={(event) => selectScope(event.target.value === "personal" ? PERSONAL_KITCHEN : householdScope(Number(event.target.value.replace("household:", ""))))}
 				aria-label="Kitchen scope"

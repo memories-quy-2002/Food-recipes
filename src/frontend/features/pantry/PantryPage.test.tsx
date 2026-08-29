@@ -106,29 +106,47 @@ describe("PantryPage", () => {
 		expect(mockPantry.remove).not.toHaveBeenCalled();
 	});
 
-	it("shows expiry states as text and links use-soon items to recipes", () => {
+	it("keeps ingredient rows focused on quantity", () => {
 		renderPage();
 
-		expect(screen.getByText("Use soon · Expires 2026-08-30")).toBeInTheDocument();
-		expect(screen.getByText("Expired · 2026-08-27. Check before using.")).toBeInTheDocument();
-		expect(screen.getByRole("link", { name: "Find recipes using Tomatoes" })).toHaveAttribute("href", "/food?useSoon=true");
+		expect(screen.getByText("4 pc")).toBeInTheDocument();
+		expect(screen.queryByText("Use soon · Expires 2026-08-30")).not.toBeInTheDocument();
+		expect(screen.queryByText("Expired · 2026-08-27. Check before using.")).not.toBeInTheDocument();
+		expect(screen.queryByRole("link", { name: "Find recipes using Tomatoes" })).not.toBeInTheDocument();
 	});
 
-	it("submits an optional expiry date and storage location", () => {
+	it("does not render removed expiry or storage controls", () => {
+		renderPage();
+
+		expect(screen.queryByLabelText("Expires on")).not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Storage location")).not.toBeInTheDocument();
+		expect(screen.queryByText("No expiry date set")).not.toBeInTheDocument();
+		expect(screen.queryByRole("link", { name: "Find recipes using Tomatoes" })).not.toBeInTheDocument();
+	});
+
+	it("submits the minimal pantry item fields", () => {
 		renderPage();
 		fireEvent.change(screen.getByLabelText("Pantry item"), { target: { value: "Chicken" } });
 		fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "2" } });
-		fireEvent.change(screen.getByLabelText("Expires on"), { target: { value: "2026-08-31" } });
-		fireEvent.change(screen.getByLabelText("Storage location"), { target: { value: "freezer" } });
+		fireEvent.change(screen.getByLabelText("Unit"), { target: { value: "GRAM" } });
 		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
 
 		expect(mockPantry.add).toHaveBeenCalledWith({
 			name: "Chicken",
 			quantity: 2,
-			unit: "PIECE",
+			unit: "GRAM",
 			have: true,
-			expiresAt: "2026-08-31",
-			storageLocation: "freezer",
 		}, expect.any(Object));
+	});
+
+	it("filters inventory by ingredient and stock status", () => {
+		renderPage();
+
+		fireEvent.change(screen.getByLabelText("Search pantry"), { target: { value: "milk" } });
+		expect(screen.getByText("Milk")).toBeInTheDocument();
+		expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
+
+		fireEvent.change(screen.getByLabelText("Filter pantry"), { target: { value: "missing" } });
+		expect(screen.getByText("No available items match this filter.")).toBeInTheDocument();
 	});
 });

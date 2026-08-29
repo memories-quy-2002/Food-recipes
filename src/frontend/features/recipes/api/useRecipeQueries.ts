@@ -7,8 +7,6 @@ import type {
 	RecipeSummary,
 } from "@/shared/api/contracts";
 import { apiRoutes } from "@/shared/api/routes";
-import { cacheKeys } from "@/shared/offline/cacheKeys";
-import { offlineDb } from "@/shared/offline/offlineDb";
 
 const RECIPE_CATALOG_PAGE_LIMIT = 100;
 // Keep the compatibility aggregation bounded even if a valid API response advertises an enormous catalog.
@@ -174,20 +172,12 @@ export const fetchRecipe = async ({
 	signal,
 }: RecipeDetailQueryInput): Promise<RecipeDetail> => {
 	const [, , recipeId] = queryKey;
-	try {
-		const response = await axios.get(
-			(apiRoutes as { recipe: (id: string) => string }).recipe(recipeId),
-			{ signal }
-		);
-		const payload = response.data as unknown as { recipe: RecipeDetail };
-		await offlineDb.set(cacheKeys.activeRecipe(recipeId), payload.recipe);
-		return payload.recipe;
-	} catch (error) {
-		if (signal?.aborted) throw error;
-		const cached = await offlineDb.get<RecipeDetail>(cacheKeys.activeRecipe(recipeId));
-		if (cached) return cached;
-		throw error;
-	}
+	const response = await axios.get(
+		(apiRoutes as { recipe: (id: string) => string }).recipe(recipeId),
+		{ signal }
+	);
+	const payload = response.data as unknown as { recipe: RecipeDetail };
+	return payload.recipe;
 };
 
 export const useAllRecipesQuery = () =>

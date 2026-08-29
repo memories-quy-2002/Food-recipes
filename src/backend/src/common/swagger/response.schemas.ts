@@ -604,6 +604,28 @@ export class ShoppingListResponseDto {
   items!: ShoppingListItemResponseDto[];
 }
 
+export class ShoppingListPantryImportSkippedDto {
+  @ApiProperty({ example: 12 })
+  item_id!: number;
+
+  @ApiProperty({ example: 'Fresh herbs' })
+  label!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'a handful' })
+  quantity!: string | null;
+
+  @ApiProperty({ enum: ['quantity_or_unit_required', 'pantry_unit_conflict'] })
+  reason!: 'quantity_or_unit_required' | 'pantry_unit_conflict';
+}
+
+export class ShoppingListPantryImportResponseDto {
+  @ApiProperty({ example: 3 })
+  imported_items!: number;
+
+  @ApiProperty({ type: [ShoppingListPantryImportSkippedDto] })
+  skipped_items!: ShoppingListPantryImportSkippedDto[];
+}
+
 export class PreparedIngredientResponseDto {
   @ApiProperty()
   position!: number;

@@ -143,7 +143,7 @@ CREATE INDEX shopping_list_user_checked_idx
   quantity.
 - Cooking mode opened from a plan shows a small plan context and offers
   `Back to plan` after the guided flow.
-- Loading, empty, conflict, not-found, and offline/network failure states are
+- Loading, empty, conflict, not-found, and network failure states are
   explicit and preserve local edits until the user retries or discards them.
 
 ## Success criteria

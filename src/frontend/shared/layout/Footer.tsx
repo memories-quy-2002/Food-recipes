@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
-import { ChefHat } from "lucide-react";
 import { Link } from "react-router-dom";
 import { BsMailbox } from "react-icons/bs";
 import { FaHouse, FaPhone } from "react-icons/fa6";
 import { siteContent } from "@/shared/utils/siteContent";
+import RecipeBookMark from "./RecipeBookMark";
 
 const Footer = (): ReactElement => {
 	const year = new Date().getFullYear();
@@ -17,15 +17,16 @@ const Footer = (): ReactElement => {
 				<div className="col-span-2 lg:col-span-1">
 					<Link
 						to="/"
+						aria-label="Food recipes home"
 						className="inline-flex min-h-11 items-center gap-2.5 rounded-xl text-xl font-black tracking-[-0.04em] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						<span
 							className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground"
 							aria-hidden="true"
 						>
-							<ChefHat className="size-4" strokeWidth={2.5} />
+							<RecipeBookMark className="size-5" />
 						</span>
-						food / recipes
+						Food recipes
 					</Link>
 					<p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
 						{about}

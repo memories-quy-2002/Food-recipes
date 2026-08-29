@@ -95,7 +95,7 @@ const HeaderAuthButton = ({
 	};
 
 	return (
-		<div className="relative ml-auto hidden xl:block">
+	<div className="relative hidden shrink-0 xl:block">
 			{isAuthenticated ? (
 				<>
 					<button
@@ -126,7 +126,7 @@ const HeaderAuthButton = ({
 								role="menuitem"
 								onClick={closeMenu}
 							>
-								<UserRound className="size-4" />
+								<UserRound className="size-4" aria-hidden="true" />
 								My profile
 							</Link>
 							<Link
@@ -135,16 +135,16 @@ const HeaderAuthButton = ({
 								role="menuitem"
 								onClick={handleSignOut}
 							>
-								<LogOut className="size-4" />
+								<LogOut className="size-4" aria-hidden="true" />
 								Sign out
 							</Link>
 						</div>
 					)}
 				</>
 			) : (
-				<Button type="button" size="icon" aria-label="Login / Sign up" title="Login / Sign up" onClick={() => navigate("/account?signup=false")}>
+				<Button type="button" variant="ghost" size="sm" className="px-3" aria-label="Sign in" title="Sign in" onClick={() => navigate("/account?signup=false")}>
 					<UserRound className="size-4" aria-hidden="true" />
-					<span className="sr-only">Login / Sign up</span>
+					<span>Sign in</span>
 				</Button>
 			)}
 		</div>

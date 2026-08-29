@@ -7,12 +7,10 @@ import ToastProvider from "./ToastProvider";
 import Layout from "@/shared/layout/Layout";
 import { queryClient } from "@/shared/api/queryClient";
 import { HouseholdScopeProvider } from "@/features/households/HouseholdScopeProvider";
-import OfflineSyncBridge from "@/shared/offline/OfflineSyncBridge";
 
 const App = (): React.ReactElement => (
 	<QueryClientProvider client={queryClient}>
 		<AuthProvider>
-			<OfflineSyncBridge />
 			<HouseholdScopeProvider>
 				<RecipeProvider>
 					<ToastProvider>

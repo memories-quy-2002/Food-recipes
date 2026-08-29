@@ -36,6 +36,8 @@ assert.match(contents.dockerfile, /^FROM node:24(?:[-@].*)? AS /m, 'Dockerfile m
 assert.ok(countMatches(contents.dockerfile, /^FROM /gm) >= 3, 'Dockerfile must contain multiple build stages');
 assert.match(contents.dockerfile, /pnpm install --frozen-lockfile/, 'dependencies must install from the frozen API lockfile');
 assert.match(contents.dockerfile, /COPY package\.json pnpm-lock\.yaml \.npmrc pnpm-workspace\.yaml/, 'the backend package manifest, lockfile, and build policy must be in the build context');
+assert.match(contents.dockerfile, /COPY prisma\.config\.ts/, 'Prisma config must be available before install lifecycle scripts run');
+assert.match(contents.dockerfile, /COPY prisma\/schema\.prisma/, 'Prisma schema must be available before Prisma Client generation runs');
 assert.match(contents.dockerfile, /prisma generate/, 'the image build must generate Prisma Client');
 assert.match(contents.dockerfile, /pnpm run build/, 'the API must be built in the image');
 assert.match(contents.dockerfile, /USER node/, 'the runtime image must run as a non-root user');

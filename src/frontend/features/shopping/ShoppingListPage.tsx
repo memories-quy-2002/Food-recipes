@@ -12,6 +12,7 @@ import {
 	useClearCompletedShoppingItemsMutation,
 	useDeleteShoppingItemMutation,
 	useShoppingListQuery,
+	useImportCheckedShoppingItemsMutation,
 	useUpdateShoppingItemMutation,
 } from "./api/shoppingQueries";
 import { isShoppingItemInPantry } from "./shoppingAvailability";
@@ -26,6 +27,7 @@ const ShoppingListPage = () => {
 	const deleteMutation = useDeleteShoppingItemMutation(scope);
 	const clearMutation = useClearCompletedShoppingItemsMutation(scope);
 	const plannedIngredientsMutation = useAddRecipeIngredientsFromRecipesMutation(scope);
+	const importToPantryMutation = useImportCheckedShoppingItemsMutation(scope);
 	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()), {}, scope);
 	const pantryQuery = usePantryQuery(scope);
 	const [label, setLabel] = useState("");
@@ -42,7 +44,7 @@ const ShoppingListPage = () => {
 	const availablePantryNames = (pantryQuery.data?.items ?? []).filter((item) => item.have && (item.quantity === null || item.quantity > 0)).map((item) => item.name);
 	const plannedRecipeIds = [...new Set((mealPlanQuery.data?.items ?? []).map((item) => item.recipe_id))];
 	const actionError =
-		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || plannedIngredientsMutation.isError
+		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || plannedIngredientsMutation.isError || importToPantryMutation.isError
 			? "We could not save that change. Try again."
 			: null;
 
@@ -50,6 +52,19 @@ const ShoppingListPage = () => {
 		if (!canEdit || plannedRecipeIds.length === 0 || plannedIngredientsMutation.isPending) return;
 		plannedIngredientsMutation.mutate(plannedRecipeIds, {
 			onSuccess: (response) => setMessage(`${response.items.length} planned ingredient${response.items.length === 1 ? "" : "s"} added to your shopping list.`),
+		});
+	};
+
+	const importPurchasedItems = () => {
+		if (!canEdit || completedItems.length === 0 || importToPantryMutation.isPending) return;
+		importToPantryMutation.mutate(undefined, {
+			onSuccess: (response) => {
+				if (response.skipped_items.length > 0) {
+					setMessage(`${response.imported_items} purchased item${response.imported_items === 1 ? "" : "s"} added to your pantry. ${response.skipped_items.length} item${response.skipped_items.length === 1 ? " needs" : "s need"} a quantity and unit.`);
+				} else {
+					setMessage(`${response.imported_items} purchased item${response.imported_items === 1 ? "" : "s"} added to your pantry.`);
+				}
+			},
 		});
 	};
 
@@ -276,6 +291,7 @@ const ShoppingListPage = () => {
 										<h3>Completed</h3>
 										<span>{completedItems.length}</span>
 									</div>
+									{completedItems.length > 0 && <p className="shopping-list__section-note">Add purchased items to your pantry before cooking so quantities can be checked and deducted.</p>}
 									{completedItems.length > 0 ? <ul>{completedItems.map(renderItem)}</ul> : <p className="shopping-list__section-note">Checked-off items will stay here until you clear them.</p>}
 								</div>
 							</>
@@ -283,6 +299,9 @@ const ShoppingListPage = () => {
 
 						{canEdit && completedItems.length > 0 && !shoppingQuery.isPending && !shoppingQuery.isError && (
 							<div className="shopping-list__footer">
+								<button type="button" className="shopping-list__button shopping-list__button--primary" onClick={importPurchasedItems} disabled={importToPantryMutation.isPending} aria-busy={importToPantryMutation.isPending}>
+									{importToPantryMutation.isPending ? "Adding to pantry…" : "Add purchased items to pantry"}
+								</button>
 								<button type="button" className="shopping-list__button shopping-list__button--quiet" onClick={() => clearMutation.mutate()} disabled={clearMutation.isPending} aria-busy={clearMutation.isPending}>
 									{clearMutation.isPending ? "Clearing..." : "Clear completed"}
 								</button>

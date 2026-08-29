@@ -1,9 +1,0 @@
-{
-  "name": "Food Recipes",
-  "short_name": "Food Recipes",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#fffaf5",
-  "theme_color": "#211813",
-  "icons": []
-}

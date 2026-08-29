@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Inject, Param, ParseIntPipe, Patch, Post
 import { ApiBearerAuth, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
-import { ApiErrorResponseDto, MessageResponseDto, PantryItemResponseDto, PantryResponseDto } from '../../common/swagger/response.schemas';
+import { ApiErrorResponseDto, MessageResponseDto, PantryItemResponseDto, PantryResponseDto, ShoppingListPantryImportResponseDto } from '../../common/swagger/response.schemas';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { HouseholdAccessService } from '../households/household-access.service';
@@ -39,6 +39,11 @@ export class PantryController {
   @ApiOkResponse({ type: MessageResponseDto })
   @ApiNotFoundResponse({ type: ApiErrorResponseDto })
   remove(@CurrentUser() user: AuthUser, @Param('pantryId', ParseIntPipe) pantryId: number) { return this.service.remove(user.id, pantryId); }
+
+  @Post('from-shopping-list')
+  @ApiOperation({ summary: 'Move checked shopping items into the authenticated user pantry' })
+  @ApiOkResponse({ type: ShoppingListPantryImportResponseDto })
+  importCheckedShoppingItems(@CurrentUser() user: AuthUser) { return this.service.importCheckedShoppingItems(user.id); }
 }
 
 @ApiTags('Household Pantry')
@@ -84,5 +89,13 @@ export class HouseholdPantryController {
   async remove(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('pantryId', ParseIntPipe) pantryId: number) {
     await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
     return this.service.removeForHousehold(householdId, pantryId);
+  }
+
+  @Post('from-shopping-list')
+  @ApiOperation({ summary: 'Move checked household shopping items into the household pantry' })
+  @ApiOkResponse({ type: ShoppingListPantryImportResponseDto })
+  async importCheckedShoppingItems(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
+    return this.service.importCheckedShoppingItemsForHousehold(householdId);
   }
 }

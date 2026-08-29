@@ -114,7 +114,7 @@ The PostgreSQL database currently uses these table and column names:
   does not infer equivalent quantities.
 - `cooking_sessions` stores one user-owned progress record per recipe while it
   is active or paused. Completion atomically creates the existing
-  `cooking_history` record; browser storage is only a guest/offline fallback.
+  `cooking_history` record; browser storage is only a guest fallback.
 - `accounts.role` is server-owned (`user` or `admin`). Admin moderation routes
   always reload the current role through `RolesGuard`.
 

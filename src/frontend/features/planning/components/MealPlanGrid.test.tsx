@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getWeekRange } from "../api/planningDates";
 import type { MealPlanItem } from "../api/planningApi";
 import MealPlanGrid from "./MealPlanGrid";
@@ -31,6 +31,20 @@ const props = {
 };
 
 describe("MealPlanGrid", () => {
+	afterEach(() => cleanup());
+
+	it("keeps the seven-day calendar for wide screens", () => {
+		render(
+			<MemoryRouter>
+				<MealPlanGrid {...props} />
+			</MemoryRouter>,
+		);
+
+		const calendar = screen.getByRole("region", { name: "Weekly meal plan" });
+		expect(calendar).toHaveClass("xl:grid-cols-7");
+		expect(calendar).not.toHaveClass("lg:grid-cols-7");
+	});
+
 	it("renders every day and slot with keyboard-accessible add actions", () => {
 		render(
 			<MemoryRouter>

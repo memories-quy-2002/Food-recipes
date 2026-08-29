@@ -45,8 +45,7 @@ PR 7  Shared pantry/planning/shopping
 PR 8  Contextual notifications
 PR 9  Recipe URL import
 PR 10 Cooking journal
-PR 11 PWA / offline cooking
-PR 12 Product analytics + final E2E hardening
+PR 11 Product analytics + final E2E hardening
 ```
 
 ---
@@ -1213,99 +1212,15 @@ git commit -m "feat(journal): add post-cook reflection"
 
 ---
 
-## Task 23 — PWA shell and offline read cache
+## Task 23 — Removed: PWA shell and offline read cache
 
-Modify/create:
-
-```text
-src/frontend/vite.config.mts
-src/frontend/shared/offline/serviceWorker.ts
-src/frontend/shared/offline/offlineDb.ts
-src/frontend/shared/offline/cacheKeys.ts
-```
-
-Use IndexedDB for offline data.
-
-Do not store refresh tokens.
-
-### Cache scope
-
-```text
-active recipe
-active cooking session
-shopping list
-current meal-plan summary
-```
-
-### Tests
-
-- [ ] previously loaded recipe opens offline.
-- [ ] shopping list renders cached state.
-- [ ] offline shell loads.
-
-### Commit
-
-```bash
-git commit -m "feat(offline): cache active kitchen workflows"
-```
+Product decision on 2026-08-28: offline/PWA support is out of scope. No service worker, manifest, IndexedDB cache, or offline release gate is maintained.
 
 ---
 
-## Task 24 — Offline mutation queue
+## Task 24 — Removed: Offline mutation queue
 
-Create:
-
-```text
-src/frontend/shared/offline/operationQueue.ts
-src/frontend/shared/offline/operationQueue.test.ts
-```
-
-### Supported operations
-
-```ts
-type OfflineOperation =
-  | {
-      id: string;
-      kind: 'shopping-check';
-      itemId: number;
-      checked: boolean;
-      createdAt: string;
-    }
-  | {
-      id: string;
-      kind: 'cooking-progress';
-      sessionId: number;
-      currentStep: number;
-      createdAt: string;
-    };
-```
-
-### Sync
-
-Shopping:
-
-```text
-last valid operation wins
-```
-
-Cooking:
-
-```text
-max(serverStep, localStep)
-```
-
-### Tests
-
-- [ ] queued operation survives reload.
-- [ ] successful sync removes operation.
-- [ ] retryable error leaves operation queued.
-- [ ] deleted server resource discards operation with notice.
-
-### Commit
-
-```bash
-git commit -m "feat(offline): sync shopping and cooking progress"
-```
+Product decision on 2026-08-28: shopping and cooking mutations require an active network connection and use the normal API request path. No client-side outbox or reconnect sync is maintained.
 
 ---
 
@@ -1411,7 +1326,6 @@ generate plan → save → prepare → cook
 household invite → shared shopping
 recipe URL → preview → draft
 complete cook → journal
-offline shopping check → reconnect sync
 ```
 
 ### Verification
@@ -1458,7 +1372,6 @@ P1 release gate:
 - [ ] Invite replay/expiry tests green.
 - [ ] Recipe import SSRF suite green.
 - [ ] Journal privacy tests green.
-- [ ] Offline sync tests green.
 - [ ] Full frontend/backend quality gates green.
 
 ---
@@ -1479,7 +1392,6 @@ feat/p1-households
 feat/p1-notifications
 feat/p1-recipe-import
 feat/p1-cooking-journal
-feat/p1-offline
 ```
 
 Preferred Superpowers execution mode:

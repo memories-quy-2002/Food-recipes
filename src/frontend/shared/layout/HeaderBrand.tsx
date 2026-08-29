@@ -1,20 +1,20 @@
 import type { ReactElement } from "react";
-import { ChefHat } from "lucide-react";
 import { Link } from "react-router-dom";
+import RecipeBookMark from "./RecipeBookMark";
 
 const HeaderBrand = (): ReactElement => (
 	<Link
 		to="/"
-		className="inline-flex min-h-11 min-w-11 shrink-0 items-center gap-2.5 rounded-xl px-1 text-lg font-black tracking-[-0.04em] text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-xl"
-		aria-label="Food Recipes home"
+		className="inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-xl px-1 text-[0.96rem] font-extrabold tracking-[-0.03em] text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-lg"
+		aria-label="Food recipes home"
 	>
 		<span
-			className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm"
+			className="grid size-10 place-items-center rounded-[0.85rem] bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/10"
 			aria-hidden="true"
 		>
-			<ChefHat className="size-5" strokeWidth={2.5} />
+			<RecipeBookMark className="size-6" />
 		</span>
-		<span className="hidden xs:inline sm:inline">food / recipes</span>
+		<span>Food recipes</span>
 	</Link>
 );
 

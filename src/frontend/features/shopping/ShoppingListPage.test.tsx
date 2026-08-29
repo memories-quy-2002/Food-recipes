@@ -18,6 +18,7 @@ const mockShopping = vi.hoisted(() => ({
 	clear: vi.fn(),
 	importRecipe: vi.fn(),
 	importPlanned: vi.fn(),
+	importToPantry: vi.fn(),
 }));
 
 vi.mock("./api/shoppingQueries", () => ({
@@ -28,6 +29,7 @@ vi.mock("./api/shoppingQueries", () => ({
 	useClearCompletedShoppingItemsMutation: () => ({ mutate: mockShopping.clear, isPending: false, isError: false }),
 	useAddRecipeIngredientsMutation: () => ({ mutate: mockShopping.importRecipe, isPending: false, isError: false }),
 	useAddRecipeIngredientsFromRecipesMutation: () => ({ mutate: mockShopping.importPlanned, isPending: false, isError: false }),
+	useImportCheckedShoppingItemsMutation: () => ({ mutate: mockShopping.importToPantry, isPending: false, isError: false }),
 }));
 
 vi.mock("@/features/planning/api/planningQueries", () => ({
@@ -61,6 +63,7 @@ describe("ShoppingListPage", () => {
 		mockShopping.clear.mockReset();
 		mockShopping.importRecipe.mockReset();
 		mockShopping.importPlanned.mockReset();
+		mockShopping.importToPantry.mockReset();
 	});
 
 	afterEach(() => {
@@ -136,6 +139,9 @@ describe("ShoppingListPage", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Clear completed" }));
 		expect(mockShopping.clear).toHaveBeenCalledTimes(1);
+
+		fireEvent.click(screen.getByRole("button", { name: "Add purchased items to pantry" }));
+		expect(mockShopping.importToPantry).toHaveBeenCalledTimes(1);
 	});
 
 	it("offers a retry when the list fails to load", () => {

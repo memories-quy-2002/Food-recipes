@@ -151,19 +151,3 @@ test("completing a cook opens the private journal", async ({ page }) => {
 	await page.getByRole("button", { name: "Save journal" }).click();
 	await expect(page).toHaveURL(/\/history$/);
 });
-
-test("offline shopping check syncs when connectivity returns", async ({ page }) => {
-	await authenticatedPage(page);
-	await page.goto("/shopping-list");
-	const checkbox = page.getByRole("checkbox", { name: /Mark pasta as (purchased|not needed)/ });
-	await checkbox.waitFor();
-	await expect(checkbox).not.toBeChecked();
-	await page.context().setOffline(true);
-	await checkbox.click();
-	await expect(checkbox).toBeChecked();
-	await expect(page.getByText("Completed", { exact: true })).toBeVisible();
-	const syncRequest = page.waitForRequest((request) => request.method() === "PATCH" && request.url().includes("/users/me/shopping-list/items/1"));
-	await page.context().setOffline(false);
-	await page.evaluate(() => window.dispatchEvent(new Event("online")));
-	await syncRequest;
-});

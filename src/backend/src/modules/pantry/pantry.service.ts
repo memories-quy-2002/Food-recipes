@@ -2,7 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { CreatePantryItemDto } from './dto/create-pantry-item.dto';
 import { UpdatePantryItemDto } from './dto/update-pantry-item.dto';
 import { normalizePantryUnit } from './pantry-inventory';
-import { PANTRY_REPOSITORY, PantryItemRecord, PantryRepositoryPort } from './pantry.repository';
+import { PANTRY_REPOSITORY, PantryItemRecord, PantryRepositoryPort, ShoppingListPantryImportResult } from './pantry.repository';
 import { PANTRY_STORAGE_LOCATIONS, PantryStorageLocation } from './pantry-storage';
 export type PantryExpiryStatus = 'none' | 'fresh' | 'use_soon' | 'expired';
 
@@ -93,9 +93,17 @@ export class PantryService {
     return { message: 'Pantry item removed' };
   }
 
+  importCheckedShoppingItems(userId: number): Promise<ShoppingListPantryImportResult> {
+    return this.repository.importCheckedShoppingItems(userId);
+  }
+
   async removeForHousehold(householdId: number, pantryId: number): Promise<{ message: string }> {
     if (!(await this.repository.removeForHousehold(householdId, pantryId))) throw this.notFound();
     return { message: 'Pantry item removed' };
+  }
+
+  importCheckedShoppingItemsForHousehold(householdId: number): Promise<ShoppingListPantryImportResult> {
+    return this.repository.importCheckedShoppingItemsForHousehold(householdId);
   }
 
   private normalizeName(name: string): string {
@@ -157,4 +165,4 @@ export class PantryService {
   }
 }
 
-export type PantryServicePort = Pick<PantryService, 'list' | 'create' | 'update' | 'remove' | 'listForHousehold' | 'createForHousehold' | 'updateForHousehold' | 'removeForHousehold'>;
+export type PantryServicePort = Pick<PantryService, 'list' | 'create' | 'update' | 'remove' | 'importCheckedShoppingItems' | 'listForHousehold' | 'createForHousehold' | 'updateForHousehold' | 'removeForHousehold' | 'importCheckedShoppingItemsForHousehold'>;

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { convertQuantity, normalizeIngredientName, normalizePantryUnit, parseShoppingListQuantity, type PantryUnit } from './pantry-inventory';
 
 export type PantryItemRecord = {
   pantry_id: number;
@@ -18,15 +19,29 @@ export type PantryItemRecord = {
   updated_at: Date;
 };
 
+export type ShoppingListPantryImportSkipped = {
+  item_id: number;
+  label: string;
+  quantity: string | null;
+  reason: 'quantity_or_unit_required' | 'pantry_unit_conflict';
+};
+
+export type ShoppingListPantryImportResult = {
+  imported_items: number;
+  skipped_items: ShoppingListPantryImportSkipped[];
+};
+
 export interface PantryRepositoryPort {
   list(userId: number): Promise<PantryItemRecord[]>;
   create(userId: number, name: string, quantity: number | null, unit: string | null, have: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord>;
   update(userId: number, pantryId: number, name?: string, quantity?: number | null, unit?: string | null, have?: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord | null>;
   remove(userId: number, pantryId: number): Promise<boolean>;
+  importCheckedShoppingItems(userId: number): Promise<ShoppingListPantryImportResult>;
   listForHousehold(householdId: number): Promise<PantryItemRecord[]>;
   createForHousehold(householdId: number, name: string, quantity: number | null, unit: string | null, have: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord>;
   updateForHousehold(householdId: number, pantryId: number, name?: string, quantity?: number | null, unit?: string | null, have?: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord | null>;
   removeForHousehold(householdId: number, pantryId: number): Promise<boolean>;
+  importCheckedShoppingItemsForHousehold(householdId: number): Promise<ShoppingListPantryImportResult>;
 }
 
 export const PANTRY_REPOSITORY = Symbol('PANTRY_REPOSITORY');
@@ -126,8 +141,117 @@ export class PantryRepository implements PantryRepositoryPort {
     return this.removeByScope(this.scopeWhere(userId), pantryId);
   }
 
+  importCheckedShoppingItems(userId: number): Promise<ShoppingListPantryImportResult> {
+    return this.importCheckedShoppingItemsByScope(
+      Prisma.sql`user_id = ${userId}`,
+      Prisma.sql`user_id = ${userId}`,
+      Prisma.sql`user_id, household_id`,
+      Prisma.sql`${userId}, NULL`,
+    );
+  }
+
   removeForHousehold(householdId: number, pantryId: number): Promise<boolean> {
     return this.removeByScope(this.scopeWhere(undefined, householdId), pantryId);
+  }
+
+  importCheckedShoppingItemsForHousehold(householdId: number): Promise<ShoppingListPantryImportResult> {
+    return this.importCheckedShoppingItemsByScope(
+      Prisma.sql`household_id = ${householdId}`,
+      Prisma.sql`household_id = ${householdId}`,
+      Prisma.sql`user_id, household_id`,
+      Prisma.sql`NULL, ${householdId}`,
+    );
+  }
+
+  private async importCheckedShoppingItemsByScope(
+    shoppingScope: Prisma.Sql,
+    pantryScope: Prisma.Sql,
+    ownerColumns: Prisma.Sql,
+    ownerValues: Prisma.Sql,
+  ): Promise<ShoppingListPantryImportResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const shoppingItems = await tx.$queryRaw<Array<{ item_id: number; label: string; quantity: string | null }>>(Prisma.sql`
+        SELECT item_id, label, quantity
+        FROM shopping_list_items
+        WHERE ${shoppingScope} AND checked = TRUE
+        ORDER BY created_at ASC, item_id ASC
+        FOR UPDATE
+      `);
+      const pantryRows = await tx.$queryRaw<Array<{ pantry_id: number; name: string; have: boolean; quantity: number | string | null; unit: string | null }>>(Prisma.sql`
+        SELECT pantry_id, name, have, quantity, unit
+        FROM pantry_items
+        WHERE ${pantryScope}
+        FOR UPDATE
+      `);
+      const pantryItems = pantryRows.map((item) => ({ ...item, quantity: item.quantity === null ? null : Number(item.quantity) }));
+      const skippedItems: ShoppingListPantryImportSkipped[] = [];
+      let importedItems = 0;
+
+      for (const shoppingItem of shoppingItems) {
+        const parsed = parseShoppingListQuantity(shoppingItem.quantity);
+        if (!parsed) {
+          skippedItems.push({
+            item_id: Number(shoppingItem.item_id),
+            label: shoppingItem.label,
+            quantity: shoppingItem.quantity,
+            reason: 'quantity_or_unit_required',
+          });
+          continue;
+        }
+
+        const pantryItem = pantryItems.find((item) => normalizeIngredientName(item.name) === normalizeIngredientName(shoppingItem.label));
+        if (pantryItem) {
+          const pantryUnit = normalizePantryUnit(pantryItem.unit);
+          if (pantryItem.quantity !== null && pantryUnit) {
+            const quantityToAdd = convertQuantity(parsed.quantity, parsed.unit, pantryUnit);
+            if (quantityToAdd === null) {
+              skippedItems.push({
+                item_id: Number(shoppingItem.item_id),
+                label: shoppingItem.label,
+                quantity: shoppingItem.quantity,
+                reason: 'pantry_unit_conflict',
+              });
+              continue;
+            }
+            await tx.$executeRaw(Prisma.sql`
+              UPDATE pantry_items
+              SET quantity = quantity + ${quantityToAdd}, have = TRUE, purchased_at = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP
+              WHERE ${pantryScope} AND pantry_id = ${pantryItem.pantry_id}
+            `);
+            pantryItem.quantity += quantityToAdd;
+          } else {
+            await tx.$executeRaw(Prisma.sql`
+              UPDATE pantry_items
+              SET quantity = ${parsed.quantity}, unit = ${parsed.unit}, have = TRUE, purchased_at = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP
+              WHERE ${pantryScope} AND pantry_id = ${pantryItem.pantry_id}
+            `);
+            pantryItem.quantity = parsed.quantity;
+            pantryItem.unit = parsed.unit;
+          }
+        } else {
+          const inserted = await tx.$queryRaw<{ pantry_id: number }[]>(Prisma.sql`
+            INSERT INTO pantry_items (${ownerColumns}, name, quantity, unit, have, purchased_at)
+            VALUES (${ownerValues}, ${shoppingItem.label}, ${parsed.quantity}, ${parsed.unit}, TRUE, CURRENT_DATE)
+            RETURNING pantry_id
+          `);
+          pantryItems.push({
+            pantry_id: Number(inserted[0].pantry_id),
+            name: shoppingItem.label,
+            have: true,
+            quantity: parsed.quantity,
+            unit: parsed.unit,
+          });
+        }
+
+        await tx.$executeRaw(Prisma.sql`
+          DELETE FROM shopping_list_items
+          WHERE ${shoppingScope} AND item_id = ${shoppingItem.item_id}
+        `);
+        importedItems += 1;
+      }
+
+      return { imported_items: importedItems, skipped_items: skippedItems };
+    });
   }
 
   private removeByScope(scope: Prisma.Sql, pantryId: number): Promise<boolean> {
