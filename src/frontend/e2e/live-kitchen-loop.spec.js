@@ -1,12 +1,7 @@
 import { expect, test } from "@playwright/test";
-import { stubThirdPartyMedia } from "./real-stack/helpers.js";
+import { demoCredentials, findRecipeByName, stubThirdPartyMedia } from "./real-stack/helpers.js";
 
 const recipeName = "Avocado Toast with Chili";
-const recipeId = 164;
-const demoCredentials = {
-	email: "demo.homecook@foodrecipes.local",
-	password: "DemoPass123!",
-};
 
 const isApiResponse = (response, path, method) => {
 	const url = new URL(response.url());
@@ -18,7 +13,9 @@ const isCookingCompletionResponse = (response) => {
 	return response.request().method() === "POST" && /\/users\/me\/cooking-session\/\d+\/complete$/.test(url.pathname);
 };
 
-test("real browser: login, choose, prepare, cook, and complete a meal", async ({ page }, testInfo) => {
+test("real browser: login, choose, prepare, cook, and complete a meal", async ({ page, request }, testInfo) => {
+	const recipe = await findRecipeByName(request, recipeName);
+	const recipeId = recipe.recipe_id;
 	const consoleErrors = [];
 	page.on("console", (message) => {
 		if (message.type() === "error") consoleErrors.push({ text: message.text(), url: message.location().url });

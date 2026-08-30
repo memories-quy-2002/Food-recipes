@@ -1,14 +1,15 @@
 import request from 'supertest';
-import { createApplication } from '../src/main';
+import type { INestApplication } from '@nestjs/common';
 
 describe('HTTP security boundary', () => {
-  let app: Awaited<ReturnType<typeof createApplication>>;
+  let app: INestApplication;
   const originalDatabaseUrl = process.env.DATABASE_URL;
   const originalJwtSecret = process.env.JWT_SECRET;
 
   beforeAll(async () => {
     process.env.DATABASE_URL = 'postgresql://security:security@127.0.0.1:5432/security_boundary';
     process.env.JWT_SECRET = '8mR!2qV#7xL@4pN$9zK%6tH&3cW^1jF*5sD';
+    const { createApplication } = await import('../src/main');
     app = await createApplication();
     await app.init();
   });

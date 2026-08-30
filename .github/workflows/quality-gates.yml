@@ -236,18 +236,19 @@ jobs:
         working-directory: src/backend
         run: pnpm prisma:generate
 
+      - name: Generate an ephemeral CI JWT secret
+        run: echo "JWT_SECRET=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
       - name: Apply migrations to the ephemeral database
         working-directory: src/backend
         env:
           DATABASE_URL: postgresql://food_recipes:food_recipes@127.0.0.1:5432/food_recipes_e2e
-          JWT_SECRET: ci-real-stack-jwt-secret-8mR2qV7xL4pN9zK6tH3cW1jF5sD
         run: pnpm exec prisma migrate deploy --config prisma.config.ts
 
       - name: Seed the ephemeral database
         working-directory: src/backend
         env:
           DATABASE_URL: postgresql://food_recipes:food_recipes@127.0.0.1:5432/food_recipes_e2e
-          JWT_SECRET: ci-real-stack-jwt-secret-8mR2qV7xL4pN9zK6tH3cW1jF5sD
         run: pnpm prisma:seed
 
       - name: Start the API
@@ -256,7 +257,6 @@ jobs:
           NODE_ENV: development
           PORT: 3000
           DATABASE_URL: postgresql://food_recipes:food_recipes@127.0.0.1:5432/food_recipes_e2e
-          JWT_SECRET: ci-real-stack-jwt-secret-8mR2qV7xL4pN9zK6tH3cW1jF5sD
           CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
           AUTH_PUBLIC_WEB_URL: http://localhost:5173
         run: |
