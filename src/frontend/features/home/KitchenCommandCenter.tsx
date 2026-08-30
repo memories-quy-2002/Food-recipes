@@ -7,6 +7,9 @@ import type { PrepareRecipeResponse } from "@/features/shopping/api/shoppingApi"
 import PreparationSummary from "@/features/shopping/PreparationSummary";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
+import { useLeftoversQuery } from "@/features/leftovers/api/leftoversQueries";
+import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
+import type { KitchenScope } from "@/features/households/householdScope";
 
 type KitchenCommandCenterProps = {
 	kitchen: KitchenState;
@@ -34,7 +37,7 @@ const cookingHref = (session: KitchenState["active_session"]): string => {
 	return `/recipe/cooking?${params.toString()}`;
 };
 
-const mealCookingHref = (meal: NonNullable<KitchenState["next_meal"]>): string => {
+const mealCookingHref = (meal: NonNullable<KitchenState["next_meal"]>, scope: KitchenScope): string => {
 	const params = new URLSearchParams({
 		id: String(meal.recipe_id),
 		planItemId: String(meal.item_id),
@@ -43,6 +46,7 @@ const mealCookingHref = (meal: NonNullable<KitchenState["next_meal"]>): string =
 		servings: String(meal.servings),
 		returnTo: "/",
 	});
+	if (scope.kind === "household") params.set("householdId", String(scope.householdId));
 	return `/recipe/cooking?${params.toString()}`;
 };
 
@@ -58,12 +62,16 @@ const progressSteps = (kitchen: KitchenState): Array<{ key: string; label: strin
 };
 
 const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCenterProps): ReactElement => {
+	const { scope } = useHouseholdScope();
 	const [isOnboardingDismissed, setIsOnboardingDismissed] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return window.localStorage.getItem(`${ONBOARDING_STORAGE_PREFIX}${userId}`) === "dismissed";
 	});
 	const [preparationResult, setPreparationResult] = useState<PrepareRecipeResponse | null>(null);
 	const prepareMutation = usePrepareRecipeIngredientsMutation();
+	const leftoversQuery = useLeftoversQuery(scope);
+	const leftovers = leftoversQuery.data?.items ?? [];
+	const leftoverServings = leftovers.reduce((total, item) => total + item.remaining_servings, 0);
 	const steps = progressSteps(kitchen);
 	const activeSession = kitchen.active_session;
 	const nextMeal = kitchen.next_meal;
@@ -121,7 +129,7 @@ const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCen
 							<p className="mt-2 text-sm leading-6 text-muted-foreground">{formatDate(nextMeal.planned_date)} · {nextMeal.slot[0].toUpperCase() + nextMeal.slot.slice(1)} · {nextMeal.servings} servings</p>
 							<div className="mt-5 flex flex-wrap gap-2">
 								<Button type="button" onClick={prepareNextMeal} disabled={prepareMutation.isPending} aria-busy={prepareMutation.isPending}>{prepareMutation.isPending ? "Checking pantry…" : "Prepare this meal"}</Button>
-								<Button asChild variant="outline"><Link to={mealCookingHref(nextMeal)}>Start cooking</Link></Button>
+								<Button asChild variant="outline"><Link to={mealCookingHref(nextMeal, scope)}>Start cooking</Link></Button>
 							</div>
 							{preparationResult && <PreparationSummary result={preparationResult} />}
 						</> : <>
@@ -132,10 +140,11 @@ const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCen
 					</Card>
 				</div>
 
-				<div className="mt-4 grid gap-3 sm:grid-cols-3">
+				<div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 					<Link className="rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40" to="/shopping-list"><div className="flex items-center gap-2 text-primary"><ShoppingBasket className="size-4" aria-hidden="true" /><span className="text-xs font-black uppercase tracking-[0.12em]">Shopping</span></div><p className="mt-3 text-2xl font-black">{kitchen.shopping.open_items}</p><p className="text-sm text-muted-foreground">items to buy</p></Link>
 					<Link className="rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40" to="/pantry"><div className="flex items-center gap-2 text-primary"><PackageCheck className="size-4" aria-hidden="true" /><span className="text-xs font-black uppercase tracking-[0.12em]">Pantry</span></div><p className="mt-3 text-2xl font-black">{kitchen.pantry.available_items}</p><p className="text-sm text-muted-foreground">available items</p></Link>
 					<Link className="rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40" to="/history"><div className="flex items-center gap-2 text-primary"><ChefHat className="size-4" aria-hidden="true" /><span className="text-xs font-black uppercase tracking-[0.12em]">History</span></div><p className="mt-3 text-2xl font-black">{kitchen.progress.completed_cooks}</p><p className="text-sm text-muted-foreground">completed cooks</p></Link>
+					<Link className="rounded-2xl border border-border bg-card p-4 transition hover:border-primary/40" to="/planning" aria-label="Use leftovers in planning"><div className="flex items-center gap-2 text-primary"><PackageCheck className="size-4" aria-hidden="true" /><span className="text-xs font-black uppercase tracking-[0.12em]">Leftovers</span></div><p className="mt-3 text-2xl font-black">{leftoverServings}</p><p className="text-sm text-muted-foreground">{leftovers.length ? "servings ready" : leftoversQuery.isPending ? "checking…" : "save extras to reuse"}</p>{leftovers.length > 0 && <span className="mt-3 inline-flex text-sm font-black text-primary underline-offset-4 hover:underline">Use tonight <ArrowRight className="ml-1 size-4" aria-hidden="true" /></span>}</Link>
 				</div>
 			</div>
 

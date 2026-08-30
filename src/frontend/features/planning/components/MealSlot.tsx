@@ -5,6 +5,8 @@ import Button from "@/shared/ui/Button";
 import type { MealPlanItem, MealSlot as MealSlotName } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
 import { mealDropTargetId, mealItemId } from "../planningDnD";
+import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
+import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 type MealSlotProps = {
 	day: PlanningDay;
@@ -27,6 +29,23 @@ const SLOT_META: Record<MealSlotName, { shortLabel: string; Icon: LucideIcon }> 
 
 const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1);
 const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
+
+export const buildMealCookingHref = (item: MealPlanItem, scope: KitchenScope = PERSONAL_KITCHEN): string => {
+	const params = new URLSearchParams({
+		id: String(item.recipe_id),
+		planItemId: String(item.item_id),
+		date: item.planned_date.slice(0, 10),
+		slot: item.slot,
+		servings: String(item.servings),
+		returnTo: "/planning",
+	});
+	if (item.source_type === "leftover") {
+		params.set("sourceType", "leftover");
+		if (item.leftover_batch_id != null) params.set("leftoverBatchId", String(item.leftover_batch_id));
+	}
+	if (scope.kind === "household") params.set("householdId", String(scope.householdId));
+	return `/recipe/cooking?${params.toString()}`;
+};
 
 const statusMeta = {
 	planned: { label: "Planned", className: "bg-muted text-muted-foreground" },
@@ -51,6 +70,7 @@ const SlotBadge = ({ slot }: { slot: MealSlotName }) => {
 };
 
 const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false, readOnly = false }: MealSlotProps) => {
+	const { scope } = useHouseholdScope();
 	const targetId = mealDropTargetId({ date: day.date, slot });
 	const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({ id: targetId });
 	const { attributes, listeners, setNodeRef: setDraggableNodeRef, isDragging } = useDraggable({
@@ -104,6 +124,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 				<div className="flex items-center justify-between gap-2">
 					<SlotBadge slot={slot} />
 					<div className="flex items-center gap-2">
+						{item.source_type === "leftover" && <span className="inline-flex min-h-7 items-center rounded-full bg-amber-100 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-amber-900">Leftover</span>}
 						<span className={`inline-flex min-h-7 items-center gap-1 rounded-full px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] ${status.className}`}><CheckCircle2 className="size-3" aria-hidden="true" />{status.label}</span>
 						<span className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground" title={`${item.servings} servings`}>
 						<span aria-hidden="true">{item.servings}×</span>
@@ -126,7 +147,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 				<div className="mt-2 flex items-center justify-between gap-2">
 					<Link
 						className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						to={`/recipe/cooking?id=${item.recipe_id}&planItemId=${item.item_id}&date=${encodeURIComponent(item.planned_date.slice(0, 10))}&slot=${item.slot}&servings=${item.servings}&returnTo=%2Fplanning`}
+						to={buildMealCookingHref(item, scope)}
 						aria-label={`${cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"} ${item.recipe_name}`}
 						title={`${cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"} ${item.recipe_name}`}
 						onPointerDown={stopDragStart}

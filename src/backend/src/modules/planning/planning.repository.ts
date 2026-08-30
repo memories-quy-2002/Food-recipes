@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
 import { MealPlanSlot } from './dto/add-meal-plan-item.dto';
+import { AddLeftoverMealPlanItemDto } from './dto/add-leftover-meal-plan-item.dto';
 import {
   calculateInventoryConsumption,
   formatInventoryQuantity,
@@ -12,7 +13,7 @@ import {
 } from '../pantry/pantry-inventory';
 
 export type MealPlanRecord = { plan_id: number; user_id?: number | null; household_id?: number | null; name: string; start_date: Date | string; end_date: Date | string; created_at: Date; updated_at: Date };
-export type MealPlanItemRecord = { item_id: number; plan_id: number; recipe_id: number; recipe_name: string; planned_date: Date | string; slot: MealPlanSlot; servings: number; cooking_status: 'planned' | 'cooking' | 'completed'; created_at: Date };
+export type MealPlanItemRecord = { item_id: number; plan_id: number; recipe_id: number; recipe_name: string; source_type: 'recipe' | 'leftover' | 'external'; leftover_batch_id: number | null; planned_date: Date | string; slot: MealPlanSlot; servings: number; cooking_status: 'planned' | 'cooking' | 'completed'; created_at: Date };
 export type ShoppingListItemRecord = { item_id: number; user_id?: number | null; household_id?: number | null; label: string; quantity: string | null; source_recipe_id: number | null; source_recipe_name: string | null; checked: boolean; created_at: Date; updated_at: Date };
 export type StructuredShoppingIngredient = { name: string; quantity: number | null; unit: string | null; note: string | null; position: number; recipe_id?: number };
 export type RecipeIngredientsRecord = { name: string; ingredients: string[]; structuredIngredients?: StructuredShoppingIngredient[] };
@@ -52,11 +53,15 @@ export interface PlanningRepositoryPort {
   addPlanItem(userId: number, planId: number, recipeId: number, date: string, slot: MealPlanSlot, servings: number): Promise<MealPlanItemRecord | null>;
   updatePlanItem(userId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null>;
   deletePlanItem(userId: number, planId: number, itemId: number): Promise<boolean>;
+  deletePlanItemAndRecordRemoval(userId: number, planId: number, itemId: number): Promise<boolean>;
   listPlanItemsForHousehold(householdId: number, planId: number): Promise<MealPlanItemRecord[]>;
   findPlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null>;
   addPlanItemForHousehold(householdId: number, planId: number, recipeId: number, date: string, slot: MealPlanSlot, servings: number): Promise<MealPlanItemRecord | null>;
+  addLeftoverPlanItem?(userId: number, planId: number, dto: AddLeftoverMealPlanItemDto): Promise<MealPlanItemRecord | null>;
+  addLeftoverPlanItemForHousehold?(householdId: number, planId: number, dto: AddLeftoverMealPlanItemDto): Promise<MealPlanItemRecord | null>;
   updatePlanItemForHousehold(householdId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null>;
   deletePlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<boolean>;
+  deletePlanItemAndRecordRemovalForHousehold(userId: number, householdId: number, planId: number, itemId: number): Promise<boolean>;
   listShoppingItems(userId: number): Promise<ShoppingListItemRecord[]>;
   addShoppingItem(userId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord>;
   updateShoppingItem(userId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null>;
@@ -116,7 +121,14 @@ export class PlanningRepository implements PlanningRepositoryPort {
   }
 
   async deletePlan(userId: number, planId: number): Promise<boolean> {
-    return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM meal_plans WHERE user_id = ${userId} AND plan_id = ${planId}`)) > 0;
+    return this.prisma.$transaction(async (tx) => {
+      const plans = await tx.$queryRaw<{ plan_id: number }[]>(Prisma.sql`SELECT p.plan_id FROM meal_plans p WHERE p.user_id = ${userId} AND p.plan_id = ${planId} FOR UPDATE`);
+      if (!plans[0]) return false;
+      await tx.$queryRaw(Prisma.sql`SELECT s.session_id FROM cooking_sessions s JOIN meal_plan_items i ON i.item_id = s.meal_plan_item_id WHERE i.plan_id = ${planId} AND s.status IN ('active', 'paused') FOR UPDATE OF s`);
+      const items = await tx.$queryRaw<Array<{ item_id: number; source_type: string; leftover_batch_id: number | null; servings: number; has_history: boolean }>>(Prisma.sql`SELECT i.item_id, i.source_type, i.leftover_batch_id, i.servings, EXISTS (SELECT 1 FROM cooking_history h WHERE h.meal_plan_item_id = i.item_id) AS has_history FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id WHERE p.user_id = ${userId} AND p.plan_id = ${planId} FOR UPDATE OF i`);
+      for (const item of items) if (!item.has_history && item.source_type === 'leftover' && item.leftover_batch_id) await tx.$executeRaw(Prisma.sql`UPDATE leftover_batches SET remaining_servings = LEAST(cooked_servings, remaining_servings + ${item.servings}) WHERE leftover_id = ${item.leftover_batch_id}`);
+      return (await tx.$executeRaw(Prisma.sql`DELETE FROM meal_plans WHERE user_id = ${userId} AND plan_id = ${planId}`)) > 0;
+    });
   }
 
   async listPlansForHousehold(householdId: number, from?: string, to?: string): Promise<MealPlanRecord[]> {
@@ -157,12 +169,19 @@ export class PlanningRepository implements PlanningRepositoryPort {
   }
 
   async deletePlanForHousehold(householdId: number, planId: number): Promise<boolean> {
-    return (await this.prisma.$executeRaw(Prisma.sql`DELETE FROM meal_plans WHERE household_id = ${householdId} AND plan_id = ${planId}`)) > 0;
+    return this.prisma.$transaction(async (tx) => {
+      const plans = await tx.$queryRaw<{ plan_id: number }[]>(Prisma.sql`SELECT p.plan_id FROM meal_plans p WHERE p.household_id = ${householdId} AND p.plan_id = ${planId} FOR UPDATE`);
+      if (!plans[0]) return false;
+      await tx.$queryRaw(Prisma.sql`SELECT s.session_id FROM cooking_sessions s JOIN meal_plan_items i ON i.item_id = s.meal_plan_item_id WHERE i.plan_id = ${planId} AND s.status IN ('active', 'paused') FOR UPDATE OF s`);
+      const items = await tx.$queryRaw<Array<{ item_id: number; source_type: string; leftover_batch_id: number | null; servings: number; has_history: boolean }>>(Prisma.sql`SELECT i.item_id, i.source_type, i.leftover_batch_id, i.servings, EXISTS (SELECT 1 FROM cooking_history h WHERE h.meal_plan_item_id = i.item_id) AS has_history FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id WHERE p.household_id = ${householdId} AND p.plan_id = ${planId} FOR UPDATE OF i`);
+      for (const item of items) if (!item.has_history && item.source_type === 'leftover' && item.leftover_batch_id) await tx.$executeRaw(Prisma.sql`UPDATE leftover_batches SET remaining_servings = LEAST(cooked_servings, remaining_servings + ${item.servings}) WHERE leftover_id = ${item.leftover_batch_id}`);
+      return (await tx.$executeRaw(Prisma.sql`DELETE FROM meal_plans WHERE household_id = ${householdId} AND plan_id = ${planId}`)) > 0;
+    });
   }
 
   async listPlanItems(userId: number, planId: number): Promise<MealPlanItemRecord[]> {
     return this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
-      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+       SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.source_type, i.leftover_batch_id, i.planned_date, i.slot, i.servings,
              CASE
                WHEN EXISTS (
                  SELECT 1 FROM cooking_sessions cs
@@ -183,7 +202,7 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   async findPlanItem(userId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null> {
     const rows = await this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
-      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+       SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.source_type, i.leftover_batch_id, i.planned_date, i.slot, i.servings,
              CASE
                WHEN EXISTS (
                  SELECT 1 FROM cooking_sessions cs
@@ -221,6 +240,7 @@ export class PlanningRepository implements PlanningRepositoryPort {
   async updatePlanItem(userId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null> {
     const item = await this.findPlanItem(userId, planId, itemId);
     if (!item) return null;
+    if (item.source_type === 'leftover' && ((recipeId !== undefined && recipeId !== item.recipe_id) || (servings !== undefined && servings !== item.servings))) return null;
     const nextRecipeId = recipeId ?? item.recipe_id;
     const nextDate = date ?? this.dateText(item.planned_date);
     const nextSlot = slot ?? item.slot;
@@ -240,9 +260,36 @@ export class PlanningRepository implements PlanningRepositoryPort {
     `)) > 0;
   }
 
+  async deletePlanItemAndRecordRemoval(userId: number, planId: number, itemId: number): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw(Prisma.sql`SELECT session_id FROM cooking_sessions WHERE meal_plan_item_id = ${itemId} AND status IN ('active', 'paused') FOR UPDATE`);
+      const items = await tx.$queryRaw<{ recipe_id: number; source_type: string; leftover_batch_id: number | null; servings: number; has_history: boolean }[]>(Prisma.sql`
+        SELECT i.recipe_id, i.source_type, i.leftover_batch_id, i.servings,
+               EXISTS (SELECT 1 FROM cooking_history h WHERE h.meal_plan_item_id = i.item_id) AS has_history
+        FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id
+        WHERE p.user_id = ${userId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
+        FOR UPDATE OF i
+      `);
+      if (!items[0]) return false;
+      const rows = await tx.$queryRaw<{ recipe_id: number }[]>(Prisma.sql`
+        DELETE FROM meal_plan_items i USING meal_plans p
+        WHERE i.plan_id = p.plan_id AND p.user_id = ${userId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
+        RETURNING i.recipe_id
+      `);
+      if (!rows[0]) return false;
+      if (!items[0].has_history && items[0].source_type === 'leftover' && items[0].leftover_batch_id) await tx.$executeRaw(Prisma.sql`UPDATE leftover_batches b SET remaining_servings = LEAST(b.cooked_servings, b.remaining_servings + ${items[0].servings}) WHERE b.leftover_id = ${items[0].leftover_batch_id}`);
+      await tx.$executeRaw(Prisma.sql`
+        INSERT INTO recommendation_meal_plan_removals (user_id, recipe_id, removed_at)
+        VALUES (${userId}, ${items[0].recipe_id}, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id, recipe_id) DO UPDATE SET removed_at = CURRENT_TIMESTAMP
+      `);
+      return true;
+    });
+  }
+
   async listPlanItemsForHousehold(householdId: number, planId: number): Promise<MealPlanItemRecord[]> {
     return this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
-      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+       SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.source_type, i.leftover_batch_id, i.planned_date, i.slot, i.servings,
              CASE
                WHEN EXISTS (SELECT 1 FROM cooking_sessions cs WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')) THEN 'cooking'
                WHEN EXISTS (SELECT 1 FROM cooking_history ch WHERE ch.meal_plan_item_id = i.item_id) THEN 'completed'
@@ -257,7 +304,7 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   async findPlanItemForHousehold(householdId: number, planId: number, itemId: number): Promise<MealPlanItemRecord | null> {
     const rows = await this.prisma.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`
-      SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.planned_date, i.slot, i.servings,
+       SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.source_type, i.leftover_batch_id, i.planned_date, i.slot, i.servings,
              CASE
                WHEN EXISTS (SELECT 1 FROM cooking_sessions cs WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')) THEN 'cooking'
                WHEN EXISTS (SELECT 1 FROM cooking_history ch WHERE ch.meal_plan_item_id = i.item_id) THEN 'completed'
@@ -281,9 +328,38 @@ export class PlanningRepository implements PlanningRepositoryPort {
     return rows[0] ? this.findPlanItemForHousehold(householdId, planId, rows[0].item_id) : null;
   }
 
+  async addLeftoverPlanItem(userId: number, planId: number, dto: AddLeftoverMealPlanItemDto): Promise<MealPlanItemRecord | null> {
+    try { return await this.prisma.$transaction(async (tx) => {
+      const plans = await tx.$queryRaw<{ plan_id: number }[]>(Prisma.sql`SELECT p.plan_id FROM meal_plans p WHERE p.user_id = ${userId} AND p.plan_id = ${planId} FOR UPDATE`);
+      if (!plans[0]) return null;
+      const rows = await tx.$queryRaw<{ item_id: number }[]>(Prisma.sql`
+        WITH consumed AS (
+          UPDATE leftover_batches b SET remaining_servings = b.remaining_servings - ${dto.servings}
+          FROM meal_plans p WHERE b.leftover_id = ${dto.leftoverBatchId} AND b.user_id = ${userId} AND b.remaining_servings >= ${dto.servings} AND b.expires_at > CURRENT_TIMESTAMP AND ${dto.date}::date <= b.expires_at::date AND p.plan_id = ${planId} AND p.user_id = ${userId} AND ${dto.date}::date BETWEEN p.start_date AND p.end_date AND NOT EXISTS (SELECT 1 FROM meal_plan_items i WHERE i.plan_id = p.plan_id AND i.planned_date = ${dto.date}::date AND i.slot = ${dto.slot}) RETURNING b.recipe_id
+        ) INSERT INTO meal_plan_items (plan_id, recipe_id, source_type, leftover_batch_id, planned_date, slot, servings)
+        SELECT ${planId}, recipe_id, 'leftover', ${dto.leftoverBatchId}, ${dto.date}::date, ${dto.slot}, ${dto.servings} FROM consumed RETURNING item_id`);
+      return rows[0] ? this.findPlanItemWithClient(tx, userId, planId, rows[0].item_id) : null;
+    }); } catch (error) { if (this.isUniqueViolation(error)) return null; throw error; }
+  }
+
+  async addLeftoverPlanItemForHousehold(householdId: number, planId: number, dto: AddLeftoverMealPlanItemDto): Promise<MealPlanItemRecord | null> {
+    try { return await this.prisma.$transaction(async (tx) => {
+      const plans = await tx.$queryRaw<{ plan_id: number }[]>(Prisma.sql`SELECT p.plan_id FROM meal_plans p WHERE p.household_id = ${householdId} AND p.plan_id = ${planId} FOR UPDATE`);
+      if (!plans[0]) return null;
+      const rows = await tx.$queryRaw<{ item_id: number }[]>(Prisma.sql`
+        WITH consumed AS (
+          UPDATE leftover_batches b SET remaining_servings = b.remaining_servings - ${dto.servings}
+          FROM meal_plans p WHERE b.leftover_id = ${dto.leftoverBatchId} AND b.household_id = ${householdId} AND b.remaining_servings >= ${dto.servings} AND b.expires_at > CURRENT_TIMESTAMP AND ${dto.date}::date <= b.expires_at::date AND p.plan_id = ${planId} AND p.household_id = ${householdId} AND ${dto.date}::date BETWEEN p.start_date AND p.end_date AND NOT EXISTS (SELECT 1 FROM meal_plan_items i WHERE i.plan_id = p.plan_id AND i.planned_date = ${dto.date}::date AND i.slot = ${dto.slot}) RETURNING b.recipe_id
+        ) INSERT INTO meal_plan_items (plan_id, recipe_id, source_type, leftover_batch_id, planned_date, slot, servings)
+        SELECT ${planId}, recipe_id, 'leftover', ${dto.leftoverBatchId}, ${dto.date}::date, ${dto.slot}, ${dto.servings} FROM consumed RETURNING item_id`);
+      return rows[0] ? this.findPlanItemWithClient(tx, undefined, planId, rows[0].item_id, householdId) : null;
+    }); } catch (error) { if (this.isUniqueViolation(error)) return null; throw error; }
+  }
+
   async updatePlanItemForHousehold(householdId: number, planId: number, itemId: number, recipeId?: number, date?: string, slot?: MealPlanSlot, servings?: number): Promise<MealPlanItemRecord | null> {
     const item = await this.findPlanItemForHousehold(householdId, planId, itemId);
     if (!item) return null;
+    if (item.source_type === 'leftover' && ((recipeId !== undefined && recipeId !== item.recipe_id) || (servings !== undefined && servings !== item.servings))) return null;
     const nextRecipeId = recipeId ?? item.recipe_id;
     const nextDate = date ?? this.dateText(item.planned_date);
     const nextSlot = slot ?? item.slot;
@@ -302,6 +378,33 @@ export class PlanningRepository implements PlanningRepositoryPort {
       DELETE FROM meal_plan_items i USING meal_plans p
       WHERE i.plan_id = p.plan_id AND p.household_id = ${householdId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
     `)) > 0;
+  }
+
+  async deletePlanItemAndRecordRemovalForHousehold(userId: number, householdId: number, planId: number, itemId: number): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw(Prisma.sql`SELECT session_id FROM cooking_sessions WHERE meal_plan_item_id = ${itemId} AND status IN ('active', 'paused') FOR UPDATE`);
+      const items = await tx.$queryRaw<{ recipe_id: number; source_type: string; leftover_batch_id: number | null; servings: number; has_history: boolean }[]>(Prisma.sql`
+        SELECT i.recipe_id, i.source_type, i.leftover_batch_id, i.servings,
+               EXISTS (SELECT 1 FROM cooking_history h WHERE h.meal_plan_item_id = i.item_id) AS has_history
+        FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id
+        WHERE p.household_id = ${householdId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
+        FOR UPDATE OF i
+      `);
+      if (!items[0]) return false;
+      const rows = await tx.$queryRaw<{ recipe_id: number }[]>(Prisma.sql`
+        DELETE FROM meal_plan_items i USING meal_plans p
+        WHERE i.plan_id = p.plan_id AND p.household_id = ${householdId} AND i.plan_id = ${planId} AND i.item_id = ${itemId}
+        RETURNING i.recipe_id
+      `);
+      if (!rows[0]) return false;
+      if (!items[0].has_history && items[0].source_type === 'leftover' && items[0].leftover_batch_id) await tx.$executeRaw(Prisma.sql`UPDATE leftover_batches b SET remaining_servings = LEAST(b.cooked_servings, b.remaining_servings + ${items[0].servings}) WHERE b.leftover_id = ${items[0].leftover_batch_id}`);
+      await tx.$executeRaw(Prisma.sql`
+        INSERT INTO recommendation_meal_plan_removals (user_id, recipe_id, removed_at)
+        VALUES (${userId}, ${items[0].recipe_id}, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id, recipe_id) DO UPDATE SET removed_at = CURRENT_TIMESTAMP
+      `);
+      return true;
+    });
   }
 
   async listShoppingItems(userId: number): Promise<ShoppingListItemRecord[]> {
@@ -518,6 +621,11 @@ export class PlanningRepository implements PlanningRepositoryPort {
     return this.prisma.$executeRaw(Prisma.sql`DELETE FROM shopping_list_items WHERE household_id = ${householdId} AND checked = TRUE`);
   }
 
+  private async findPlanItemWithClient(client: Pick<PrismaService, '$queryRaw'>, userId: number | undefined, planId: number, itemId: number, householdId?: number): Promise<MealPlanItemRecord | null> {
+    const rows = await client.$queryRaw<MealPlanItemRecord[]>(Prisma.sql`SELECT i.item_id, i.plan_id, i.recipe_id, r.recipe_name, i.source_type, i.leftover_batch_id, i.planned_date, i.slot, i.servings, CASE WHEN EXISTS (SELECT 1 FROM cooking_sessions cs WHERE cs.meal_plan_item_id = i.item_id AND cs.status IN ('active', 'paused')) THEN 'cooking' WHEN EXISTS (SELECT 1 FROM cooking_history ch WHERE ch.meal_plan_item_id = i.item_id) THEN 'completed' ELSE 'planned' END AS cooking_status, i.created_at FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id JOIN recipes r ON r.recipe_id = i.recipe_id WHERE i.plan_id = ${planId} AND i.item_id = ${itemId} AND ${householdId === undefined ? Prisma.sql`p.user_id = ${userId}` : Prisma.sql`p.household_id = ${householdId}`}`);
+    return rows[0] ?? null;
+  }
+
   private findShoppingItem(userId: number, itemId: number): Promise<ShoppingListItemRecord | null> {
     return this.prisma.$queryRaw<ShoppingListItemRecord[]>(Prisma.sql`
       SELECT i.item_id, i.label, i.quantity, i.source_recipe_id, r.recipe_name AS source_recipe_name,
@@ -538,6 +646,12 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   private dateText(value: Date | string): string {
     return value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10);
+  }
+
+  private isUniqueViolation(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const candidate = error as { code?: unknown; meta?: { target?: unknown } };
+    return candidate.code === 'P2002' || candidate.code === '23505' || (Array.isArray(candidate.meta?.target) && candidate.meta.target.includes('meal_plan_items_plan_date_slot_key'));
   }
 
   private unitLabel(unit: string): string {

@@ -58,8 +58,10 @@
     "test:ci": "vitest run",
     "test:ui": "vitest --ui",
     "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test --config e2e/playwright.config.js",
-    "test:e2e:ci": "playwright test --config e2e/playwright.config.js"
+    "test:e2e": "node tools/run-frontend-e2e.mjs",
+    "test:e2e:ci": "node tools/run-frontend-e2e.mjs",
+    "test:e2e:quality": "node tools/run-frontend-e2e.mjs e2e/frontend-quality.spec.js",
+    "test:e2e:real": "node tools/run-real-stack-e2e.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

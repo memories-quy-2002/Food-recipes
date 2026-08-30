@@ -1,7 +1,6 @@
 import axios, {
 	AxiosHeaders,
 	type AxiosInstance,
-	type AxiosResponse,
 	type InternalAxiosRequestConfig,
 } from "axios";
 
@@ -11,6 +10,7 @@ import {
 	setAuthToken,
 	type ApiEnvironment,
 } from "./config";
+import { withSharedAuthRefresh } from "./authRefreshCoordinator";
 import { apiRoutes } from "./routes";
 
 type RetriableRequestConfig = InternalAxiosRequestConfig & {
@@ -38,8 +38,6 @@ export const createApiClient = (
 		baseURL: apiConfig.baseURL,
 		withCredentials: true,
 	});
-
-	let refreshPromise: Promise<AxiosResponse<RefreshResponse>> | null = null;
 
 	client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 		const token = getAuthToken();
@@ -72,17 +70,14 @@ export const createApiClient = (
 				isRefreshRequest ||
 				isLogoutRequest
 			) {
-				if (isUnauthorized && !isLogoutRequest) dispatchAuthExpired();
+				if (isUnauthorized && !isLogoutRequest && !isRefreshRequest) dispatchAuthExpired();
 				return Promise.reject(error);
 			}
 
 			try {
-				refreshPromise ??= client
-					.post<RefreshResponse>(apiRoutes.authRefresh, {})
-					.finally(() => {
-						refreshPromise = null;
-					});
-				const response = await refreshPromise;
+				const response = await withSharedAuthRefresh(() =>
+					client.post<RefreshResponse>(apiRoutes.authRefresh, {}),
+				);
 				const token = response.data?.token;
 				if (!token) throw error;
 				setAuthToken(token);

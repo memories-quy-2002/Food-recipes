@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const root = path.resolve(import.meta.dirname, '..');
+const schema = await readFile(path.join(root, 'prisma/schema.prisma'), 'utf8');
+const migration = await readFile(path.join(root, 'prisma/migrations/20260830120000_add_leftovers_and_meal_plan_sources/migration.sql'), 'utf8');
+assert.match(schema, /model LeftoverBatch/);
+assert.match(schema, /leftoverBatchId/);
+assert.match(migration, /CREATE TABLE "leftover_batches"/);
+assert.match(migration, /remaining_servings.*CHECK|CHECK.*remaining_servings/si);
+assert.match(migration, /remaining_servings" >= 0/);
+assert.match(migration, /source_consistency_check/);
+assert.doesNotMatch(migration, /leftover_batch_id.*ON DELETE SET NULL/i);
+assert.match(migration, /leftover_batch_id.*ON DELETE RESTRICT/i);
+assert.match(migration, /leftover_batches_user_fk.*REFERENCES "accounts"\("user_id"\).*ON DELETE RESTRICT/s);
+assert.match(migration, /leftover_batches_household_fk.*REFERENCES "households"\("household_id"\).*ON DELETE RESTRICT/s);
+assert.match(migration, /cooking_sessions_household_fk.*REFERENCES "households"\("household_id"\).*ON DELETE RESTRICT/s);
+assert.match(migration, /cooking_sessions_active_plan_item_key.*WHERE "meal_plan_item_id" IS NOT NULL AND "status" IN \('active', 'paused'\)/s);
+assert.match(migration, /UNIQUE.*history_id|history_id.*UNIQUE/si);
+assert.match(migration, /source_type.*recipe.*leftover.*external/si);
+console.log('leftovers migration validation passed');

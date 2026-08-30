@@ -243,6 +243,24 @@ describe("Nest API authentication and expiry", () => {
 		);
 	});
 
+	it("does not publish auth expiry for an anonymous refresh bootstrap failure", async () => {
+		const dispatchEvent = vi.fn();
+		Object.defineProperty(globalThis, "window", {
+			configurable: true,
+			value: { dispatchEvent },
+		});
+		const client = createApiClient({
+			DEV: false,
+			PROD: true,
+			VITE_API_BASE_URL: "https://api.example.test",
+		});
+		const responseErrorHandler = getResponseErrorHandler(client);
+		const error = createUnauthorizedError(createRequestConfig(apiRoutes.authRefresh));
+
+		await expect(responseErrorHandler(error)).rejects.toBe(error);
+		expect(dispatchEvent).not.toHaveBeenCalled();
+	});
+
 	it("does not refresh or emit expiry while logout is being finalized", async () => {
 		const dispatchEvent = vi.fn();
 		Object.defineProperty(globalThis, "window", {

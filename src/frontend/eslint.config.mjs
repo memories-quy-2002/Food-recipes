@@ -19,11 +19,14 @@ export default [
 	{
 		ignores: [
 			"dist/**",
+			".temp/**",
 			".vite/**",
 			".vite-verification/**",
 			"node_modules/**",
 			"coverage/**",
 			"test-results/**",
+			"playwright-report/**",
+			"output/**",
 			".playwright-cli/**",
 		],
 	},

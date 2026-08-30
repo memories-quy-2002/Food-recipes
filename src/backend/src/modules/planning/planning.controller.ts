@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { HouseholdAccessService } from '../households/household-access.service';
 import { AddMealPlanItemDto } from './dto/add-meal-plan-item.dto';
+import { AddLeftoverMealPlanItemDto } from './dto/add-leftover-meal-plan-item.dto';
 import { AddShoppingListItemDto } from './dto/add-shopping-list-item.dto';
 import { DateRangeDto } from './dto/date-range.dto';
 import { MealPlanQueryDto } from './dto/meal-plan-query.dto';
@@ -17,6 +18,10 @@ import { AddRecipeIngredientsDto } from './dto/add-recipe-ingredients.dto';
 import { FromMealPlanPreviewDto, GenerateMealPlanDto } from './dto/generate-meal-plan.dto';
 import { MealPlanGeneratorService } from './meal-plan-generator.service';
 import { PlanningService } from './planning.service';
+import { ApplyMealPlanTemplateDto } from './dto/apply-meal-plan-template.dto';
+import { CreateRecurringMealRuleDto } from './dto/create-recurring-meal-rule.dto';
+import { SaveMealPlanTemplateDto } from './dto/save-meal-plan-template.dto';
+import { SavedPlanningService } from './saved-planning.service';
 
 @ApiTags('Planning')
 @ApiBearerAuth()
@@ -27,6 +32,7 @@ export class PlanningController {
   constructor(
     @Inject(PlanningService) private readonly service: PlanningService,
     @Inject(MealPlanGeneratorService) private readonly generator: MealPlanGeneratorService,
+    private readonly savedPlanning: SavedPlanningService,
   ) {}
 
   @Post('meal-plans/generate-preview')
@@ -40,6 +46,30 @@ export class PlanningController {
   createMealPlanFromPreview(@CurrentUser() user: AuthUser, @Body() dto: FromMealPlanPreviewDto) {
     return this.generator.createFromPreview(user.id, dto);
   }
+
+  @Post('meal-plan-templates')
+  @ApiOperation({ summary: 'Save an owned meal plan as a reusable template' })
+  saveMealPlanTemplate(@CurrentUser() user: AuthUser, @Body() dto: SaveMealPlanTemplateDto) { return this.savedPlanning.saveTemplate(user.id, dto); }
+
+  @Get('meal-plan-templates')
+  @ApiOperation({ summary: 'List saved meal-plan templates' })
+  listMealPlanTemplates(@CurrentUser() user: AuthUser) { return this.savedPlanning.listTemplates(user.id); }
+
+  @Post('meal-plan-templates/:templateId/apply')
+  @ApiOperation({ summary: 'Apply a saved template to an owned meal plan and date range' })
+  applyMealPlanTemplate(@CurrentUser() user: AuthUser, @Param('templateId', ParseIntPipe) templateId: number, @Body() dto: ApplyMealPlanTemplateDto) { return this.savedPlanning.applyTemplate(user.id, templateId, dto); }
+
+  @Post('recurring-meal-rules')
+  @ApiOperation({ summary: 'Create a recurring meal rule' })
+  createRecurringMealRule(@CurrentUser() user: AuthUser, @Body() dto: CreateRecurringMealRuleDto) { return this.savedPlanning.createRecurringRule(user.id, dto); }
+
+  @Get('recurring-meal-rules')
+  @ApiOperation({ summary: 'List recurring meal rules' })
+  listRecurringMealRules(@CurrentUser() user: AuthUser) { return this.savedPlanning.listRecurringRules(user.id); }
+
+  @Delete('recurring-meal-rules/:ruleId')
+  @ApiOperation({ summary: 'Delete a recurring meal rule' })
+  deleteRecurringMealRule(@CurrentUser() user: AuthUser, @Param('ruleId', ParseIntPipe) ruleId: number) { return this.savedPlanning.deleteRecurringRule(user.id, ruleId); }
 
   @Get('meal-plans')
   @ApiOperation({ summary: 'List owned meal plans' })
@@ -70,6 +100,11 @@ export class PlanningController {
   @ApiOperation({ summary: 'Add a recipe to an owned meal plan' })
   @ApiCreatedResponse({ type: MealPlanItemResponseDto })
   addPlanItem(@CurrentUser() user: AuthUser, @Param('planId', ParseIntPipe) planId: number, @Body() dto: AddMealPlanItemDto) { return this.service.addPlanItem(user.id, planId, dto); }
+
+  @Post('meal-plans/:planId/items/leftover')
+  @ApiOperation({ summary: 'Add an available leftover to an owned meal plan' })
+  @ApiCreatedResponse({ type: MealPlanItemResponseDto })
+  addLeftoverPlanItem(@CurrentUser() user: AuthUser, @Param('planId', ParseIntPipe) planId: number, @Body() dto: AddLeftoverMealPlanItemDto) { return this.service.addLeftoverPlanItem(user.id, planId, dto); }
 
   @Patch('meal-plans/:planId/items/:itemId')
   @ApiOperation({ summary: 'Update a meal plan item' })
@@ -178,6 +213,11 @@ export class HouseholdPlanningController {
     return this.service.addPlanItemForHousehold(householdId, planId, dto);
   }
 
+  @Post('meal-plans/:planId/items/leftover')
+  @ApiOperation({ summary: 'Add an available leftover to a household meal plan' })
+  @ApiCreatedResponse({ type: MealPlanItemResponseDto })
+  async addLeftoverPlanItem(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('planId', ParseIntPipe) planId: number, @Body() dto: AddLeftoverMealPlanItemDto) { await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']); return this.service.addLeftoverPlanItemForHousehold(householdId, planId, dto); }
+
   @Patch('meal-plans/:planId/items/:itemId')
   @ApiOperation({ summary: 'Update a household meal plan item' })
   async updatePlanItem(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('planId', ParseIntPipe) planId: number, @Param('itemId', ParseIntPipe) itemId: number, @Body() dto: UpdateMealPlanItemDto) {
@@ -190,7 +230,7 @@ export class HouseholdPlanningController {
   @ApiOkResponse({ type: MessageResponseDto })
   async deletePlanItem(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('planId', ParseIntPipe) planId: number, @Param('itemId', ParseIntPipe) itemId: number) {
     await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
-    return this.service.deletePlanItemForHousehold(householdId, planId, itemId);
+    return this.service.deletePlanItemForHousehold(user.id, householdId, planId, itemId);
   }
 
   @Get('shopping-list')

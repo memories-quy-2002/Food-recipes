@@ -17,6 +17,18 @@ type ErrorBody = {
   ingredient_names?: string[];
 };
 
+type UnknownHttpError = {
+  status?: unknown;
+  statusCode?: unknown;
+  type?: unknown;
+};
+
+const isPayloadTooLargeError = (exception: unknown): exception is UnknownHttpError => {
+  if (typeof exception !== 'object' || exception === null) return false;
+  const candidate = exception as UnknownHttpError;
+  return candidate.type === 'entity.too.large' || candidate.status === 413 || candidate.statusCode === 413;
+};
+
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
@@ -24,15 +36,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = http.getRequest<RequestWithContext>();
     const response = http.getResponse<Response>();
     const isHttpException = exception instanceof HttpException;
+    const isPayloadTooLarge = isPayloadTooLargeError(exception);
     const statusCode = isHttpException
       ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+      : isPayloadTooLarge
+        ? HttpStatus.PAYLOAD_TOO_LARGE
+        : HttpStatus.INTERNAL_SERVER_ERROR;
     const exceptionResponse = isHttpException ? exception.getResponse() : null;
     const body: ErrorBody =
       typeof exceptionResponse === 'object' && exceptionResponse !== null
         ? exceptionResponse
         : {};
-    const message = Array.isArray(body.message)
+    const message = isPayloadTooLarge
+      ? 'Request payload is too large'
+      : Array.isArray(body.message)
       ? body.message.join(', ')
       : body.message ??
         (isHttpException && typeof exceptionResponse === 'string'
@@ -66,6 +83,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         403: 'FORBIDDEN',
         404: 'NOT_FOUND',
         409: 'CONFLICT',
+        413: 'PAYLOAD_TOO_LARGE',
         503: 'SERVICE_UNAVAILABLE',
       }[statusCode] ?? 'INTERNAL_SERVER_ERROR'
     );

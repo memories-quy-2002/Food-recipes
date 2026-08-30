@@ -5,6 +5,10 @@ import {
 	setAccessToken,
 } from "@/features/auth/state/authTokenStore";
 import { apiRoutes } from "@/shared/api/routes";
+import {
+	withSharedAuthRefresh,
+	type AuthRefreshResponse,
+} from "@/shared/api/authRefreshCoordinator";
 
 export const AUTH_REFRESH_TIMEOUT_MS = 5000;
 
@@ -69,11 +73,14 @@ const invalidRefreshError = (): AuthRefreshError =>
 
 export const authSessionApi = {
 	async refresh(): Promise<AuthSessionWithToken> {
-		const response: AxiosResponse<unknown> = await axios.post<unknown>(
-			apiRoutes.authRefresh,
-			{},
-			{ timeout: AUTH_REFRESH_TIMEOUT_MS },
-		);
+		const response: AxiosResponse<AuthRefreshResponse> =
+			await withSharedAuthRefresh(() =>
+				axios.post<AuthRefreshResponse>(
+					apiRoutes.authRefresh,
+					{},
+					{ timeout: AUTH_REFRESH_TIMEOUT_MS },
+				),
+			);
 		if (!isAuthSession(response.data)) {
 			clearAccessToken();
 			throw invalidRefreshError();

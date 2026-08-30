@@ -12,4 +12,10 @@ describe("home feed query contract", () => {
 		expect(getHomeFeedRoute(false)).toBe(apiRoutes.homeFeed);
 		expect(getHomeFeedRoute(true)).toBe(apiRoutes.userHomeFeed);
 	});
+
+	it("exposes the authenticated not-interested recommendation route", () => {
+		expect(apiRoutes.userRecommendationNotInterested(42)).toBe(
+			"/users/me/recommendations/not-interested/42",
+		);
+	});
 });

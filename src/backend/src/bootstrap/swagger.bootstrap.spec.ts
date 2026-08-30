@@ -90,6 +90,8 @@ describe('Swagger document', () => {
       'GET /api/v1/users/me/wishlist',
       'POST /api/v1/users/me/wishlist',
       'DELETE /api/v1/users/me/wishlist/{recipeId}',
+      'PUT /api/v1/users/me/recommendations/not-interested/{recipeId}',
+      'DELETE /api/v1/users/me/recommendations/not-interested/{recipeId}',
       'GET /api/v1/users/me/collections',
       'POST /api/v1/users/me/collections',
       'PATCH /api/v1/users/me/collections/{collectionId}',
@@ -103,6 +105,12 @@ describe('Swagger document', () => {
       'GET /api/v1/users/me/meal-plans',
       'POST /api/v1/users/me/meal-plans/generate-preview',
       'POST /api/v1/users/me/meal-plans/from-preview',
+      'POST /api/v1/users/me/meal-plan-templates',
+      'GET /api/v1/users/me/meal-plan-templates',
+      'POST /api/v1/users/me/meal-plan-templates/{templateId}/apply',
+      'POST /api/v1/users/me/recurring-meal-rules',
+      'GET /api/v1/users/me/recurring-meal-rules',
+      'DELETE /api/v1/users/me/recurring-meal-rules/{ruleId}',
       'POST /api/v1/users/me/meal-plans',
       'GET /api/v1/users/me/meal-plans/{planId}',
       'PATCH /api/v1/users/me/meal-plans/{planId}',
@@ -127,6 +135,8 @@ describe('Swagger document', () => {
       'POST /api/v1/users/me/pantry/from-shopping-list',
       'GET /api/v1/users/me/cooking-history',
       'POST /api/v1/users/me/cooking-history',
+      'GET /api/v1/users/me/leftovers',
+      'POST /api/v1/users/me/leftovers',
       'GET /api/v1/users/me/cooking-session',
       'POST /api/v1/users/me/cooking-session',
       'PATCH /api/v1/users/me/cooking-session/{sessionId}',
@@ -177,6 +187,10 @@ describe('Swagger document', () => {
       'DELETE /api/v1/households/{householdId}/shopping-list/items/{itemId}',
       'POST /api/v1/households/{householdId}/shopping-list/from-recipe',
       'DELETE /api/v1/households/{householdId}/shopping-list/completed',
+      'GET /api/v1/households/{householdId}/leftovers',
+      'POST /api/v1/households/{householdId}/leftovers',
+      'POST /api/v1/users/me/meal-plans/{planId}/items/leftover',
+      'POST /api/v1/households/{householdId}/meal-plans/{planId}/items/leftover',
     ];
     const actualRoutes = Object.entries(document.paths).flatMap(([path, operations]) =>
       Object.keys(operations).map((method) => `${method.toUpperCase()} ${path}`),
@@ -212,7 +226,7 @@ describe('Swagger document', () => {
   it('documents bearer security and representative request DTO schemas', async () => {
     const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
     const document = response.body as {
-      paths: Record<string, Record<string, { security?: Array<Record<string, string[]>> }>>;
+      paths: Record<string, Record<string, { security?: Array<Record<string, string[]>>; responses?: Record<string, unknown> }>>;
       components: {
         securitySchemes: Record<string, { type?: string; scheme?: string; bearerFormat?: string }>;
         schemas: Record<string, { properties?: Record<string, unknown> }>;
@@ -227,10 +241,15 @@ describe('Swagger document', () => {
     });
     expect(document.paths['/api/v1/auth/me'].get.security).toEqual([{ bearer: [] }]);
     expect(document.paths['/api/v1/auth/signup'].post.security).toBeUndefined();
+    expect(document.paths['/api/v1/users/me/recommendations/not-interested/{recipeId}'].put.responses).toHaveProperty('404');
     expect(document.components.schemas.LoginDto.properties).toHaveProperty('email');
     expect(document.components.schemas.CreateRecipeDto.properties).toHaveProperty('ingredients');
     expect(document.components.schemas.UpsertRatingDto.properties).toHaveProperty('score');
     expect(document.components.schemas.UpdateProfileDto.properties).toHaveProperty('name');
+    expect(document.components.schemas.MealPlanItemResponseDto.properties).toEqual(expect.objectContaining({
+      source_type: expect.any(Object),
+      leftover_batch_id: expect.any(Object),
+    }));
   });
 
   it('documents unique query parameters, runtime response shapes, and error metadata', async () => {

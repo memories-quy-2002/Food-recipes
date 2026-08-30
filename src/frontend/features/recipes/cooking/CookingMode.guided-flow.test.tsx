@@ -16,7 +16,7 @@ const recipe = {
 };
 
 type CookingModeRenderProps = Partial<
-	Pick<React.ComponentProps<typeof CookingMode>, "planningContext" | "onBackToPlan" | "initialStepIndex" | "onComplete">
+	Pick<React.ComponentProps<typeof CookingMode>, "planningContext" | "onBackToPlan" | "initialStepIndex" | "onComplete" | "keepOpenAfterComplete">
 >;
 
 const createRenderer = (element: React.ReactElement): ReactTestRenderer => {
@@ -89,6 +89,21 @@ describe("cooking mode guided flow", () => {
 		expect(findButton(renderer, "Back to plan")).toBeTruthy();
 		clickButton(renderer, "Back to plan");
 		expect(onBackToPlan).toHaveBeenCalledOnce();
+	});
+
+	it("keeps an unplanned completion screen open for a leftover follow-up", async () => {
+		const onExit = vi.fn();
+		const onComplete = vi.fn().mockResolvedValue({ session: { servings: 4 }, history: { history_id: 5 } });
+		const renderer = createRenderer(
+			<MemoryRouter>
+				<CookingMode recipe={recipe} onExit={onExit} onComplete={onComplete} keepOpenAfterComplete />
+			</MemoryRouter>,
+		);
+
+		clickButton(renderer, "Next step");
+		await clickButtonAsync(renderer, "Finish cooking");
+		expect(findText(renderer, "Recipe complete")).toBeTruthy();
+		expect(onExit).not.toHaveBeenCalled();
 	});
 
 	it("preserves instruction order and exact text while exposing the current step", () => {

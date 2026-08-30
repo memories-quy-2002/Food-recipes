@@ -22,6 +22,10 @@ const context = (overrides: Partial<RecommendationContext> = {}): Recommendation
   likedMealIds: new Set(),
   recentlyCookedRecipeIds: new Set(),
   repeatCookCounts: new Map(),
+  savedRecipeIds: new Set(),
+  plannedRecipeIds: new Set(),
+  notInterestedRecipeIds: new Set(),
+  removedFromMealPlanRecipeIds: new Set(),
   asOf: new Date('2026-08-24T00:00:00.000Z'),
   ...overrides,
 });

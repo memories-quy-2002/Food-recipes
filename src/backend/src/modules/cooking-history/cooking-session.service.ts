@@ -23,22 +23,34 @@ export class CookingSessionService {
   }
 
   async start(userId: number, dto: StartCookingSessionDto): Promise<{ session: CookingSessionRecord }> {
-    if (!(await this.repository.recipeExists(dto.recipeId))) throw this.recipeNotFound();
-    if (
-      dto.mealPlanItemId !== undefined &&
-      !(await this.repository.mealPlanItemBelongsToUser(userId, dto.mealPlanItemId, dto.recipeId))
-    ) {
-      throw this.planItemNotFound();
+    if (dto.sourceType !== 'leftover' && dto.leftoverBatchId !== undefined) throw new BadRequestException({ code: 'LEFTOVER_SOURCE_INVALID', message: 'A leftover batch requires sourceType leftover' });
+    if (dto.sourceType === 'leftover' && (!dto.leftoverBatchId || !this.repository.leftoverStartContext)) throw new NotFoundException({ code: 'LEFTOVER_SOURCE_INVALID', message: 'Leftover source is not available' });
+    const leftoverContext = dto.sourceType === 'leftover'
+      ? await this.repository.leftoverStartContext!(userId, dto.recipeId, dto.leftoverBatchId!, dto.mealPlanItemId ?? null, dto.householdId ?? null)
+      : null;
+    if (dto.sourceType === 'leftover' && !leftoverContext) throw new NotFoundException({ code: 'LEFTOVER_SOURCE_INVALID', message: 'Leftover source does not belong to this user, household, or meal-plan item' });
+    if (dto.sourceType === 'leftover' && dto.mealPlanItemId !== undefined && leftoverContext?.mode !== 'reserved') throw new ConflictException({ code: 'LEFTOVER_SOURCE_INVALID', message: 'A meal-plan item must be a matching leftover reservation' });
+    if (leftoverContext?.mode === 'reserved' && dto.servings !== undefined && dto.servings !== leftoverContext.available_servings) throw new ConflictException({ code: 'LEFTOVER_RESERVATION_MISMATCH', message: 'Reserved leftover cooking servings must equal the meal-plan reservation' });
+    if (leftoverContext && (dto.servings ?? leftoverContext.available_servings) > leftoverContext.available_servings) throw new ConflictException({ code: 'LEFTOVER_SERVINGS_UNAVAILABLE', message: 'Requested servings exceed the available leftover reservation' });
+    if (dto.sourceType !== 'leftover' && dto.mealPlanItemId !== undefined && dto.householdId !== undefined && this.repository.mealPlanItemBelongsToHousehold && !(await this.repository.mealPlanItemBelongsToHousehold(dto.householdId, dto.mealPlanItemId, dto.recipeId))) throw this.planItemNotFound();
+    if (dto.sourceType !== 'leftover' && dto.mealPlanItemId !== undefined && dto.householdId === undefined && !(await this.repository.mealPlanItemBelongsToUser(userId, dto.mealPlanItemId, dto.recipeId))) throw this.planItemNotFound();
+    if (dto.sourceType === 'leftover') {
+      const active = await this.repository.findActive(userId, dto.recipeId);
+      if (active && (active.source_type !== 'leftover' || active.leftover_batch_id !== dto.leftoverBatchId)) throw new ConflictException({ code: 'LEFTOVER_SOURCE_MISMATCH', message: 'An active recipe cooking session already exists for this recipe' });
     }
-
-    return {
-      session: await this.repository.start(
-        userId,
-        dto.recipeId,
-        dto.mealPlanItemId ?? null,
-        dto.servings ?? null,
-      ),
-    };
+    if (dto.sourceType !== 'leftover') {
+      const active = await this.repository.findActive(userId, dto.recipeId);
+      if (active?.source_type === 'leftover' || active?.leftover_batch_id) throw new ConflictException({ code: 'COOKING_SESSION_SOURCE_MISMATCH', message: 'An active leftover cooking session already exists for this recipe' });
+    }
+    if (!(await this.repository.recipeExists(dto.recipeId))) throw this.recipeNotFound();
+    const session = dto.sourceType === 'leftover'
+      ? dto.householdId === undefined
+        ? await this.repository.start(userId, dto.recipeId, dto.mealPlanItemId ?? null, dto.servings ?? leftoverContext!.available_servings, 'leftover', dto.leftoverBatchId ?? null)
+        : await this.repository.start(userId, dto.recipeId, dto.mealPlanItemId ?? null, dto.servings ?? leftoverContext!.available_servings, 'leftover', dto.leftoverBatchId ?? null, dto.householdId)
+      : dto.householdId === undefined
+        ? await this.repository.start(userId, dto.recipeId, dto.mealPlanItemId ?? null, dto.servings ?? null)
+        : await this.repository.start(userId, dto.recipeId, dto.mealPlanItemId ?? null, dto.servings ?? null, 'recipe', null, dto.householdId);
+    return { session };
   }
 
   async update(userId: number, sessionId: number, dto: UpdateCookingSessionDto): Promise<{ session: CookingSessionRecord }> {

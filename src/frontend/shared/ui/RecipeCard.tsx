@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock3, Heart, HeartOff, Star } from "lucide-react";
+import { Clock3, EyeOff, Heart, HeartOff, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { RecipeSummary } from "@/shared/api/contracts";
 import convertImage from "@/shared/utils/convertImage";
@@ -25,6 +25,8 @@ export type RecipeCardProps = {
 	viewMode?: "grid" | "list";
 	favorite?: boolean;
 	onToggleFavorite?: () => void;
+	onNotInterested?: () => void;
+	notInterestedPending?: boolean;
 };
 
 type RecipeMetadataItem = {
@@ -37,6 +39,8 @@ const RecipeCard = ({
 	viewMode = "grid",
 	favorite,
 	onToggleFavorite,
+	onNotInterested,
+	notInterestedPending = false,
 }: RecipeCardProps): React.ReactElement => {
 	const name = recipe.recipe_name || "Untitled recipe";
 	const dietaryTag = (recipe.dietary_tags || recipe.dietaryTags || []).find(
@@ -150,6 +154,23 @@ const RecipeCard = ({
 					) : (
 						<Heart className="size-5" aria-hidden="true" />
 					)}
+				</button>
+			) : null}
+			{onNotInterested ? (
+				<button
+					type="button"
+					className="absolute right-14 top-3 inline-flex size-9 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-sm backdrop-blur transition hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					onClick={(event) => {
+						event.preventDefault();
+						event.stopPropagation();
+						onNotInterested();
+					}}
+					disabled={notInterestedPending}
+					aria-busy={notInterestedPending}
+					aria-label={notInterestedPending ? `Hiding ${name}` : `Not interested in ${name}`}
+					title={notInterestedPending ? "Hiding recommendation" : "Not interested"}
+				>
+					<EyeOff className="size-4" aria-hidden="true" />
 				</button>
 			) : null}
 		</article>

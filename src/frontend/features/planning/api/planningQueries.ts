@@ -7,6 +7,7 @@ import {
 import { useContext } from "react";
 import {
 	addMealPlanItem,
+	addLeftoverMealPlanItem,
 	createMealPlan,
 	deleteMealPlanItem,
 	getMealPlan,
@@ -16,6 +17,7 @@ import {
 	listSavedRecipeIds,
 	updateMealPlanItem,
 	type AddMealPlanItemInput,
+	type AddLeftoverMealPlanItemInput,
 	type CreateMealPlanInput,
 	type DateRange,
 	type MealPlanResponse,
@@ -27,6 +29,7 @@ import {
 import { useToast } from "@/app/ToastProvider";
 import { AuthContext } from "@/app/AuthProvider";
 import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
+import { leftoversQueryKeys } from "@/features/leftovers/api/leftoversQueries";
 
 export const planningQueryKeys = {
 	all: ["planning"] as const,
@@ -153,6 +156,25 @@ export const useAddMealPlanItemMutation = (scope: KitchenScope = PERSONAL_KITCHE
 	});
 };
 
+export const useAddLeftoverMealPlanItemMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
+	const queryClient = useQueryClient();
+	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
+	return useMutation({
+		mutationFn: ({ planId, input }: { planId: number; input: AddLeftoverMealPlanItemInput }) =>
+			addLeftoverMealPlanItem(planId, input, scope),
+		onSuccess: async () => {
+			await Promise.all([
+				invalidatePlanning(queryClient, userId, scope),
+				queryClient.invalidateQueries({ queryKey: ["leftovers", userId, scopeKey(scope)] }),
+			]);
+			showToast({ title: "Leftover added to your plan" });
+		},
+		onError: () => showToast({ title: "Couldn’t plan this leftover", message: "It may have expired or already been used.", type: "error" }),
+	});
+};
+
 export const useUpdateMealPlanItemMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
@@ -178,7 +200,13 @@ export const useDeleteMealPlanItemMutation = (scope: KitchenScope = PERSONAL_KIT
 	return useMutation({
 		mutationFn: ({ planId, itemId }: { planId: number; itemId: number }) =>
 			deleteMealPlanItem(planId, itemId, scope),
-		onSuccess: async () => { await invalidatePlanning(queryClient, userId, scope); showToast({ title: "Meal removed from your plan" }); },
+		onSuccess: async () => {
+			await Promise.all([
+				invalidatePlanning(queryClient, userId, scope),
+				queryClient.invalidateQueries({ queryKey: leftoversQueryKeys.forUser(userId, scope) }),
+			]);
+			showToast({ title: "Meal removed from your plan" });
+		},
 		onError: () => showToast({ title: "Couldn’t remove this meal", message: "Please try again.", type: "error" }),
 	});
 };

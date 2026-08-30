@@ -6,6 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KitchenState } from "@/shared/api/contracts";
 
 const prepare = vi.fn();
+vi.mock("@/features/leftovers/api/leftoversQueries", () => ({
+	useLeftoversQuery: () => ({ data: { items: [] }, isPending: false }),
+}));
 vi.mock("@/features/shopping/api/shoppingQueries", () => ({
 	usePrepareRecipeIngredientsMutation: () => ({
 		isPending: false,

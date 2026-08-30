@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { DateRangeDto } from './dto/date-range.dto';
 import { MealPlanQueryDto } from './dto/meal-plan-query.dto';
 import { AddMealPlanItemDto } from './dto/add-meal-plan-item.dto';
+import { AddLeftoverMealPlanItemDto } from './dto/add-leftover-meal-plan-item.dto';
 import { UpdateMealPlanItemDto } from './dto/update-meal-plan-item.dto';
 import { AddShoppingListItemDto } from './dto/add-shopping-list-item.dto';
 import { UpdateShoppingListItemDto } from './dto/update-shopping-list-item.dto';
@@ -84,6 +85,14 @@ export class PlanningService {
     return { item };
   }
 
+  async addLeftoverPlanItem(userId: number, planId: number, dto: AddLeftoverMealPlanItemDto) {
+    const plan = await this.requirePlan(userId, planId);
+    this.validateDateInRange(dto.date, plan.start_date, plan.end_date);
+    const item = await this.repository.addLeftoverPlanItem?.(userId, planId, dto);
+    if (!item) throw new NotFoundException({ code: 'LEFTOVER_NOT_AVAILABLE', message: 'Leftover batch is not available for this plan' });
+    return { item };
+  }
+
   async updatePlanItem(userId: number, planId: number, itemId: number, dto: UpdateMealPlanItemDto) {
     const plan = await this.requirePlan(userId, planId);
     if (dto.date) this.validateDateInRange(dto.date, plan.start_date, plan.end_date);
@@ -95,7 +104,7 @@ export class PlanningService {
 
   async deletePlanItem(userId: number, planId: number, itemId: number) {
     await this.requirePlan(userId, planId);
-    if (!(await this.repository.deletePlanItem(userId, planId, itemId))) throw new NotFoundException({ code: 'MEAL_PLAN_ITEM_NOT_FOUND', message: 'Meal plan item not found' });
+    if (!(await this.repository.deletePlanItemAndRecordRemoval(userId, planId, itemId))) throw new NotFoundException({ code: 'MEAL_PLAN_ITEM_NOT_FOUND', message: 'Meal plan item not found' });
     return { message: 'Meal plan item removed' };
   }
 
@@ -108,6 +117,14 @@ export class PlanningService {
     return { item };
   }
 
+  async addLeftoverPlanItemForHousehold(householdId: number, planId: number, dto: AddLeftoverMealPlanItemDto) {
+    const plan = await this.requireHouseholdPlan(householdId, planId);
+    this.validateDateInRange(dto.date, plan.start_date, plan.end_date);
+    const item = await this.repository.addLeftoverPlanItemForHousehold?.(householdId, planId, dto);
+    if (!item) throw new NotFoundException({ code: 'LEFTOVER_NOT_AVAILABLE', message: 'Leftover batch is not available for this plan' });
+    return { item };
+  }
+
   async updatePlanItemForHousehold(householdId: number, planId: number, itemId: number, dto: UpdateMealPlanItemDto) {
     const plan = await this.requireHouseholdPlan(householdId, planId);
     if (dto.date) this.validateDateInRange(dto.date, plan.start_date, plan.end_date);
@@ -117,9 +134,9 @@ export class PlanningService {
     return { item };
   }
 
-  async deletePlanItemForHousehold(householdId: number, planId: number, itemId: number) {
+  async deletePlanItemForHousehold(userId: number, householdId: number, planId: number, itemId: number) {
     await this.requireHouseholdPlan(householdId, planId);
-    if (!(await this.repository.deletePlanItemForHousehold(householdId, planId, itemId))) throw new NotFoundException({ code: 'MEAL_PLAN_ITEM_NOT_FOUND', message: 'Meal plan item not found' });
+    if (!(await this.repository.deletePlanItemAndRecordRemovalForHousehold(userId, householdId, planId, itemId))) throw new NotFoundException({ code: 'MEAL_PLAN_ITEM_NOT_FOUND', message: 'Meal plan item not found' });
     return { message: 'Meal plan item removed' };
   }
 

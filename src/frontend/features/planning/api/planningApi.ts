@@ -29,6 +29,8 @@ export type MealPlanItem = {
 	servings: number;
 	cooking_status?: "planned" | "cooking" | "completed";
 	created_at: string;
+	source_type?: "recipe" | "leftover" | "external";
+	leftover_batch_id?: number | null;
 };
 
 export type MealPlanListResponse = { plans: MealPlan[] };
@@ -45,6 +47,13 @@ export type CreateMealPlanInput = DateRange & { name: string };
 
 export type AddMealPlanItemInput = {
 	recipeId: number;
+	date: string;
+	slot: MealSlot;
+	servings: number;
+};
+
+export type AddLeftoverMealPlanItemInput = {
+	leftoverBatchId: number;
 	date: string;
 	slot: MealSlot;
 	servings: number;
@@ -93,6 +102,7 @@ type MealPlanApiRoutes = {
 	mealPlan: (planId: number) => string;
 	mealPlanItems: (planId: number) => string;
 	mealPlanItem: (planId: number, itemId: number) => string;
+	mealPlanLeftoverItems: (planId: number) => string;
 };
 
 const createMealPlanRoutes = (scope: KitchenScope): MealPlanApiRoutes => {
@@ -102,6 +112,7 @@ const createMealPlanRoutes = (scope: KitchenScope): MealPlanApiRoutes => {
 			mealPlan: apiRoutes.mealPlan,
 			mealPlanItems: apiRoutes.mealPlanItems,
 			mealPlanItem: apiRoutes.mealPlanItem,
+			mealPlanLeftoverItems: (planId) => `${apiRoutes.mealPlanItems(planId)}/leftover`,
 		};
 	}
 
@@ -111,6 +122,7 @@ const createMealPlanRoutes = (scope: KitchenScope): MealPlanApiRoutes => {
 		mealPlan: (planId) => `${mealPlans}/${planId}`,
 		mealPlanItems: (planId) => `${mealPlans}/${planId}/items`,
 		mealPlanItem: (planId, itemId) => `${mealPlans}/${planId}/items/${itemId}`,
+		mealPlanLeftoverItems: (planId) => `${mealPlans}/${planId}/items/leftover`,
 	};
 };
 
@@ -162,6 +174,18 @@ export const addMealPlanItem = async (
 ): Promise<MealPlanItemResponse> => {
 	const response = await axios.post<MealPlanItemResponse>(
 		createMealPlanRoutes(scope).mealPlanItems(planId),
+		input,
+	);
+	return response.data;
+};
+
+export const addLeftoverMealPlanItem = async (
+	planId: number,
+	input: AddLeftoverMealPlanItemInput,
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<MealPlanItemResponse> => {
+	const response = await axios.post<MealPlanItemResponse>(
+		createMealPlanRoutes(scope).mealPlanLeftoverItems(planId),
 		input,
 	);
 	return response.data;

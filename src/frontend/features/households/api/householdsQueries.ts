@@ -13,10 +13,11 @@ export const householdQueryKeys = {
 export const useHouseholdsQuery = () => {
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
+	const isAuthReady = auth.current.hydrated && userId > 0;
 	return useQuery({
 		queryKey: householdQueryKeys.forUser(userId),
 		queryFn: ({ signal }) => listHouseholds(signal),
-		enabled: userId > 0,
+		enabled: isAuthReady,
 	});
 };
 

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import axios from "@/shared/api/axios";
 import {
 	addMealPlanItem,
+	addLeftoverMealPlanItem,
 	createMealPlan,
 	deleteMealPlanItem,
 	getMealPlan,
@@ -130,6 +131,22 @@ describe("planning API", () => {
 		);
 		expect(mockedAxios.delete).toHaveBeenCalledWith(
 			"/households/12/meal-plans/12/items/4",
+		);
+	});
+
+	it("adds a leftover item through the scope-aware leftover route", async () => {
+		mockedAxios.post.mockResolvedValueOnce({ data: { item: { item_id: 9 } } });
+
+		await addLeftoverMealPlanItem(12, {
+			leftoverBatchId: 8,
+			date: "2026-08-31",
+			slot: "lunch",
+			servings: 2,
+		}, householdScope(22));
+
+		expect(mockedAxios.post).toHaveBeenCalledWith(
+			"/households/22/meal-plans/12/items/leftover",
+			{ leftoverBatchId: 8, date: "2026-08-31", slot: "lunch", servings: 2 },
 		);
 	});
 });

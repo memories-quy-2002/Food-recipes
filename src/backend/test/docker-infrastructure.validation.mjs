@@ -9,6 +9,7 @@ const apiDirectory = path.resolve(apiTestDirectory, '..');
 const backendRoot = apiDirectory;
 
 const files = {
+  packageJson: path.join(backendRoot, 'package.json'),
   dockerfile: path.join(apiDirectory, 'Dockerfile'),
   apiDockerignore: path.join(backendRoot, '.dockerignore'),
   compose: path.join(backendRoot, 'infrastructure/docker/docker-compose.yml'),
@@ -89,4 +90,12 @@ assert.match(contents.composeDev, /(?:\.\/)?src:/, 'development Compose must mou
 assert.doesNotMatch(contents.composeDev, /^\s+internal:\s+true\s*$/m, 'development Compose must publish API and PostgreSQL ports to localhost');
 assert.match(contents.composeDev, /condition:\s*service_healthy/, 'development migration must wait for healthy PostgreSQL');
 assert.match(contents.composeDev, /condition:\s*service_completed_successfully/, 'development API must wait for successful migrations');
+
+const backendPackage = JSON.parse(contents.packageJson);
+const infraUpScript = backendPackage.scripts?.['infra:up'];
+assert.equal(typeof infraUpScript, 'string', 'backend package must define infra:up');
+assert.match(infraUpScript, /--no-deps/, 'infra:up must not start Compose dependencies implicitly');
+assert.match(infraUpScript, /\bpostgres\b/, 'infra:up must start PostgreSQL');
+assert.match(infraUpScript, /\bapi\b/, 'infra:up must start the API');
+assert.doesNotMatch(infraUpScript, /\bmigrate\b/, 'infra:up must leave migrations to the local dev command');
 console.log('Direct Nest API and Docker infrastructure static validation passed.');

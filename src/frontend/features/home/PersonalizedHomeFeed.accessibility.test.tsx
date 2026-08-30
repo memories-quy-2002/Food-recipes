@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 
 const { useHomeFeedQueryMock } = vi.hoisted(() => ({
 	useHomeFeedQueryMock: vi.fn(),
+}));
+const { useDismissRecommendationMutationMock } = vi.hoisted(() => ({
+	useDismissRecommendationMutationMock: vi.fn(),
 }));
 
 vi.mock("./api/useHomeFeedQuery", () => ({
@@ -18,6 +21,9 @@ vi.mock("./KitchenCommandCenter", () => ({
 			<h2 id="mock-kitchen-command-center-title">Kitchen command center</h2>
 		</section>
 	),
+}));
+vi.mock("../recommendations/api/recommendationsQueries", () => ({
+	useDismissRecommendationMutation: useDismissRecommendationMutationMock,
 }));
 
 import PersonalizedHomeFeed from "./PersonalizedHomeFeed";
@@ -68,6 +74,7 @@ const renderFeed = (): void => {
 describe("PersonalizedHomeFeed accessibility", () => {
 	beforeEach(() => {
 		useHomeFeedQueryMock.mockReset();
+		useDismissRecommendationMutationMock.mockReturnValue({ mutate: vi.fn(), isPending: false });
 	});
 
 	afterEach(cleanup);
@@ -158,5 +165,39 @@ describe("PersonalizedHomeFeed accessibility", () => {
 		expect(document.activeElement).toBe(saveButton);
 		expect(screen.getByRole("link", { name: "Update your pantry" })).toHaveAttribute("href", "/pantry");
 		expect(screen.getByText("Pantry pasta")).toBeInTheDocument();
+	});
+
+	it("shows not-interested only for authenticated recommendations and invokes the callback", () => {
+		const mutate = vi.fn();
+		useDismissRecommendationMutationMock.mockReturnValue({ mutate, isPending: false });
+		useHomeFeedQueryMock.mockReturnValue(createQueryState([{
+			key: "recommended", title: "Recommended for you", description: "Personalized ideas.", recipes: [createRecipe()],
+		}]));
+
+		renderFeed();
+		fireEvent.click(screen.getByRole("button", { name: "Not interested in Pantry pasta" }));
+		expect(mutate).toHaveBeenCalledWith(7);
+
+		cleanup();
+		useHomeFeedQueryMock.mockReturnValue(createQueryState([{
+			key: "recommended", title: "Recommended", description: "Ideas.", recipes: [createRecipe()],
+		}]));
+		render(<MemoryRouter><PersonalizedHomeFeed isAuthenticated={false} wishlist={[]} onClickFavorite={vi.fn()} /></MemoryRouter>);
+		expect(screen.queryByRole("button", { name: "Not interested in Pantry pasta" })).not.toBeInTheDocument();
+	});
+
+	it("disables the not-interested action while dismissal is pending", () => {
+		const mutate = vi.fn();
+		useDismissRecommendationMutationMock.mockReturnValue({ mutate, isPending: true });
+		useHomeFeedQueryMock.mockReturnValue(createQueryState([{
+			key: "recommended", title: "Recommended", description: "Ideas.", recipes: [createRecipe()],
+		}]));
+
+		renderFeed();
+		const action = screen.getByRole("button", { name: "Hiding Pantry pasta" });
+		expect(action).toBeDisabled();
+		expect(action).toHaveAttribute("aria-busy", "true");
+		fireEvent.click(action);
+		expect(mutate).not.toHaveBeenCalled();
 	});
 });
