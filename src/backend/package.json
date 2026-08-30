@@ -31,7 +31,7 @@
     "prisma:studio": "prisma studio --config prisma.config.ts",
     "demo:reset:production": "ts-node --transpile-only scripts/production-demo-reset.ts",
     "demo:verify": "ts-node --transpile-only scripts/verify-demo-seed.ts",
-    "infra:up": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build",
+    "infra:up": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build --no-deps postgres api",
     "infra:down": "docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml down",
     "postinstall": "pnpm run prisma:generate",
     "prepare": "cd ../.. && husky .husky"

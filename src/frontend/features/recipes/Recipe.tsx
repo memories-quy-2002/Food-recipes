@@ -23,11 +23,16 @@ import type {
 	CookingSessionCompletionResponse,
 	CookingShoppingListResponse,
 } from "@/features/history/api/cookingSessionApi";
+import LeftoverCompletionDialog, { type LeftoverSaveInput } from "@/features/leftovers/LeftoverCompletionDialog";
+import { useCreateLeftoverMutation } from "@/features/leftovers/api/leftoversQueries";
+import { addLeftoverMealPlanItem, createMealPlan, getMealPlan, listMealPlans } from "@/features/planning/api/planningApi";
+import { getWeekRange } from "@/features/planning/api/planningDates";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
 import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
+import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
 import PrivateRecipeNotes from "@/features/recipes/notes/PrivateRecipeNotes";
@@ -103,6 +108,11 @@ type CookingSessionControls = {
 	complete: (action?: CookingCompletionAction) => Promise<CookingSessionCompletionResponse | CookingShoppingListResponse | null>;
 };
 
+type LeftoverPromptState = {
+	historyId: number;
+	cookedServings: number;
+};
+
 type CollectionDialogProps = {
 	open: boolean;
 	recipeName: string;
@@ -140,6 +150,7 @@ const isUserRating = (value: unknown): value is UserRating =>
 
 const Recipe = (): React.ReactElement => {
 	const { auth } = useContext(AuthContext);
+	const { scope } = useHouseholdScope();
 	const { isAuthenticated, userId } = auth.current;
 	const [recipe, setRecipe] = useState<RecipeReadRecipe | null>(null);
 	const [isLoadingRecipe, setIsLoadingRecipe] = useState(true);
@@ -162,10 +173,12 @@ const Recipe = (): React.ReactElement => {
 	const [collectionDialogError, setCollectionDialogError] = useState<string | null>(null);
 	const [pendingCollectionId, setPendingCollectionId] = useState<number | null>(null);
 	const [preparationResult, setPreparationResult] = useState<PrepareRecipeResponse | null>(null);
+	const [leftoverPrompt, setLeftoverPrompt] = useState<LeftoverPromptState | null>(null);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
 	const prepareRecipeMutation = usePrepareRecipeIngredientsMutation();
+	const createLeftoverMutation = useCreateLeftoverMutation(scope);
 	const collectionsQuery = useCollectionsQuery(isAuthenticated);
 	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
 	const canDeleteReview = true;
@@ -179,6 +192,16 @@ const Recipe = (): React.ReactElement => {
 	const planningSlot = searchParams.get("slot");
 	const planningServings = Number(searchParams.get("servings"));
 	const planningItemId = searchParams.get("planItemId");
+	const sourceType = searchParams.get("sourceType") === "leftover" ? "leftover" : "recipe";
+	const leftoverBatchId = Number(searchParams.get("leftoverBatchId"));
+	const requestedHouseholdId = Number(searchParams.get("householdId"));
+	const cookingHouseholdId = Number.isInteger(requestedHouseholdId) && requestedHouseholdId > 0
+		? requestedHouseholdId
+		: scope.kind === "household" ? scope.householdId : undefined;
+	const validLeftoverBatchId = sourceType === "leftover" && Number.isInteger(leftoverBatchId) && leftoverBatchId > 0
+		? leftoverBatchId
+		: undefined;
+	const invalidLeftoverSource = isCookingMode && sourceType === "leftover" && validLeftoverBatchId === undefined;
 	const requestedReturnTo = searchParams.get("returnTo");
 	const safeReturnTo =
 		requestedReturnTo?.startsWith("/") && !requestedReturnTo.startsWith("//")
@@ -199,14 +222,17 @@ const Recipe = (): React.ReactElement => {
 			  }
 			: null;
 	const cookingToolsStorageKey = recipe
-		? getCookingToolsStorageKey(isAuthenticated ? userId : 0, recipe.recipe_id)
+		? getCookingToolsStorageKey(isAuthenticated ? userId : 0, recipe.recipe_id, sourceType, validLeftoverBatchId)
 		: null;
 	const cookingSession: CookingSessionControls = useCookingSession({
-		enabled: isCookingMode && Boolean(recipe),
+		enabled: isCookingMode && Boolean(recipe) && !invalidLeftoverSource,
 		userId: isAuthenticated ? userId : 0,
 		recipeId: recipe?.recipe_id,
 		mealPlanItemId: planningContext?.planItemId,
 		servings: planningContext?.servings ?? recipe?.nutrition?.servings ?? 1,
+		sourceType,
+		leftoverBatchId: validLeftoverBatchId,
+		householdId: cookingHouseholdId,
 	});
 	const queryClient = useQueryClient();
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
@@ -439,6 +465,12 @@ const Recipe = (): React.ReactElement => {
 			} else {
 				clearCookingToolsState(cookingToolsStorageKey);
 				showToast({ title: "Cooking history saved" });
+				if (sourceType === "recipe" && "history" in completedSession) {
+					setLeftoverPrompt({
+						historyId: completedSession.history.history_id,
+						cookedServings: completedSession.session.servings,
+					});
+				}
 			}
 			await refreshKitchenQueries(queryClient);
 			return completedSession;
@@ -446,6 +478,38 @@ const Recipe = (): React.ReactElement => {
 		clearCookingToolsState(cookingToolsStorageKey);
 		await refreshKitchenQueries(queryClient);
 		return null;
+	};
+
+	const handleSaveLeftover = async (input: LeftoverSaveInput): Promise<void> => {
+		if (!leftoverPrompt) return;
+		const response = await createLeftoverMutation.mutateAsync({
+			cookingHistoryId: leftoverPrompt.historyId,
+			servings: input.remainingServings,
+			expiresAt: input.expiresAt,
+		});
+		if (input.planDate && input.slot && input.planServings) {
+			const range = getWeekRange(new Date(`${input.planDate}T00:00:00`));
+			const plans = await listMealPlans({ from: range.from, to: range.to }, undefined, scope);
+			const existingPlan = plans.plans.find((plan) => plan.start_date.slice(0, 10) <= input.planDate! && plan.end_date.slice(0, 10) >= input.planDate!);
+			const plan = existingPlan ?? (await createMealPlan({ name: "This week", from: range.from, to: range.to }, scope)).plan;
+			const planDetails = await getMealPlan(plan.plan_id, undefined, scope);
+			if (planDetails.items.some((item) => item.planned_date.slice(0, 10) === input.planDate && item.slot === input.slot)) {
+				throw new Error("That meal slot already has a meal. Choose another slot.");
+			}
+			await addLeftoverMealPlanItem(plan.plan_id, {
+				leftoverBatchId: response.leftover.leftover_id,
+				date: input.planDate,
+				slot: input.slot,
+				servings: input.planServings,
+			}, scope);
+		}
+		setLeftoverPrompt(null);
+		await Promise.all([
+			queryClient.invalidateQueries({ queryKey: ["leftovers"] }),
+			queryClient.invalidateQueries({ queryKey: ["planning"] }),
+			queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
+		]);
+		showToast({ title: input.planDate ? "Leftover saved and planned" : "Leftover saved" });
 	};
 
 	const handleCookingPause = async (): Promise<void> => {
@@ -639,6 +703,7 @@ const Recipe = (): React.ReactElement => {
 					onAction={() => navigate("/food")}
 				/>
 			) : recipe && isCookingMode ? (
+				<>
 				<CookingMode
 					recipe={{
 						recipe_id: recipe.recipe_id,
@@ -649,9 +714,11 @@ const Recipe = (): React.ReactElement => {
 					}}
 					planningContext={planningContext || undefined}
 					onComplete={handleCookingComplete}
+					keepOpenAfterComplete={isAuthenticated && sourceType === "recipe"}
+					canComplete={!invalidLeftoverSource}
 					initialStepIndex={cookingSession.session?.current_step ?? 0}
 					isSessionReady={cookingSession.isReady}
-					sessionError={cookingSession.error}
+					sessionError={invalidLeftoverSource ? "This leftover cooking link is incomplete. Open the planned leftover again from Planning." : cookingSession.error}
 					onStepChange={cookingSession.updateProgress}
 					onPause={handleCookingPause}
 					toolsStorageKey={cookingToolsStorageKey}
@@ -662,6 +729,8 @@ const Recipe = (): React.ReactElement => {
 					}
 					onExit={() => navigate(`/recipe?id=${encodeURIComponent(id)}`)}
 				/>
+					{isAuthenticated && leftoverPrompt && sourceType === "recipe" && <LeftoverCompletionDialog open recipeName={recipe.recipe_name ?? "this recipe"} cookedServings={leftoverPrompt.cookedServings} onClose={() => setLeftoverPrompt(null)} onSave={handleSaveLeftover} />}
+				</>
 			) : recipe && (
 				<main className="recipe-print min-h-screen bg-background text-foreground">
 					<div className="recipe-print__summary">

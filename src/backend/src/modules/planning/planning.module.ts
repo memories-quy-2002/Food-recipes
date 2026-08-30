@@ -7,11 +7,13 @@ import { HouseholdPlanningController, PlanningController } from './planning.cont
 import { PlanningRepository, PLANNING_REPOSITORY } from './planning.repository';
 import { PlanningService } from './planning.service';
 import { MealPlanGeneratorService } from './meal-plan-generator.service';
+import { SavedPlanningRepository } from './saved-planning.repository';
+import { SAVED_PLANNING_REPOSITORY, SavedPlanningService } from './saved-planning.service';
 
 @Module({
   imports: [AuthModule, PrismaModule, RecommendationsModule, HouseholdsModule],
   controllers: [PlanningController, HouseholdPlanningController],
-  providers: [PlanningRepository, { provide: PLANNING_REPOSITORY, useExisting: PlanningRepository }, PlanningService, MealPlanGeneratorService],
+  providers: [PlanningRepository, { provide: PLANNING_REPOSITORY, useExisting: PlanningRepository }, PlanningService, MealPlanGeneratorService, SavedPlanningRepository, { provide: SAVED_PLANNING_REPOSITORY, useExisting: SavedPlanningRepository }, SavedPlanningService],
   exports: [PlanningService],
 })
 export class PlanningModule {}

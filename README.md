@@ -199,7 +199,8 @@ pnpm build
 ```
 
 The frontend package also provides `pnpm dev`, `pnpm preview`, `pnpm lint`,
-`pnpm typecheck`, `pnpm test`, `pnpm test:ci`, and `pnpm test:e2e:ci`.
+`pnpm typecheck`, `pnpm test`, `pnpm test:ci`, `pnpm test:e2e:quality`,
+`pnpm test:e2e:ci`, and `pnpm test:e2e:real`.
 
 ## Verification
 
@@ -208,8 +209,26 @@ Run the frontend gates from `src/frontend`:
 ```powershell
 cd src/frontend
 pnpm check
-pnpm test:e2e:ci
+pnpm test:e2e:quality
 ```
+
+`pnpm test:e2e:quality` runs the CI frontend-quality gate with mocked APIs:
+retryable catalog failure recovery, mobile overflow and hit-target checks,
+keyboard menu behavior, and serious/critical axe violations. The broader
+`pnpm test:e2e:ci` command remains available for the full mocked journey set.
+For acceptance coverage against the real NestJS API and PostgreSQL, start the
+Docker-backed stack first and then run the managed real-stack runner:
+
+```powershell
+.\tools\dev.ps1 start -Mode docker
+cd src/frontend
+pnpm test:e2e:real
+```
+
+The real-stack runner builds a temporary frontend preview locally, starts it,
+runs the authenticated and public journeys, and cleans up the preview process
+when the suite exits. CI provisions an isolated PostgreSQL service, applies
+migrations, seeds demo data, starts the API, and runs the same command.
 
 Run the backend package gates from `src/backend`:
 
@@ -222,10 +241,11 @@ corepack pnpm@11.18.0 prisma:validate
 ```
 
 `pnpm check` runs lint, typecheck, and the non-watch test suite for the
-frontend. The backend `pnpm check` runs typecheck and Jest. The Playwright
-suite runs against the Vite preview server and uses its existing
-browser-facing journey assertions. CI installs Chromium explicitly before
-running it.
+frontend. The backend `pnpm check` runs typecheck and Jest. The mock Playwright
+suite runs against a managed Vite preview server and keeps read assertions
+deterministic; the real-stack suite exercises the API, database persistence,
+authorization, security headers, and browser UI together. CI installs
+Chromium explicitly before running the frontend-quality and real-stack suites.
 
 Use `corepack pnpm@11.18.0 infra:down` from `src/backend` to stop the development Compose
 stack. All backend commands run directly from the single package at

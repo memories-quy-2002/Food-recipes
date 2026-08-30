@@ -140,3 +140,51 @@ jobs:
         env:
           VITE_API_BASE_URL: http://127.0.0.1:3000
         run: pnpm build
+
+  frontend-e2e:
+    name: Frontend quality E2E
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.cross == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.18.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/frontend/pnpm-lock.yaml
+
+      - name: Install locked dependencies
+        working-directory: src/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend for preview
+        working-directory: src/frontend
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:3000
+        run: pnpm build
+
+      - name: Install Playwright browser
+        working-directory: src/frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run frontend quality journeys
+        working-directory: src/frontend
+        run: pnpm test:e2e:quality
+
+      - name: Upload frontend browser artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-playwright-artifacts
+          if-no-files-found: ignore
+          path: |
+            src/frontend/test-results
+            src/frontend/playwright-report
+            src/frontend/output

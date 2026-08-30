@@ -549,6 +549,12 @@ export class MealPlanItemResponseDto {
   @ApiProperty({ example: 'Pasta Carbonara' })
   recipe_name!: string;
 
+  @ApiProperty({ enum: ['recipe', 'leftover', 'external'], example: 'recipe' })
+  source_type!: 'recipe' | 'leftover' | 'external';
+
+  @ApiProperty({ type: Number, nullable: true, example: null })
+  leftover_batch_id!: number | null;
+
   @ApiProperty({ example: '2026-08-25', format: 'date' })
   planned_date!: string;
 
@@ -682,6 +688,12 @@ export class CookingHistoryItemDto {
   @ApiProperty({ type: Number, nullable: true, example: 42 })
   meal_plan_item_id!: number | null;
 
+  @ApiProperty({ enum: ['recipe', 'leftover'], example: 'recipe' })
+  source_type!: 'recipe' | 'leftover';
+
+  @ApiProperty({ type: Number, nullable: true, example: null })
+  leftover_batch_id!: number | null;
+
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-08-25' })
   planned_date!: string | null;
 
@@ -711,6 +723,27 @@ export class CookingHistoryResponseDto {
   items!: CookingHistoryItemDto[];
 }
 
+export class LeftoverBatchDto {
+  @ApiProperty({ example: 8 }) leftover_id!: number;
+  @ApiProperty({ type: Number, nullable: true, example: 7 }) user_id!: number | null;
+  @ApiProperty({ type: Number, nullable: true, example: null }) household_id!: number | null;
+  @ApiProperty({ example: 15 }) recipe_id!: number;
+  @ApiProperty({ example: 'Soup' }) recipe_name!: string;
+  @ApiProperty({ example: 4 }) history_id!: number;
+  @ApiProperty({ example: 4 }) cooked_servings!: number;
+  @ApiProperty({ example: 2 }) remaining_servings!: number;
+  @ApiProperty({ type: String, format: 'date-time' }) prepared_at!: string;
+  @ApiProperty({ type: String, format: 'date-time' }) expires_at!: string;
+}
+
+export class LeftoverBatchResponseDto {
+  @ApiProperty({ type: LeftoverBatchDto }) leftover!: LeftoverBatchDto;
+}
+
+export class LeftoverBatchListResponseDto {
+  @ApiProperty({ type: [LeftoverBatchDto] }) items!: LeftoverBatchDto[];
+}
+
 export class CookingSessionDto {
   @ApiProperty({ example: 24 })
   session_id!: number;
@@ -723,6 +756,15 @@ export class CookingSessionDto {
 
   @ApiProperty({ type: Number, nullable: true, example: 42 })
   meal_plan_item_id!: number | null;
+
+  @ApiProperty({ enum: ['recipe', 'leftover'], example: 'recipe' })
+  source_type!: 'recipe' | 'leftover';
+
+  @ApiProperty({ type: Number, nullable: true, example: null })
+  leftover_batch_id!: number | null;
+
+  @ApiProperty({ type: Number, nullable: true, example: null })
+  household_id!: number | null;
 
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-08-25' })
   planned_date!: string | null;

@@ -19,6 +19,8 @@ model User {
   address   String?   @db.VarChar(255)
   role      String    @default("user") @db.VarChar(16)
   emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamp(6)
+  recommendationNotInterested RecommendationNotInterested[]
+  recommendationMealPlanRemovals RecommendationMealPlanRemoval[]
 
   @@map("accounts")
 }
@@ -172,6 +174,8 @@ model Recipe {
   publishedAt    DateTime?              @map("published_at") @db.Timestamp(6)
   archivedAt     DateTime?              @map("archived_at") @db.Timestamp(6)
   updatedAt      DateTime               @default(now()) @map("updated_at") @db.Timestamp(6)
+  recommendationNotInterested RecommendationNotInterested[]
+  recommendationMealPlanRemovals RecommendationMealPlanRemoval[]
 
   @@map("recipes")
 }
@@ -229,6 +233,32 @@ model Wishlist {
 
   @@unique([userId, recipeId], map: "user_recipe_constraint")
   @@map("wishlist")
+}
+
+model RecommendationNotInterested {
+  id        Int      @id @default(autoincrement()) @map("not_interested_id")
+  userId    Int      @map("user_id")
+  recipeId  Int      @map("recipe_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId], map: "recommendation_not_interested_user_recipe_key")
+  @@index([userId], map: "recommendation_not_interested_user_idx")
+  @@map("recommendation_not_interested")
+}
+
+model RecommendationMealPlanRemoval {
+  id        Int      @id @default(autoincrement()) @map("removal_id")
+  userId    Int      @map("user_id")
+  recipeId  Int      @map("recipe_id")
+  removedAt DateTime @default(now()) @map("removed_at") @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId], map: "recommendation_meal_plan_removal_user_recipe_key")
+  @@index([userId, removedAt], map: "recommendation_meal_plan_removal_user_removed_idx")
+  @@map("recommendation_meal_plan_removals")
 }
 
 model Rating {
@@ -357,12 +387,51 @@ model MealPlanItem {
   id           Int      @id @default(autoincrement()) @map("item_id")
   planId       Int      @map("plan_id")
   recipeId     Int      @map("recipe_id")
+  sourceType   String   @default("recipe") @map("source_type") @db.VarChar(16)
+  leftoverBatchId Int?  @map("leftover_batch_id")
   plannedDate  DateTime @map("planned_date") @db.Date
   slot         String   @db.VarChar(16)
   servings     Int      @default(1)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
+  @@unique([planId, plannedDate, slot], map: "meal_plan_items_plan_date_slot_key")
   @@map("meal_plan_items")
+}
+
+model MealPlanTemplate {
+  id           Int      @id @default(autoincrement()) @map("template_id")
+  userId       Int      @map("user_id")
+  name         String   @db.VarChar(80)
+  durationDays Int      @map("duration_days")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([userId, createdAt], map: "meal_plan_templates_user_created_idx")
+  @@map("meal_plan_templates")
+}
+
+model MealPlanTemplateItem {
+  id         Int      @id @default(autoincrement()) @map("template_item_id")
+  templateId Int      @map("template_id")
+  relativeDay Int     @map("relative_day")
+  recipeId   Int      @map("recipe_id")
+  slot       String   @db.VarChar(16)
+  servings   Int      @default(1)
+
+  @@index([templateId, relativeDay], map: "meal_plan_template_items_template_day_idx")
+  @@map("meal_plan_template_items")
+}
+
+model RecurringMealRule {
+  id        Int      @id @default(autoincrement()) @map("rule_id")
+  userId    Int      @map("user_id")
+  weekday   Int
+  slot      String   @db.VarChar(16)
+  recipeId  Int      @map("recipe_id")
+  servings  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([userId, weekday, slot], map: "recurring_meal_rules_user_weekday_slot_idx")
+  @@map("recurring_meal_rules")
 }
 
 model ShoppingListItem {
@@ -384,6 +453,8 @@ model CookingHistory {
   userId         Int      @map("user_id")
   recipeId       Int      @map("recipe_id")
   mealPlanItemId Int?     @map("meal_plan_item_id")
+  sourceType     String   @default("recipe") @map("source_type") @db.VarChar(16)
+  leftoverBatchId Int?    @map("leftover_batch_id")
   servings       Int      @default(1)
   startedAt      DateTime @map("started_at") @db.Timestamp(6)
   completedAt    DateTime @map("completed_at") @db.Timestamp(6)
@@ -391,7 +462,24 @@ model CookingHistory {
 
   @@index([userId, completedAt], map: "cooking_history_user_completed_idx")
   @@index([userId, recipeId], map: "cooking_history_user_recipe_idx")
+  @@index([leftoverBatchId], map: "cooking_history_leftover_batch_idx")
   @@map("cooking_history")
+}
+
+model LeftoverBatch {
+  id                 Int      @id @default(autoincrement()) @map("leftover_id")
+  userId             Int?     @map("user_id")
+  householdId        Int?     @map("household_id")
+  historyId          Int      @unique @map("history_id")
+  recipeId           Int      @map("recipe_id")
+  cookedServings     Int      @map("cooked_servings")
+  remainingServings  Int      @map("remaining_servings")
+  preparedAt         DateTime @map("prepared_at") @db.Timestamp(6)
+  expiresAt          DateTime @map("expires_at") @db.Timestamp(6)
+
+  @@index([userId, expiresAt, remainingServings], map: "leftover_batches_user_available_idx")
+  @@index([householdId, expiresAt, remainingServings], map: "leftover_batches_household_available_idx")
+  @@map("leftover_batches")
 }
 
 model CookingJournal {
@@ -423,6 +511,9 @@ model CookingSession {
   userId         Int       @map("user_id")
   recipeId       Int       @map("recipe_id")
   mealPlanItemId Int?      @map("meal_plan_item_id")
+  sourceType     String    @default("recipe") @map("source_type") @db.VarChar(16)
+  leftoverBatchId Int?     @map("leftover_batch_id")
+  householdId    Int?      @map("household_id")
   servings       Int       @default(1)
   currentStep    Int       @default(0) @map("current_step")
   status         String    @default("active") @db.VarChar(16)

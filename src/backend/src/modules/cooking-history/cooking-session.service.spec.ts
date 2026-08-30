@@ -49,12 +49,16 @@ describe('CookingSessionService', () => {
     abandon: jest.fn(),
     recipeExists: jest.fn(),
     mealPlanItemBelongsToUser: jest.fn(),
+    mealPlanItemBelongsToHousehold: jest.fn(),
+    leftoverStartContext: jest.fn(),
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
     repository.recipeExists.mockResolvedValue(true);
     repository.mealPlanItemBelongsToUser.mockResolvedValue(true);
+    jest.mocked(repository.mealPlanItemBelongsToHousehold!).mockResolvedValue(true);
+    repository.findActive.mockResolvedValue(null);
   });
 
   it('returns the latest active or paused session for the user', async () => {
@@ -72,6 +76,73 @@ describe('CookingSessionService', () => {
     await expect(service.start(7, { recipeId: 15, mealPlanItemId: 42, servings: 4 })).resolves.toEqual({ session });
     expect(repository.mealPlanItemBelongsToUser).toHaveBeenCalledWith(7, 42, 15);
     expect(repository.start).toHaveBeenCalledWith(7, 15, 42, 4);
+  });
+
+  it('uses household source-aware ownership for recipe plan items', async () => {
+    repository.start.mockResolvedValue(session);
+    const service = new CookingSessionService(repository);
+
+    await expect(service.start(7, { recipeId: 15, mealPlanItemId: 42, householdId: 22 })).resolves.toEqual({ session });
+    expect(repository.mealPlanItemBelongsToHousehold).toHaveBeenCalledWith(22, 42, 15);
+    expect(repository.mealPlanItemBelongsToUser).not.toHaveBeenCalled();
+  });
+
+  it('starts a leftover source only when the owned batch is available', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.leftoverStartContext = jest.fn().mockResolvedValue({ mode: 'direct', available_servings: 3, leftover_batch_id: 8 });
+    await expect(service.start(7, { recipeId: 15, sourceType: 'leftover', leftoverBatchId: 8, servings: 2 })).resolves.toEqual({ session });
+    expect(repository.start).toHaveBeenCalledWith(7, 15, null, 2, 'leftover', 8);
+  });
+
+  it('rejects a direct leftover cook when requested servings exceed the available batch', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.leftoverStartContext = jest.fn().mockResolvedValue({ mode: 'direct', available_servings: 1, leftover_batch_id: 8 });
+    await expect(service.start(7, { recipeId: 15, sourceType: 'leftover', leftoverBatchId: 8, servings: 2 })).rejects.toMatchObject({ response: { code: 'LEFTOVER_SERVINGS_UNAVAILABLE' } });
+    expect(repository.start).not.toHaveBeenCalled();
+  });
+
+  it('requires a reserved leftover cook to use exactly the plan reservation', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.leftoverStartContext = jest.fn().mockResolvedValue({ mode: 'reserved', available_servings: 2, leftover_batch_id: 8 });
+    await expect(service.start(7, { recipeId: 15, sourceType: 'leftover', leftoverBatchId: 8, mealPlanItemId: 42, servings: 1 })).rejects.toMatchObject({ response: { code: 'LEFTOVER_RESERVATION_MISMATCH' } });
+  });
+
+  it('rejects a recipe start when the active session is leftover-backed', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.findActive.mockResolvedValue({ ...session, source_type: 'leftover', leftover_batch_id: 8 });
+    await expect(service.start(7, { recipeId: 15 })).rejects.toMatchObject({ response: { code: 'COOKING_SESSION_SOURCE_MISMATCH' } });
+  });
+
+  it('starts a fully reserved leftover plan item even when the batch has no remaining servings', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.leftoverStartContext = jest.fn().mockResolvedValue({ mode: 'reserved', available_servings: 2, leftover_batch_id: 8 });
+    await expect(service.start(7, { recipeId: 15, sourceType: 'leftover', leftoverBatchId: 8, mealPlanItemId: 42, servings: 2 })).resolves.toEqual({ session });
+  });
+
+  it('rejects a source mismatch instead of resuming a recipe session as leftover', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.leftoverStartContext = jest.fn().mockResolvedValue(null);
+    await expect(service.start(7, { recipeId: 15, sourceType: 'leftover', leftoverBatchId: 8, servings: 2 })).rejects.toMatchObject({ response: { code: 'LEFTOVER_SOURCE_INVALID' } });
+  });
+
+  it('rejects an active recipe session when a leftover source is requested', async () => {
+    const service = new CookingSessionService(repository);
+    repository.recipeExists.mockResolvedValue(true);
+    repository.findActive.mockResolvedValue(session);
+    repository.leftoverStartContext = jest.fn().mockResolvedValue({ mode: 'direct', available_servings: 2, leftover_batch_id: 8 });
+    await expect(service.start(7, { recipeId: 15, sourceType: 'leftover', leftoverBatchId: 8, servings: 1 })).rejects.toMatchObject({ response: { code: 'LEFTOVER_SOURCE_MISMATCH' } });
+  });
+
+  it('propagates a conflict when direct leftover consumption loses its atomic race', async () => {
+    const service = new CookingSessionService(repository);
+    repository.complete.mockRejectedValue({ response: { code: 'LEFTOVER_SERVINGS_UNAVAILABLE' } });
+    await expect(service.complete(7, 31, {})).rejects.toMatchObject({ response: { code: 'LEFTOVER_SERVINGS_UNAVAILABLE' } });
   });
 
   it('rejects an unknown recipe before creating a session', async () => {

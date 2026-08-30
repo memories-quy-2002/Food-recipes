@@ -6,6 +6,7 @@ import { useHomeFeedQuery } from "./api/useHomeFeedQuery";
 import type { WishlistItem } from "./main/FoodCardList";
 import RecipeCard from "@/shared/ui/RecipeCard";
 import KitchenCommandCenter from "./KitchenCommandCenter";
+import { useDismissRecommendationMutation } from "../recommendations/api/recommendationsQueries";
 
 const HOME_FEED_SECTION_LIMIT = 3;
 const HOME_FEED_RECIPE_LIMIT = 4;
@@ -37,12 +38,16 @@ type HomeFeedSectionProps = {
 	section: HomeFeedSection;
 	wishlist: WishlistItem[];
 	onClickFavorite: (recipeId: number) => void | Promise<void>;
+	onNotInterested?: (recipeId: number) => void;
+	notInterestedPending?: boolean;
 };
 
 const HomeFeedSection = ({
 	section,
 	wishlist,
 	onClickFavorite,
+	onNotInterested,
+	notInterestedPending,
 }: HomeFeedSectionProps): ReactElement => {
 	const Icon = sectionIcons[section.key] ?? Sparkles;
 
@@ -65,6 +70,8 @@ const HomeFeedSection = ({
 							recipe={recipe}
 							favorite={wishlist.some((item) => Number(item.recipe?.recipe_id ?? item.recipe_id) === Number(recipe.recipe_id))}
 							onToggleFavorite={() => onClickFavorite(recipe.recipe_id)}
+							onNotInterested={section.key === "recommended" && onNotInterested ? () => onNotInterested(recipe.recipe_id) : undefined}
+							notInterestedPending={section.key === "recommended" ? notInterestedPending : false}
 						/>
 						{section.key === "recommended" ? (
 							<div className="-mt-px rounded-b-xl border-x border-b border-border bg-muted/40 px-4 pb-4 pt-3 sm:px-5">
@@ -97,6 +104,7 @@ const PersonalizedHomeFeed = ({
 	onClickFavorite,
 }: PersonalizedHomeFeedProps): ReactElement => {
 	const { data, isLoading, isError, refetch } = useHomeFeedQuery(isAuthenticated);
+	const dismissRecommendation = useDismissRecommendationMutation();
 	const sections = (data?.sections ?? [])
 		.filter((section) => section.recipes?.length > 0)
 		.slice(0, HOME_FEED_SECTION_LIMIT)
@@ -143,7 +151,7 @@ const PersonalizedHomeFeed = ({
 					</Link>
 				</div>
 			</div>
-			{sections.map((section) => <HomeFeedSection key={section.key} section={section} wishlist={wishlist} onClickFavorite={onClickFavorite} />)}
+			{sections.map((section) => <HomeFeedSection key={section.key} section={section} wishlist={wishlist} onClickFavorite={onClickFavorite} onNotInterested={isAuthenticated ? (recipeId) => { if (!dismissRecommendation.isPending) dismissRecommendation.mutate(recipeId); } : undefined} notInterestedPending={dismissRecommendation.isPending} />)}
 		</section>
 	);
 };

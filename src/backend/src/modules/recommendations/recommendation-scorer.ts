@@ -24,6 +24,7 @@ export type RecommendationScore = {
   score: number;
   reasons: string[];
   breakdown: RecommendationBreakdown;
+  implicitAdjustment: number;
 };
 
 export type RecommendationScoreOptions = {
@@ -200,6 +201,9 @@ const hardExclusion = (
     [...context.preferences.dislikedIngredients].some((dislike) => matches(ingredient, dislike)))) {
     return 'Excluded because it contains a strictly disliked ingredient.';
   }
+  if (context.notInterestedRecipeIds.has(candidate.recipeId)) {
+    return 'Excluded because you marked this recipe as not interested.';
+  }
   return null;
 };
 
@@ -223,7 +227,7 @@ export class RecommendationScorer {
   ): RecommendationScore {
     const exclusion = hardExclusion(candidate, context, options);
     if (exclusion) {
-      return { excluded: true, score: 0, reasons: [exclusion], breakdown: emptyBreakdown() };
+      return { excluded: true, score: 0, reasons: [exclusion], breakdown: emptyBreakdown(), implicitAdjustment: 0 };
     }
 
     const asOf = context.asOf ?? new Date();
@@ -257,6 +261,13 @@ export class RecommendationScorer {
         : 0,
     };
 
+    const implicitAdjustment =
+      (context.savedRecipeIds.has(candidate.recipeId) ? 0.10 : 0) +
+      (context.plannedRecipeIds.has(candidate.recipeId) ? 0.15 : 0) +
+      (context.recentlyCookedRecipeIds.has(candidate.recipeId) ? 0.25 : 0) +
+      ((context.repeatCookCounts.get(candidate.recipeId) ?? 0) > 1 ? 0.35 : 0) -
+      (context.removedFromMealPlanRecipeIds.has(candidate.recipeId) ? 0.10 : 0);
+
     const score = clamp(
       breakdown.preference * WEIGHTS.preference +
       breakdown.pantryCoverage * WEIGHTS.pantryCoverage +
@@ -265,7 +276,7 @@ export class RecommendationScorer {
       breakdown.timeFit * WEIGHTS.timeFit +
       breakdown.quality * WEIGHTS.quality +
       breakdown.novelty * WEIGHTS.novelty +
-      breakdown.wasteReduction * WEIGHTS.wasteReduction,
+      breakdown.wasteReduction * WEIGHTS.wasteReduction + implicitAdjustment,
     );
 
     const reasons: string[] = [];
@@ -284,6 +295,11 @@ export class RecommendationScorer {
       reasons.push('Fits your nutrition preferences.');
     }
     if (candidate.averageRating >= 4) reasons.push('Highly rated by the community.');
+    if (context.savedRecipeIds.has(candidate.recipeId)) reasons.push('Saved by you.');
+    if (context.plannedRecipeIds.has(candidate.recipeId)) reasons.push('Added to your meal plan.');
+    if (context.recentlyCookedRecipeIds.has(candidate.recipeId)) reasons.push('You have cooked this before.');
+    if ((context.repeatCookCounts.get(candidate.recipeId) ?? 0) > 1) reasons.push('You have cooked this more than once.');
+    if (context.removedFromMealPlanRecipeIds.has(candidate.recipeId)) reasons.push('Recently removed from your meal plan.');
     if (!reasons.length) reasons.push('Matches your recipe discovery preferences.');
 
     return {
@@ -291,6 +307,7 @@ export class RecommendationScorer {
       score,
       reasons: [...new Set(reasons)].slice(0, 3),
       breakdown,
+      implicitAdjustment,
     };
   }
 }

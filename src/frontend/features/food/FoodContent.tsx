@@ -49,6 +49,7 @@ export type FoodContentProps = {
 	isLoading?: boolean;
 	isFetching?: boolean;
 	error?: string | null;
+	onRetry?: () => void;
 };
 
 const isRecipeSort = (value: string): value is RecipeSort =>
@@ -62,6 +63,7 @@ const FoodContent = ({
 	isLoading = false,
 	isFetching = false,
 	error = null,
+	onRetry,
 }: FoodContentProps): ReactElement => {
 	const navigate = useNavigate();
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -98,7 +100,7 @@ const FoodContent = ({
 				</div>
 			</div>
 			{isFetching && !isLoading && <div className="mb-4 rounded-lg bg-secondary px-3 py-2 text-sm font-semibold text-secondary-foreground" role="status" aria-live="polite">Updating recipes…</div>}
-			{isLoading ? <LoadingSkeleton /> : error ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-6"><h3 className="font-bold text-destructive">Recipe library could not load</h3><p className="mt-2 text-sm text-destructive">{error}</p></div> : sortedRecipes.length === 0 ? <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center"><h3 className="text-xl font-bold">No recipes found</h3><p className="mt-2 text-muted-foreground">Try another search term or clear one of the filters.</p></div> : shouldGroupByCategory ? categories.map(({ id, name }) => <FoodContentSection key={id} id={id} name={name} recipes={visibleRecipes} viewMode={viewMode} />) : <div className={cn("grid gap-4", viewMode === "grid" ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1")}>{visibleRecipes.map((recipe) => <FoodContentSectionItem key={recipe.recipe_id} recipe={recipe} viewMode={viewMode} />)}</div>}
+			{isLoading ? <LoadingSkeleton /> : error ? <div className="rounded-xl border border-destructive/25 bg-destructive/10 p-6" role="alert"><h3 className="font-bold text-destructive">Recipe library could not load</h3><p className="mt-2 text-sm text-destructive">{error}</p>{onRetry ? <Button className="mt-4" type="button" onClick={onRetry}>Try again</Button> : null}</div> : sortedRecipes.length === 0 ? <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center"><h3 className="text-xl font-bold">No recipes found</h3><p className="mt-2 text-muted-foreground">Try another search term or clear one of the filters.</p></div> : shouldGroupByCategory ? categories.map(({ id, name }) => <FoodContentSection key={id} id={id} name={name} recipes={visibleRecipes} viewMode={viewMode} />) : <div className={cn("grid gap-4", viewMode === "grid" ? "sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4" : "grid-cols-1")}>{visibleRecipes.map((recipe) => <FoodContentSectionItem key={recipe.recipe_id} recipe={recipe} viewMode={viewMode} />)}</div>}
 			{!isLoading && !error && totalPages > 1 && <FoodContentPagination recipesPerPage={queryState.limit} totalRecipes={totalRecipes} totalPages={totalPages} onPagination={(page) => onQueryStateChange({ page })} currentPage={currentPage} />}
 			<Button className="mt-5 w-full sm:hidden" onClick={() => navigate("/food/add")}><BsPlusLg />Add recipe</Button>
 		</div>

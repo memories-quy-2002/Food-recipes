@@ -55,6 +55,19 @@ describe("authSessionApi", () => {
 		expect(getAccessToken()).toBeNull();
 	});
 
+	it("shares one refresh request across concurrent session bootstraps", async () => {
+		const user = { user_id: 7, full_name: "Smoke User" };
+		postMock.mockResolvedValue(
+			createResponse({ user, token: "fresh-token" }),
+		);
+
+		await expect(Promise.all([authSessionApi.refresh(), authSessionApi.refresh()])).resolves.toEqual([
+			{ user, token: "fresh-token" },
+			{ user, token: "fresh-token" },
+		]);
+		expect(postMock).toHaveBeenCalledTimes(1);
+	});
+
 	it("logs out through the server endpoint", async () => {
 		postMock.mockResolvedValue(
 			createResponse({ message: "Logged out" }),

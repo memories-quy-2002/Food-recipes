@@ -52,10 +52,17 @@ type ApiRoutes = {
 	authLogout: string;
 	userProfile: string;
 	userFoodPreferences: string;
+	userRecommendationNotInterested: (recipeId: ApiRouteId) => string;
+	userLeftovers: string;
+	householdLeftovers: (householdId: ApiRouteId) => string;
 	userPassword: string;
 	mealPlans: string;
 	mealPlanGeneratePreview: string;
 	mealPlanFromPreview: string;
+	mealPlanTemplates: string;
+	mealPlanTemplateApply: (templateId: ApiRouteId) => string;
+	recurringMealRules: string;
+	recurringMealRule: (ruleId: ApiRouteId) => string;
 	mealPlan: (planId: ApiRouteId) => string;
 	mealPlanItems: (planId: ApiRouteId) => string;
 	mealPlanItem: (planId: ApiRouteId, itemId: ApiRouteId) => string;
@@ -118,10 +125,17 @@ const apiRoutes: ApiRoutes = {
 	authLogout: "/auth/logout",
 	userProfile: "/users/me/profile",
 	userFoodPreferences: "/users/me/food-preferences",
+	userRecommendationNotInterested: (recipeId) => `/users/me/recommendations/not-interested/${recipeId}`,
+	userLeftovers: "/users/me/leftovers",
+	householdLeftovers: (householdId) => `/households/${householdId}/leftovers`,
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",
 	mealPlanGeneratePreview: "/users/me/meal-plans/generate-preview",
 	mealPlanFromPreview: "/users/me/meal-plans/from-preview",
+	mealPlanTemplates: "/users/me/meal-plan-templates",
+	mealPlanTemplateApply: (templateId) => `/users/me/meal-plan-templates/${templateId}/apply`,
+	recurringMealRules: "/users/me/recurring-meal-rules",
+	recurringMealRule: (ruleId) => `/users/me/recurring-meal-rules/${ruleId}`,
 	mealPlan: (planId) => `/users/me/meal-plans/${planId}`,
 	mealPlanItems: (planId) => `/users/me/meal-plans/${planId}/items`,
 	mealPlanItem: (planId, itemId) =>

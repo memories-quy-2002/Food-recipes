@@ -8,6 +8,8 @@ export type CookingHistoryRecord = {
   recipe_id: number;
   recipe_name: string;
   meal_plan_item_id: number | null;
+  source_type?: 'recipe' | 'leftover';
+  leftover_batch_id?: number | null;
   planned_date: Date | string | null;
   slot: string | null;
   servings: number;
@@ -32,7 +34,7 @@ export class CookingHistoryRepository implements CookingHistoryRepositoryPort {
   list(userId: number, limit: number): Promise<CookingHistoryRecord[]> {
     return this.prisma.$queryRaw<CookingHistoryRecord[]>(Prisma.sql`
       SELECT h.history_id, h.user_id, h.recipe_id, r.recipe_name,
-             h.meal_plan_item_id, i.planned_date, i.slot, h.servings,
+             h.meal_plan_item_id, h.source_type, h.leftover_batch_id, i.planned_date, i.slot, h.servings,
              h.started_at, h.completed_at, h.created_at
       FROM cooking_history h
       JOIN recipes r ON r.recipe_id = h.recipe_id
@@ -57,6 +59,7 @@ export class CookingHistoryRepository implements CookingHistoryRepositoryPort {
       JOIN meal_plans p ON p.plan_id = i.plan_id
       WHERE i.item_id = ${mealPlanItemId}
         AND i.recipe_id = ${recipeId}
+        AND i.source_type = 'recipe'
         AND p.user_id = ${userId}
     `);
     return rows.length > 0;
@@ -64,8 +67,8 @@ export class CookingHistoryRepository implements CookingHistoryRepositoryPort {
 
   async create(userId: number, recipeId: number, mealPlanItemId: number | null, servings: number, startedAt: Date, completedAt: Date): Promise<CookingHistoryRecord> {
     const rows = await this.prisma.$queryRaw<{ history_id: number }[]>(Prisma.sql`
-      INSERT INTO cooking_history (user_id, recipe_id, meal_plan_item_id, servings, started_at, completed_at)
-      VALUES (${userId}, ${recipeId}, ${mealPlanItemId}, ${servings}, ${startedAt}, ${completedAt})
+      INSERT INTO cooking_history (user_id, recipe_id, meal_plan_item_id, source_type, leftover_batch_id, servings, started_at, completed_at)
+      VALUES (${userId}, ${recipeId}, ${mealPlanItemId}, 'recipe', NULL, ${servings}, ${startedAt}, ${completedAt})
       RETURNING history_id
     `);
     return (await this.find(userId, rows[0].history_id))!;
@@ -74,7 +77,7 @@ export class CookingHistoryRepository implements CookingHistoryRepositoryPort {
   private async find(userId: number, historyId: number): Promise<CookingHistoryRecord | null> {
     const rows = await this.prisma.$queryRaw<CookingHistoryRecord[]>(Prisma.sql`
       SELECT h.history_id, h.user_id, h.recipe_id, r.recipe_name,
-             h.meal_plan_item_id, i.planned_date, i.slot, h.servings,
+             h.meal_plan_item_id, h.source_type, h.leftover_batch_id, i.planned_date, i.slot, h.servings,
              h.started_at, h.completed_at, h.created_at
       FROM cooking_history h
       JOIN recipes r ON r.recipe_id = h.recipe_id

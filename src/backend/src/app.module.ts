@@ -27,6 +27,7 @@ import { HouseholdsModule } from './modules/households/households.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RecipeImportsModule } from './modules/recipe-imports/recipe-imports.module';
 import { JournalsModule } from './modules/journals/journals.module';
+import { LeftoversModule } from './modules/leftovers/leftovers.module';
 import { PRODUCT_ANALYTICS } from './common/analytics/product-analytics.port';
 import { ProductAnalyticsService } from './common/analytics/product-analytics.service';
 
@@ -61,6 +62,7 @@ import { ProductAnalyticsService } from './common/analytics/product-analytics.se
     NotificationsModule,
     RecipeImportsModule,
     JournalsModule,
+    LeftoversModule,
   ],
   providers: [ProductAnalyticsService, { provide: PRODUCT_ANALYTICS, useExisting: ProductAnalyticsService }],
 })

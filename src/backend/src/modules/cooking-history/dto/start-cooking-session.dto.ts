@@ -1,7 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+export const COOKING_SOURCE_TYPES = ['recipe', 'leftover'] as const;
+export type CookingSourceType = (typeof COOKING_SOURCE_TYPES)[number];
 
 export class StartCookingSessionDto {
+  @ApiPropertyOptional({ enum: COOKING_SOURCE_TYPES, default: 'recipe' }) @IsOptional() @IsIn(COOKING_SOURCE_TYPES) sourceType?: CookingSourceType;
   @ApiProperty({ example: 15 })
   @IsInt()
   @Min(1)
@@ -19,4 +22,6 @@ export class StartCookingSessionDto {
   @Min(1)
   @Max(24)
   servings?: number;
+  @ApiPropertyOptional({ example: 8 }) @IsOptional() @IsInt() @Min(1) leftoverBatchId?: number;
+  @ApiPropertyOptional({ example: 12 }) @IsOptional() @IsInt() @Min(1) householdId?: number;
 }

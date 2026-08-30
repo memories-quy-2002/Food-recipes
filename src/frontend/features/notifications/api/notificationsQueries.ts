@@ -13,7 +13,8 @@ export const notificationQueryKeys = {
 export const useNotificationsQuery = () => {
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
-	return useQuery({ queryKey: notificationQueryKeys.forUser(userId), queryFn: ({ signal }) => listNotifications(signal), enabled: userId > 0, refetchInterval: 60_000 });
+	const isAuthReady = auth.current.hydrated && userId > 0;
+	return useQuery({ queryKey: notificationQueryKeys.forUser(userId), queryFn: ({ signal }) => listNotifications(signal), enabled: isAuthReady, refetchInterval: 60_000 });
 };
 
 export const useMarkNotificationReadMutation = () => {
@@ -31,7 +32,8 @@ export const useMarkAllNotificationsReadMutation = () => {
 export const useNotificationPreferencesQuery = () => {
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
-	return useQuery({ queryKey: notificationQueryKeys.preferences(userId), queryFn: getNotificationPreferences, enabled: userId > 0 });
+	const isAuthReady = auth.current.hydrated && userId > 0;
+	return useQuery({ queryKey: notificationQueryKeys.preferences(userId), queryFn: getNotificationPreferences, enabled: isAuthReady });
 };
 
 export const useUpdateNotificationPreferencesMutation = () => {

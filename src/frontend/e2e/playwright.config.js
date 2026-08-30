@@ -7,15 +7,18 @@ const previewOutput = process.env.CI ? "" : ` --outDir ${e2eBuildDirectory}`;
 const viteCommand = `${JSON.stringify(process.execPath)} ${JSON.stringify(viteCli)}`;
 const previewCommand = `${viteCommand} preview${previewOutput} --host 127.0.0.1 --port 4173`;
 const buildCommand = `${viteCommand} build --outDir ${e2eBuildDirectory} --emptyOutDir`;
+const managedServer = process.env.FOOD_RECIPES_E2E_MANAGED_SERVER === "1";
+const webBaseURL = process.env.FOOD_RECIPES_E2E_WEB_URL || "http://127.0.0.1:4173";
 
 export default defineConfig({
 	testDir: __dirname,
+	testIgnore: ["**/real-stack/**", "**/real-backend-inventory.spec.js", "**/live-kitchen-loop.spec.js"],
 	fullyParallel: true,
 	retries: process.env.CI ? 2 : 0,
 	workers: process.env.CI ? 1 : undefined,
 	reporter: "list",
 	use: {
-		baseURL: "http://127.0.0.1:4173",
+		baseURL: webBaseURL,
 		trace: "on-first-retry",
 	},
 	projects: [
@@ -24,14 +27,18 @@ export default defineConfig({
 			use: { ...devices["Desktop Chrome"] },
 		},
 	],
-	webServer: {
-		cwd: path.resolve(__dirname, ".."),
-		command: process.env.CI ? previewCommand : `${buildCommand} && ${previewCommand}`,
-		env: {
-			VITE_API_BASE_URL: "http://127.0.0.1:3000",
-		},
-		url: "http://127.0.0.1:4173",
-		reuseExistingServer: !process.env.CI,
-		timeout: 120000,
-	},
+	...(managedServer
+		? {}
+		: {
+				webServer: {
+					cwd: path.resolve(__dirname, ".."),
+					command: process.env.CI ? previewCommand : `${buildCommand} && ${previewCommand}`,
+					env: {
+						VITE_API_BASE_URL: "http://127.0.0.1:3000",
+					},
+					url: webBaseURL,
+					reuseExistingServer: !process.env.CI,
+					timeout: 120000,
+				},
+			}),
 });

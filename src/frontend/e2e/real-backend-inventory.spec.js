@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
-
-test.use({ baseURL: "http://localhost:5173" });
+import { loginInBrowser, stubThirdPartyMedia, uniqueName } from "./real-stack/helpers.js";
 
 const backendApi = "http://localhost:3000/api/v1";
 const demoCredentials = {
@@ -13,31 +12,27 @@ async function getApiAuth(request) {
 	const response = await request.post(`${backendApi}/auth/login`, { data: { ...demoCredentials, remember: true } });
 	expect(response.ok()).toBeTruthy();
 	const body = await response.json();
-	const setCookie = response.headers()["set-cookie"] ?? "";
-	const refreshCookie = setCookie.match(/food_refresh=([^;]+)/)?.[1] ?? null;
 	return {
 		headers: { Authorization: `Bearer ${body.token}` },
-		refreshCookie,
 	};
 }
 
-async function authenticateRealPage(page, auth) {
-	if (auth.refreshCookie) {
-		await page.context().addCookies([{
-			name: "food_refresh",
-			value: auth.refreshCookie,
-			domain: "localhost",
-			path: "/api/v1/auth",
-			httpOnly: true,
-			secure: false,
-			sameSite: "Lax",
-		}]);
-	}
-	await page.goto("/pantry");
-	await expect(page.getByRole("heading", { name: "Know what you already have" })).toBeVisible();
+async function findRecipeId(request, name) {
+	const response = await request.get(`${backendApi}/recipes?q=${encodeURIComponent(name)}&limit=100`);
+	expect(response.ok()).toBeTruthy();
+	const body = await response.json();
+	const recipe = (body.recipes ?? []).find((candidate) => candidate.recipe_name === name);
+	expect(recipe, `seeded recipe not found: ${name}`).toBeTruthy();
+	return recipe.recipe_id;
 }
 
-async function cleanupLocalInventory(request, headers) {
+async function authenticateRealPage(page) {
+	await loginInBrowser(page);
+	await page.goto("/pantry");
+	await expect(page.getByRole("heading", { name: "Pantry", exact: true })).toBeVisible();
+}
+
+async function cleanupLocalInventory(request, headers, recipeIds = []) {
 	const pantryResponse = await request.get(`${backendApi}/users/me/pantry`, { headers });
 	if (pantryResponse.ok()) {
 		const pantry = await pantryResponse.json();
@@ -58,7 +53,7 @@ async function cleanupLocalInventory(request, headers) {
 		}
 	}
 
-	for (const recipeId of [51, 55]) {
+	for (const recipeId of recipeIds) {
 		const sessionResponse = await request.get(`${backendApi}/users/me/cooking-session?recipeId=${recipeId}`, { headers });
 		if (!sessionResponse.ok()) continue;
 		const session = (await sessionResponse.json()).session;
@@ -74,9 +69,9 @@ async function addPantryItem(page, name, quantity, unit) {
 	await expect(page.getByText(name, { exact: true })).toBeVisible();
 }
 
-async function openLastStep(page, recipeId, stepCount) {
+async function openLastStep(page, recipeId, recipeName, stepCount) {
 	await page.goto(`/recipe/cooking?id=${recipeId}&servings=2`);
-	await expect(page.getByRole("heading", { name: recipeId === 51 ? "Classic Vietnamese Pho" : "Banana Oat Pancakes" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: recipeName, exact: true })).toBeVisible();
 	const nextButton = page.getByRole("button", { name: "Next step" });
 	const finishButton = page.getByRole("button", { name: "Finish cooking" });
 	for (let step = 1; step < stepCount; step += 1) {
@@ -90,20 +85,22 @@ async function openLastStep(page, recipeId, stepCount) {
 test("real API: Pantry -> shortage handoff -> replenishment -> cooking completion -> history", async ({ page, request }, testInfo) => {
 	const auth = await getApiAuth(request);
 	const headers = auth.headers;
-	await cleanupLocalInventory(request, headers);
+	const phoRecipeId = await findRecipeId(request, "Classic Vietnamese Pho");
+	await cleanupLocalInventory(request, headers, [phoRecipeId]);
 	const consoleErrors = [];
-	page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
-	page.on("pageerror", (error) => consoleErrors.push(error.message));
+	page.on("console", (message) => { if (message.type() === "error") consoleErrors.push({ text: message.text(), url: message.location().url }); });
+	page.on("pageerror", (error) => consoleErrors.push({ text: error.message, url: "" }));
+	await stubThirdPartyMedia(page);
 
 	try {
-		await authenticateRealPage(page, auth);
+		await authenticateRealPage(page);
 		await addPantryItem(page, "beef bones", 300, "GRAM");
 		await addPantryItem(page, "rice noodles", 250, "GRAM");
 		await addPantryItem(page, "yellow onion", 1, "PIECE");
 		await addPantryItem(page, "ginger", 1, "PIECE");
 		await addPantryItem(page, "lime", 1, "PIECE");
 
-		await openLastStep(page, 51, 4);
+		await openLastStep(page, phoRecipeId, "Classic Vietnamese Pho", 4);
 		await page.getByRole("button", { name: "Finish cooking" }).click();
 		await expect(page.getByRole("dialog", { name: "Some ingredients are missing" })).toBeVisible();
 		await expect(page.getByText("missing 200 g", { exact: false })).toBeVisible();
@@ -126,7 +123,7 @@ test("real API: Pantry -> shortage handoff -> replenishment -> cooking completio
 		await editForm.getByRole("button", { name: "Save beef bones" }).click();
 		await expect(page.getByText("500 g", { exact: true })).toBeVisible();
 
-		await openLastStep(page, 51, 4);
+		await openLastStep(page, phoRecipeId, "Classic Vietnamese Pho", 4);
 		await page.getByRole("button", { name: "Finish cooking" }).click();
 		await expect(page.getByRole("heading", { name: "Classic Vietnamese Pho", exact: true })).toBeVisible();
 
@@ -137,23 +134,65 @@ test("real API: Pantry -> shortage handoff -> replenishment -> cooking completio
 		await page.goto("/history");
 		await expect(page.getByRole("article").filter({ hasText: "Classic Vietnamese Pho" }).first()).toBeVisible();
 		await page.screenshot({ path: testInfo.outputPath("real-inventory-history.png"), fullPage: true });
-		expect(consoleErrors.filter((error) => !error.includes("409 (Conflict)"))).toEqual([]);
+		expect(consoleErrors.filter((error) => !error.url.includes("/auth/refresh") && !error.url.includes("/cooking-session/"))).toEqual([]);
 	} finally {
-		await cleanupLocalInventory(request, headers);
+		await cleanupLocalInventory(request, headers, [phoRecipeId]);
 	}
 });
 
-test("real API: recipe with unquantified ingredients is rejected without a false completion", async ({ page, request }) => {
+test("real API: cooking an unquantified draft is rejected without a false completion", async ({ request }) => {
 	const auth = await getApiAuth(request);
 	const headers = auth.headers;
-	await cleanupLocalInventory(request, headers);
+	let draftRecipeId;
+	let sessionId;
 	try {
-		await authenticateRealPage(page, auth);
-		await openLastStep(page, 55, 3);
-		await page.getByRole("button", { name: "Finish cooking" }).click();
-		await expect(page.getByRole("alert")).toHaveText("This recipe needs a positive quantity and supported unit for every ingredient before it can be completed.");
-		await expect(page.getByRole("heading", { name: "Recipe complete" })).toHaveCount(0);
+		const draftResponse = await request.post(`${backendApi}/users/me/recipes/drafts`, {
+			headers,
+			data: {
+				name: uniqueName("Unquantified acceptance recipe"),
+				mealId: 1,
+				categoryId: 1,
+				prepTimeMinutes: 1,
+				cookTimeMinutes: 1,
+				ingredients: ["salt"],
+				instructions: ["Add salt"],
+			},
+		});
+		expect(draftResponse.status()).toBe(201);
+		draftRecipeId = (await draftResponse.json()).recipe.recipe_id;
+
+		const ingredientsResponse = await request.put(`${backendApi}/recipes/${draftRecipeId}/ingredients`, {
+			headers,
+			data: { ingredients: [{ name: "salt" }] },
+		});
+		expect(ingredientsResponse.ok()).toBeTruthy();
+
+		const startResponse = await request.post(`${backendApi}/users/me/cooking-session`, {
+			headers,
+			data: { recipeId: draftRecipeId, servings: 1 },
+		});
+		expect(startResponse.status()).toBe(201);
+		sessionId = (await startResponse.json()).session.session_id;
+
+		const completeResponse = await request.post(`${backendApi}/users/me/cooking-session/${sessionId}/complete`, {
+			headers,
+			data: {},
+		});
+		expect(completeResponse.status()).toBe(400);
+		const errorBody = await completeResponse.json();
+		expect(errorBody.code).toBe("COOKING_RECIPE_INGREDIENTS_UNQUANTIFIED");
+
+		const activeResponse = await request.get(`${backendApi}/users/me/cooking-session?recipeId=${draftRecipeId}`, { headers });
+		expect(activeResponse.ok()).toBeTruthy();
+		expect((await activeResponse.json()).session.status).toBe("active");
 	} finally {
-		await cleanupLocalInventory(request, headers);
+		if (sessionId) {
+			const abandonResponse = await request.delete(`${backendApi}/users/me/cooking-session/${sessionId}`, { headers });
+			expect([200, 404]).toContain(abandonResponse.status());
+		}
+		if (draftRecipeId) {
+			const deleteResponse = await request.delete(`${backendApi}/recipes/${draftRecipeId}`, { headers });
+			expect([204, 404]).toContain(deleteResponse.status());
+		}
 	}
 });

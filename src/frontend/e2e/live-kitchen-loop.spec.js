@@ -1,11 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { demoCredentials, findRecipeByName, stubThirdPartyMedia } from "./real-stack/helpers.js";
 
 const recipeName = "Avocado Toast with Chili";
-const recipeId = 164;
-const demoCredentials = {
-	email: "demo.homecook@foodrecipes.local",
-	password: "DemoPass123!",
-};
 
 const isApiResponse = (response, path, method) => {
 	const url = new URL(response.url());
@@ -17,12 +13,15 @@ const isCookingCompletionResponse = (response) => {
 	return response.request().method() === "POST" && /\/users\/me\/cooking-session\/\d+\/complete$/.test(url.pathname);
 };
 
-test("real browser: login, choose, prepare, cook, and complete a meal", async ({ page }, testInfo) => {
+test("real browser: login, choose, prepare, cook, and complete a meal", async ({ page, request }, testInfo) => {
+	const recipe = await findRecipeByName(request, recipeName);
+	const recipeId = recipe.recipe_id;
 	const consoleErrors = [];
 	page.on("console", (message) => {
-		if (message.type() === "error") consoleErrors.push(message.text());
+		if (message.type() === "error") consoleErrors.push({ text: message.text(), url: message.location().url });
 	});
-	page.on("pageerror", (error) => consoleErrors.push(error.message));
+	page.on("pageerror", (error) => consoleErrors.push({ text: error.message, url: "" }));
+	await stubThirdPartyMedia(page);
 
 	await page.goto("/account?signup=false");
 	await page.getByRole("textbox", { name: "Email address *" }).fill(demoCredentials.email);
@@ -31,10 +30,13 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 
 	await expect(page).toHaveURL(/\/$/);
 	await expect(page.getByRole("heading", { name: "Know what to do next." })).toBeVisible();
-	await page.getByRole("link", { name: `Open ${recipeName}` }).click();
+	await page
+		.getByRole("region", { name: "Top rated recipes" })
+		.getByRole("link", { name: `Open ${recipeName}` })
+		.click();
 
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
-	await expect(page.getByRole("heading", { name: recipeName, exact: true })).toBeVisible();
+	await expect(page.locator("#recipe-title")).toHaveText(recipeName);
 
 	const prepareResponsePromise = page.waitForResponse((response) =>
 		isApiResponse(response, "/users/me/shopping-list/prepare", "POST"),
@@ -50,7 +52,7 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 
 	await page.getByRole("link", { name: "Start cooking" }).click();
 	await expect(page).toHaveURL(new RegExp(`/recipe/cooking\\?id=${recipeId}$`));
-	await expect(page.getByRole("heading", { name: recipeName, exact: true })).toBeVisible();
+	await expect(page.locator("#cooking-mode-title")).toHaveText(recipeName);
 	await expect(page.getByText("Step 1 of 3", { exact: true })).toBeVisible();
 
 	for (const checkbox of await page.getByRole("checkbox").all()) {
@@ -81,8 +83,15 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	const completionResponse = await completionResponsePromise;
 	expect(completionResponse.ok()).toBeTruthy();
 
+	await expect(page.getByRole("heading", { name: "Recipe complete", exact: true })).toBeVisible();
+	await page.getByRole("button", { name: "Review recipe" }).click();
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
-	await page.getByRole("link", { name: "History", exact: true }).click();
+	await expect(page.locator("#recipe-title")).toHaveText(recipeName);
+	await page.getByRole("button", { name: "More navigation" }).click();
+	await page
+		.getByRole("menu", { name: "More navigation links" })
+		.getByRole("menuitem", { name: "Cooking history" })
+		.click();
 	await expect(page).toHaveURL(/\/history$/);
 	await expect(page.getByRole("heading", { name: "Your cooking history" })).toBeVisible();
 	const completedRecipeHeadings = page.getByRole("heading", { name: recipeName, exact: true });
@@ -91,7 +100,7 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	await page.screenshot({ path: testInfo.outputPath("live-kitchen-history.png"), fullPage: true });
 
 	const unexpectedConsoleErrors = consoleErrors.filter(
-		(error) => !error.includes("/auth/refresh") && !error.includes("/cooking-session/"),
+		(error) => !error.url.includes("/auth/refresh") && !error.url.includes("/cooking-session/"),
 	);
 	expect(unexpectedConsoleErrors).toEqual([]);
 });

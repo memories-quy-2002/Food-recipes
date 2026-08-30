@@ -41,6 +41,10 @@ const context: RecommendationContext = {
   likedMealIds: new Set(),
   recentlyCookedRecipeIds: new Set(),
   repeatCookCounts: new Map(),
+  savedRecipeIds: new Set(),
+  plannedRecipeIds: new Set(),
+  notInterestedRecipeIds: new Set(),
+  removedFromMealPlanRecipeIds: new Set(),
 };
 
 const candidate = (recipeId: number, authorId = 42): RecommendationCandidate => ({
@@ -74,6 +78,7 @@ const scored = (score: number, reasons = ['Matches your preferences.']): Recomme
     novelty: 0,
     wasteReduction: 0,
   },
+  implicitAdjustment: 0,
 });
 
 describe('RecommendationService', () => {
@@ -113,7 +118,16 @@ describe('RecommendationService', () => {
         ],
       }),
     };
-    const prisma = { $queryRaw: jest.fn().mockResolvedValue([{ category_id: 3, meal_id: 4 }]) };
+    const prisma = {
+      $queryRaw: jest.fn()
+        .mockResolvedValueOnce([{ category_id: 3, meal_id: 4 }])
+        .mockResolvedValueOnce([
+          { signal: 'saved', recipe_id: 21 },
+          { signal: 'planned', recipe_id: 22 },
+          { signal: 'not_interested', recipe_id: 23 },
+          { signal: 'removed_from_meal_plan', recipe_id: 24 },
+        ]),
+    };
     const service = new RecommendationContextService(
       preferencesService as never,
       pantryService as never,
@@ -137,11 +151,18 @@ describe('RecommendationService', () => {
         [11, 2],
         [12, 1],
       ]),
+      savedRecipeIds: new Set([21]),
+      plannedRecipeIds: new Set([22]),
+      notInterestedRecipeIds: new Set([23]),
+      removedFromMealPlanRecipeIds: new Set([24]),
     });
     expect(preferencesService.get).toHaveBeenCalledWith(7);
     expect(pantryService.list).toHaveBeenCalledWith(7);
     expect(historyService.list).toHaveBeenCalledWith(7);
-    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
+    const signalQuery = prisma.$queryRaw.mock.calls[1][0];
+    expect(signalQuery.strings.join(' ')).toMatch(/household_members/);
+    expect(signalQuery.strings.join(' ')).toMatch(/recommendation_meal_plan_removals/);
   });
 
   it('returns ranked public candidates without exposing the scorer breakdown', async () => {

@@ -146,5 +146,6 @@ export const useRecipesQuery = (
 	queryKey: createRecipeQueryKey(state),
 	queryFn: fetchRecipes,
 	placeholderData: keepPreviousData,
+	retry: false,
 	enabled: options.enabled ?? true,
 });

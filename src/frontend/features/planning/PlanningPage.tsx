@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, CalendarDays, List, ShoppingBasket, Sparkles } from "lucide-react";
+import { Bookmark, CalendarDays, List, ShoppingBasket, Sparkles, Utensils } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
@@ -12,6 +12,8 @@ import MealPlanAgenda from "./components/MealPlanAgenda";
 import MealPlanGrid from "./components/MealPlanGrid";
 import WeekNavigator from "./components/WeekNavigator";
 import GenerateMealPlanDialog from "./GenerateMealPlanDialog";
+import UseLeftoverDialog from "./components/UseLeftoverDialog";
+import SavedPlanningPanel from "./components/SavedPlanningPanel";
 import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 type DialogState = { date: string; slot: MealSlot; item?: MealPlanItem };
@@ -36,6 +38,7 @@ const PlanningPage = () => {
 	const [dialogState, setDialogState] = useState<DialogState | null>(null);
 	const [planningView, setPlanningView] = useState<PlanningView>("calendar");
 	const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+	const [isLeftoverDialogOpen, setIsLeftoverDialogOpen] = useState(false);
 	const mealPlanQuery = useMealPlanForWeekQuery(visibleWeek, {}, scope);
 	const createPlanMutation = useCreateMealPlanMutation(scope);
 	const addMealMutation = useAddMealPlanItemMutation(scope);
@@ -142,6 +145,7 @@ const PlanningPage = () => {
 					</div>
 					<div className="flex w-full flex-col gap-2 sm:flex-row lg:w-full xl:w-auto">
 						{canEdit && scope.kind === "personal" && <Button className="flex-1 xl:flex-none" onClick={() => setIsGenerateDialogOpen(true)}><Sparkles className="size-4" aria-hidden="true" />Generate week</Button>}
+						{canEdit && <Button variant="outline" className="flex-1 xl:flex-none" onClick={() => setIsLeftoverDialogOpen(true)}><Utensils className="size-4" aria-hidden="true" />Use leftovers</Button>}
 						<Button asChild variant="outline" className="flex-1 xl:flex-none"><Link to="/wishlist"><Bookmark className="size-4" aria-hidden="true" />Saved recipes</Link></Button>
 						<Button asChild className="flex-1 xl:flex-none"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Shopping list</Link></Button>
 					</div>
@@ -150,9 +154,11 @@ const PlanningPage = () => {
 					<WeekNavigator range={visibleWeek} onPrevious={() => moveWeek(-1)} onNext={() => moveWeek(1)} isCurrentWeek={currentWeek.from === visibleWeek.from} />
 					<div className="mt-5">{renderPlanContent()}</div>
 				</Card>
+				{scope.kind === "personal" && <SavedPlanningPanel planId={activePlan?.plan_id} from={visibleWeek.from} to={visibleWeek.to} canEdit={canEdit} />}
 			</div>
 			<GenerateMealPlanDialog open={isGenerateDialogOpen && canEdit && scope.kind === "personal"} from={visibleWeek.from} to={visibleWeek.to} onClose={() => setIsGenerateDialogOpen(false)} />
 			{canEdit && <AddMealDialog open={Boolean(dialogState)} initialDate={dialogState?.date ?? visibleWeek.from} initialSlot={dialogState?.slot ?? "dinner"} item={dialogState?.item} onClose={() => setDialogState(null)} onSubmit={handleMealSubmit} isSubmitting={isMealMutationPending} error={mutationError} />}
+			{canEdit && isLeftoverDialogOpen && <UseLeftoverDialog open initialDate={visibleWeek.from} scope={scope} activePlan={activePlan} onClose={() => setIsLeftoverDialogOpen(false)} />}
 		</main>
 	);
 };

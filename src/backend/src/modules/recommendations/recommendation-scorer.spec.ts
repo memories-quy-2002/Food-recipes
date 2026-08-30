@@ -26,6 +26,10 @@ const createContext = (
   likedMealIds: new Set(),
   recentlyCookedRecipeIds: new Set(),
   repeatCookCounts: new Map(),
+  savedRecipeIds: new Set(),
+  plannedRecipeIds: new Set(),
+  notInterestedRecipeIds: new Set(),
+  removedFromMealPlanRecipeIds: new Set(),
   ...overrides,
 });
 
@@ -216,7 +220,8 @@ describe('RecommendationScorer', () => {
     const novel = scorer.score(candidate, createContext());
 
     expect(recent.breakdown.novelty).toBeLessThan(novel.breakdown.novelty);
-    expect(recent.score).toBeLessThan(novel.score);
+    expect(recent.implicitAdjustment).toBeCloseTo(0.25);
+    expect(recent.score).toBeGreaterThan(novel.score);
   });
 
   it('raises the waste-reduction score for an ingredient that expires soon', () => {
@@ -264,5 +269,29 @@ describe('RecommendationScorer', () => {
     expect(result.excluded).toBe(false);
     expect(result.reasons.length).toBeGreaterThan(0);
     expect(result.reasons.every((reason: string) => reason.trim().length > 0)).toBe(true);
+  });
+
+  it('applies signed implicit signals and explains them', () => {
+    const candidate = createCandidate();
+    const result = scorer.score(candidate, createContext({
+      savedRecipeIds: new Set([candidate.recipeId]),
+      plannedRecipeIds: new Set([candidate.recipeId]),
+      recentlyCookedRecipeIds: new Set([candidate.recipeId]),
+      repeatCookCounts: new Map([[candidate.recipeId, 2]]),
+      removedFromMealPlanRecipeIds: new Set([candidate.recipeId]),
+    }));
+
+    expect(result.implicitAdjustment).toBeCloseTo(0.75);
+    expect(result.reasons.join(' ')).toMatch(/saved|meal plan|cooked|removed/i);
+  });
+
+  it('hard-excludes a recipe marked not interested', () => {
+    const candidate = createCandidate();
+    const result = scorer.score(candidate, createContext({
+      notInterestedRecipeIds: new Set([candidate.recipeId]),
+    }));
+
+    expect(result).toMatchObject({ excluded: true, score: 0, implicitAdjustment: 0 });
+    expect(result.reasons.join(' ')).toMatch(/not interested/i);
   });
 });

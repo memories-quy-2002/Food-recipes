@@ -20,7 +20,11 @@ const getStorage = (): Storage | null => {
 export const getCookingToolsStorageKey = (
 	userId: number | string,
 	recipeId: number | string,
-): string => `${STORAGE_PREFIX}:${userId || "guest"}:${recipeId}`;
+	sourceType: "recipe" | "leftover" = "recipe",
+	leftoverBatchId?: number | string | null,
+): string => sourceType === "leftover"
+	? `${STORAGE_PREFIX}:${userId || "guest"}:${recipeId}:leftover:${leftoverBatchId ?? "invalid"}`
+	: `${STORAGE_PREFIX}:${userId || "guest"}:${recipeId}`;
 
 export const defaultCookingToolsState = (): CookingToolsState => ({
 	checkedIngredients: [],
