@@ -10,14 +10,9 @@ const baselineWorkflowPath = path.join(
   repositoryRoot,
   '.github/workflows/production-prisma-baseline.yml',
 );
-const realStackConfigPath = path.join(
-  repositoryRoot,
-  'src/frontend/e2e/real-stack.playwright.config.js',
-);
-const [workflow, baselineWorkflow, realStackConfig] = await Promise.all([
+const [workflow, baselineWorkflow] = await Promise.all([
   readFile(workflowPath, 'utf8'),
   readFile(baselineWorkflowPath, 'utf8'),
-  readFile(realStackConfigPath, 'utf8'),
 ]);
 
 const jobsSectionMatch = workflow.match(/^jobs:\r?\n([\s\S]*)$/m);
@@ -31,7 +26,7 @@ const jobs = Object.fromEntries(
   ]),
 );
 
-const expectedJobs = ['static', 'backend', 'frontend', 'frontend-e2e', 'real-stack'];
+const expectedJobs = ['static', 'backend', 'frontend', 'frontend-e2e'];
 
 assert.deepEqual(Object.keys(jobs), ['changes', ...expectedJobs], 'quality gates must include change detection before package jobs');
 assert.match(workflow, /^  pull_request:\s*$/m, 'workflow must run for pull requests');
@@ -62,7 +57,7 @@ for (const validator of [
   assertJobContains('static', new RegExp(validator.replace('.', '\\.')));
 }
 
-for (const jobName of ['backend', 'frontend', 'frontend-e2e', 'real-stack']) {
+for (const jobName of ['backend', 'frontend', 'frontend-e2e']) {
   assertJobContains(jobName, /pnpm\/action-setup@v4[\s\S]*version: 11\.18\.0/);
   assertJobContains(jobName, /actions\/setup-node@v4[\s\S]*node-version: 24/);
   assertJobContains(jobName, /pnpm install --frozen-lockfile/);
@@ -84,29 +79,6 @@ assertJobContains('frontend-e2e', /needs:\s*changes/);
 assertJobContains('frontend-e2e', /pnpm exec playwright install --with-deps chromium/);
 assertJobContains('frontend-e2e', /pnpm test:e2e:quality/);
 assertJobContains('frontend-e2e', /actions\/upload-artifact@v4/);
-assertJobContains('real-stack', /services:\s*[\s\S]*postgres:\s*\r?\n\s+image:\s*postgres:17/);
-assertJobContains('real-stack', /pnpm exec prisma migrate deploy/);
-assertJobContains('real-stack', /pnpm prisma:seed/);
-assertJobContains('real-stack', /pnpm test:e2e:real/);
-assertJobContains('real-stack', /actions\/upload-artifact@v4/);
-assertJobContains('real-stack', /Generate an ephemeral CI JWT secret/);
-assertJobContains(
-  'real-stack',
-  /FOOD_RECIPES_E2E_SKIP_ACCEPTANCE_SECURITY:\s*["']?1["']?/,
-  'real-stack CI must skip flaky acceptance and security suites',
-);
-assert.match(
-  realStackConfig,
-  /FOOD_RECIPES_E2E_SKIP_ACCEPTANCE_SECURITY/,
-  'real-stack Playwright config must support skipping acceptance and security suites in CI',
-);
-assert.match(
-  realStackConfig,
-  /real-stack\/acceptance\.spec\.js[\s\S]*real-stack\/security\.spec\.js/,
-  'real-stack Playwright config must exclude both acceptance and security suites when requested',
-);
-assert.match(workflow, /JWT_SECRET=\$\(openssl rand -hex 32\)/, 'real-stack must generate a fresh JWT secret at runtime');
-assert.doesNotMatch(workflow, /ci-real-stack-jwt-secret-[A-Za-z0-9]+/, 'workflow must not contain a hard-coded high-entropy JWT secret');
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
 assert.doesNotMatch(jobs.frontend, /playwright/i, 'frontend quality gates must not run Playwright journeys');
 assert.doesNotMatch(jobs.frontend, /actions\/upload-artifact@v4/, 'frontend quality gates must not upload Playwright artifacts');
