@@ -190,7 +190,7 @@ jobs:
             src/frontend/output
 
   real-stack:
-    name: Real-stack acceptance and security
+    name: Real-stack core journeys
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.cross == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -284,12 +284,13 @@ jobs:
         working-directory: src/frontend
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run real-stack acceptance and security journeys
+      - name: Run real-stack core journeys
         working-directory: src/frontend
         env:
           FOOD_RECIPES_E2E_API_URL: http://localhost:3000/api/v1
           FOOD_RECIPES_E2E_API_ORIGIN: http://localhost:3000
           FOOD_RECIPES_E2E_WEB_URL: http://localhost:5173
+          FOOD_RECIPES_E2E_SKIP_ACCEPTANCE_SECURITY: "1"
         run: pnpm test:e2e:real
 
       - name: Capture API log

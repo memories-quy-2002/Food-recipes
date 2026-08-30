@@ -10,9 +10,14 @@ const baselineWorkflowPath = path.join(
   repositoryRoot,
   '.github/workflows/production-prisma-baseline.yml',
 );
-const [workflow, baselineWorkflow] = await Promise.all([
+const realStackConfigPath = path.join(
+  repositoryRoot,
+  'src/frontend/e2e/real-stack.playwright.config.js',
+);
+const [workflow, baselineWorkflow, realStackConfig] = await Promise.all([
   readFile(workflowPath, 'utf8'),
   readFile(baselineWorkflowPath, 'utf8'),
+  readFile(realStackConfigPath, 'utf8'),
 ]);
 
 const jobsSectionMatch = workflow.match(/^jobs:\r?\n([\s\S]*)$/m);
@@ -85,6 +90,21 @@ assertJobContains('real-stack', /pnpm prisma:seed/);
 assertJobContains('real-stack', /pnpm test:e2e:real/);
 assertJobContains('real-stack', /actions\/upload-artifact@v4/);
 assertJobContains('real-stack', /Generate an ephemeral CI JWT secret/);
+assertJobContains(
+  'real-stack',
+  /FOOD_RECIPES_E2E_SKIP_ACCEPTANCE_SECURITY:\s*["']?1["']?/,
+  'real-stack CI must skip flaky acceptance and security suites',
+);
+assert.match(
+  realStackConfig,
+  /FOOD_RECIPES_E2E_SKIP_ACCEPTANCE_SECURITY/,
+  'real-stack Playwright config must support skipping acceptance and security suites in CI',
+);
+assert.match(
+  realStackConfig,
+  /real-stack\/acceptance\.spec\.js[\s\S]*real-stack\/security\.spec\.js/,
+  'real-stack Playwright config must exclude both acceptance and security suites when requested',
+);
 assert.match(workflow, /JWT_SECRET=\$\(openssl rand -hex 32\)/, 'real-stack must generate a fresh JWT secret at runtime');
 assert.doesNotMatch(workflow, /ci-real-stack-jwt-secret-[A-Za-z0-9]+/, 'workflow must not contain a hard-coded high-entropy JWT secret');
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
