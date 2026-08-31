@@ -10,34 +10,34 @@ importers:
     dependencies:
       '@nestjs/common':
         specifier: ^11.2.3
-        version: 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+        version: 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@nestjs/config':
         specifier: ^4.0.4
-        version: 4.0.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(rxjs@7.8.2)
+        version: 4.0.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/jwt':
         specifier: ^11.0.2
-        version: 11.0.2(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))
+        version: 11.0.2(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))
       '@nestjs/passport':
         specifier: ^11.0.5
-        version: 11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(passport@0.7.0)
+        version: 11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(passport@0.7.0)
       '@nestjs/platform-express':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)
       '@nestjs/swagger':
         specifier: ^11.4.7
-        version: 11.4.7(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+        version: 11.4.7(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       '@prisma/adapter-pg':
-        specifier: ^7.9.1
-        version: 7.9.1
+        specifier: ^7.10.0
+        version: 7.10.0
       '@prisma/client':
-        specifier: ^7.9.1
-        version: 7.9.1(prisma@7.9.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)
+        specifier: ^7.10.0
+        version: 7.10.0(prisma@7.10.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)
       '@sentry/nestjs':
         specifier: ^10.71.0
-        version: 10.71.0(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(supports-color@8.1.1)
+        version: 10.71.0(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(supports-color@8.1.1)
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -45,8 +45,8 @@ importers:
         specifier: ^0.5.1
         version: 0.5.1
       class-validator:
-        specifier: ^0.14.4
-        version: 0.14.4
+        specifier: ^0.15.1
+        version: 0.15.1
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -71,7 +71,7 @@ importers:
         version: 21.2.2
       '@nestjs/testing':
         specifier: ^11.2.1
-        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/platform-express@11.2.1)
+        version: 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/platform-express@11.2.1)
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
@@ -94,8 +94,8 @@ importers:
         specifier: ^30.4.2
         version: 30.4.2(@types/node@24.13.3)(supports-color@8.1.1)(ts-node@10.9.2(@types/node@24.13.3)(typescript@5.9.3))
       prisma:
-        specifier: ^7.9.1
-        version: 7.9.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
+        specifier: ^7.10.0
+        version: 7.10.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
       supertest:
         specifier: ^7.2.2
         version: 7.2.2(supports-color@8.1.1)
@@ -689,14 +689,14 @@ packages:
     resolution: {integrity: sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  '@prisma/adapter-pg@7.9.1':
-    resolution: {integrity: sha512-Ho2RK1KanQxLNSC0sR5bpiiVep10sWPLXCcxK+KXfI/Q69TMRbiafSvLPv3V9snimX72rMCqGlyJ4sBO4lKTAw==}
+  '@prisma/adapter-pg@7.10.0':
+    resolution: {integrity: sha512-N7nwSor0HO1Kz6xBv0TPAjAPysKK0fac6p4fVN3ensLOuzc/83Fgmln5k92eK/cvzqdkSR/2kkAqlbcdwVrwpw==}
 
-  '@prisma/client-runtime-utils@7.9.1':
-    resolution: {integrity: sha512-mVIBGYdO5CFmK0HvjxrtfIyQQcPdb88pSCeVQriVQPVZyDovIWblpHfOgcS8QO187j3QF0ePArH8qPhp0AU2vg==}
+  '@prisma/client-runtime-utils@7.10.0':
+    resolution: {integrity: sha512-cnCy7lUV8/CctgKVEmqAbSLAmwqJdE/qAlqTBk/0NDk59zEb2cZ0M0M0E4vVPnqbSEYudRroQDvOWfUZH6RIfw==}
 
-  '@prisma/client@7.9.1':
-    resolution: {integrity: sha512-+xgrh2EhJVF79wC0yX5G4PI1Rdcm7Qn/nekNQ+t/O153wtNggruHal+fXHSa0QE+Tp/Cw5wvxeCEhZZ59xGm8Q==}
+  '@prisma/client@7.10.0':
+    resolution: {integrity: sha512-Ubw/QS9JGIBSBUsyxAUQuK/Jcu0Tsva7le7QbLd91Kix9yJvYDdj5QkwgEbbZniH80dd+sziQcALPc+HnvQC8Q==}
     engines: {node: ^20.19 || ^22.12 || >=24.0}
     peerDependencies:
       prisma: '*'
@@ -707,35 +707,35 @@ packages:
       typescript:
         optional: true
 
-  '@prisma/config@7.9.1':
-    resolution: {integrity: sha512-4znKhxTmXmuPye9Z6pbIyYb5VZlkZ05qG1L6Dr4g+7oTwc6V50Bs9XirFBDdjWt+H/AabMn9aUnxBcvj8z05aA==}
+  '@prisma/config@7.10.0':
+    resolution: {integrity: sha512-Rcg828gIRE3HOQ3pOATFjV5d/P0U9OIobxhd/IMxlfWjA4vru0eGwb0AIwFw0rmcLMVShohZYWPixVxkBHsxUA==}
+
+  '@prisma/debug@7.10.0':
+    resolution: {integrity: sha512-caygJKtltmRIgdJ3jRpkOr7yM4DW6zxo5uOmojKWFb3asnxWoRkQOwZmXBgD8FZp4htrX+nMpcWqDwzlQ1+Y4g==}
 
   '@prisma/debug@7.2.0':
     resolution: {integrity: sha512-YSGTiSlBAVJPzX4ONZmMotL+ozJwQjRmZweQNIq/ER0tQJKJynNkRB3kyvt37eOfsbMCXk3gnLF6J9OJ4QWftw==}
 
-  '@prisma/debug@7.9.1':
-    resolution: {integrity: sha512-/cpVZ4itxtcgB8GHBvZtcmuEjq+lWsLrRJxFMbwZrT1RIdtuKmUm7PPGo/wzfbYpBrk+9WmmBE8CHJw2rybKDQ==}
-
   '@prisma/dev@0.24.17':
     resolution: {integrity: sha512-UvdZzmpFwknnfreh6Jije84ekkYGPYEJhXG1tFzCsCfQyzJifrOo38eZc0qajzvaC6OLUOrN9ML5XfCnEZL9DA==}
 
-  '@prisma/driver-adapter-utils@7.9.1':
-    resolution: {integrity: sha512-vmHehG7nn/heW32DXXpp13DxxAxVVe6n250oEt3dOL2E/4bt3olktKZN0mzSuxMMronyMSkbeW2uCOn3F4g8RQ==}
+  '@prisma/driver-adapter-utils@7.10.0':
+    resolution: {integrity: sha512-u8zkcRLlaryO652T4qavBg0HmzNW5tSKdsCn6hc1PhWAp/J6k0vrxLuUs+b9o+HcjsK7Dfa01o4OFSn0frauJA==}
 
-  '@prisma/engines-version@7.9.0-1.e922089b7d7502aff4249d5da3420f6fa55fc6ad':
-    resolution: {integrity: sha512-2BsPPFksz3CQUXG6af3rVCtJKg6+JJGJTtfgu2fU8DdXhOfkBjulCq8mwybCd6ge0/jhZq2kOtLAbmUDMyI1nA==}
+  '@prisma/engines-version@7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3':
+    resolution: {integrity: sha512-8OJ6RuZTZ06eFUOtBwxVmv8XMmOW6HWN5F+uxUbZkGxR0Bfab1dfAdXaHPmR5mb59E+fmUo8IOzXlbLY1SClbw==}
 
-  '@prisma/engines@7.9.1':
-    resolution: {integrity: sha512-UprXSMNXx2NF5ow4pqaQtE8OuBz6K78B0wc0tn2L28G5r933iWp1DR9Do2qWrsNvvFIP3x6mpEWnQtckMO0Uhg==}
+  '@prisma/engines@7.10.0':
+    resolution: {integrity: sha512-KNumN6NHFwybvfdYzTee9pqwx5PvknpWAaHn6L5NsbrKdl+SQrsVZs9opKs6U6SAsvB26HDt3WybRjOhgoWOYQ==}
 
-  '@prisma/fetch-engine@7.9.1':
-    resolution: {integrity: sha512-9DwxrNTeT25Orbu9CWh0CZvVlyY1lmscpbaeLZcOnuR7zcuFrt91YSmmOfIm7zJ08YOZ6mVzURKwLoMwEBcK8w==}
+  '@prisma/fetch-engine@7.10.0':
+    resolution: {integrity: sha512-Zqyu8DY14t6W/xwmAxUYWCXtHrvQnSvT644EAZSsdM8NSmCS74vJJbBKdVsK3ucFpnUWkEpbO1a0CxJXrg130g==}
+
+  '@prisma/get-platform@7.10.0':
+    resolution: {integrity: sha512-0bra1LFYi8xNw0yqV62bHJNQk4BKleOngZiqPWIQc7a3+9q6rqsnqJ15BuepP8943PFMvtmgnP52juZsyYkA6w==}
 
   '@prisma/get-platform@7.2.0':
     resolution: {integrity: sha512-k1V0l0Td1732EHpAfi2eySTezyllok9dXb6UQanajkJQzPUGi3vO2z7jdkz67SypFTdmbnyGYxvEvYZdZsMAVA==}
-
-  '@prisma/get-platform@7.9.1':
-    resolution: {integrity: sha512-PK8R60YZRQvYxBrGG9i7l2/rFyzy+2MuI1dKtmtrCqPH8YpiJx/MfiC7LRzX5786rZDEv7BngcjfIJW4/9ADuw==}
 
   '@prisma/query-plan-executor@7.2.0':
     resolution: {integrity: sha512-EOZmNzcV8uJ0mae3DhTsiHgoNCuu1J9mULQpGCh62zN3PxPTd+qI9tJvk5jOst8WHKQNwJWR3b39t0XvfBB0WQ==}
@@ -950,6 +950,9 @@ packages:
   '@types/d3-color@3.1.0':
     resolution: {integrity: sha512-HKuicPHJuvPgCD+np6Se9MQvS6OCbJmOjGvylzMJRlDwUXjKTTXs6Pwgk79O09Vj/ho3u1ofXnhFOaEWWPrlwA==}
 
+  '@types/d3-color@3.1.3':
+    resolution: {integrity: sha512-iO90scth9WAbmgv7ogoq57O9YpKmFBbmoEoCHDB2xMBY0+/KVrqAaCDyCE16dUspeOvIxFFRI+0sEtqDqy2b4A==}
+
   '@types/d3-delaunay@6.0.1':
     resolution: {integrity: sha512-tLxQ2sfT0p6sxdG75c6f/ekqxjyYR0+LwPrsO1mbC9YDBzPJhs2HbJJRrn8Ez1DBoHRo2yx7YEATI+8V1nGMnQ==}
 
@@ -976,6 +979,9 @@ packages:
 
   '@types/d3-time@3.0.0':
     resolution: {integrity: sha512-sZLCdHvBUcNby1cB6Fd3ZBrABbjz3v1Vm90nysCQ6Vt7vd6e/h9Lt7SiJUoEX0l4Dzc7P5llKyhqSi1ycSf1Hg==}
+
+  '@types/d3-time@3.0.4':
+    resolution: {integrity: sha512-yuzZug1nkAAaBlBBikKZTgzCeA+k1uy4ZFwWANOfKw5z5LRhV0gNA7gNkKm7HoK+HRN0wX3EkxGk0fpbWhmB7g==}
 
   '@types/estree@1.0.9':
     resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
@@ -1443,8 +1449,8 @@ packages:
   class-transformer@0.5.1:
     resolution: {integrity: sha512-SQa1Ws6hUbfC98vKGxZH3KFY0Y1lm5Zm0SY8XX9zbK7FJCyVEac3ATW0RIpwzW+oOfmHE5PMPufDG9hCfoEOMw==}
 
-  class-validator@0.14.4:
-    resolution: {integrity: sha512-AwNusCCam51q703dW82x95tOqQp6oC9HNUl724KxJJOfnKscI8dOloXFgyez7LbTTKWuRBA37FScqVbJEoq8Yw==}
+  class-validator@0.15.1:
+    resolution: {integrity: sha512-LqoS80HBBSCVhz/3KloUly0ovokxpdOLR++Al3J3+dHXWt9sTKlKd4eYtoxhxyUjoe5+UcIM+5k9MIxyBWnRTw==}
 
   classnames@2.5.1:
     resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
@@ -1576,6 +1582,10 @@ packages:
 
   d3-format@3.1.0:
     resolution: {integrity: sha512-YyUI6AEuY/Wpt8KWLgZHsIU86atmikuoOmCfommt0LYHiQSPjvX2AcFc38PX0CBpr2RCyZhjex+NS/LPOv6YqA==}
+    engines: {node: '>=12'}
+
+  d3-format@3.1.2:
+    resolution: {integrity: sha512-AJDdYOdnyRDV5b6ArilzCPPwc1ejkHcoyFarqlPqT7zRYjhavcT3uSrqcMvsgh2CgoPbK3RCwyHaVyxYcP2Arg==}
     engines: {node: '>=12'}
 
   d3-geo@3.1.0:
@@ -2285,8 +2295,8 @@ packages:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
 
-  libphonenumber-js@1.13.11:
-    resolution: {integrity: sha512-ETER2kMaIFTI/Nh1a8Gk03dUF/SL0VZqtI+CcVHZxp5WIHYwNS7S+uiYZDYCvLy3lOR4/DAD5jf0h5WkePPpqg==}
+  libphonenumber-js@1.13.12:
+    resolution: {integrity: sha512-uLVeV1c9OTk6qkdqnj+mpMD+ZdnZ0szVyWu58HwMmpwkHA1gCEkyjd3veZQXDnuw9KEwSRjcc9B1pS9XKIN1fA==}
 
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
@@ -2650,8 +2660,8 @@ packages:
     resolution: {integrity: sha512-K6KiKMHTL4jjX4u3Kir2EW07nRfcqVTXIImx50wbjHQTcZPgg+gjVeNTIT3l3L1Rd4UefxfogquC9J37SoFyyw==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  prisma@7.9.1:
-    resolution: {integrity: sha512-aPqePoZIqwlAchbgbFDO/wHqGB+7H1nj9gaM+OsL9h77S5S3TnLd9BgD3LnoeDikULo7cl2HSUrEyQ55Z7DYbg==}
+  prisma@7.10.0:
+    resolution: {integrity: sha512-o0ornyJOWgygVAzGCpr8PdXV8EJLHyVGDDUr/voBQt8Azzw8cYTByzzPGcA/m4tCkPcnJA8raEOv2CslsKhPEw==}
     engines: {node: ^20.19 || ^22.12 || >=24.0}
     hasBin: true
     peerDependencies:
@@ -3810,7 +3820,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)':
+  '@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)':
     dependencies:
       file-type: 21.3.4(supports-color@8.1.1)
       iterare: 1.2.1
@@ -3821,21 +3831,21 @@ snapshots:
       uid: 2.0.2
     optionalDependencies:
       class-transformer: 0.5.1
-      class-validator: 0.14.4
+      class-validator: 0.15.1
     transitivePeerDependencies:
       - supports-color
 
-  '@nestjs/config@4.0.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(rxjs@7.8.2)':
+  '@nestjs/config@4.0.4(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(rxjs@7.8.2)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       dotenv: 17.4.1
       dotenv-expand: 12.0.3
       lodash: 4.18.1
       rxjs: 7.8.2
 
-  '@nestjs/core@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/core@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       fast-safe-stringify: 2.1.1
       iterare: 1.2.1
       path-to-regexp: 8.4.2
@@ -3844,31 +3854,31 @@ snapshots:
       tslib: 2.8.1
       uid: 2.0.2
     optionalDependencies:
-      '@nestjs/platform-express': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)
+      '@nestjs/platform-express': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)
 
-  '@nestjs/jwt@11.0.2(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))':
+  '@nestjs/jwt@11.0.2(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       '@types/jsonwebtoken': 9.0.10
       jsonwebtoken: 9.0.3
 
-  '@nestjs/mapped-types@2.1.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
+  '@nestjs/mapped-types@2.1.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       reflect-metadata: 0.2.2
     optionalDependencies:
       class-transformer: 0.5.1
-      class-validator: 0.14.4
+      class-validator: 0.15.1
 
-  '@nestjs/passport@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(passport@0.7.0)':
+  '@nestjs/passport@11.0.5(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(passport@0.7.0)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
       passport: 0.7.0
 
-  '@nestjs/platform-express@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)':
+  '@nestjs/platform-express@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       cors: 2.8.6
       express: 5.2.1(supports-color@8.1.1)
       multer: 2.2.0
@@ -3877,12 +3887,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@nestjs/swagger@11.4.7(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)':
+  '@nestjs/swagger@11.4.7(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)':
     dependencies:
       '@microsoft/tsdoc': 0.16.0
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/mapped-types': 2.1.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/mapped-types': 2.1.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)
       js-yaml: 5.3.0
       lodash: 4.18.1
       path-to-regexp: 8.4.2
@@ -3890,15 +3900,15 @@ snapshots:
       swagger-ui-dist: 5.32.13
     optionalDependencies:
       class-transformer: 0.5.1
-      class-validator: 0.14.4
+      class-validator: 0.15.1
 
-  '@nestjs/testing@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/platform-express@11.2.1)':
+  '@nestjs/testing@11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@nestjs/platform-express@11.2.1)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       tslib: 2.8.1
     optionalDependencies:
-      '@nestjs/platform-express': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)
+      '@nestjs/platform-express': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(supports-color@8.1.1)
 
   '@noble/hashes@1.8.0': {}
 
@@ -3954,25 +3964,25 @@ snapshots:
 
   '@pkgr/core@0.3.6': {}
 
-  '@prisma/adapter-pg@7.9.1':
+  '@prisma/adapter-pg@7.10.0':
     dependencies:
-      '@prisma/driver-adapter-utils': 7.9.1
+      '@prisma/driver-adapter-utils': 7.10.0
       '@types/pg': 8.23.1
       pg: 8.23.0
       postgres-array: 3.0.4
     transitivePeerDependencies:
       - pg-native
 
-  '@prisma/client-runtime-utils@7.9.1': {}
+  '@prisma/client-runtime-utils@7.10.0': {}
 
-  '@prisma/client@7.9.1(prisma@7.9.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)':
+  '@prisma/client@7.10.0(prisma@7.10.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3))(typescript@5.9.3)':
     dependencies:
-      '@prisma/client-runtime-utils': 7.9.1
+      '@prisma/client-runtime-utils': 7.10.0
     optionalDependencies:
-      prisma: 7.9.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
+      prisma: 7.10.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3)
       typescript: 5.9.3
 
-  '@prisma/config@7.9.1':
+  '@prisma/config@7.10.0':
     dependencies:
       c12: 3.3.4
       deepmerge-ts: 7.1.5
@@ -3981,9 +3991,9 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@prisma/debug@7.2.0': {}
+  '@prisma/debug@7.10.0': {}
 
-  '@prisma/debug@7.9.1': {}
+  '@prisma/debug@7.2.0': {}
 
   '@prisma/dev@0.24.17(typescript@5.9.3)':
     dependencies:
@@ -4005,32 +4015,32 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@prisma/driver-adapter-utils@7.9.1':
+  '@prisma/driver-adapter-utils@7.10.0':
     dependencies:
-      '@prisma/debug': 7.9.1
+      '@prisma/debug': 7.10.0
 
-  '@prisma/engines-version@7.9.0-1.e922089b7d7502aff4249d5da3420f6fa55fc6ad': {}
+  '@prisma/engines-version@7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3': {}
 
-  '@prisma/engines@7.9.1':
+  '@prisma/engines@7.10.0':
     dependencies:
-      '@prisma/debug': 7.9.1
-      '@prisma/engines-version': 7.9.0-1.e922089b7d7502aff4249d5da3420f6fa55fc6ad
-      '@prisma/fetch-engine': 7.9.1
-      '@prisma/get-platform': 7.9.1
+      '@prisma/debug': 7.10.0
+      '@prisma/engines-version': 7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3
+      '@prisma/fetch-engine': 7.10.0
+      '@prisma/get-platform': 7.10.0
 
-  '@prisma/fetch-engine@7.9.1':
+  '@prisma/fetch-engine@7.10.0':
     dependencies:
-      '@prisma/debug': 7.9.1
-      '@prisma/engines-version': 7.9.0-1.e922089b7d7502aff4249d5da3420f6fa55fc6ad
-      '@prisma/get-platform': 7.9.1
+      '@prisma/debug': 7.10.0
+      '@prisma/engines-version': 7.10.0-4.0edf323efd1d98336f3f0a68684b56f689b900d3
+      '@prisma/get-platform': 7.10.0
+
+  '@prisma/get-platform@7.10.0':
+    dependencies:
+      '@prisma/debug': 7.10.0
 
   '@prisma/get-platform@7.2.0':
     dependencies:
       '@prisma/debug': 7.2.0
-
-  '@prisma/get-platform@7.9.1':
-    dependencies:
-      '@prisma/debug': 7.9.1
 
   '@prisma/query-plan-executor@7.2.0': {}
 
@@ -4122,10 +4132,10 @@ snapshots:
     dependencies:
       '@sentry/conventions': 0.16.0
 
-  '@sentry/nestjs@10.71.0(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(supports-color@8.1.1)':
+  '@sentry/nestjs@10.71.0(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(supports-color@8.1.1)':
     dependencies:
-      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
-      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/common': 11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
+      '@nestjs/core': 11.2.1(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@11.2.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.220.0(@opentelemetry/api@1.9.1)(supports-color@8.1.1)
       '@sentry/conventions': 0.16.0
@@ -4259,6 +4269,8 @@ snapshots:
 
   '@types/d3-color@3.1.0': {}
 
+  '@types/d3-color@3.1.3': {}
+
   '@types/d3-delaunay@6.0.1': {}
 
   '@types/d3-format@3.0.1': {}
@@ -4269,13 +4281,13 @@ snapshots:
 
   '@types/d3-interpolate@3.0.1':
     dependencies:
-      '@types/d3-color': 3.1.0
+      '@types/d3-color': 3.1.3
 
   '@types/d3-path@3.1.1': {}
 
   '@types/d3-scale@4.0.2':
     dependencies:
-      '@types/d3-time': 3.0.0
+      '@types/d3-time': 3.0.4
 
   '@types/d3-shape@3.1.7':
     dependencies:
@@ -4284,6 +4296,8 @@ snapshots:
   '@types/d3-time-format@2.1.0': {}
 
   '@types/d3-time@3.0.0': {}
+
+  '@types/d3-time@3.0.4': {}
 
   '@types/estree@1.0.9': {}
 
@@ -4782,10 +4796,10 @@ snapshots:
 
   class-transformer@0.5.1: {}
 
-  class-validator@0.14.4:
+  class-validator@0.15.1:
     dependencies:
       '@types/validator': 13.15.10
-      libphonenumber-js: 1.13.11
+      libphonenumber-js: 1.13.12
       validator: 13.15.35
 
   classnames@2.5.1: {}
@@ -4903,6 +4917,8 @@ snapshots:
 
   d3-format@3.1.0: {}
 
+  d3-format@3.1.2: {}
+
   d3-geo@3.1.0:
     dependencies:
       d3-array: 3.2.4
@@ -4916,7 +4932,7 @@ snapshots:
   d3-scale@4.0.2:
     dependencies:
       d3-array: 3.2.4
-      d3-format: 3.1.0
+      d3-format: 3.1.2
       d3-interpolate: 3.0.1
       d3-time: 3.1.0
       d3-time-format: 4.1.0
@@ -5783,7 +5799,7 @@ snapshots:
 
   leven@3.1.0: {}
 
-  libphonenumber-js@1.13.11: {}
+  libphonenumber-js@1.13.12: {}
 
   lines-and-columns@1.2.4: {}
 
@@ -6081,11 +6097,11 @@ snapshots:
       react-is-18: react-is@18.3.1
       react-is-19: react-is@19.2.8
 
-  prisma@7.9.1(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3):
+  prisma@7.10.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@5.9.3):
     dependencies:
-      '@prisma/config': 7.9.1
+      '@prisma/config': 7.10.0
       '@prisma/dev': 0.24.17(typescript@5.9.3)
-      '@prisma/engines': 7.9.1
+      '@prisma/engines': 7.10.0
       '@prisma/studio-core': 0.33.0(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       mysql2: 3.15.3
       postgres: 3.4.7
