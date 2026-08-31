@@ -29,7 +29,7 @@ jobs:
 
       - name: Detect affected packages
         id: filter
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         with:
           filters: |
             frontend:
