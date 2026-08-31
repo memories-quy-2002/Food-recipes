@@ -40,7 +40,7 @@ assert.match(workflow, /^permissions:\r?\n  contents: read\r?\n  pull-requests: 
 const assertJobContains = (jobName, pattern, message) => {
   assert.match(jobs[jobName], pattern, message ?? `${jobName} must contain ${pattern}`);
 };
-assertJobContains('changes', /dorny\/paths-filter@v3/, 'changes must use the maintained path filter action');
+assertJobContains('changes', /dorny\/paths-filter@v4/, 'changes must use the maintained path filter action');
 assertJobContains('changes', /frontend:\s*\r?\n\s+- 'src\/frontend\/\*\*'/, 'changes must detect frontend paths');
 assertJobContains('changes', /backend:\s*\r?\n\s+- 'src\/backend\/\*\*'/, 'changes must detect backend paths');
 assertJobContains('changes', /cross:\s*\r?\n\s+- '\.github\/\*\*'/, 'changes must detect cross-package paths');
