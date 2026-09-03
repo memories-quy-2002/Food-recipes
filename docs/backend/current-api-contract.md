@@ -139,7 +139,8 @@ normalization phase.
    headers are applied at bootstrap, and auth attempts have an in-process
    per-IP/per-email throttle. A shared rate-limit service should be added
    before scaling the API horizontally.
-7. Backend CI audits dependencies at high severity. One upstream Prisma
-   tooling advisory (`GHSA-ggr8-5vv4-36mx`) is explicitly allowlisted because
-   Prisma 7.9.1 still pins the vulnerable transitive version; this should be
-   removed when the Prisma dependency publishes a patched pin.
+7. Backend CI audits dependencies at high severity. Prisma 7.10.0 still pins
+   vulnerable transitive versions of `mysql2` and `deepmerge-ts`, so the
+   backend workspace applies narrowly scoped overrides to patched releases.
+   These overrides must be rechecked and removed when Prisma publishes patched
+   dependency pins.
