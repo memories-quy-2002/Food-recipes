@@ -1,7 +1,7 @@
-import React, { useContext, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { RecipeContext } from "@/app/RecipeProvider";
+import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
 
@@ -10,7 +10,7 @@ type RecipeOtherListProps = {
 };
 
 const RecipeOtherList = ({ recipeId }: RecipeOtherListProps): React.ReactElement | null => {
-	const { recipes } = useContext(RecipeContext);
+	const { data: recipes = [] } = useAllRecipesQuery();
 	const relatedRecipes = useMemo(() => {
 		const candidates = recipes.filter(
 			(recipe) => Number(recipe.recipe_id) !== Number(recipeId)

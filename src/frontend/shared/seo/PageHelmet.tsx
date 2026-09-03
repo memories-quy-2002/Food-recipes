@@ -3,7 +3,7 @@ import { useEffect, type ReactElement } from "react";
 const SITE_NAME = "Food Recipes";
 const DEFAULT_DESCRIPTION =
 	"Discover, save, review, and share practical recipes for everyday cooking.";
-const DEFAULT_IMAGE = "/hamburger.svg";
+const DEFAULT_IMAGE = "/food-recipes-social.svg";
 const SITE_URL =
 	import.meta.env.VITE_SITE_URL || "https://foodrecipes1.vercel.app";
 const SEO_ATTRIBUTE = "data-food-recipes-seo";

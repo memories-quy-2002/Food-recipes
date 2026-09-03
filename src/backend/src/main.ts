@@ -1,4 +1,3 @@
-import './bootstrap/instrument';
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { INestApplication, VersioningType } from '@nestjs/common';

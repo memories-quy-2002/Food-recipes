@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Food Recipes</title>
+  <desc id="desc">Discover, save, review, and share practical recipes for everyday cooking.</desc>
+  <rect width="1200" height="630" fill="#f7f1e8"/>
+  <circle cx="1040" cy="80" r="260" fill="#ffe48d" opacity=".65"/>
+  <circle cx="1120" cy="570" r="250" fill="#d9f1d4" opacity=".8"/>
+  <g transform="translate(120 140) scale(3.4)">
+    <rect width="64" height="64" rx="16" fill="#211813"/>
+    <path d="M13 39h38c0 8-7 14-19 14S13 47 13 39Z" fill="#ff9d3b"/>
+    <path d="M17 35h30c3 0 5 2 5 5H12c0-3 2-5 5-5Z" fill="#ed732f"/>
+    <path d="M18 32c0-10 6-17 14-17s14 7 14 17H18Z" fill="#ff9d3b"/>
+    <path d="M24 23c2-4 5-6 8-6" fill="none" stroke="#21cc5a" stroke-linecap="round" stroke-width="3"/>
+  </g>
+  <text x="390" y="285" fill="#211813" font-family="Georgia, serif" font-size="86" font-weight="700">Food Recipes</text>
+  <text x="395" y="365" fill="#6b5d52" font-family="Arial, sans-serif" font-size="32">Practical recipes for everyday cooking</text>
+</svg>

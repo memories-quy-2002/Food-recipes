@@ -1,4 +1,4 @@
-import type { CatalogItem, RecipeDraftPayload } from "./contracts";
+import type { CatalogItem } from "./contracts";
 
 type CatalogItemLike = Partial<CatalogItem> & {
 	category_id?: number | string;
@@ -55,29 +55,6 @@ type RecipeMetadataPayload = {
 		name: string;
 		source: "provided_by_author";
 	}>;
-};
-
-export type SerializedRecipePayload = RecipeDraftPayload & {
-	metadata?: RecipeMetadataPayload;
-};
-
-const findCatalogId = (
-	items: CatalogItemLike[],
-	name: string | null | undefined,
-	label: string,
-): number => {
-	const normalizedName = String(name || "").trim().toLowerCase();
-	const match = items.find((item) => {
-		const itemName = item.name ?? item.category_name ?? item.meal_name;
-		return String(itemName || "").trim().toLowerCase() === normalizedName;
-	});
-	const id = Number(match?.id ?? match?.category_id ?? match?.meal_id);
-
-	if (!Number.isInteger(id) || id < 1) {
-		throw new Error(`Nest recipe creation requires a known ${label} ID.`);
-	}
-
-	return id;
 };
 
 const toMinutes = (time: RecipeTimeInput | null | undefined): number => {
@@ -170,32 +147,6 @@ export const serializeRecipeMetadata = (
 	};
 };
 
-export const serializeCreateRecipePayload = ({
-	recipe,
-	categories,
-	meals,
-	imageUrl,
-}: {
-	recipe: RecipeMutationForm;
-	categories: CatalogItemLike[];
-	meals: CatalogItemLike[];
-	imageUrl?: string | null;
-}): SerializedRecipePayload => {
-	const metadata = serializeRecipeMetadata(recipe);
-	return {
-		name: recipe.recipeName.trim(),
-		description: recipe.recipeDescription ?? undefined,
-		mealId: findCatalogId(meals, recipe.recipeMealName, "meal"),
-		categoryId: findCatalogId(categories, recipe.recipeCategoryName, "category"),
-		prepTimeMinutes: toMinutes(recipe.recipePrepTime),
-		cookTimeMinutes: toMinutes(recipe.recipeCookTime),
-		ingredients: recipe.recipeIngredients,
-		instructions: recipe.recipeInstructions,
-		imageUrl,
-		...(metadata ? { metadata } : {}),
-	};
-};
-
 export const serializeCreateRecipeDraftPayload = ({
 	recipe,
 	categories,
@@ -226,10 +177,6 @@ export const serializeCreateRecipeDraftPayload = ({
 		Object.entries(payload).filter(([, value]) => value !== undefined),
 	);
 };
-
-export const serializeProfilePayload = <T>(profile: T): T => profile;
-
-export const getUpdatedProfileUser = <T>(responseData: T): T => responseData;
 
 export const isWishlistAddSuccess = (status: number): boolean => status === 201;
 

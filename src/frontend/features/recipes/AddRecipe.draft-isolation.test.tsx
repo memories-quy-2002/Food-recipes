@@ -6,9 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import AddRecipe from "./AddRecipe";
 import { AuthContext } from "@/app/AuthProvider";
-import { RecipeContext } from "@/app/RecipeProvider";
 import type { AuthState } from "@/app/AuthProvider";
-import type { RecipeContextValue } from "@/app/RecipeProvider";
 import { loadRecipeDraft } from "./recipeDraftStorage";
 
 vi.mock("@/shared/api/axios", () => ({
@@ -35,15 +33,8 @@ const renderForUser = (userId: number, rerender: RenderResult["rerender"]): void
 				userId,
 				token: null,
 			} satisfies AuthState } }}>
-				<RecipeContext.Provider value={{
-					recipes: [],
-				isLoadingRecipes: false,
-				recipesError: null,
-				refreshRecipes: vi.fn().mockResolvedValue(undefined),
-			} satisfies RecipeContextValue}>
 					<AddRecipe />
-				</RecipeContext.Provider>
-			</AuthContext.Provider>
+				</AuthContext.Provider>
 		</MemoryRouter>
 	);
 

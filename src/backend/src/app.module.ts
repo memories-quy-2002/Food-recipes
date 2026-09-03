@@ -20,7 +20,6 @@ import { PantryModule } from './modules/pantry/pantry.module';
 import { SuggestionsModule } from './modules/suggestions/suggestions.module';
 import { HomeFeedModule } from './modules/home-feed/home-feed.module';
 import { CookingHistoryModule } from './modules/cooking-history/cooking-history.module';
-import { SentryModule } from '@sentry/nestjs/setup';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { HouseholdsModule } from './modules/households/households.module';
@@ -33,7 +32,6 @@ import { ProductAnalyticsService } from './common/analytics/product-analytics.se
 
 @Module({
   imports: [
-    SentryModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       cache: true,

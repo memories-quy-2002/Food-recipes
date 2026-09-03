@@ -86,8 +86,8 @@ Access JWTs are short-lived (15 minutes by default). Login and signup set an
 HttpOnly, SameSite refresh cookie. Refresh tokens are opaque, stored only as
 SHA-256 hashes, rotated on use, and revoked on reuse or logout. The optional
 body `refreshToken` on `/auth/refresh` is a backend-client compatibility
-fallback; browser clients should use the cookie. Frontend token-storage
-migration is intentionally deferred to the later frontend slice.
+fallback; browser clients should use the cookie. Browser access tokens are kept
+in module memory, while the HttpOnly refresh cookie is used for browser refreshes.
 
 The `/auth/token` endpoint remains a compatibility bridge and should not be
 used by new clients. Recovery endpoints return generic responses for unknown

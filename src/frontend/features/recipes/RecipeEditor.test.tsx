@@ -4,11 +4,11 @@ import { cleanup, fireEvent, render, screen, waitFor, type RenderResult } from "
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
-import { RecipeContext } from "@/app/RecipeProvider";
 import type { AuthState } from "@/app/AuthProvider";
-import type { RecipeContextValue } from "@/app/RecipeProvider";
 import type { RecipeStatus } from "@/shared/api/contracts";
 import axios from "@/shared/api/axios";
+import { queryClient } from "@/shared/api/queryClient";
+import { recipeQueryKeys } from "@/features/recipes/api/useRecipeQueries";
 import RecipeEditor, { normalizeStructuredIngredients, type RecipeEditorInput, type RecipeEditorProps } from "./RecipeEditor";
 
 vi.mock("@/shared/api/axios", () => ({
@@ -24,13 +24,6 @@ vi.mock("@/shared/api/supabaseStorage", () => ({
 	isSupabaseStorageConfigured: () => false,
 	uploadRecipeImage: vi.fn(),
 }));
-
-type RenderEditorOptions = {
-	refreshRecipes?: RecipeContextValue["refreshRecipes"];
-};
-
-const createRefreshRecipesMock = () =>
-	vi.fn<RecipeContextValue["refreshRecipes"]>().mockResolvedValue(undefined);
 
 const fixtureRecipe: RecipeEditorInput = {
 	recipe_id: 42,
@@ -100,10 +93,7 @@ const expectEditPayloadRequests = (): void => {
 	expect(axios.put).toHaveBeenNthCalledWith(3, "/recipes/42/dietary-tags", expectedEditTagsPayload);
 };
 
-const renderEditor = (
-	props: RecipeEditorProps,
-	{ refreshRecipes = createRefreshRecipesMock() }: RenderEditorOptions = {},
-): RenderResult => render(
+const renderEditor = (props: RecipeEditorProps): RenderResult => render(
 	<MemoryRouter>
 		<AuthContext.Provider value={{ auth: { current: {
 			isAuthenticated: true,
@@ -112,14 +102,7 @@ const renderEditor = (
 			userId: 42,
 			token: null,
 		} satisfies AuthState } }}>
-			<RecipeContext.Provider value={{
-				recipes: [],
-				isLoadingRecipes: false,
-				recipesError: null,
-				refreshRecipes,
-			} satisfies RecipeContextValue}>
-				<RecipeEditor onSaved={vi.fn()} {...props} />
-			</RecipeContext.Provider>
+			<RecipeEditor onSaved={vi.fn()} {...props} />
 		</AuthContext.Provider>
 	</MemoryRouter>
 );
@@ -235,14 +218,7 @@ describe("RecipeEditor", () => {
 					userId: 42,
 					token: null,
 				} satisfies AuthState } }}>
-					<RecipeContext.Provider value={{
-						recipes: [],
-						isLoadingRecipes: false,
-						recipesError: null,
-						refreshRecipes: vi.fn().mockResolvedValue(undefined),
-					} satisfies RecipeContextValue}>
-						<RecipeEditor mode="edit" recipeId={42} initialRecipe={{ ...fixtureRecipe, status: "draft" }} onSaved={vi.fn()} />
-					</RecipeContext.Provider>
+					<RecipeEditor mode="edit" recipeId={42} initialRecipe={{ ...fixtureRecipe, status: "draft" }} onSaved={vi.fn()} />
 				</AuthContext.Provider>
 			</MemoryRouter>
 		);
@@ -327,14 +303,15 @@ describe("RecipeEditor", () => {
 	});
 
 	it("refreshes owner and detail queries before reporting an edit save", async () => {
-		const refreshRecipes = vi.fn();
+		const invalidateQueries = vi.spyOn(queryClient, "invalidateQueries").mockResolvedValue(undefined);
 		const onSaved = vi.fn();
-		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved }, { refreshRecipes });
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: { ...fixtureRecipe, status: "published" }, onSaved });
 
 		fireEvent.change(await screen.findByLabelText(/recipe name/i), { target: { value: "Better tomato pasta" } });
 		fireEvent.click(await screen.findByRole("button", { name: "Save changes" }));
 
 		await waitFor(() => expect(onSaved).toHaveBeenCalled());
-		expect(refreshRecipes).toHaveBeenCalledTimes(1);
+		expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: recipeQueryKeys.list() });
+		invalidateQueries.mockRestore();
 	});
 });

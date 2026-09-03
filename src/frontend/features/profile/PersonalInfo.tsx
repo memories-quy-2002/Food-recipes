@@ -6,7 +6,6 @@ import Input from "@/shared/ui/Input";
 import Label from "@/shared/ui/Label";
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import { getUpdatedProfileUser, serializeProfilePayload } from "@/shared/api/mutations";
 import { authActions } from "@/features/auth/state/authSlice";
 import { useToast } from "@/app/ToastProvider";
 import type { ProfileUser } from "./profileTypes";
@@ -54,9 +53,9 @@ const PersonalInfo = ({ user }: PersonalInfoProps): ReactElement => {
 		if (!isDirty || isSaving) return;
 		setIsSaving(true);
 		try {
-			const response = await axios.put<ProfileUser>(apiRoutes.userProfile, serializeProfilePayload(formData));
+			const response = await axios.put<ProfileUser>(apiRoutes.userProfile, formData);
 			if (response.status === 200) {
-				const updatedUser = getUpdatedProfileUser(response.data);
+				const updatedUser = response.data;
 				const nextFormData = getFormData(updatedUser);
 				dispatch(authActions.updateUser({ user: updatedUser }));
 				setFormData(nextFormData);

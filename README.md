@@ -9,12 +9,12 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - Create an account, log in, manage profile details, and change passwords.
 - Save recipes to a wishlist and manage saved recipes interactively.
 - Add new recipes with ingredients, instructions, timing, and image preview.
-- SEO metadata with React Helmet for page titles, descriptions, canonical URLs, and social previews.
+- SEO metadata with the shared `PageHelmet` helper for page titles, descriptions, canonical URLs, and social previews.
 - NestJS request logging, centralized exception filters, CORS, validation, Swagger, and PostgreSQL persistence.
 
 ## Tech Stack
 
-- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, and shadcn/ui as an incremental UI layer; Bootstrap/react-bootstrap and existing SCSS remain during migration
+- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, shadcn/ui, and the remaining feature SCSS styles
 - Server state: TanStack Query
 - Forms and validation: React Hook Form + Zod for recipe forms
 - API: REST/OpenAPI-compatible NestJS `/api/v1`
@@ -40,7 +40,6 @@ Food-recipes/
       index.html         Vite HTML entry
       main.tsx           Frontend bootstrap
       vite.config.mts    Vite config with @ alias to the frontend root
-      jsconfig.json      Frontend JavaScript editor settings
       vite-env.d.ts      Vite environment types
       tsconfig.json      Frontend TypeScript settings
       vercel.json        Frontend SPA rewrites for Vercel
@@ -59,7 +58,7 @@ Food-recipes/
         api/            Axios client and payload helpers
         assets/         Images and icons
         layout/         Header, footer, and layout shell
-        seo/            Helmet helpers
+        seo/            SEO helpers
         ui/             Reusable UI primitives and states
         lib/            Shared frontend libraries
           utils.ts      cn class-merging utility
@@ -227,8 +226,9 @@ pnpm test:e2e:real
 
 The real-stack runner builds a temporary frontend preview locally, starts it,
 runs the authenticated and public journeys, and cleans up the preview process
-when the suite exits. CI provisions an isolated PostgreSQL service, applies
-migrations, seeds demo data, starts the API, and runs the same command.
+when the suite exits. It requires the Docker-backed API and PostgreSQL stack;
+the current GitHub workflow runs the mocked frontend-quality suite and does not
+provision the real stack automatically.
 
 Run the backend package gates from `src/backend`:
 
@@ -241,11 +241,12 @@ corepack pnpm@11.18.0 prisma:validate
 ```
 
 `pnpm check` runs lint, typecheck, and the non-watch test suite for the
-frontend. The backend `pnpm check` runs typecheck and Jest. The mock Playwright
-suite runs against a managed Vite preview server and keeps read assertions
-deterministic; the real-stack suite exercises the API, database persistence,
-authorization, security headers, and browser UI together. CI installs
-Chromium explicitly before running the frontend-quality and real-stack suites.
+frontend. The backend `pnpm check` generates the Prisma client before running
+typecheck and Jest. The mock Playwright suite runs against a managed Vite
+preview server and keeps read assertions deterministic; the real-stack suite
+exercises the API, database persistence, authorization, security headers, and
+browser UI together. CI installs Chromium explicitly before running the
+frontend-quality suite.
 
 Use `corepack pnpm@11.18.0 infra:down` from `src/backend` to stop the development Compose
 stack. All backend commands run directly from the single package at
@@ -281,7 +282,7 @@ been backed up and reconciled.
 ## Deployment Notes
 
 - The supported production-like deployment publishes the NestJS API directly: set public `VITE_API_BASE_URL=https://your-api.example.com`; the frontend then uses the NestJS `/api/v1` API.
-- Set public `VITE_SITE_URL` if the public frontend URL changes so Helmet canonical URLs stay accurate.
+- Set public `VITE_SITE_URL` if the public frontend URL changes so `PageHelmet` canonical URLs stay accurate.
 - Configure the Vercel project root directory as `src/frontend`; Vercel then runs that package's `pnpm build`, serves its `dist` output, and applies the SPA rewrites from `src/frontend/vercel.json`.
 - The backend Compose files live under `src/backend/infrastructure`; the API image uses `src/backend` as its build context and `Dockerfile`. For a public deployment, place the API behind the hosting platform's TLS and load-balancing layer.
 
@@ -290,8 +291,7 @@ been backed up and reconciled.
 The project is currently best served by a modular NestJS API, PostgreSQL, and
 Prisma. The next additions should solve concrete product or operational needs:
 
-1. Add backend OpenTelemetry traces and metrics, structured JSON log shipping,
-   and an error tracker such as Sentry.
+1. Add backend OpenTelemetry traces and metrics plus structured JSON log shipping.
 2. Complete one object-storage pipeline for recipe images with signed uploads,
    validation, thumbnails, and CDN delivery.
 3. Add a transactional email provider for password recovery, verification, and
@@ -308,6 +308,7 @@ operational complexity without a clear need in the current single-API system.
 
 - [Changelog](./CHANGELOG.md)
 - [Backend API and migration notes](./src/backend/README.prisma.md)
+- [Legacy compatibility retirement plan](./docs/backend/legacy-compatibility-retirement.md)
 - [Code of Conduct](./CODE_OF_CONDUCT.md)
 
 ## License

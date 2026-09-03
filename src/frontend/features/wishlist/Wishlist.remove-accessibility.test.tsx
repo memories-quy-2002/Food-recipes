@@ -6,13 +6,18 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Wishlist from "./Wishlist";
-import { RecipeContext } from "@/app/RecipeProvider";
 import axios from "@/shared/api/axios";
 import type { RootState } from "@/app/store";
 import type { RecipeSummary } from "@/shared/api/contracts";
 
 vi.mock("@/shared/api/axios", () => ({
 	default: { get: vi.fn(), delete: vi.fn() },
+}));
+
+const mockUseAllRecipesQuery = vi.hoisted(() => vi.fn());
+
+vi.mock("@/features/recipes/api/useRecipeQueries", () => ({
+	useAllRecipesQuery: mockUseAllRecipesQuery,
 }));
 
 vi.mock("react-redux", () => ({
@@ -43,11 +48,7 @@ const recipes: RecipeSummary[] = [
 const renderWishlist = () =>
 	render(
 		<MemoryRouter initialEntries={["/saved"]}>
-			<RecipeContext.Provider
-				value={{ recipes, isLoadingRecipes: false, recipesError: null, refreshRecipes: async () => undefined }}
-			>
-				<Wishlist />
-			</RecipeContext.Provider>
+			<Wishlist />
 		</MemoryRouter>,
 		{ container: Object.assign(document.body.appendChild(document.createElement("div")), { id: "root" }) }
 	);
@@ -55,6 +56,7 @@ const renderWishlist = () =>
 describe("Wishlist remove confirmation accessibility", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks();
+		mockUseAllRecipesQuery.mockReturnValue({ data: recipes, isLoading: false, error: null });
 		vi.mocked(axios.get).mockResolvedValue({ data: { wishlist: recipes } });
 	});
 	afterEach(() => cleanup());

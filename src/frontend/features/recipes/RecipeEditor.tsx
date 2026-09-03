@@ -18,7 +18,6 @@ import {
 } from "@/shared/api/supabaseStorage";
 import convertTime from "@/shared/utils/convertTime";
 import { AuthContext } from "@/app/AuthProvider";
-import { RecipeContext } from "@/app/RecipeProvider";
 import { useToast } from "@/app/ToastProvider";
 import {
 	clearRecipeDraft,
@@ -331,7 +330,6 @@ const getEditErrorSection = (error: unknown): string => {
 const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: RecipeEditorProps): ReactElement => {
 	const { auth } = useContext(AuthContext);
 	const { userId } = auth.current;
-	const { refreshRecipes } = useContext(RecipeContext);
 	const { showToast } = useToast();
 	const isCreateMode = mode === "create";
 	const recipeStatus = initialRecipe?.status || "published";
@@ -713,7 +711,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 
 	const invalidateEditedRecipe = async (savedRecipeId: number): Promise<void> => {
 		await Promise.all([
-			refreshRecipes(),
+			queryClient.invalidateQueries({ queryKey: recipeQueryKeys.list() }),
 			queryClient.invalidateQueries({ queryKey: recipeQueryKeys.detail(savedRecipeId) }),
 			queryClient.invalidateQueries({ queryKey: ["users", "me", "recipes"] }),
 		]);
@@ -813,8 +811,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 
 			if (response.status >= 200 && response.status < 300) {
 				if (isCreateMode) clearRecipeDraft(window.localStorage, userId);
-				// Keep the existing compatibility boundary; the provider now invalidates the query cache.
-				await refreshRecipes().catch((refreshError) =>
+				await queryClient.invalidateQueries({ queryKey: recipeQueryKeys.list() }).catch((refreshError) =>
 					console.error("Unable to refresh recipes after publish:", refreshError)
 				);
 				showToast({ title: "Recipe published successfully" });

@@ -28,30 +28,6 @@ vi.mock("@/features/auth/state/authSlice", () => ({
 	authActions: { logout: () => ({ type: "auth/logout" }) },
 }));
 
-vi.mock("react-bootstrap", () => {
-	const passthrough = ({
-		children,
-		...props
-	}: React.PropsWithChildren<React.HTMLAttributes<HTMLDivElement>>) => (
-		<div {...props}>{children}</div>
-	);
-	const Button = ({
-		children,
-		...props
-	}: React.PropsWithChildren<
-		React.ButtonHTMLAttributes<HTMLButtonElement>
-	>) => <button {...props}>{children}</button>;
-
-	return {
-		Button,
-		Offcanvas: Object.assign(passthrough, {
-			Body: passthrough,
-			Header: passthrough,
-			Title: passthrough,
-		}),
-	};
-});
-
 const renderTree = (
 	ui: React.ReactElement,
 	initialEntry = "/",

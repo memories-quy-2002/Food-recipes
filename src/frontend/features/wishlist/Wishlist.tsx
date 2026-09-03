@@ -1,5 +1,5 @@
-import { useContext, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
-import { Container } from "@/shared/ui/legacy-ui";
+import { useEffect, useMemo, useRef, useState, type ReactElement } from "react";
+import { Container } from "@/shared/ui/layout";
 import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -9,7 +9,7 @@ import { apiRoutes } from "@/shared/api/routes";
 import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
-import { RecipeContext } from "@/app/RecipeProvider";
+import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
 import SavedCollections from "@/features/saved/collections/SavedCollections";
 import CollectionDialog from "@/features/saved/collections/CollectionDialog";
 import {
@@ -189,7 +189,12 @@ const Wishlist = (): ReactElement => {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const [searchParams, setSearchParams] = useSearchParams();
-	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
+	const recipesQuery = useAllRecipesQuery();
+	const recipes = recipesQuery.data ?? [];
+	const isLoadingRecipes = recipesQuery.isLoading;
+	const recipesError = recipesQuery.error
+		? getApiErrorMessage(recipesQuery.error, "Unable to load recipes from the server.")
+		: null;
 	const { local, session } = useSelector((state: RootState) => state.auth);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const authenticatedUser = local.isAuthenticated ? local.user : session.user;

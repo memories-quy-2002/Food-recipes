@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Food Recipes</title>
+  <rect width="64" height="64" rx="16" fill="#211813"/>
+  <path d="M13 39h38c0 8-7 14-19 14S13 47 13 39Z" fill="#ff9d3b"/>
+  <path d="M17 35h30c3 0 5 2 5 5H12c0-3 2-5 5-5Z" fill="#ed732f"/>
+  <path d="M18 32c0-10 6-17 14-17s14 7 14 17H18Z" fill="#ff9d3b"/>
+  <path d="M24 23c2-4 5-6 8-6" fill="none" stroke="#21cc5a" stroke-linecap="round" stroke-width="3"/>
+</svg>

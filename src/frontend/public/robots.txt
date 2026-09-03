@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /profile
+Disallow: /households
+Disallow: /history
+Disallow: /pantry
+Disallow: /planning
+Disallow: /shopping-list
+Disallow: /wishlist
+Disallow: /recipes/import
+Disallow: /food/add
+Disallow: /food/edit
+
+Sitemap: https://foodrecipes1.vercel.app/sitemap.xml

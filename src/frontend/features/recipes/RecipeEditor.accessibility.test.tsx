@@ -5,9 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
-import { RecipeContext } from "@/app/RecipeProvider";
 import type { AuthState } from "@/app/AuthProvider";
-import type { RecipeContextValue } from "@/app/RecipeProvider";
 import axios from "@/shared/api/axios";
 import RecipeEditor, { type RecipeEditorInput } from "./RecipeEditor";
 
@@ -46,14 +44,7 @@ const renderEditor = () => render(
 			userId: 42,
 			token: null,
 		} satisfies AuthState } }}>
-			<RecipeContext.Provider value={{
-				recipes: [],
-				isLoadingRecipes: false,
-				recipesError: null,
-				refreshRecipes: vi.fn().mockResolvedValue(undefined),
-			} satisfies RecipeContextValue}>
-				<RecipeEditor mode="edit" recipeId={42} initialRecipe={recipe} onSaved={vi.fn()} />
-			</RecipeContext.Provider>
+			<RecipeEditor mode="edit" recipeId={42} initialRecipe={recipe} onSaved={vi.fn()} />
 		</AuthContext.Provider>
 	</MemoryRouter>
 );

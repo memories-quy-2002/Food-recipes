@@ -3,7 +3,6 @@ import path from "node:path";
 
 const frontendRoot = process.cwd();
 const applicationRoots = ["app", "features", "shared"];
-const applicationEntryPoints = ["main.js", "main.jsx"];
 const disallowedExtensions = new Set([".js", ".jsx"]);
 const excludedDirectories = new Set([
 	"e2e",
@@ -41,7 +40,7 @@ for (const root of applicationRoots) {
 
 const frontendEntries = await readdir(frontendRoot, { withFileTypes: true });
 for (const entry of frontendEntries) {
-	if (entry.isFile() && applicationEntryPoints.includes(entry.name)) {
+	if (entry.isFile() && disallowedExtensions.has(path.extname(entry.name).toLowerCase())) {
 		applicationFiles.push(path.join(frontendRoot, entry.name));
 	}
 }

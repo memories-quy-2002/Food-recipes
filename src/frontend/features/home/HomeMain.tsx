@@ -9,8 +9,8 @@ import {
 	serializeWishlistPayload,
 } from "@/shared/api/mutations";
 import { AuthContext } from "@/app/AuthProvider";
-import { RecipeContext } from "@/app/RecipeProvider";
 import { useToast } from "@/app/ToastProvider";
+import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
 import CategorySection, { type HomeCategory } from "./main/CategorySection";
 import FoodCardList, { type FeaturedMode, type FeaturedRecipe, type WishlistItem } from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
@@ -113,9 +113,14 @@ const HomeMain = (): ReactElement => {
 	const [selectedCategoryId, setSelectedCategoryId] = useState<string | number>("all");
 	const [featuredMode, setFeaturedMode] = useState<FeaturedMode>("top-rated");
 	const [categoryError, setCategoryError] = useState<string | null>(null);
-	const { recipes, isLoadingRecipes, recipesError } = useContext(RecipeContext);
 	const { auth } = useContext(AuthContext);
 	const { isAuthenticated, userId } = auth.current;
+	const recipesQuery = useAllRecipesQuery();
+	const recipes = recipesQuery.data ?? [];
+	const isLoadingRecipes = recipesQuery.isLoading;
+	const recipesError = recipesQuery.error
+		? getApiErrorMessage(recipesQuery.error, "Unable to load recipes from the server.")
+		: null;
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const location = useLocation();

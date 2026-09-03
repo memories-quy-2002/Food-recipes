@@ -21,18 +21,6 @@ const asOptionalHttpUrl = (value: unknown, name: string): string | undefined => 
   return candidate;
 };
 
-const asOptionalRate = (value: unknown, name: string): number | undefined => {
-  const candidate = asString(value);
-  if (!candidate) return undefined;
-
-  const rate = Number(candidate);
-  if (!Number.isFinite(rate) || rate < 0 || rate > 1) {
-    throw new Error(`${name} must be a number between 0 and 1`);
-  }
-
-  return rate;
-};
-
 const JWT_PLACEHOLDER_PREFIX_PATTERN =
   /^(?:replace[-_\s]?with|change[-_\s]?me|generate|dev|development|test|testing|local|localhost|default|example|sample|dummy|fake|placeholder|secret|password)/i;
 const JWT_PREDICTABLE_SHAPE_PATTERN = /^[a-z0-9_-]+$/i;
@@ -52,14 +40,6 @@ export function validateEnvironment(environment: Environment): Environment {
     environment.AUTH_PUBLIC_WEB_URL,
     'AUTH_PUBLIC_WEB_URL',
   );
-  const sentryDsn = asOptionalHttpUrl(environment.SENTRY_DSN, 'SENTRY_DSN');
-  const sentryEnvironment = asString(environment.SENTRY_ENVIRONMENT);
-  const sentryRelease = asString(environment.SENTRY_RELEASE);
-  const sentryTracesSampleRate = asOptionalRate(
-    environment.SENTRY_TRACES_SAMPLE_RATE,
-    'SENTRY_TRACES_SAMPLE_RATE',
-  );
-
   if (!databaseUrl) {
     throw new Error('DATABASE_URL is required');
   }
@@ -89,11 +69,5 @@ export function validateEnvironment(environment: Environment): Environment {
     CORS_ORIGINS: asString(environment.CORS_ORIGINS) ?? 'http://localhost:5173',
     ...(authMailWebhookUrl ? { AUTH_MAIL_WEBHOOK_URL: authMailWebhookUrl } : {}),
     ...(authPublicWebUrl ? { AUTH_PUBLIC_WEB_URL: authPublicWebUrl } : {}),
-    ...(sentryDsn ? { SENTRY_DSN: sentryDsn } : {}),
-    ...(sentryEnvironment ? { SENTRY_ENVIRONMENT: sentryEnvironment } : {}),
-    ...(sentryRelease ? { SENTRY_RELEASE: sentryRelease } : {}),
-    ...(sentryTracesSampleRate !== undefined
-      ? { SENTRY_TRACES_SAMPLE_RATE: sentryTracesSampleRate }
-      : {}),
   };
 }

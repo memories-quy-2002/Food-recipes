@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import type { RequestWithContext } from '../middleware/request-context.middleware';
-import { captureSentryException } from '../../bootstrap/instrument';
 
 type ErrorBody = {
   statusCode?: number;
@@ -55,15 +54,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         (isHttpException && typeof exceptionResponse === 'string'
           ? exceptionResponse
           : 'Internal server error');
-
-    if (statusCode >= 500) {
-      captureSentryException(exception, {
-        requestId: request.requestId ?? request.header('X-Request-ID'),
-        method: request.method,
-        path: request.originalUrl,
-        statusCode,
-      });
-    }
 
     response.status(statusCode).json({
       statusCode,
