@@ -120,6 +120,10 @@ Personal routes are under `/users/me` and household equivalents are under
 All planning and shopping routes require JWT. Household routes additionally
 check membership and role: viewers can read, while owners/members can mutate.
 The frontend must expose read-only state rather than hiding a denied mutation.
+Unchecked shopping items are idempotent within a personal or household scope by
+normalized label and quantity; checked rows may be added again. An update that
+would create an active duplicate returns HTTP 409 with code
+`SHOPPING_ITEM_DUPLICATE`.
 
 ## Pantry, leftovers, cooking, and journals
 

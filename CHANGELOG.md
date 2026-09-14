@@ -41,8 +41,13 @@ Detailed implementation plans and design decisions are preserved under
 - Production auth delivery configuration now fails fast when the recovery
   webhook or public web origin is missing; local and test delivery behavior
   remains configurable.
+- Planning, shopping, and pantry continuity now has scoped query indexes,
+  guarded unchecked-item uniqueness, concurrent-safe imports, stable duplicate
+  conflicts, and a full deterministic kitchen-loop browser regression.
 - Historical implementation plans, design specs, and task reports are stored in
   `docs/archive` instead of being mixed with active runbooks.
+- Shopping-list edit failures now keep the editor open so a cook can correct or
+  retry the mutation instead of seeing a premature success message.
 
 ### Removed
 

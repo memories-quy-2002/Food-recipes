@@ -113,20 +113,32 @@ Remaining operational work:
 
 ### P0 E: planning, shopping, and pantry
 
-Already present:
+Implemented in the current wave:
 
 - Personal and household planning, recurring rules, templates, shopping imports,
   pantry quantities/expiry, leftovers, cooking sessions, history, and journal
   flows are wired through the Nest API and frontend.
 - Household role checks and read-only UI behavior are represented in the current
   controllers and queries.
+- `20260914100000_harden_kitchen_loop_indexes` adds personal/household plan
+  indexes, household pantry and shopping-list indexes, removes the redundant
+  non-unique plan-item index, keeps the existing unique plan/date/slot index as
+  the item-read path, and guards the unchecked shopping-item uniqueness
+  invariant with a preflight duplicate check.
+- Shopping imports are idempotent under concurrent requests. Updating an item
+  into an existing unchecked duplicate returns the stable
+  `SHOPPING_ITEM_DUPLICATE` conflict instead of an unhandled database error.
+- The shopping editor now stays open after a failed save, and the deterministic
+  Playwright kitchen-loop journey covers recipe -> plan -> shopping list ->
+  pantry -> cooking -> history/journal, including a failed checkbox retry,
+  duplicate import, checked-item pantry import, and shortage continuation.
 
-Required improvements:
+Remaining operational verification:
 
-- `meal_plans`, `meal_plan_items`, and `shopping_list_items` need indexes aligned
-  with the high-frequency user/household date and checked-state queries.
-- The full path needs a production-oriented regression pass after the migration,
-  including duplicate prevention and failed-mutation recovery.
+- Apply and rehearse the migration on a disposable or staging database only
+  after reviewing any duplicate preflight failure; run the real-stack API and
+  browser flow with household viewer/member cases and inspect representative
+  query plans before production rollout.
 
 ## Cleanup decisions
 

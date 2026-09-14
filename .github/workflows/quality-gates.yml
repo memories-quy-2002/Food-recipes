@@ -63,6 +63,7 @@ jobs:
           node src/backend/test/docker-infrastructure.validation.mjs
           node src/backend/test/backend-product-security.validation.mjs
           node src/backend/test/production-demo-reset.validation.mjs
+          node src/backend/test/kitchen-loop-migration.validation.mjs
 
   backend:
     name: Backend

@@ -42,8 +42,9 @@ Logout -> refresh failure -> signed-out state
 | Own recipe lifecycle | `/food/add` creates a recipe; `/food/edit` loads the owner record and saves changes; profile actions expose lifecycle operations. | `features/recipes/AddRecipe.tsx`, `EditRecipe.tsx`, `features/profile/PersonalRecipes.tsx` | Owner/guest/forbidden Playwright journeys |
 | Password and profile settings | Profile and password updates use protected API routes and show inline validation/status states. | `features/profile/Profile.tsx`, `ChangePassword.tsx` | Backend authorization tests + authenticated journey |
 | Recovery and verification | Guests can request generic recovery instructions, complete a valid reset or see a safe invalid-link state, consume email verification links, and authenticated unverified users can resend from a dismissible reminder. Tokens are never rendered. | src/frontend/features/auth/**, src/backend/src/modules/auth/** | Focused frontend API/component tests + 6 mocked Playwright journeys; backend recovery/config tests |
+| Recipe -> plan -> shopping -> pantry -> cooking -> history/journal | A planned recipe can be imported once into the active shopping list, recovered after a failed purchase toggle, moved into pantry, cooked through a server-reported shortage, completed, and journaled. | `features/recipes/**`, `features/planning/**`, `features/shopping/**`, `features/pantry/**`, `features/history/**`, `features/journal/**` | `e2e/kitchen-loop.spec.js` deterministic full-flow regression |
 | Planning -> cooking | Plans, recurring rules, templates, leftover items, cooking sessions, shortage handling, and return-to-plan context are persisted server-side. | `features/planning/**`, `features/history/**`, `features/recipes/cooking/**` | Backend tests + planning/kitchen Playwright journeys |
-| Shopping -> pantry | Manual and recipe/planned imports can be checked, edited, cleared, or imported into pantry when quantity/unit data is sufficient. | `features/shopping/**`, `features/pantry/**` | Backend tests + shopping/pantry Playwright journeys |
+| Shopping -> pantry | Manual and recipe/planned imports can be checked, edited, cleared, or imported into pantry when quantity/unit data is sufficient; active duplicate imports are idempotent. | `features/shopping/**`, `features/pantry/**`, `src/backend/src/modules/planning/**` | Backend repository/service tests + shopping/pantry Playwright journeys |
 | Household scope | Household membership and roles scope plan, shopping, pantry, and leftover reads/writes; viewers remain read-only. | `features/households/**`, `HouseholdScopeProvider.tsx` | Backend role tests + authenticated journey |
 | Recipe import -> draft | A public URL is previewed server-side, shown for editing, and saved as an owner draft without publishing incomplete data. | `features/recipe-import/**`, `src/backend/src/modules/recipe-imports/**` | Backend validation + retention journey |
 | Logout and refresh recovery | Access tokens remain in memory, refresh uses the HttpOnly cookie, and failed refresh clears the authenticated state. | `features/auth/api/authSessionApi.ts`, `shared/api/axios.ts`, `app/AuthProvider.tsx` | Unit tests + real-stack security journey |
@@ -61,8 +62,9 @@ Logout -> refresh failure -> signed-out state
 ## Browser verification convention
 
 - Tests live in `src/frontend/e2e/` and use Playwright Test.
-- `pnpm test:e2e:quality` covers retryable discovery failure, responsive
-  overflow/hit targets, keyboard behavior, and serious/critical axe violations.
+- `pnpm test:e2e:quality` covers retryable discovery failure, the complete
+  kitchen loop, responsive overflow/hit targets, keyboard behavior, and
+  serious/critical axe violations.
 - `pnpm test:e2e:ci` runs the broader deterministic mock journey set.
 - `pnpm test:e2e:real` uses the Docker-backed API and PostgreSQL with seeded
   demo users; it cleans up created records and does not reset the database.

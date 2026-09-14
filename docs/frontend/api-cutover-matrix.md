@@ -19,8 +19,8 @@ service-role key, JWT secret, or mail-provider secret.
 | Recovery/verification | features/auth recovery and verification screens | `/auth/forgot-password`, `/auth/reset-password`, `/auth/verify-email`, `/auth/resend-verification` | Implemented; mocked browser journeys pass |
 | Saved and collections | `features/wishlist/**`, `features/saved/**` | `/users/me/wishlist`, `/users/me/collections` | Implemented; authenticated |
 | Profile and preferences | `features/profile/**`, `preferences/**` | `/users/me`, profile/password/preferences | Implemented; noindex |
-| Planning and recurring meals | `features/planning/**` | `/users/me/meal-plans`, templates, recurring rules | Implemented; P0 E hardening |
-| Shopping and pantry | `features/shopping/**`, `pantry/**` | personal and household list/pantry routes | Implemented; P0 E hardening |
+| Planning and recurring meals | `features/planning/**` | `/users/me/meal-plans`, templates, recurring rules | Implemented; indexed and covered by the kitchen-loop regression |
+| Shopping and pantry | `features/shopping/**`, `pantry/**` | personal and household list/pantry routes | Implemented; duplicate-safe, retryable, and covered by the kitchen-loop regression |
 | Households and leftovers | `features/households/**`, `leftovers/**` | membership, invites, scoped kitchen routes | Implemented; role-aware |
 | History and journal | `features/history/**`, `journal/**` | cooking history, sessions, journal, photos | Implemented; private/noindex |
 | Imports and media | `features/recipe-import/**` | recipe preview/draft and signed upload grants | Implemented; private/noindex |

@@ -42,10 +42,17 @@ Completed in the current wave:
 
 ### E. Planning, shopping, and pantry
 
-- Preserve the complete path: recipe -> plan -> shopping list -> pantry -> cooking -> history/journal.
-- Add query indexes for the high-frequency personal and household planning/list views.
-- Keep household roles and read-only behavior enforced on the server and visible in the UI.
-- Verify duplicate prevention, shortage handling, checked-item import, leftovers, mobile layouts, and recovery from failed mutations.
+Completed in the current wave:
+
+- The complete path is covered: recipe -> plan -> shopping list -> pantry -> cooking -> history/journal.
+- Versioned PostgreSQL indexes now cover personal/household plan reads, household pantry reads, and household checked-state shopping reads; the existing unique plan/date/slot index remains the meal-item read path while its redundant legacy copy is removed.
+- Unchecked shopping items are idempotent by scope, normalized label, and quantity, with a guarded partial unique index and stable duplicate-update conflicts.
+- Household roles remain server-enforced and read-only state remains visible in the UI.
+- Focused backend tests, migration safety validation, shopping edit recovery coverage, and a deterministic Playwright full-flow regression cover duplicate prevention, shortage handling, checked-item import, and mutation recovery.
+
+Remaining operational verification:
+
+- Rehearse the migration against a disposable or staging database after checking for legacy duplicate active shopping rows; inspect query plans and run the real-stack journey with representative household data before production rollout.
 
 ## Follow-up waves
 

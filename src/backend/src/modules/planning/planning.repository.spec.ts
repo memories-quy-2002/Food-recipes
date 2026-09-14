@@ -87,3 +87,51 @@ describe('PlanningRepository recommendation removal writes', () => {
     expect(tx.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/FROM meal_plans.*p\.household_id.*FOR UPDATE/is);
   });
 });
+
+describe('PlanningRepository shopping-list duplicate prevention', () => {
+  const shoppingItem = {
+    item_id: 11,
+    label: 'rice',
+    quantity: '2 kg',
+    source_recipe_id: 15,
+    source_recipe_name: 'Rice bowl',
+    checked: false,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  it('returns the existing personal item when an unchecked duplicate races', async () => {
+    const prisma = {
+      $queryRaw: jest.fn().mockResolvedValueOnce([{ item_id: 11 }]).mockResolvedValueOnce([shoppingItem]),
+    };
+    const repository = new PlanningRepository(prisma as never);
+
+    await expect(repository.addShoppingItem(7, 'rice', '2 kg', 15)).resolves.toEqual(shoppingItem);
+    expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
+  });
+
+  it('returns the existing household item when an unchecked duplicate races', async () => {
+    const prisma = {
+      $queryRaw: jest.fn().mockResolvedValueOnce([{ item_id: 12 }]).mockResolvedValueOnce([{ ...shoppingItem, item_id: 12, household_id: 22 }]),
+    };
+    const repository = new PlanningRepository(prisma as never);
+
+    await expect(repository.addShoppingItemForHousehold(22, 'rice', '2 kg', 15)).resolves.toMatchObject({ item_id: 12, household_id: 22 });
+    expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
+  });
+
+  it('makes pantry-aware recipe imports safe when the duplicate is inserted concurrently', async () => {
+    const prisma = {
+      $queryRaw: jest.fn()
+        .mockResolvedValueOnce([{ recipe_id: 15, recipe_name: 'Rice bowl', ingredients: ['rice'] }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ servings: 2 }])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]),
+    };
+    const repository = new PlanningRepository(prisma as never);
+
+    await expect(repository.prepareRecipeIngredients(7, 15)).resolves.toMatchObject({ added_shopping_items: 0 });
+    expect(prisma.$queryRaw.mock.calls[4][0].strings.join(' ')).toMatch(/ON CONFLICT DO NOTHING/);
+  });
+});
