@@ -26,7 +26,16 @@ Completed in the current wave:
 
 ### B. Authentication and security
 
-- Complete password recovery and email verification UI against the existing single-use token endpoints.
+- Completed in the current wave: accessible forgot-password, reset-password,
+  email-verification, and authenticated resend flows use the existing
+  single-use token endpoints.
+- Recovery forms preserve generic responses, safe error states, password
+  manager support, keyboard access, and token-free rendered output.
+- Authenticated unverified users receive a dismissible verification reminder;
+  successful verification updates the in-memory and persisted user metadata.
+- Production auth delivery configuration now fails fast when the mail webhook
+  or public web origin is missing.
+- Focused API/service/component tests and six mocked browser journeys pass.
 - Preserve generic recovery responses, HttpOnly refresh cookies, token rotation, session revocation, and auth throttling.
 - Keep recovery delivery behind configuration; local and staging migrations may be rehearsed, but production operations remain operator-controlled.
 - Verify login, signup, logout, refresh failure, recovery, verification, ownership, and safe internal redirects.

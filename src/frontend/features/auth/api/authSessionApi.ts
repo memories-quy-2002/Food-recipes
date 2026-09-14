@@ -16,6 +16,7 @@ export type AuthUser = {
 	user_id: number;
 	full_name?: string | null;
 	email?: string | null;
+	email_verified?: boolean;
 };
 
 export type AuthSession = {
@@ -42,7 +43,9 @@ export const isAuthUser = (value: unknown): value is AuthUser => {
 		Number.isSafeInteger(value.user_id) &&
 		value.user_id > 0 &&
 		isOptionalString(value.full_name) &&
-		isOptionalString(value.email)
+		isOptionalString(value.email) &&
+		(value.email_verified === undefined ||
+			typeof value.email_verified === "boolean")
 	);
 };
 

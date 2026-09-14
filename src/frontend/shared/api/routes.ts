@@ -50,6 +50,10 @@ type ApiRoutes = {
 	authSignup: string;
 	authRefresh: string;
 	authLogout: string;
+	authForgotPassword: string;
+	authResetPassword: string;
+	authVerifyEmail: string;
+	authResendVerification: string;
 	userProfile: string;
 	userFoodPreferences: string;
 	userRecommendationNotInterested: (recipeId: ApiRouteId) => string;
@@ -123,6 +127,10 @@ const apiRoutes: ApiRoutes = {
 	authSignup: "/auth/signup",
 	authRefresh: "/auth/refresh",
 	authLogout: "/auth/logout",
+	authForgotPassword: "/auth/forgot-password",
+	authResetPassword: "/auth/reset-password",
+	authVerifyEmail: "/auth/verify-email",
+	authResendVerification: "/auth/resend-verification",
 	userProfile: "/users/me/profile",
 	userFoodPreferences: "/users/me/food-preferences",
 	userRecommendationNotInterested: (recipeId) => `/users/me/recommendations/not-interested/${recipeId}`,

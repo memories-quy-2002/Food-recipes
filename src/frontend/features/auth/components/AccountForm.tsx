@@ -7,6 +7,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "./LoginForm";
 import SignupForm from "./SignupForm";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 import {
 	clearAuthIntentIfUnchanged,
 	getAuthIntentSnapshot,
@@ -22,6 +23,13 @@ const getRedirectPath = (state: unknown): string | null => {
 	return isSafeInternalPath(state.from) ? state.from : null;
 };
 
+type AccountMode = "login" | "signup" | "forgot-password";
+
+const getAccountMode = (searchParams: URLSearchParams): AccountMode => {
+	if (searchParams.get("recovery") === "true") return "forgot-password";
+	return searchParams.get("signup") === "true" ? "signup" : "login";
+};
+
 const AccountForm = (): ReactElement => {
 	const location = useLocation();
 	const navigate = useNavigate();
@@ -29,12 +37,12 @@ const AccountForm = (): ReactElement => {
 	const redirectPath = getRedirectPath(location.state);
 	const intentSnapshot = useRef<string | null>(getAuthIntentSnapshot());
 	const cleanupTimer = useRef<number | null>(null);
-	const [isSignup, setIsSignup] = useState(
-		searchParams.get("signup") === "true",
+	const [mode, setMode] = useState<AccountMode>(() =>
+		getAccountMode(searchParams),
 	);
 
 	useEffect(() => {
-		setIsSignup(searchParams.get("signup") === "true");
+		setMode(getAccountMode(searchParams));
 	}, [location.search]);
 
 	useEffect(() => {
@@ -52,7 +60,7 @@ const AccountForm = (): ReactElement => {
 	}, []);
 
 	const onSignup = (): void => {
-		setIsSignup(true);
+		setMode("signup");
 		navigate("/account?signup=true", {
 			replace: true,
 			state: location.state,
@@ -60,12 +68,23 @@ const AccountForm = (): ReactElement => {
 	};
 
 	const onLogin = (): void => {
-		setIsSignup(false);
+		setMode("login");
 		navigate("/account?signup=false", {
 			replace: true,
 			state: location.state,
 		});
 	};
+
+	const onForgotPassword = (): void => {
+		setMode("forgot-password");
+		navigate("/account?recovery=true", {
+			replace: true,
+			state: location.state,
+		});
+	};
+
+	const isSignup = mode === "signup";
+	const isRecovering = mode === "forgot-password";
 
 	return (
 		<section className="account__surface grid w-full overflow-hidden rounded-3xl border border-border bg-card shadow-xl shadow-foreground/15 lg:grid-cols-[0.9fr_1.1fr]">
@@ -74,12 +93,18 @@ const AccountForm = (): ReactElement => {
 					Food Recipes account
 				</p>
 				<h1 className="max-w-[9ch] text-balance text-5xl font-black leading-[0.95] tracking-[-0.05em] xl:text-6xl">
-					{isSignup ? "Start saving recipes." : "Welcome back."}
+					{isRecovering
+						? "Get back to cooking."
+						: isSignup
+							? "Start saving recipes."
+							: "Welcome back."}
 				</h1>
 				<p className="mt-6 max-w-md text-base leading-7 text-muted">
-					{isSignup
-						? "Create an account to save favorites, rate dishes, and keep your recipe activity in one place."
-						: "Sign in to manage your Saved Recipes, share reviews, and get back to recipes you already love."}
+					{isRecovering
+						? "Use your email to receive a secure link and return to your saved recipes and kitchen."
+						: isSignup
+							? "Create an account to save favorites, rate dishes, and keep your recipe activity in one place."
+							: "Sign in to manage your Saved Recipes, share reviews, and get back to recipes you already love."}
 				</p>
 				<ul className="mt-8 grid gap-3 text-sm font-bold text-background/90">
 					{[
@@ -104,7 +129,11 @@ const AccountForm = (): ReactElement => {
 						Food Recipes account
 					</p>
 					<h1 className="mt-2 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
-						{isSignup ? "Start saving recipes." : "Welcome back."}
+						{isRecovering
+							? "Get back to cooking."
+							: isSignup
+								? "Start saving recipes."
+								: "Welcome back."}
 					</h1>
 				</div>
 
@@ -120,46 +149,72 @@ const AccountForm = (): ReactElement => {
 					</div>
 				)}
 
-				<div
-					className="mb-8 grid w-full grid-cols-2 rounded-xl border border-border bg-muted/60 p-1 sm:max-w-sm"
-					role="tablist"
-					aria-label="Account mode"
-				>
-					<Button
-						type="button"
-						role="tab"
-						aria-selected={!isSignup}
-						variant="ghost"
-						className={cn(
-							"h-11 rounded-lg font-black",
-							!isSignup &&
-								"bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
-						)}
-						onClick={onLogin}
+				{isRecovering ? (
+					<div className="mb-8 flex flex-wrap items-center gap-x-4 gap-y-2">
+						<Button
+							type="button"
+							variant="link"
+							className="h-auto px-1 font-black text-primary"
+							onClick={onLogin}
+						>
+							Back to log in
+						</Button>
+						<Button
+							type="button"
+							variant="link"
+							className="h-auto px-1 font-black text-primary"
+							onClick={onSignup}
+						>
+							Create an account
+						</Button>
+					</div>
+				) : (
+					<div
+						className="mb-8 grid w-full grid-cols-2 rounded-xl border border-border bg-muted/60 p-1 sm:max-w-sm"
+						role="tablist"
+						aria-label="Account mode"
 					>
-						Log in
-					</Button>
-					<Button
-						type="button"
-						role="tab"
-						aria-selected={isSignup}
-						variant="ghost"
-						className={cn(
-							"h-11 rounded-lg font-black",
-							isSignup &&
-								"bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
-						)}
-						onClick={onSignup}
-					>
-						Sign up
-					</Button>
-				</div>
+						<Button
+							type="button"
+							role="tab"
+							aria-selected={!isSignup}
+							variant="ghost"
+							className={cn(
+								"h-11 rounded-lg font-black",
+								!isSignup &&
+									"bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
+							)}
+							onClick={onLogin}
+						>
+							Log in
+						</Button>
+						<Button
+							type="button"
+							role="tab"
+							aria-selected={isSignup}
+							variant="ghost"
+							className={cn(
+								"h-11 rounded-lg font-black",
+								isSignup &&
+									"bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
+							)}
+							onClick={onSignup}
+						>
+							Sign up
+						</Button>
+					</div>
+				)}
 
 				<div className="w-full">
-					{isSignup ? (
+					{isRecovering ? (
+						<ForgotPasswordForm onLogin={onLogin} />
+					) : isSignup ? (
 						<SignupForm onLogin={onLogin} />
 					) : (
-						<LoginForm onSignup={onSignup} />
+						<LoginForm
+							onSignup={onSignup}
+							onForgotPassword={onForgotPassword}
+						/>
 					)}
 				</div>
 			</div>

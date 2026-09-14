@@ -35,6 +35,12 @@ Detailed implementation plans and design decisions are preserved under
   data instead of loading the complete recipe catalog.
 - Recipe detail metadata now includes validated Recipe JSON-LD and maintains a
   single authoritative robots directive across SPA navigation.
+- Account recovery now includes accessible forgot-password, reset-password,
+  email-verification, and authenticated resend flows with generic responses,
+  safe error states, and token-free rendered output.
+- Production auth delivery configuration now fails fast when the recovery
+  webhook or public web origin is missing; local and test delivery behavior
+  remains configurable.
 - Historical implementation plans, design specs, and task reports are stored in
   `docs/archive` instead of being mixed with active runbooks.
 

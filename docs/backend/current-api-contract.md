@@ -57,6 +57,9 @@ tokens in persistent browser storage.
 Recovery endpoints never return a reset or verification token. A configured
 delivery adapter must send the stored token to the user; an unset local
 delivery configuration is not evidence that a production email was delivered.
+Local and test environments may intentionally omit the delivery values, but
+production startup must fail fast when AUTH_MAIL_WEBHOOK_URL or
+AUTH_PUBLIC_WEB_URL is missing.
 
 ## Authenticated recipe and community routes
 

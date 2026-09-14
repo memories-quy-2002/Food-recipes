@@ -36,6 +36,7 @@ import { AuthUser } from './types/auth-user.type';
 import {
   ApiErrorResponseDto,
   AuthResponseDto,
+  MessageResponseDto,
   PublicUserResponseDto,
 } from '../../common/swagger/response.schemas';
 import { ApiInternalServerErrorResponse } from '../../common/swagger/api-internal-server-error-response.decorator';
@@ -116,6 +117,7 @@ export class AuthController {
   @UseGuards(AuthThrottleGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request generic password recovery instructions' })
+  @ApiOkResponse({ description: 'Generic recovery response', type: MessageResponseDto })
   async forgotPassword(@Body() dto: PasswordRecoveryDto, @Req() request: Request) {
     try {
       const result = await this.authService.forgotPassword(dto);
@@ -131,6 +133,7 @@ export class AuthController {
   @UseGuards(AuthThrottleGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Consume a password recovery token' })
+  @ApiOkResponse({ description: 'Password reset result', type: MessageResponseDto })
   async resetPassword(@Body() dto: ResetPasswordDto, @Req() request: Request) {
     try {
       const result = await this.authService.resetPassword(dto);
@@ -145,6 +148,7 @@ export class AuthController {
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Consume a single-use email verification token' })
+  @ApiOkResponse({ description: 'Email verification result', type: MessageResponseDto })
   @UseGuards(AuthThrottleGuard)
   async verifyEmail(@Body() dto: VerifyEmailDto, @Req() request: Request) {
     try {
@@ -162,6 +166,7 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request a new email verification message' })
+  @ApiOkResponse({ description: 'Generic verification response', type: MessageResponseDto })
   resendVerification(@CurrentUser() user: AuthUser) { return this.authService.resendVerification(user.id); }
 
   @Get('me')

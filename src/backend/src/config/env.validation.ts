@@ -30,6 +30,7 @@ const isJwtPlaceholder = (jwtSecret: string): boolean =>
   JWT_PLACEHOLDER_PREFIX_PATTERN.test(jwtSecret);
 
 export function validateEnvironment(environment: Environment): Environment {
+  const nodeEnv = asString(environment.NODE_ENV) ?? 'development';
   const databaseUrl = asString(environment.DATABASE_URL);
   const jwtSecret = asString(environment.JWT_SECRET);
   const authMailWebhookUrl = asOptionalHttpUrl(
@@ -54,6 +55,14 @@ export function validateEnvironment(environment: Environment): Environment {
     );
   }
 
+  if (nodeEnv === 'production' && !authMailWebhookUrl) {
+    throw new Error('AUTH_MAIL_WEBHOOK_URL is required in production');
+  }
+
+  if (nodeEnv === 'production' && !authPublicWebUrl) {
+    throw new Error('AUTH_PUBLIC_WEB_URL is required in production');
+  }
+
   const rawPort = environment.PORT ?? '3000';
   const port = Number(rawPort);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -62,7 +71,7 @@ export function validateEnvironment(environment: Environment): Environment {
 
   return {
     ...environment,
-    NODE_ENV: asString(environment.NODE_ENV) ?? 'development',
+    NODE_ENV: nodeEnv,
     PORT: port,
     DATABASE_URL: databaseUrl,
     JWT_SECRET: jwtSecret,

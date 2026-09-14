@@ -77,4 +77,38 @@ describe('validateEnvironment', () => {
       }),
     ).not.toThrow();
   });
+
+  it('accepts production auth delivery configuration when both endpoints are present', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
+        AUTH_MAIL_WEBHOOK_URL: 'https://mail.example.test/recovery',
+        AUTH_PUBLIC_WEB_URL: 'https://recipes.example.test',
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects production without a recovery delivery webhook', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
+        AUTH_PUBLIC_WEB_URL: 'https://recipes.example.test',
+      }),
+    ).toThrow(/AUTH_MAIL_WEBHOOK_URL.*production/);
+  });
+
+  it('rejects production without a public web URL for recovery links', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
+        AUTH_MAIL_WEBHOOK_URL: 'https://mail.example.test/recovery',
+      }),
+    ).toThrow(/AUTH_PUBLIC_WEB_URL.*production/);
+  });
 });

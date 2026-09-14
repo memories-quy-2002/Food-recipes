@@ -86,11 +86,29 @@ Already present:
 
 Required improvements:
 
-- The frontend has no password-recovery, reset-password, verify-email, or resend
-  verification screens even though the API endpoints exist.
-- Recovery delivery is an optional webhook and silently does nothing when unset;
-  configuration and operational failure behavior must remain explicit.
-- The compatibility body token route remains documented and must not be used by
+Implemented in the current wave:
+
+- The account flow now exposes accessible forgot-password UI with generic
+  account-safe responses.
+- /account/reset-password validates both new-password fields, handles missing
+  or expired links safely, clears the form after success, and never renders the
+  recovery token.
+- /account/verify-email consumes the single-use token with loading, success,
+  failure, and missing-token states; authenticated users receive updated
+  verification state without a full reload.
+- Authenticated users with email_verified: false receive a dismissible
+  verification reminder with a keyboard-accessible resend action.
+- Production environment validation and the delivery adapter fail explicitly
+  when the mail webhook or public web URL is missing; development and test
+  delivery behavior remains configurable.
+- Recovery API, AuthService, component, accessibility, and mocked browser
+  journeys are covered by focused tests.
+
+Remaining operational work:
+
+- Rehearse the configured delivery provider, CORS, cookies, and recovery links
+  against a disposable or staging database before production rollout.
+- The compatibility body-token route remains documented and must not be used by
   new frontend code.
 
 ### P0 E: planning, shopping, and pantry

@@ -16,7 +16,7 @@ service-role key, JWT secret, or mail-provider secret.
 | Recipe detail and cooking | `features/recipes/**` | `/recipes/:id`, metadata, ratings, reviews, cooking session | Implemented; SEO enhancement in P0 A |
 | Add/edit/lifecycle | `AddRecipe.tsx`, `EditRecipe.tsx` | `/recipes`, `/recipes/:id`, owner lifecycle routes | Implemented; owner authorization is server-side |
 | Auth/session | `features/auth/**`, `AuthProvider` | `/auth/login`, `/auth/signup`, `/auth/refresh`, `/auth/logout`, `/auth/me` | Implemented; browser tokens remain in memory |
-| Recovery/verification | P0 B screens | `/auth/forgot-password`, `/auth/reset-password`, `/auth/verify-email`, `/auth/resend-verification` | API implemented; UI delivery wave |
+| Recovery/verification | features/auth recovery and verification screens | `/auth/forgot-password`, `/auth/reset-password`, `/auth/verify-email`, `/auth/resend-verification` | Implemented; mocked browser journeys pass |
 | Saved and collections | `features/wishlist/**`, `features/saved/**` | `/users/me/wishlist`, `/users/me/collections` | Implemented; authenticated |
 | Profile and preferences | `features/profile/**`, `preferences/**` | `/users/me`, profile/password/preferences | Implemented; noindex |
 | Planning and recurring meals | `features/planning/**` | `/users/me/meal-plans`, templates, recurring rules | Implemented; P0 E hardening |
