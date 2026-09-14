@@ -13,13 +13,25 @@ const scannedExtensions = new Set<string>([
 	".css",
 	".scss",
 ]);
+const ignoredDirectories = new Set<string>([
+	".cache",
+	".git",
+	".temp",
+	".vite",
+	"coverage",
+	"dist",
+	"node_modules",
+	"output",
+	"playwright-report",
+	"test-results",
+]);
 
 const collectBootstrapReferences = (
 	directory: string,
 	violations: string[] = [],
 ): string[] => {
 	for (const entry of readdirSync(directory, { withFileTypes: true })) {
-		if (["node_modules", "dist", ".git"].includes(entry.name)) continue;
+		if (entry.isDirectory() && ignoredDirectories.has(entry.name)) continue;
 		const fullPath = join(directory, entry.name);
 		if (entry.isDirectory()) {
 			collectBootstrapReferences(fullPath, violations);
