@@ -31,6 +31,10 @@ Detailed implementation plans and design decisions are preserved under
   no longer presented as active instructions.
 - Frontend API consumers use the current DTO and status-code contracts while
   keeping compatibility bridges isolated and documented.
+- Public Home and related-recipe surfaces now use bounded, deduplicated feed
+  data instead of loading the complete recipe catalog.
+- Recipe detail metadata now includes validated Recipe JSON-LD and maintains a
+  single authoritative robots directive across SPA navigation.
 - Historical implementation plans, design specs, and task reports are stored in
   `docs/archive` instead of being mixed with active runbooks.
 

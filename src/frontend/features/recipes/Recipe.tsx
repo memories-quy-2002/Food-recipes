@@ -1,3 +1,4 @@
+import RecipeStructuredData from '@/shared/seo/RecipeJsonLd';
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -680,6 +681,7 @@ const Recipe = (): React.ReactElement => {
 	}
 	return (
 		<>
+			<RecipeStructuredData recipe={recipe} canonicalPath={'/recipe?id=' + encodeURIComponent(id)} />
 			<PageHelmet
 				title={recipe?.recipe_name || "Recipe"}
 				description={

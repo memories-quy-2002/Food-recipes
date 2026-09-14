@@ -24,7 +24,7 @@ roles, test fixtures, and build-time integrations were checked separately.
 
 Passed:
 
-- Frontend Vitest: 131 test files and 415 tests.
+- Frontend Vitest: 132 test files and 420 tests.
 - Frontend TypeScript and ESLint checks.
 - Frontend production build. Vite reports a main JavaScript chunk above 500 kB;
   this remains a P0 A performance follow-up.
@@ -49,6 +49,16 @@ Environment boundary:
 
 ### P0 A: discovery and SEO
 
+Implemented in the current wave:
+
+- Recipe detail pages emit public-field-only Recipe JSON-LD with validated
+  durations, ingredients, instructions, nutrition, dates, and rating aggregates.
+- Page metadata keeps one authoritative robots value, deterministic canonical
+  URLs, and absolute social/structured-data image URLs.
+- Home and related-recipe surfaces consume the bounded Home feed instead of
+  fetching the complete public catalog; the feed mapper deduplicates and caps
+  discovery recipes at 24.
+
 Already present:
 
 - `/recipes` accepts bounded query, category, meal, filter, sort, page, and limit parameters.
@@ -57,14 +67,10 @@ Already present:
 - Public recipe reads filter to published records; owner reads are separate.
 - Home suggestions use a debounced, bounded server request.
 
-Required improvements:
+Remaining improvements:
 
-- Recipe detail currently emits title, description, canonical, Open Graph, and
-  Twitter metadata but no `Recipe` JSON-LD.
-- The static robots tag and route-level noindex handling can produce competing
-  robots metadata in the SPA shell and need one authoritative value.
-- The Home shell still has consumers that request the complete recipe catalog;
-  public Home data should remain bounded as the catalog grows.
+- The production build still reports a main JavaScript chunk above 500 kB;
+  route-level code splitting and browser verification remain open.
 - The current public URL is query-based (`/recipe?id=...`). It is retained for
   compatibility, while canonical structured-data work must be deterministic and
   safely encoded.

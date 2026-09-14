@@ -11,6 +11,13 @@ frontend flow, focused tests, browser journey, and documentation are updated.
 
 ### A. Discovery and SEO
 
+Completed in the current wave:
+
+- Recipe JSON-LD is emitted from public recipe fields with safe rich-result
+  boundaries.
+- Robots metadata and canonical/social URLs are managed consistently.
+- Home and related-recipe reads are bounded by the Home feed contract.
+
 - Keep recipe search, filters, sort, and pagination server-side and bounded.
 - Add valid `Recipe` structured data only from public recipe fields and genuine rating aggregates.
 - Keep account, planning, pantry, import, and error surfaces out of search indexes.

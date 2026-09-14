@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
+import { getHomeFeedRecipes, useHomeFeedQuery } from "@/features/home/api/useHomeFeedQuery";
 import convertImage from "@/shared/utils/convertImage";
 import ratingStar from "@/shared/utils/ratingStar";
 
@@ -10,7 +10,8 @@ type RecipeOtherListProps = {
 };
 
 const RecipeOtherList = ({ recipeId }: RecipeOtherListProps): React.ReactElement | null => {
-	const { data: recipes = [] } = useAllRecipesQuery();
+	const { data } = useHomeFeedQuery(false);
+	const recipes = getHomeFeedRecipes(data);
 	const relatedRecipes = useMemo(() => {
 		const candidates = recipes.filter(
 			(recipe) => Number(recipe.recipe_id) !== Number(recipeId)
