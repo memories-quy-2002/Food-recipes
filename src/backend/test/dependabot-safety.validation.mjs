@@ -74,12 +74,13 @@ assertGroup('frontend-dev', 'development');
 assertGroup('backend-runtime', 'production');
 assertGroup('backend-dev', 'development');
 
-const backendRuntimeMatch = dependabotConfig.match(
-  /^      backend-runtime:\r?\n([\s\S]*?)(?=^      backend-dev:|^  - package-ecosystem:|$)/m,
-);
-assert.ok(backendRuntimeMatch, 'backend-runtime group must exist');
+const backendRuntimeStart = dependabotConfig.indexOf('      backend-runtime:');
+const backendDevStart = dependabotConfig.indexOf('      backend-dev:', backendRuntimeStart);
+assert.ok(backendRuntimeStart >= 0, 'backend-runtime group must exist');
+assert.ok(backendDevStart > backendRuntimeStart, 'backend-dev group must follow backend-runtime');
+const backendRuntimeBlock = dependabotConfig.slice(backendRuntimeStart, backendDevStart);
 assert.match(
-  backendRuntimeMatch[1],
+  backendRuntimeBlock,
   /exclude-patterns:\r?\n          - "class-validator"/,
   'backend runtime group must keep class-validator as an individually reviewed dependency',
 );
