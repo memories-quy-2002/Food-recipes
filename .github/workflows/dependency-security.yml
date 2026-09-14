@@ -27,6 +27,25 @@ jobs:
         with:
           fail-on-severity: high
 
+  dependency-downgrade:
+    name: Dependency downgrade guard
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Reject dependency downgrades
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node .github/scripts/check-dependency-downgrades.mjs
+
   audit:
     name: Audit ${{ matrix.package }}
     if: github.event_name != 'pull_request'

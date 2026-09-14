@@ -55,6 +55,8 @@ jobs:
       - name: Run repository validators
         run: |
           node src/backend/test/ci-workflow.validation.mjs
+          node src/backend/test/dependency-downgrade.validation.mjs
+          node src/backend/test/dependabot-safety.validation.mjs
           node src/backend/test/prisma-baseline.validation.mjs
           node src/backend/test/recipe-duration-migration.validation.mjs
           node src/backend/test/user-food-preferences-migration.validation.mjs
