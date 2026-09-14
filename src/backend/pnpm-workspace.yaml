@@ -1,5 +1,6 @@
 allowBuilds:
   '@prisma/engines': true
+  '@parcel/watcher': true
   prisma: true
   unrs-resolver: true
   '@scarf/scarf': false
