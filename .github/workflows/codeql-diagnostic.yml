@@ -1,0 +1,50 @@
+name: CodeQL Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Diagnose ${{ matrix.language }}
+    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/codeql-security-quality'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - javascript-typescript
+          - actions
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-and-quality
+
+      - name: Generate SARIF without publishing alerts
+        id: analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /diagnostic:${{ matrix.language }}
+          output: codeql-sarif
+          upload: never
+          upload-database: false
+
+      - name: Upload diagnostic SARIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif-${{ matrix.language }}
+          if-no-files-found: error
+          path: codeql-sarif/*.sarif
