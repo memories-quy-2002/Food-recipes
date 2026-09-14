@@ -420,7 +420,9 @@ export class PlanningRepository implements PlanningRepositoryPort {
   async addShoppingItem(userId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord> {
     const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
       INSERT INTO shopping_list_items (user_id, label, quantity, source_recipe_id)
-      VALUES (${userId}, ${label}, ${quantity}, ${sourceRecipeId}) RETURNING item_id
+      VALUES (${userId}, ${label}, ${quantity}, ${sourceRecipeId})
+      ON CONFLICT DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+      RETURNING item_id
     `);
     return (await this.findShoppingItem(userId, rows[0].item_id))!;
   }
@@ -455,7 +457,9 @@ export class PlanningRepository implements PlanningRepositoryPort {
   async addShoppingItemForHousehold(householdId: number, label: string, quantity: string | null, sourceRecipeId: number | null): Promise<ShoppingListItemRecord> {
     const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
       INSERT INTO shopping_list_items (user_id, household_id, label, quantity, source_recipe_id)
-      VALUES (NULL, ${householdId}, ${label}, ${quantity}, ${sourceRecipeId}) RETURNING item_id
+      VALUES (NULL, ${householdId}, ${label}, ${quantity}, ${sourceRecipeId})
+      ON CONFLICT DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+      RETURNING item_id
     `);
     return (await this.findShoppingItemForHousehold(householdId, rows[0].item_id))!;
   }
@@ -599,6 +603,7 @@ export class PlanningRepository implements PlanningRepositoryPort {
             AND LOWER(TRIM(label)) = LOWER(TRIM(${ingredient.ingredient_name}))
             AND COALESCE(quantity, '') = COALESCE(${quantity}, '')
         )
+        ON CONFLICT DO NOTHING
         RETURNING item_id
       `);
       addedShoppingItems += inserted.length;
@@ -650,8 +655,8 @@ export class PlanningRepository implements PlanningRepositoryPort {
 
   private isUniqueViolation(error: unknown): boolean {
     if (!error || typeof error !== 'object') return false;
-    const candidate = error as { code?: unknown; meta?: { target?: unknown } };
-    return candidate.code === 'P2002' || candidate.code === '23505' || (Array.isArray(candidate.meta?.target) && candidate.meta.target.includes('meal_plan_items_plan_date_slot_key'));
+    const candidate = error as { code?: unknown; meta?: { code?: unknown; message?: unknown; target?: unknown } };
+    return candidate.code === 'P2002' || candidate.code === '23505' || candidate.meta?.code === '23505' || (typeof candidate.meta?.message === 'string' && candidate.meta.message.includes('23505')) || (Array.isArray(candidate.meta?.target) && candidate.meta.target.includes('meal_plan_items_plan_date_slot_key'));
   }
 
   private unitLabel(unit: string): string {

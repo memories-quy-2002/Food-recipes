@@ -1,6 +1,10 @@
 # Food Recipes
 
-Food Recipes is a full-stack recipe website for discovering meals, saving favorites, rating recipes, writing reviews, and sharing personal recipes. The frontend is a React + TypeScript + Vite application, while the backend provides the recipe API and persistence services.
+Food Recipes is a full-stack recipe platform for home cooks. It supports public
+recipe discovery, safe recipe publishing, saved collections, meal planning,
+shopping and pantry workflows, and a persisted cooking history. The frontend is
+a React + TypeScript + Vite application, while the backend provides the versioned
+NestJS API and PostgreSQL persistence.
 
 ## Features
 
@@ -8,13 +12,18 @@ Food Recipes is a full-stack recipe website for discovering meals, saving favori
 - View recipe details with cooking time, ratings, reviews, and related recipes.
 - Create an account, log in, manage profile details, and change passwords.
 - Save recipes to a wishlist and manage saved recipes interactively.
-- Add new recipes with ingredients, instructions, timing, and image preview.
-- SEO metadata with the shared `PageHelmet` helper for page titles, descriptions, canonical URLs, and social previews.
-- NestJS request logging, centralized exception filters, CORS, validation, Swagger, and PostgreSQL persistence.
+- Add, edit, publish, archive, restore, and delete owned recipes with structured ingredients and metadata.
+- Organize saved recipes into collections and leave private recipe notes.
+- Plan meals, apply templates/recurring rules, import ingredients to a shopping list, and compare pantry availability.
+- Cook with persisted progress, shortage handling, leftovers, cooking history, and a private journal.
+- Share household planning, shopping, pantry, and leftover scopes with role-aware access.
+- Import a public recipe URL into a private draft and upload validated recipe/journal media through signed grants.
+- Generate route-aware SEO metadata with the shared `PageHelmet` helper and public recipe structured data.
+- Run NestJS request logging, centralized exception filters, CORS, validation, Swagger, and PostgreSQL persistence.
 
 ## Tech Stack
 
-- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, shadcn/ui, and the remaining feature SCSS styles
+- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, shadcn/ui, and shared CSS styles
 - Server state: TanStack Query
 - Forms and validation: React Hook Form + Zod for recipe forms
 - API: REST/OpenAPI-compatible NestJS `/api/v1`
@@ -51,9 +60,19 @@ Food-recipes/
         diagnostics/    Local-only health page
         food/           Food listing page and filters
         home/           Home page, carousel, search, featured recipe sections
-        profile/        Profile details, personal recipes, reviews
-        recipes/        Recipe details and add-recipe flow
-        wishlist/       Wishlist page and saved recipe cards
+        profile/        Profile details, personal recipes, and reviews
+        recipes/        Recipe details, editing, cooking, sharing, and notes
+        planning/       Meal plans, templates, recurring meals, and continuity
+        shopping/       Shopping list and pantry preparation
+        pantry/         Personal and household pantry inventory
+        households/     Household membership and scope selection
+        history/        Cooking history and completion handoff
+        journal/        Private post-cook journal
+        saved/          Saved collections
+        preferences/    Food preferences and notification settings
+        recommendations/ Personalized recommendations
+        recipe-import/  URL preview and draft import
+        wishlist/       Saved recipe page and saved recipe cards
       shared/
         api/            Axios client and payload helpers
         assets/         Images and icons
@@ -83,7 +102,7 @@ Frontend imports can use `@` for `src/frontend`, for example
 
 ### Prerequisites
 
-- Node.js
+- Node.js 24 (the supported CI/runtime line)
 - pnpm 11.18.0 through Corepack
 - Docker Desktop, if using the Compose stack
 - PostgreSQL database, if running the API directly
@@ -306,6 +325,9 @@ operational complexity without a clear need in the current single-API system.
 
 ## Documentation
 
+- [Documentation index](./docs/README.md)
+- [Production roadmap](./docs/roadmap.md)
+- [Production-quality audit](./docs/audits/2026-09-14-production-quality-audit.md)
 - [Changelog](./CHANGELOG.md)
 - [Backend API and migration notes](./src/backend/README.prisma.md)
 - [Legacy compatibility retirement plan](./docs/backend/legacy-compatibility-retirement.md)

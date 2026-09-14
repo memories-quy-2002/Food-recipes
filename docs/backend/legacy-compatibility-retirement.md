@@ -1,9 +1,13 @@
 # Legacy compatibility retirement plan
 
+Last reviewed: 2026-09-14
+
 This plan records compatibility paths that are still active in the NestJS API
 and frontend. It is a sequencing document, not permission to remove them
 immediately. Remove a path only after its exit criteria are demonstrated in a
-staging or production-like environment.
+staging or production-like environment. The current source boundary is the
+independent `src/backend` package; `apps/api` and `src/server` are historical
+paths and do not exist in the checked-in tree.
 
 ## API compatibility
 
@@ -15,6 +19,11 @@ staging or production-like environment.
 | Recipe query parameter `search` | `q` | No requests use `search` in access logs for one release window | Remove the DTO field and repository fallback |
 | Frontend `/saved` route | `/wishlist` | No meaningful traffic or support links use `/saved` | Remove the redirect after a bookmark/deprecation window |
 | Profile hash aliases | Named profile sections | No old hash links remain in owned documentation or analytics | Remove the aliases and their compatibility test |
+
+The `/auth/refresh` cookie flow, JWT `sub` claim, `q` query parameter, and
+`/wishlist` route are current supported behavior. The body refresh token,
+legacy `/auth/token`, `search` alias, `/saved` redirect, and old profile hash
+aliases remain only for compatibility until their exit criteria are verified.
 
 Before retiring an API path, search the repository, inspect access logs if
 available, and check any mobile, partner, or deployed older frontend clients.

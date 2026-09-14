@@ -65,4 +65,24 @@ describe('RecoveryDeliveryService', () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('fails explicitly in production when the delivery webhook is missing', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.AUTH_MAIL_WEBHOOK_URL;
+
+    await expect(
+      service.sendPasswordReset('cook@example.test', 'token'),
+    ).rejects.toThrow('Recovery delivery is not configured');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('fails explicitly in production when recovery links cannot be built', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.AUTH_PUBLIC_WEB_URL;
+
+    await expect(
+      service.sendEmailVerification('cook@example.test', 'token'),
+    ).rejects.toThrow('Recovery public web URL is not configured');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

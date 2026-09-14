@@ -1,7 +1,7 @@
 # Copilot Instructions — Food-recipes
 
 ## Project overview
-Website for food recipes and blogs. Monorepo structure:
+Food Recipes is a full-stack recipe platform. Repository structure:
 - `src/frontend/` — React + Vite + TypeScript frontend
 - `src/backend/` — single NestJS + Prisma backend package and infrastructure
 
@@ -9,12 +9,15 @@ Database: PostgreSQL, hosted on Supabase. Package manager: pnpm, isolated betwee
 
 ## Setup & commands
 - Install frontend dependencies: `cd src/frontend && pnpm install`
-- Install backend dependencies: `cd src/backend && pnpm install`
+- Install backend dependencies: `cd src/backend && corepack pnpm@11.18.0 install`
 - Run frontend dev server: `cd src/frontend && pnpm dev`
 - Run backend dev server: `cd src/backend && pnpm dev`
 - Typecheck frontend: `cd src/frontend && pnpm typecheck`
 - Test backend: `cd src/backend && pnpm test`
 - Run backend containers: `cd src/backend && docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build`
+
+The frontend and backend are independent package roots; there is no root pnpm
+workspace. Use Node 24 for CI and production-like verification.
 
 ## Coding conventions
 - Use TypeScript strictly on the client — avoid `any`, prefer explicit types/interfaces.

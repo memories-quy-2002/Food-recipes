@@ -2,6 +2,8 @@ import { Suspense, lazy, type ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
 import Account from "@/features/auth/Account";
+import ResetPassword from "@/features/auth/ResetPassword";
+import VerifyEmail from "@/features/auth/VerifyEmail";
 import ErrorPage from "@/features/content/ErrorPage";
 import Health from "@/features/diagnostics/Health";
 import Food from "@/features/food/Food";
@@ -29,6 +31,8 @@ const AppRoutes = (): ReactElement => (
 		<Route path="/food" element={<Food />} />
 		{isLocalHealthEnabled && <Route path="/health" element={<Health />} />}
 		<Route path="/account" element={<Account />} />
+		<Route path="/account/reset-password" element={<ResetPassword />} />
+		<Route path="/account/verify-email" element={<VerifyEmail />} />
 		<Route
 			path="/profile"
 			element={

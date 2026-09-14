@@ -21,7 +21,7 @@ import {
 	useRenameCollectionMutation,
 } from "@/features/saved/api/collectionsQueries";
 import { getSavedAtTimestamp } from "./savedRecipe";
-import "./Wishlist.scss";
+import "./Wishlist.css";
 import { useToast } from "@/app/ToastProvider";
 import type { RootState } from "@/app/store";
 import { isAxiosError } from "axios";

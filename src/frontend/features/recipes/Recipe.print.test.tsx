@@ -20,7 +20,7 @@ describe("recipe print layout", () => {
 	});
 
 	it("hides chrome and keeps printable recipe content together", () => {
-		const printStyles = readRecipeSource("Recipe.print.scss");
+		const printStyles = readRecipeSource("Recipe.print.css");
 
 		expect(printStyles).toContain("@media print");
 		expect(printStyles).toMatch(/:is\(header,\s*footer,\s*nav\)/);

@@ -349,6 +349,7 @@ model PantryItem {
   updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamp(6)
 
   @@index([userId, have], map: "pantry_items_user_have_idx")
+  @@index([householdId, have], map: "pantry_items_household_have_idx")
   @@map("pantry_items")
 }
 
@@ -380,6 +381,8 @@ model MealPlan {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
 
+  @@index([userId, startDate, endDate], map: "meal_plans_user_start_end_idx")
+  @@index([householdId, startDate, endDate], map: "meal_plans_household_start_end_idx")
   @@map("meal_plans")
 }
 
@@ -395,6 +398,7 @@ model MealPlanItem {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(6)
 
   @@unique([planId, plannedDate, slot], map: "meal_plan_items_plan_date_slot_key")
+  @@index([leftoverBatchId], map: "meal_plan_items_leftover_idx")
   @@map("meal_plan_items")
 }
 
@@ -445,6 +449,8 @@ model ShoppingListItem {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamp(6)
 
+  @@index([userId, checked, createdAt], map: "shopping_list_user_checked_idx")
+  @@index([householdId, checked, createdAt], map: "shopping_list_household_checked_idx")
   @@map("shopping_list_items")
 }
 

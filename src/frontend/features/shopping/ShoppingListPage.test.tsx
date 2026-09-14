@@ -129,10 +129,10 @@ describe("ShoppingListPage", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Edit 2 eggs" }));
 		fireEvent.change(screen.getByDisplayValue("2 eggs"), { target: { value: "3 eggs" } });
 		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-		expect(mockShopping.update).toHaveBeenCalledWith({
+		expect(mockShopping.update).toHaveBeenNthCalledWith(2, {
 			itemId: 1,
 			input: { label: "3 eggs", quantity: "large" },
-		});
+		}, expect.objectContaining({ onError: expect.any(Function), onSuccess: expect.any(Function) }));
 
 		fireEvent.click(screen.getByRole("button", { name: "Delete olive oil" }));
 		expect(mockShopping.remove).toHaveBeenCalledWith(2);
@@ -150,5 +150,25 @@ describe("ShoppingListPage", () => {
 
 		fireEvent.click(screen.getByRole("button", { name: "Try again" }));
 		expect(mockShopping.refetch).toHaveBeenCalledTimes(1);
+	});
+
+	it("keeps an edit open after a failed save so the cook can retry", () => {
+		mockShopping.data = {
+			items: [{ item_id: 1, label: "rice", quantity: "2 kg", source_recipe_id: null, source_recipe_name: null, checked: false }],
+		};
+		mockShopping.update.mockImplementationOnce((_input, options) => options?.onError?.(new Error("conflict")));
+		renderPage();
+
+		fireEvent.click(screen.getByRole("button", { name: "Edit rice" }));
+		fireEvent.change(screen.getByDisplayValue("rice"), { target: { value: "brown rice" } });
+		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+		expect(screen.getByRole("alert").textContent).toContain("We could not update this item. Try again.");
+		expect(screen.getByDisplayValue("brown rice")).toBeTruthy();
+
+		mockShopping.update.mockImplementationOnce((_input, options) => options?.onSuccess?.());
+		fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+		expect(screen.queryByRole("button", { name: "Save changes" })).toBeNull();
+		expect(screen.getByRole("status").textContent).toContain("Item updated.");
 	});
 });

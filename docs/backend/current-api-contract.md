@@ -1,146 +1,189 @@
 # Current API contract
 
-This document records the current NestJS API contract after the Express
-migration.
+Last reviewed: 2026-09-14
 
-## Base URL
+The current backend is a single NestJS package under `src/backend`. It exposes
+URI-versioned REST routes under `/api/v1`. This document is a developer-facing
+route map; DTO decorators, response DTOs, and controller code remain the
+executable source of truth.
 
-The NestJS API is served under `/api/v1`. Local development and the
-production-like Compose stack use the API directly at
-`http://localhost:3000` by default.
+## Base URLs and operational endpoints
 
-## Routes
+- Local API origin: `http://localhost:3000`
+- API base: `http://localhost:3000/api/v1`
+- Swagger UI: `http://localhost:3000/api/docs`
+- Swagger JSON: `http://localhost:3000/api/docs-json`
+- Liveness: `GET /api/v1/health/live`
+- Readiness: `GET /api/v1/health/ready`
+
+## Public discovery routes
+
+| Method | Route | Contract |
+| --- | --- | --- |
+| GET | `/home-feed` | Bounded quick and popular public sections |
+| GET | `/recipes` | Published recipe list with `q`/`search`, taxonomy filters, supported sort/filter, page, and limit |
+| GET | `/recipes/:id` | Published recipe detail |
+| GET | `/categories` | Public taxonomy |
+| GET | `/meals` | Public taxonomy |
+| POST | `/suggestions` | Submit a public suggestion |
+| POST | `/users/me/suggestions` | Submit an authenticated suggestion |
+
+Public recipe list limits are validated server-side. Search uses PostgreSQL
+full-text and trigram indexes from migration
+`20260826100000_add_recipe_search_indexes`; callers must not implement a second
+full-catalog filter in the browser.
+
+## Authentication routes
 
 | Method | Route | Auth target |
-| --- | --- | --- | --- |
-| GET | `/api/v1/recipes` | Public |
-| GET | `/api/v1/recipes/:id` | Public |
-| GET | `/api/v1/users/me/recipes` | JWT |
-| POST | `/api/v1/recipes` | JWT |
-| DELETE | `/api/v1/recipes/:id` | JWT + owner |
-| GET | `/api/v1/categories` | Public |
-| GET | `/api/v1/meals` | Public |
-| GET | `/api/v1/users/me/wishlist` | JWT |
-| POST | `/api/v1/users/me/wishlist` | JWT |
-| DELETE | `/api/v1/users/me/wishlist/:recipeId` | JWT |
-| GET | `/api/v1/users/me/ratings` | JWT |
-| PUT | `/api/v1/recipes/:recipeId/rating` | JWT |
-| DELETE | `/api/v1/recipes/:recipeId/rating` | JWT |
-| GET | `/api/v1/recipes/:recipeId/reviews` | Public |
-| POST | `/api/v1/auth/login` | Public |
-| POST | `/api/v1/auth/signup` | Public |
-| POST | `/api/v1/auth/token` | Compatibility bridge |
-| POST | `/api/v1/auth/refresh` | Refresh cookie / backend fallback |
-| POST | `/api/v1/auth/logout` | Refresh-session revocation |
-| POST | `/api/v1/auth/forgot-password` | Public, generic response |
-| POST | `/api/v1/auth/reset-password` | Single-use token |
-| POST | `/api/v1/auth/verify-email` | Single-use token |
-| POST | `/api/v1/auth/resend-verification` | JWT |
-| GET | `/api/v1/auth/me` | JWT |
-| PUT | `/api/v1/users/me/profile` | JWT |
-| PUT | `/api/v1/users/me/password` | JWT |
-| GET | `/api/v1/health/ready` | Public |
-| GET | `/api/v1/users/me/collections` | JWT |
-| POST | `/api/v1/users/me/collections` | JWT |
-| PATCH | `/api/v1/users/me/collections/:collectionId` | JWT + owner |
-| DELETE | `/api/v1/users/me/collections/:collectionId` | JWT + owner |
-| POST | `/api/v1/users/me/collections/:collectionId/recipes` | JWT + owner |
-| DELETE | `/api/v1/users/me/collections/:collectionId/recipes/:recipeId` | JWT + owner |
-| POST | `/api/v1/recipes/:recipeId/reviews/:ratingId/report` | JWT |
-| GET | `/api/v1/admin/review-reports` | JWT + admin role |
-| PATCH | `/api/v1/admin/review-reports/:reportId` | JWT + admin role |
-| GET | `/api/v1/users/me/meal-plans` | JWT |
-| POST | `/api/v1/users/me/meal-plans` | JWT |
-| GET | `/api/v1/users/me/meal-plans/:planId` | JWT + owner |
-| PATCH | `/api/v1/users/me/meal-plans/:planId` | JWT + owner |
-| DELETE | `/api/v1/users/me/meal-plans/:planId` | JWT + owner |
-| POST | `/api/v1/users/me/meal-plans/:planId/items` | JWT + owner |
-| PATCH | `/api/v1/users/me/meal-plans/:planId/items/:itemId` | JWT + owner |
-| DELETE | `/api/v1/users/me/meal-plans/:planId/items/:itemId` | JWT + owner |
-| GET | `/api/v1/users/me/shopping-list` | JWT |
-| POST | `/api/v1/users/me/shopping-list/items` | JWT |
-| PATCH | `/api/v1/users/me/shopping-list/items/:itemId` | JWT + owner |
-| DELETE | `/api/v1/users/me/shopping-list/items/:itemId` | JWT + owner |
-| POST | `/api/v1/users/me/shopping-list/from-recipe` | JWT |
-| DELETE | `/api/v1/users/me/shopping-list/completed` | JWT |
-| GET | `/api/v1/users/me/cooking-session` | JWT |
-| POST | `/api/v1/users/me/cooking-session` | JWT |
-| PATCH | `/api/v1/users/me/cooking-session/:sessionId` | JWT + owner |
-| POST | `/api/v1/users/me/cooking-session/:sessionId/complete` | JWT + owner |
-| DELETE | `/api/v1/users/me/cooking-session/:sessionId` | JWT + owner |
-| POST | `/api/v1/media/recipe-image/upload-url` | JWT |
+| --- | --- | --- |
+| POST | `/auth/signup` | Public; returns `201` and sets a refresh cookie |
+| POST | `/auth/login` | Public; returns `200` and sets a refresh cookie |
+| POST | `/auth/refresh` | Refresh cookie; body token is a compatibility fallback |
+| POST | `/auth/logout` | Refresh cookie revocation |
+| POST | `/auth/forgot-password` | Public; generic response for unknown email |
+| POST | `/auth/reset-password` | Public single-use token |
+| POST | `/auth/verify-email` | Public single-use token |
+| POST | `/auth/resend-verification` | JWT |
+| GET | `/auth/me` | JWT |
+| POST | `/auth/token` | Compatibility bridge for legacy body-token clients |
 
-## Authentication response
+Access JWTs are short-lived. Browser refresh uses the `food_refresh` HttpOnly,
+SameSite cookie; refresh tokens are opaque, stored as SHA-256 hashes, rotated on
+use, and revoked on reuse or logout. Browser access tokens are held in frontend
+module memory. New clients must not use `/auth/token` or store access/refresh
+tokens in persistent browser storage.
 
-The legacy login and signup responses contain the following important fields:
+Recovery endpoints never return a reset or verification token. A configured
+delivery adapter must send the stored token to the user; an unset local
+delivery configuration is not evidence that a production email was delivered.
+Local and test environments may intentionally omit the delivery values, but
+production startup must fail fast when AUTH_MAIL_WEBHOOK_URL or
+AUTH_PUBLIC_WEB_URL is missing.
 
-```ts
-interface AuthResponse {
-  user: User;
-  token: string;
-  message: string;
-}
+## Authenticated recipe and community routes
+
+| Method | Route | Auth target |
+| --- | --- | --- |
+| GET | `/users/me` | JWT |
+| PUT | `/users/me/profile` | JWT |
+| PUT | `/users/me/password` | JWT; current password required |
+| GET | `/users/me/recipes` | JWT; owner-scoped status filter |
+| POST | `/users/me/recipes/drafts` | JWT; creates an owner draft |
+| POST | `/recipes` | JWT; creates a published recipe when valid |
+| PATCH | `/recipes/:id` | JWT + owner; archived recipes are read-only |
+| DELETE | `/recipes/:id` | JWT + owner; returns `204` |
+| PUT | `/recipes/:id/ingredients` | JWT + owner |
+| PUT | `/recipes/:id/nutrition` | JWT + owner |
+| PUT | `/recipes/:id/dietary-tags` | JWT + owner |
+| POST | `/recipes/:id/publish` | JWT + owner |
+| POST | `/recipes/:id/archive` | JWT + owner |
+| POST | `/recipes/:id/restore` | JWT + owner |
+| GET/PUT | `/recipes/:recipeId/metadata` | GET public; PUT JWT + owner |
+| PUT | `/recipes/:recipeId/rating` | JWT; authors cannot self-review |
+| DELETE | `/recipes/:recipeId/rating` | JWT; own rating only |
+| GET | `/recipes/:recipeId/reviews` | Public |
+| POST | `/recipes/:recipeId/reviews/:ratingId/report` | JWT |
+| GET | `/users/me/ratings` | JWT |
+| GET/PATCH/DELETE | `/users/me/recipes/:recipeId/note` | JWT; private note |
+| GET/POST/PATCH/DELETE | `/users/me/collections...` | JWT; collection owner |
+| GET/PATCH | `/admin/review-reports...` | JWT + current admin role |
+
+The collection route suffixes are `/:collectionId/recipes` and
+`/:collectionId/recipes/:recipeId`. Ownership is evaluated on the server from
+the JWT subject; client-provided user IDs are not trusted.
+
+## Planning and kitchen routes
+
+Personal routes are under `/users/me` and household equivalents are under
+`/households/:householdId`.
+
+| Method | Personal route | Household route |
+| --- | --- | --- |
+| GET/POST | `/meal-plans` | `/meal-plans` |
+| GET/PATCH/DELETE | `/meal-plans/:planId` | `/meal-plans/:planId` |
+| POST | `/meal-plans/:planId/items` | `/meal-plans/:planId/items` |
+| POST | `/meal-plans/:planId/items/leftover` | `/meal-plans/:planId/items/leftover` |
+| PATCH/DELETE | `/meal-plans/:planId/items/:itemId` | `/meal-plans/:planId/items/:itemId` |
+| POST | `/meal-plans/generate-preview` | Not available |
+| POST | `/meal-plans/from-preview` | Not available |
+| GET/POST | `/meal-plan-templates` | Not available |
+| POST | `/meal-plan-templates/:templateId/apply` | Not available |
+| GET/POST | `/recurring-meal-rules` | Not available |
+| DELETE | `/recurring-meal-rules/:ruleId` | Not available |
+| GET/POST | `/shopping-list` and `/shopping-list/items` | Same suffixes |
+| PATCH/DELETE | `/shopping-list/items/:itemId` | Same suffix |
+| POST | `/shopping-list/from-recipe` | Same suffix |
+| POST | `/shopping-list/prepare` | Not available |
+| DELETE | `/shopping-list/completed` | Same suffix |
+
+All planning and shopping routes require JWT. Household routes additionally
+check membership and role: viewers can read, while owners/members can mutate.
+The frontend must expose read-only state rather than hiding a denied mutation.
+Unchecked shopping items are idempotent within a personal or household scope by
+normalized label and quantity; checked rows may be added again. An update that
+would create an active duplicate returns HTTP 409 with code
+`SHOPPING_ITEM_DUPLICATE`.
+
+## Pantry, leftovers, cooking, and journals
+
+| Method | Route | Auth target |
+| --- | --- | --- |
+| GET/POST/PATCH/DELETE | `/users/me/pantry...` | JWT; personal scope |
+| GET/POST/PATCH/DELETE | `/households/:householdId/pantry...` | JWT + household role |
+| POST | `/users/me/pantry/from-shopping-list` | JWT |
+| POST | `/households/:householdId/pantry/from-shopping-list` | JWT + household editor role |
+| GET/POST | `/users/me/leftovers` | JWT |
+| GET/POST | `/households/:householdId/leftovers` | JWT + household role |
+| GET/POST | `/users/me/cooking-history` | JWT |
+| GET/POST/PATCH/DELETE | `/users/me/cooking-session...` | JWT + session owner |
+| POST | `/users/me/cooking-session/:sessionId/complete` | JWT + session owner |
+| GET/PUT | `/users/me/cooking-history/:historyId/journal` | JWT + history owner |
+
+Cooking completion is transactional: it records history and ingredient usage,
+and may return a shortage result or shopping-list handoff. Browser storage is a
+guest fallback only and is not the source of truth for authenticated progress.
+
+## Preferences, recommendations, notifications, households, imports, and media
+
+| Method | Route | Auth target |
+| --- | --- | --- |
+| GET/PUT | `/users/me/food-preferences` | JWT |
+| GET | `/users/me/home-feed` | JWT; personalized kitchen sections |
+| PUT/DELETE | `/users/me/recommendations/not-interested/:recipeId` | JWT |
+| GET/PATCH/POST | `/users/me/notifications...` | JWT |
+| GET/PUT | `/users/me/notification-preferences` | JWT |
+| POST/GET | `/households` | JWT |
+| GET | `/households/:householdId` | JWT + membership |
+| POST | `/households/:householdId/invites` | JWT + owner/member role |
+| POST | `/household-invites/:token/accept` | JWT + invite token |
+| PATCH/DELETE | `/households/:householdId/members/:memberId` | JWT + household role |
+| POST | `/users/me/recipe-imports/preview` | JWT |
+| POST | `/users/me/recipe-imports/drafts` | JWT |
+| POST | `/media/recipe-image/upload-url` | JWT; validated signed grant |
+| POST | `/media/journal-photo/upload-url` | JWT; validated signed grant |
+
+## Data and compatibility rules
+
+1. Do not reset or destructively migrate an existing database.
+2. Keep public reads limited to published recipes; owner reads may include draft and archived records.
+3. Use the JWT subject for ownership and return ownership-safe errors.
+4. Legacy `recipes.ingredients` and interval duration columns remain compatibility fields while structured ingredients and minute columns are canonical.
+5. Recipe image grants accept only JPEG, PNG, WebP, or AVIF metadata up to 5 MiB and expire after 10 minutes.
+6. JSON and URL-encoded request bodies are capped at 256 KiB; security headers and auth throttling are configured at bootstrap.
+7. PostgreSQL migrations are additive and must be validated and rehearsed in local/staging environments before an operator applies them to production.
+
+## Verification
+
+From `src/backend`:
+
+```powershell
+corepack pnpm@11.18.0 prisma:validate
+corepack pnpm@11.18.0 check
+corepack pnpm@11.18.0 build
+corepack pnpm@11.18.0 test:e2e
 ```
 
-Access JWTs are short-lived (15 minutes by default). Login and signup set an
-HttpOnly, SameSite refresh cookie. Refresh tokens are opaque, stored only as
-SHA-256 hashes, rotated on use, and revoked on reuse or logout. The optional
-body `refreshToken` on `/auth/refresh` is a backend-client compatibility
-fallback; browser clients should use the cookie. Browser access tokens are kept
-in module memory, while the HttpOnly refresh cookie is used for browser refreshes.
-
-The `/auth/token` endpoint remains a compatibility bridge and should not be
-used by new clients. Recovery endpoints return generic responses for unknown
-emails and never return a reset or verification token. A mail delivery
-provider must be configured before those stored single-use tokens can be
-delivered to users.
-
-## Legacy data names
-
-The PostgreSQL database currently uses these table and column names:
-
-- `accounts.user_id`, `full_name`, `password`, `email`, `phone`, `address`
-- `recipes.recipe_id`, `recipe_name`, `recipe_description`, `meal_id`,
-  `category_id`, `prep_time`, `cook_time`, `date_added`, `user_id`,
-  `ingredients`, `instructions`
-- `categories.category_id`, `category_name`
-- `meals.meal_id`, `meal_name`, `meal_description`
-- `wishlist.wishlist_id`, `user_id`, `recipe_id`, `date_added`
-- `rating.rating_id`, `user_id`, `recipe_id`, `score`, `review`, `date_added`
-- `saved_collections`, `saved_collection_items`, and `review_reports` are
-  additive P1 tables.
-- `meal_plans`, `meal_plan_items`, and `shopping_list_items` are additive P2
-  tables. Recipe ingredients are copied as separate free-text lines; the API
-  does not infer equivalent quantities.
-- `cooking_sessions` stores one user-owned progress record per recipe while it
-  is active or paused. Completion atomically creates the existing
-  `cooking_history` record; browser storage is only a guest fallback.
-- `accounts.role` is server-owned (`user` or `admin`). Admin moderation routes
-  always reload the current role through `RolesGuard`.
-
-`recipes.prep_time` and `recipes.cook_time` are PostgreSQL `interval` columns.
-They remain unchanged during the parallel migration. NestJS reads and writes
-their minute representation through parameterized raw SQL until the later
-normalization phase.
-
-## Compatibility rules
-
-1. Do not reset or destructively migrate the existing database.
-2. Keep response fields stable for the current client.
-3. Treat JWT identity as server-owned for all protected endpoints.
-4. Protected writes use the JWT subject and return ownership-safe 404 responses
-   for foreign collections, plans, and list items.
-5. Recipe image upload grants accept only JPEG, PNG, WebP, or AVIF metadata up
-   to 5 MiB and last 10 minutes. Storage signing is intentionally abstracted
-   behind `SUPABASE_UPLOAD_GRANT_BASE_URL` and
-   `SUPABASE_UPLOAD_GRANT_SECRET`; the API refuses to issue a grant when
-   signing configuration is absent.
-6. JSON and URL-encoded request bodies are capped at 256 KiB, common security
-   headers are applied at bootstrap, and auth attempts have an in-process
-   per-IP/per-email throttle. A shared rate-limit service should be added
-   before scaling the API horizontally.
-7. Backend CI audits dependencies at high severity. Prisma 7.10.0 still pins
-   vulnerable transitive versions of `mysql2` and `deepmerge-ts`, so the
-   backend workspace applies narrowly scoped overrides to patched releases.
-   These overrides must be rechecked and removed when Prisma publishes patched
-   dependency pins.
+Static checks and unit tests do not prove live CORS, cookie, PostgreSQL, or
+third-party delivery behavior. Record those separately when a real-stack
+environment is available.

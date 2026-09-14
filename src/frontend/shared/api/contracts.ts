@@ -207,3 +207,7 @@ export type ApiErrorResponse = {
 	message: string;
 	requestId: string | null;
 };
+
+export type MessageResponse = {
+	message: string;
+};

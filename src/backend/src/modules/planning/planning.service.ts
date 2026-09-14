@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DateRangeDto } from './dto/date-range.dto';
 import { MealPlanQueryDto } from './dto/meal-plan-query.dto';
 import { AddMealPlanItemDto } from './dto/add-meal-plan-item.dto';
@@ -152,9 +152,14 @@ export class PlanningService {
 
   async updateShoppingItem(userId: number, itemId: number, dto: UpdateShoppingListItemDto) {
     const label = dto.label === undefined ? undefined : this.normalizeName(dto.label);
-    const item = await this.repository.updateShoppingItem(userId, itemId, label, dto.quantity === undefined ? undefined : dto.quantity.trim() || null, dto.checked);
-    if (!item) throw new NotFoundException({ code: 'SHOPPING_ITEM_NOT_FOUND', message: 'Shopping list item not found' });
-    return { item };
+    try {
+      const item = await this.repository.updateShoppingItem(userId, itemId, label, dto.quantity === undefined ? undefined : dto.quantity.trim() || null, dto.checked);
+      if (!item) throw new NotFoundException({ code: 'SHOPPING_ITEM_NOT_FOUND', message: 'Shopping list item not found' });
+      return { item };
+    } catch (error) {
+      if (!this.isUniqueViolation(error)) throw error;
+      throw new ConflictException({ code: 'SHOPPING_ITEM_DUPLICATE', message: 'An unchecked shopping item with the same name and quantity already exists' });
+    }
   }
 
   async deleteShoppingItem(userId: number, itemId: number) {
@@ -170,9 +175,14 @@ export class PlanningService {
 
   async updateShoppingItemForHousehold(householdId: number, itemId: number, dto: UpdateShoppingListItemDto) {
     const label = dto.label === undefined ? undefined : this.normalizeName(dto.label);
-    const item = await this.repository.updateShoppingItemForHousehold(householdId, itemId, label, dto.quantity === undefined ? undefined : dto.quantity.trim() || null, dto.checked);
-    if (!item) throw new NotFoundException({ code: 'SHOPPING_ITEM_NOT_FOUND', message: 'Shopping list item not found' });
-    return { item };
+    try {
+      const item = await this.repository.updateShoppingItemForHousehold(householdId, itemId, label, dto.quantity === undefined ? undefined : dto.quantity.trim() || null, dto.checked);
+      if (!item) throw new NotFoundException({ code: 'SHOPPING_ITEM_NOT_FOUND', message: 'Shopping list item not found' });
+      return { item };
+    } catch (error) {
+      if (!this.isUniqueViolation(error)) throw error;
+      throw new ConflictException({ code: 'SHOPPING_ITEM_DUPLICATE', message: 'An unchecked shopping item with the same name and quantity already exists' });
+    }
   }
 
   async deleteShoppingItemForHousehold(householdId: number, itemId: number) {
@@ -324,6 +334,12 @@ export class PlanningService {
   private dateText(value: Date | string): string { return value instanceof Date ? value.toISOString().slice(0, 10) : value.slice(0, 10); }
   private invalidRange(): BadRequestException { return new BadRequestException({ code: 'MEAL_PLAN_DATE_RANGE_INVALID', message: 'Meal plan dates must be an inclusive range of 1 to 31 days' }); }
   private planNotFound(): NotFoundException { return new NotFoundException({ code: 'MEAL_PLAN_NOT_FOUND', message: 'Meal plan not found' }); }
+
+  private isUniqueViolation(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const candidate = error as { code?: unknown; meta?: { code?: unknown; message?: unknown; target?: unknown } };
+    return candidate.code === 'P2002' || candidate.code === '23505' || candidate.meta?.code === '23505' || (typeof candidate.meta?.message === 'string' && candidate.meta.message.includes('23505'));
+  }
 
   private consolidateStructuredIngredients(ingredients: Array<StructuredShoppingIngredient & { sourceRecipeId: number }>) {
     const consolidated: Array<StructuredShoppingIngredient & { sourceRecipeId: number }> = [];

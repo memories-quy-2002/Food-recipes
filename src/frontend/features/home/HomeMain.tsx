@@ -1,3 +1,4 @@
+import { getHomeFeedRecipes, useHomeFeedQuery } from './api/useHomeFeedQuery';
 import { useContext, useEffect, useMemo, useRef, useState, type ReactElement } from "react";
 import { isAxiosError } from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,7 +11,6 @@ import {
 } from "@/shared/api/mutations";
 import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
-import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
 import CategorySection, { type HomeCategory } from "./main/CategorySection";
 import FoodCardList, { type FeaturedMode, type FeaturedRecipe, type WishlistItem } from "./main/FoodCardList";
 import HomeSearchBar from "./main/HomeSearchBar";
@@ -58,15 +58,15 @@ const isWishlistItem = (value: unknown): value is WishlistItem => {
 	return hasFlatId || hasNestedId;
 };
 
-const getApiErrorMessage = (error: unknown, fallback: string): string => {
-	if (!isAxiosError(error)) return fallback;
-	const data = error.response?.data;
-	return isRecord(data) && typeof data.message === "string" ? data.message : fallback;
-};
-
 const normalizeMinutes = (value: unknown): number | null => {
 	const minutes = Number(value);
 	return Number.isFinite(minutes) ? minutes : null;
+};
+
+const getApiErrorMessage = (error: unknown, fallback: string): string => {
+	if (!isAxiosError(error)) return fallback;
+	const data = error.response?.data;
+	return isRecord(data) && typeof data.message === 'string' ? data.message : fallback;
 };
 
 const HOME_RECIPE_LIMIT = 4;
@@ -115,12 +115,11 @@ const HomeMain = (): ReactElement => {
 	const [categoryError, setCategoryError] = useState<string | null>(null);
 	const { auth } = useContext(AuthContext);
 	const { isAuthenticated, userId } = auth.current;
-	const recipesQuery = useAllRecipesQuery();
-	const recipes = recipesQuery.data ?? [];
-	const isLoadingRecipes = recipesQuery.isLoading;
-	const recipesError = recipesQuery.error
-		? getApiErrorMessage(recipesQuery.error, "Unable to load recipes from the server.")
-		: null;
+	const homeFeedQuery = useHomeFeedQuery(isAuthenticated);
+	const recipes = useMemo(
+		() => getHomeFeedRecipes(homeFeedQuery.data),
+		[homeFeedQuery.data],
+	);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -218,7 +217,6 @@ const HomeMain = (): ReactElement => {
 			!isAuthenticated ||
 			!isWishlistLoaded ||
 			!isMatchingSaveRecipeIntent(intent, currentPath, intentRecipeId) ||
-			!recipes.some((recipe) => Number(recipe.recipe_id) === Number(intentRecipeId)) ||
 			processedAuthIntent.current === intent
 		) return;
 
@@ -269,44 +267,36 @@ const HomeMain = (): ReactElement => {
 
 	return (
 		<div className="mx-auto w-full max-w-[112rem] space-y-8 px-4 pb-6 pt-8 sm:px-6 sm:pt-10 lg:space-y-10 lg:px-10 lg:pb-8">
-			{isLoadingRecipes ? (
-				<PageState title="Loading recipes" message="Fetching recipes for search and featured cards." />
-			) : recipesError ? (
-				<PageState type="error" title="Recipes could not load" message={recipesError} />
+			<PersonalizedHomeFeed
+				isAuthenticated={isAuthenticated}
+				userId={userId}
+				wishlist={wishlist}
+				onClickFavorite={handleClickFavorite}
+			/>
+			<PantryMatchPanel />
+			<HomeSearchBar
+				recipes={recipes}
+				searchResults={searchQuery.data?.recipes ?? []}
+				isSearchLoading={searchQuery.isFetching}
+				searchError={searchQuery.error}
+			/>
+			{categoryError ? (
+				<PageState type="error" title="Categories could not load" message={categoryError} />
 			) : (
-				<>
-					<PersonalizedHomeFeed
-						isAuthenticated={isAuthenticated}
-						userId={userId}
-						wishlist={wishlist}
-						onClickFavorite={handleClickFavorite}
-					/>
-					<PantryMatchPanel />
-					<HomeSearchBar
-						recipes={recipes}
-						searchResults={searchQuery.data?.recipes ?? []}
-						isSearchLoading={searchQuery.isFetching}
-						searchError={searchQuery.error}
-					/>
-					{categoryError ? (
-						<PageState type="error" title="Categories could not load" message={categoryError} />
-					) : (
-						<CategorySection
-							categories={categories}
-							selectedCategoryId={selectedCategoryId}
-							onCategorySelect={setSelectedCategoryId}
-						/>
-					)}
-					<FoodCardList
-						recipes={featuredRecipes}
-						wishlist={wishlist}
-						onClickFavorite={handleClickFavorite}
-						featuredMode={featuredMode}
-						onFeaturedModeChange={setFeaturedMode}
-					/>
-					<RecentlyViewedRecipes recipes={recipes} />
-				</>
+				<CategorySection
+					categories={categories}
+					selectedCategoryId={selectedCategoryId}
+					onCategorySelect={setSelectedCategoryId}
+				/>
 			)}
+			<FoodCardList
+				recipes={featuredRecipes}
+				wishlist={wishlist}
+				onClickFavorite={handleClickFavorite}
+				featuredMode={featuredMode}
+				onFeaturedModeChange={setFeaturedMode}
+			/>
+			<RecentlyViewedRecipes recipes={recipes} />
 		</div>
 	);
 };

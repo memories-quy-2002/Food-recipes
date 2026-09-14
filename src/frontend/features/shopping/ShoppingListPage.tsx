@@ -16,7 +16,7 @@ import {
 	useUpdateShoppingItemMutation,
 } from "./api/shoppingQueries";
 import { isShoppingItemInPantry } from "./shoppingAvailability";
-import "./ShoppingList.scss";
+import "./ShoppingList.css";
 import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 const ShoppingListPage = () => {
@@ -35,6 +35,7 @@ const ShoppingListPage = () => {
 	const [editingItemId, setEditingItemId] = useState<number | null>(null);
 	const [editLabel, setEditLabel] = useState("");
 	const [editQuantity, setEditQuantity] = useState("");
+	const [editError, setEditError] = useState<string | null>(null);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
 
@@ -95,6 +96,7 @@ const ShoppingListPage = () => {
 		setEditingItemId(item.item_id);
 		setEditLabel(item.label);
 		setEditQuantity(item.quantity ?? "");
+		setEditError(null);
 		setMessage(null);
 	};
 
@@ -102,24 +104,30 @@ const ShoppingListPage = () => {
 		setEditingItemId(null);
 		setEditLabel("");
 		setEditQuantity("");
+		setEditError(null);
 	};
 
 	const saveEdit = (item: ShoppingListItem) => {
 		const nextLabel = editLabel.trim();
 		if (!nextLabel) {
-			setMessage("An item needs a name before it can be saved.");
+			setEditError("An item needs a name before it can be saved.");
 			return;
 		}
 
+		setEditError(null);
 		updateMutation.mutate({
 			itemId: item.item_id,
 			input: {
 				label: nextLabel,
 				quantity: editQuantity.trim(),
 			},
+		}, {
+			onSuccess: () => {
+				cancelEditing();
+				setMessage("Item updated.");
+			},
+			onError: () => setEditError("We could not update this item. Try again."),
 		});
-		cancelEditing();
-		setMessage("Item updated.");
 	};
 
 	const toggleItem = (item: ShoppingListItem) => {
@@ -149,13 +157,14 @@ const ShoppingListPage = () => {
 							/>
 						</label>
 						<div className="shopping-list__item-actions">
-							<button type="button" className="shopping-list__button shopping-list__button--primary" onClick={() => saveEdit(item)}>
-								Save changes
+							<button type="button" className="shopping-list__button shopping-list__button--primary" onClick={() => saveEdit(item)} disabled={updateMutation.isPending} aria-busy={updateMutation.isPending}>
+								{updateMutation.isPending ? "Saving..." : "Save changes"}
 							</button>
 							<button type="button" className="shopping-list__button shopping-list__button--quiet" onClick={cancelEditing}>
 								Cancel
 							</button>
 						</div>
+					{editError && <p className="shopping-list-page__inline-error" role="alert">{editError}</p>}
 					</div>
 				) : (
 					<>

@@ -14,9 +14,13 @@ const fieldClass =
 
 export type LoginFormProps = {
 	onSignup: () => void;
+	onForgotPassword: () => void;
 };
 
-const LoginForm = ({ onSignup }: LoginFormProps): ReactElement => {
+const LoginForm = ({
+	onSignup,
+	onForgotPassword,
+}: LoginFormProps): ReactElement => {
 	const [showPassword, setShowPassword] = useState(false);
 	const [
 		formData,
@@ -129,6 +133,17 @@ const LoginForm = ({ onSignup }: LoginFormProps): ReactElement => {
 				/>
 				Remember me
 			</label>
+
+			<div className="-mt-2 flex justify-end">
+				<Button
+					type="button"
+					variant="link"
+					className="h-auto px-1 font-black text-primary"
+					onClick={onForgotPassword}
+				>
+					Forgot your password?
+				</Button>
+			</div>
 
 			{errors.length > 0 && (
 				<div className="grid gap-2" role="alert">

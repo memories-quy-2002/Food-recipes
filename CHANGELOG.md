@@ -1,66 +1,68 @@
 # Changelog
 
-All notable changes to Food Recipes will be documented in this file.
-
-The format follows the spirit of Keep a Changelog, and this project uses
-calendar dates for release entries.
+All notable changes to Food Recipes are recorded here for developer review.
+Detailed implementation plans and design decisions are preserved under
+[`docs/archive`](./docs/archive/).
 
 ## [Unreleased]
 
 ### Added
 
-- NestJS API under `src/backend/apps/api` with REST routes under `/api/v1`.
-- OpenAPI/Swagger UI at `/api/docs` and the generated document at
-  `/api/docs-json`.
-- Prisma 7 schema, generated client configuration, baseline migrations, and
-  migration validation artifacts for the legacy PostgreSQL database.
-- Independent pnpm package roots for the frontend and backend, with the
-  backend workspace forwarding commands to `@food-recipes/api`; both are
-  pinned to `pnpm@11.18.0`.
-- Frontend lint, typecheck, unit-test, and Playwright commands.
-- Backend typecheck, Jest, Prisma, build, and migration commands.
-- Docker Compose development and production-like infrastructure with
-  PostgreSQL, a migration service, and the Nest API.
-- JWT bearer authentication for signup, login, token resolution, and
-  protected account, recipe, rating, and wishlist routes.
-- React Helmet SEO metadata, including page titles, descriptions, canonical
-  URLs, Open Graph tags, and Twitter card metadata.
-- News and About pages, recipe and rating UI flows, and related recipe content.
-- Tailwind CSS v4 through the Vite plugin, shadcn/ui metadata, semantic theme
-  tokens, and a shared `cn` utility for the incremental styling foundation.
-- A shadcn-style `Button` primitive and `PageState` pilot integration; Bootstrap,
-  react-bootstrap, and existing SCSS remain in place during migration.
+- A canonical documentation index, production roadmap, and tracked-file audit.
+- A versioned NestJS REST API under `src/backend` with `/api/v1` routes,
+  Swagger documentation, Prisma migrations, PostgreSQL persistence, and
+  independent frontend/backend package roots.
+- Public and personalized Home feeds, bounded recipe discovery search,
+  server-side filtering/sorting/pagination, recipe lifecycle metadata, saved
+  collections, planning, shopping, pantry, household, cooking-session,
+  leftovers, history, journal, notification, preference, recommendation, and
+  recipe-import flows.
+- JWT access authentication with HttpOnly refresh-cookie rotation, hashed
+  sessions, reuse-family revocation, password recovery tokens, email
+  verification tokens, auth throttling, ownership checks, and bounded request
+  bodies.
+- Shared Tailwind/shadcn-style UI primitives, route-aware metadata, public
+  recipe SEO structured data, and production-focused migration validators.
 
 ### Changed
 
-- Split the application layout into `src/frontend` and `src/backend` instead
-  of keeping frontend scripts and server code at the repository root.
-- Updated local development to run Vite and NestJS from their own package
-  directories. The frontend runs on port `5173`; the direct Nest API runs on
-  port `3000`.
-- Frontend API requests now use `VITE_API_BASE_URL` and append `/api/v1`.
-  Both Compose stacks expose the API directly on the configurable `API_PORT`.
-- Replaced the previous Express-oriented request and error handling with
-  NestJS logging, global exception filters, validation, CORS, and Swagger
-  bootstrap configuration.
-- Updated Vercel deployment configuration to use `src/frontend` as the
-  project root and serve its Vite `dist` output with SPA rewrites.
-- Improved Home, Header, Footer, Food, Profile, Wishlist, Recipes, Add
-  Recipe, Login, and Signup UI states and interactions.
+- Current documentation now describes the actual independent package layout and
+  current Nest controller surface; legacy `apps/api` and `src/server` paths are
+  no longer presented as active instructions.
+- Frontend API consumers use the current DTO and status-code contracts while
+  keeping compatibility bridges isolated and documented.
+- Public Home and related-recipe surfaces now use bounded, deduplicated feed
+  data instead of loading the complete recipe catalog.
+- Recipe detail metadata now includes validated Recipe JSON-LD and maintains a
+  single authoritative robots directive across SPA navigation.
+- Account recovery now includes accessible forgot-password, reset-password,
+  email-verification, and authenticated resend flows with generic responses,
+  safe error states, and token-free rendered output.
+- Production auth delivery configuration now fails fast when the recovery
+  webhook or public web origin is missing; local and test delivery behavior
+  remains configurable.
+- Planning, shopping, and pantry continuity now has scoped query indexes,
+  guarded unchecked-item uniqueness, concurrent-safe imports, stable duplicate
+  conflicts, and a full deterministic kitchen-loop browser regression.
+- The three active feature SCSS files are now plain CSS, and the direct Sass
+  dependency has been removed after import, build, and test scans passed.
+- Historical implementation plans, design specs, and task reports are stored in
+  `docs/archive` instead of being mixed with active runbooks.
+- Shopping-list edit failures now keep the editor open so a cook can correct or
+  retry the mutation instead of seeing a premature success message.
 
-### Fixed
+### Removed
 
-- Prevented review UI crashes when a user has not rated a recipe yet.
-- Prevented duplicate `(user_id, recipe_id)` rating seed keys.
-- Fixed Home hero layout and search alignment issues.
-- Preserved JWT validation and protected-route behavior while moving the API
-  to NestJS.
-- Removed the undefined `reportWebVitals()` runtime call.
+- Verified-unused Vite starter and column-toggle assets.
 
-### Deployment notes
+### Verification
 
-- Prisma baseline application to an existing database remains gated by backup,
-  schema inspection, and reconciliation of the documented `image_url`
-  discrepancy. Static validation does not prove live database parity.
-- JWT refresh-token rotation and RBAC are not yet exposed by the current
-  NestJS API source.
+- Frontend application TypeScript guard, ESLint, TypeScript, Vitest, and Vite
+  production build are required gates.
+- Backend Prisma validation/generation, TypeScript, Jest, static validators,
+  and production build are required gates.
+- Playwright quality and real-stack suites remain separate. CI installs the
+  browser and provisions the real stack only when its workflow explicitly says
+  so; a local missing browser is an environment blocker, not a passing result.
+- Database migrations and demo reset operations remain local/staging or
+  operator-controlled. Static validation does not claim production execution.

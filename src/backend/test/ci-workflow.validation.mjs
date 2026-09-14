@@ -53,6 +53,7 @@ for (const validator of [
   'docker-infrastructure.validation.mjs',
   'backend-product-security.validation.mjs',
   'production-demo-reset.validation.mjs',
+  'kitchen-loop-migration.validation.mjs',
 ]) {
   assertJobContains('static', new RegExp(validator.replace('.', '\\.')));
 }

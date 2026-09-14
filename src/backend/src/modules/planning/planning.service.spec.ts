@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { PlanningService } from './planning.service';
 import type { PlanningRepositoryPort } from './planning.repository';
 
@@ -131,6 +131,16 @@ describe('PlanningService', () => {
     const service = new PlanningService(repository);
 
     await expect(service.prepareRecipeIngredients(7, 999)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('returns a stable conflict when an update would create an unchecked duplicate', async () => {
+    repository.updateShoppingItem.mockRejectedValue({ code: 'P2010', meta: { code: '23505' } });
+    const service = new PlanningService(repository);
+
+    await expect(service.updateShoppingItem(7, 11, { label: 'rice', quantity: '2 kg' })).rejects.toMatchObject({
+      constructor: ConflictException,
+      response: { code: 'SHOPPING_ITEM_DUPLICATE' },
+    });
   });
 
   it('consolidates compatible structured ingredients across recipes', async () => {

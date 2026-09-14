@@ -1,73 +1,79 @@
-# Current Frontend User Journeys
+# Current frontend user journeys
 
-This document records the frontend journeys and the verification boundary for
-the repository. Browser coverage is intentionally split between deterministic
-mock-API tests and real-stack acceptance tests.
+Last reviewed: 2026-09-14
+
+This document describes observable behavior in the current React application.
+The primary audience is developers reviewing the recipe discovery and kitchen
+loops. A journey is production-ready only when its loading, empty, error,
+keyboard, mobile, desktop, and authenticated states are covered at the relevant
+test boundary.
 
 ## Critical journeys
 
 ```text
 Guest:
-Home -> Search -> Recipe detail
-Home -> Category -> Recipe detail
+Home -> search -> recipe detail
+Home -> category -> recipe detail
 Recipes -> filter -> sort -> detail
-Recipe -> Save -> login redirect
+Recipe -> save -> account -> original route and action
 
 Authenticated:
-Login -> return to original action
-Save / unsave recipe
-Rate / update review
-Open Saved
-Create recipe
-Edit own recipe
-Delete own recipe
-Update profile
-Change password
-Logout
+Login/signup -> pending action -> original route
+Save / unsave recipe and organize collections
+Rate, update, delete, or report a review
+Open Saved, create/edit/archive/restore/delete an own recipe
+Update profile, preferences, notification settings, and password
+Recipe -> plan -> shopping list -> pantry -> cooking -> history/journal
+Recipe URL import -> preview -> private draft -> publish when complete
+Household invite -> shared planning, shopping, and pantry scopes
+Logout -> refresh failure -> signed-out state
 ```
 
 ## Current behavior evidence
 
-| Journey | Current behavior | Evidence | Task 1 coverage |
+| Journey | Current behavior | Evidence | Verification |
 | --- | --- | --- | --- |
-| Home -> Search -> Recipe detail | Home loads the recipe catalog through the feature query hook; the Home search filters by recipe name and clicking a result navigates to `/recipe?id=<id>`. | `src/frontend/features/home/HomeMain.tsx`, `src/frontend/features/home/main/HomeSearchBar.tsx`, `src/frontend/features/recipes/api/useRecipeQueries.ts` | Playwright smoke test with deterministic API fixtures |
-| Home -> Category -> Recipe detail | Home category selection filters the featured cards locally; a featured card click navigates to `/recipe?id=<id>`. | `src/frontend/features/home/HomeMain.tsx`, `src/frontend/features/home/main/CategorySection.tsx`, `src/frontend/features/home/main/FoodCardList.tsx` | Playwright smoke test |
-| Recipes -> filter -> sort -> detail | `/food` reads category, meal, and search values from URL state; the result view applies local filters and provides Popular, Highest score, and Name A-Z sorting. | `src/frontend/features/food/Food.tsx`, `src/frontend/features/food/FoodContent.tsx` | Playwright smoke test |
-| Recipe -> Save -> login redirect | A guest favorite click navigates to `/account`; protected `/wishlist` redirects to `/account?signup=false` with the attempted location in router state. | `src/frontend/features/home/HomeMain.tsx`, `src/frontend/features/recipes/Recipe.tsx`, `src/frontend/features/auth/components/ProtectedRoute.tsx`, `src/frontend/features/auth/components/AccountForm.tsx` | Playwright smoke test for the recipe Save action; real-stack auth/save coverage is in `e2e/real-stack/acceptance.spec.js` |
-| Login -> return to original action | The login form can receive `location.state.from`, but the current login flow does not yet complete a pending save intent. | `src/frontend/features/auth/components/AccountForm.tsx`, `src/frontend/features/auth/components/LoginForm.tsx` | Not covered as a passing authenticated journey; product behavior is recorded as a gap |
-| Save / unsave recipe | Authenticated recipe and Home handlers call the wishlist POST/DELETE endpoints and show a toast. | `src/frontend/features/recipes/Recipe.tsx`, `src/frontend/features/home/HomeMain.tsx` | Real-stack login, save, reload persistence, unsave, and cleanup |
-| Rate / update review | Recipe detail submits a rating/review and uses the existing-rating state to choose create vs update; review deletion is not present in the current detail flow. | `src/frontend/features/recipes/Recipe.tsx`, `src/frontend/features/recipes/content/RecipeRating.tsx` | Not run without a stable authenticated fixture |
-| Open Saved | `/wishlist` is protected and loads the authenticated user wishlist. | `src/frontend/app/AppRoutes.tsx`, `src/frontend/features/wishlist/Wishlist.tsx` | Guest redirect covered by mock E2E; API protection is covered by real-stack security tests |
-| Create recipe | `/food/add` is protected; the current editor posts a new recipe and returns to `/food` on success. | `src/frontend/app/AppRoutes.tsx`, `src/frontend/features/recipes/AddRecipe.tsx` | Not run without a stable authenticated fixture |
-| Edit own recipe | No edit route or edit action is currently exposed in the frontend profile flow. | `src/frontend/features/profile/PersonalRecipes.tsx`, `src/frontend/features/profile/Profile.tsx` | Recorded gap |
-| Delete own recipe | Personal recipes expose a delete action backed by `DELETE /recipes/:id` and a confirmation modal. | `src/frontend/features/profile/PersonalRecipes.tsx` | Not run without a stable authenticated fixture |
-| Update profile | Profile details submit updates through the user profile endpoint. | `src/frontend/features/profile/Profile.tsx`, `src/frontend/features/profile/PersonalInfo.tsx` | Not run without a stable authenticated fixture |
-| Change password | Profile exposes a change-password page with client-side validation and a password endpoint. | `src/frontend/features/profile/Profile.tsx`, `src/frontend/features/profile/ChangePassword.tsx` | Not run without a stable authenticated fixture |
-| Logout | Header and profile actions dispatch the auth logout action and navigate as appropriate. | `src/frontend/shared/layout/HeaderAuthButton.tsx`, `src/frontend/features/profile/Profile.tsx` | Not run without a stable authenticated fixture |
+| Home -> search -> recipe detail | Home search debounces input, queries the bounded public recipe endpoint, supports keyboard navigation, and links to recipe detail. | `src/frontend/features/home/main/HomeSearchBar.tsx`, `src/frontend/features/home/main/api/useHomeSearchQuery.ts` | Vitest + Playwright mocked journey |
+| Home -> category -> recipe detail | Category cards update the featured view and recipe cards expose real links. | `src/frontend/features/home/main/CategorySection.tsx`, `FoodCardList.tsx` | Playwright mocked journey |
+| Recipes -> filter -> sort -> detail | `/food` stores query, taxonomy filters, sort, page, and limit in the URL and sends them to the server. | `src/frontend/features/food/Food.tsx`, `api/useRecipesQuery.ts` | Vitest + responsive Playwright journey |
+| Recipe -> save -> account -> action | Guests receive a safe internal return path and a typed pending intent; login/signup consumes it after the wishlist is loaded. | `src/frontend/features/auth/returnIntent.ts`, `features/auth/hooks/useLoginForm.ts`, `features/home/HomeMain.tsx`, `features/recipes/Recipe.tsx` | Unit + mocked journey + real-stack acceptance when available |
+| Save / unsave / collections | Authenticated users can save, remove, create/rename/delete collections, and add/remove recipes from collections. | `features/wishlist/Wishlist.tsx`, `features/saved/**`, wishlist API queries | Backend Jest + mocked/real-stack journeys |
+| Ratings and reviews | Authors cannot review their own recipe; other users can create/update/delete their own rating/review and report another review where the API permits it. | `features/recipes/Recipe.tsx`, `features/recipes/content/RecipeRating.tsx` | Focused component tests + backend authorization tests |
+| Own recipe lifecycle | `/food/add` creates a recipe; `/food/edit` loads the owner record and saves changes; profile actions expose lifecycle operations. | `features/recipes/AddRecipe.tsx`, `EditRecipe.tsx`, `features/profile/PersonalRecipes.tsx` | Owner/guest/forbidden Playwright journeys |
+| Password and profile settings | Profile and password updates use protected API routes and show inline validation/status states. | `features/profile/Profile.tsx`, `ChangePassword.tsx` | Backend authorization tests + authenticated journey |
+| Recovery and verification | Guests can request generic recovery instructions, complete a valid reset or see a safe invalid-link state, consume email verification links, and authenticated unverified users can resend from a dismissible reminder. Tokens are never rendered. | src/frontend/features/auth/**, src/backend/src/modules/auth/** | Focused frontend API/component tests + 6 mocked Playwright journeys; backend recovery/config tests |
+| Recipe -> plan -> shopping -> pantry -> cooking -> history/journal | A planned recipe can be imported once into the active shopping list, recovered after a failed purchase toggle, moved into pantry, cooked through a server-reported shortage, completed, and journaled. | `features/recipes/**`, `features/planning/**`, `features/shopping/**`, `features/pantry/**`, `features/history/**`, `features/journal/**` | `e2e/kitchen-loop.spec.js` deterministic full-flow regression |
+| Planning -> cooking | Plans, recurring rules, templates, leftover items, cooking sessions, shortage handling, and return-to-plan context are persisted server-side. | `features/planning/**`, `features/history/**`, `features/recipes/cooking/**` | Backend tests + planning/kitchen Playwright journeys |
+| Shopping -> pantry | Manual and recipe/planned imports can be checked, edited, cleared, or imported into pantry when quantity/unit data is sufficient; active duplicate imports are idempotent. | `features/shopping/**`, `features/pantry/**`, `src/backend/src/modules/planning/**` | Backend repository/service tests + shopping/pantry Playwright journeys |
+| Household scope | Household membership and roles scope plan, shopping, pantry, and leftover reads/writes; viewers remain read-only. | `features/households/**`, `HouseholdScopeProvider.tsx` | Backend role tests + authenticated journey |
+| Recipe import -> draft | A public URL is previewed server-side, shown for editing, and saved as an owner draft without publishing incomplete data. | `features/recipe-import/**`, `src/backend/src/modules/recipe-imports/**` | Backend validation + retention journey |
+| Logout and refresh recovery | Access tokens remain in memory, refresh uses the HttpOnly cookie, and failed refresh clears the authenticated state. | `features/auth/api/authSessionApi.ts`, `shared/api/axios.ts`, `app/AuthProvider.tsx` | Unit tests + real-stack security journey |
+
+## SEO and indexability boundary
+
+- Public Home, `/food`, and published recipe detail are indexable surfaces.
+- Account, profile, household, planning, shopping, pantry, import, history,
+  journal, edit, health, and error surfaces use `noindex,nofollow`.
+- Recipe detail keeps the compatibility URL `/recipe?id=<id>` while canonical
+  and structured-data output are generated from validated public recipe fields.
+- User-generated reviews are rendered as content, but rating aggregates must
+  never be fabricated when there are no ratings.
 
 ## Browser verification convention
 
 - Tests live in `src/frontend/e2e/` and use Playwright Test.
-- `pnpm test:e2e:quality` uses `src/frontend/e2e/playwright.config.js` and
-  deterministic read-API fixtures for the CI frontend-quality gate. It covers
-  loading/error/retry behavior, responsive overflow and hit targets, keyboard
-  interaction, and serious/critical axe violations.
-- `pnpm test:e2e:ci` remains the broader deterministic mock journey command for
-  React routes, providers, navigation, filtering, sorting, and protected flows.
-- `pnpm test:e2e:real` uses
-  `src/frontend/e2e/real-stack.playwright.config.js` and
-  `tools/run-real-stack-e2e.mjs`. It runs public discovery, authenticated save
-  persistence, the kitchen loop, local inventory behavior, API security
-  headers/session rotation, ownership/role enforcement, input validation, and
-  oversized-request handling against the running NestJS API and PostgreSQL.
-- Real-stack tests use the seeded demo accounts and clean up records created by
-  the suite. They do not reset the whole development database.
+- `pnpm test:e2e:quality` covers retryable discovery failure, the complete
+  kitchen loop, responsive overflow/hit targets, keyboard behavior, and
+  serious/critical axe violations.
+- `pnpm test:e2e:ci` runs the broader deterministic mock journey set.
+- `pnpm test:e2e:real` uses the Docker-backed API and PostgreSQL with seeded
+  demo users; it cleans up created records and does not reset the database.
+- CI installs Chromium explicitly. A local suite cannot be called passed when
+  the Playwright browser executable is absent.
 
 ## Known verification boundaries
 
-- `src/frontend/package.json` defines `pnpm test` as `vitest` for the frontend package.
-- The real-stack suite requires a reachable API at `FOOD_RECIPES_E2E_API_ORIGIN`
-  (default `http://localhost:3000`) and seeded data. The current CI workflow
-  runs the deterministic frontend suite and does not provision the real stack.
-- The current product scope does not include offline/PWA behavior, so no offline
-  acceptance claim is made here.
+- Real-stack tests require a reachable API, PostgreSQL, and seeded data.
+- Static/type/unit checks do not prove browser routing, CORS, cookie behavior,
+  or live database parity.
+- The product does not currently promise offline/PWA behavior.

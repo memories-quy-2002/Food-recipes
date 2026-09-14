@@ -1,3 +1,4 @@
+import RecipeStructuredData from '@/shared/seo/RecipeJsonLd';
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -53,7 +54,7 @@ import {
 	useCollectionsQuery,
 } from "@/features/saved/api/collectionsQueries";
 import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
-import "./Recipe.print.scss";
+import "./Recipe.print.css";
 
 type RecipeReadRecipe = Omit<Partial<RecipeDetail>,
 	| "recipe_id"
@@ -680,6 +681,7 @@ const Recipe = (): React.ReactElement => {
 	}
 	return (
 		<>
+			<RecipeStructuredData recipe={recipe} canonicalPath={'/recipe?id=' + encodeURIComponent(id)} />
 			<PageHelmet
 				title={recipe?.recipe_name || "Recipe"}
 				description={

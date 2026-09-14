@@ -28,9 +28,18 @@ export class RecoveryDeliveryService implements RecoveryDeliveryPort {
 
   private async send(kind: RecoveryDeliveryKind, email: string, token: string): Promise<void> {
     const webhook = process.env.AUTH_MAIL_WEBHOOK_URL?.trim();
-    if (!webhook || process.env.NODE_ENV === 'test') return;
+    if (process.env.NODE_ENV === 'test') return;
+    if (!webhook) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Recovery delivery is not configured');
+      }
+      return;
+    }
 
     const link = this.buildLink(kind, token);
+    if (process.env.NODE_ENV === 'production' && !link) {
+      throw new Error('Recovery public web URL is not configured');
+    }
     const response = await fetch(webhook, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
