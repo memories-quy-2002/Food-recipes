@@ -14,10 +14,18 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "dependabot"
     groups:
-      frontend-dependencies:
+      frontend-runtime:
         applies-to: version-updates
+        dependency-type: "production"
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+      frontend-dev:
+        applies-to: version-updates
+        dependency-type: "development"
         patterns:
           - "*"
         update-types:
@@ -38,14 +46,22 @@ updates:
       include: "scope"
     labels:
       - "dependencies"
-      - "dependabot"
     groups:
-      backend-dependencies:
+      backend-runtime:
         applies-to: version-updates
+        dependency-type: "production"
         patterns:
           - "*"
         exclude-patterns:
           - "class-validator"
+        update-types:
+          - "minor"
+          - "patch"
+      backend-dev:
+        applies-to: version-updates
+        dependency-type: "development"
+        patterns:
+          - "*"
         update-types:
           - "minor"
           - "patch"
