@@ -143,8 +143,8 @@ Remaining operational verification:
 ## Cleanup decisions
 
 - Keep all direct dependencies that have an import, script, compiler, test,
-  runtime adapter, or generated-client role. `sass` remains until the three
-  tracked feature SCSS files are migrated.
+  runtime adapter, or generated-client role. The three active feature SCSS
+  files are now plain CSS, so the direct `sass` dependency has been removed.
 - Remove only verified dead assets: the Vite starter `src/logo.svg` and the
   unreferenced `toggle-column-svgrepo-com.svg` icon.
 - Move old implementation plans, design specs, and task reports to
@@ -156,6 +156,7 @@ Remaining operational verification:
 ## Audit conclusion
 
 The system has a strong modular foundation and broad user journeys, but it is
-not production-complete until the P0 A/B/E gaps, bounded Home reads, SCSS
-migration, browser verification, and the documented Node 24 runtime boundary
-are handled. This document is updated as each delivery wave lands.
+not production-complete until the P0 A/B/E gaps, bounded Home reads, browser
+verification, the documented Node 24 runtime boundary, and staging evidence
+for database changes are handled. This document is updated as each delivery
+wave lands.

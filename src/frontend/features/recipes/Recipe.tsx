@@ -54,7 +54,7 @@ import {
 	useCollectionsQuery,
 } from "@/features/saved/api/collectionsQueries";
 import CollectionRecipeDialog from "@/features/saved/collections/CollectionRecipeDialog";
-import "./Recipe.print.scss";
+import "./Recipe.print.css";
 
 type RecipeReadRecipe = Omit<Partial<RecipeDetail>,
 	| "recipe_id"

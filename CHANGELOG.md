@@ -44,6 +44,8 @@ Detailed implementation plans and design decisions are preserved under
 - Planning, shopping, and pantry continuity now has scoped query indexes,
   guarded unchecked-item uniqueness, concurrent-safe imports, stable duplicate
   conflicts, and a full deterministic kitchen-loop browser regression.
+- The three active feature SCSS files are now plain CSS, and the direct Sass
+  dependency has been removed after import, build, and test scans passed.
 - Historical implementation plans, design specs, and task reports are stored in
   `docs/archive` instead of being mixed with active runbooks.
 - Shopping-list edit failures now keep the editor open so a cook can correct or
@@ -52,11 +54,6 @@ Detailed implementation plans and design decisions are preserved under
 ### Removed
 
 - Verified-unused Vite starter and column-toggle assets.
-
-### Planned
-
-- Migrate the remaining feature SCSS to CSS/Tailwind-compatible styles, then
-  remove the Sass dependency after import, build, and test scans pass.
 
 ### Verification
 

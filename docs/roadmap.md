@@ -56,7 +56,7 @@ Remaining operational verification:
 
 ## Follow-up waves
 
-- Migrate the remaining feature SCSS to plain CSS/Tailwind-compatible styles and remove Sass only after import, build, and test scans pass.
+- Completed in this wave: migrated the remaining active feature SCSS to plain CSS/Tailwind-compatible styles and removed the direct Sass dependency after import, build, and test scans passed.
 - Keep dependency cleanup evidence-led. A package is removable only when imports, scripts, build configuration, tests, and runtime roles are all accounted for.
 - Add observability, object storage, and asynchronous infrastructure only when the deployment topology requires them.
 

@@ -16,7 +16,7 @@ import {
 	useUpdateShoppingItemMutation,
 } from "./api/shoppingQueries";
 import { isShoppingItemInPantry } from "./shoppingAvailability";
-import "./ShoppingList.scss";
+import "./ShoppingList.css";
 import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 const ShoppingListPage = () => {
