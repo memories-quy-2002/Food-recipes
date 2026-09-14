@@ -1,50 +1,49 @@
-name: CodeQL Diagnostic
+name: Temporary Security Lockfile Refresh
 
 on:
-  pull_request:
+  push:
     branches:
-      - master
-  workflow_dispatch:
+      - fix/codeql-security-quality
 
 permissions:
-  contents: read
-  security-events: write
+  contents: write
 
 jobs:
-  analyze:
-    name: Diagnose ${{ matrix.language }}
-    if: github.event_name == 'workflow_dispatch' || github.head_ref == 'fix/codeql-security-quality'
+  refresh-lockfile:
+    name: Refresh backend lockfile
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        language:
-          - javascript-typescript
-          - actions
+    timeout-minutes: 10
     steps:
-      - name: Checkout repository
+      - name: Checkout branch
         uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
         with:
-          languages: ${{ matrix.language }}
-          build-mode: none
-          queries: security-and-quality
+          ref: ${{ github.ref_name }}
 
-      - name: Generate SARIF without publishing alerts
-        id: analyze
-        uses: github/codeql-action/analyze@v4
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          category: /diagnostic:${{ matrix.language }}
-          output: codeql-sarif
-          upload: never
-          upload-database: false
+          version: 11.18.0
 
-      - name: Upload diagnostic SARIF
-        uses: actions/upload-artifact@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          name: codeql-sarif-${{ matrix.language }}
-          if-no-files-found: error
-          path: codeql-sarif/*.sarif
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
+
+      - name: Refresh backend lockfile
+        working-directory: src/backend
+        run: pnpm install --lockfile-only --ignore-scripts
+
+      - name: Commit refreshed lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/backend/pnpm-lock.yaml
+          if git diff --cached --quiet; then
+            echo "No lockfile changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(security): refresh backend lockfile"
+          git push
