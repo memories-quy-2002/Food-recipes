@@ -6,9 +6,10 @@ import { fileURLToPath } from 'node:url';
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(testDirectory, '../../..');
 
-const [dependencyWorkflow, dependabotConfig] = await Promise.all([
+const [dependencyWorkflow, dependabotConfig, qualityWorkflow] = await Promise.all([
   readFile(path.join(repositoryRoot, '.github/workflows/dependency-security.yml'), 'utf8'),
   readFile(path.join(repositoryRoot, '.github/dependabot.yml'), 'utf8'),
+  readFile(path.join(repositoryRoot, '.github/workflows/quality-gates.yml'), 'utf8'),
 ]);
 
 assert.match(
@@ -42,6 +43,17 @@ assert.doesNotMatch(
   'dependency security workflow must remain read-only',
 );
 
+assert.match(
+  qualityWorkflow,
+  /node src\/backend\/test\/dependency-downgrade\.validation\.mjs/,
+  'quality gates must run dependency downgrade validation',
+);
+assert.match(
+  qualityWorkflow,
+  /node src\/backend\/test\/dependabot-safety\.validation\.mjs/,
+  'quality gates must run Dependabot safety validation',
+);
+
 const assertGroup = (groupName, dependencyType) => {
   const pattern = new RegExp(
     `^      ${groupName}:\\r?\\n` +
@@ -63,7 +75,7 @@ assertGroup('backend-runtime', 'production');
 assertGroup('backend-dev', 'development');
 
 const backendRuntimeMatch = dependabotConfig.match(
-  /^      backend-runtime:\r?\n([\s\S]*?)(?=^      backend-dev:|^  - package-ecosystem:|\Z)/m,
+  /^      backend-runtime:\r?\n([\s\S]*?)(?=^      backend-dev:|^  - package-ecosystem:|$)/m,
 );
 assert.ok(backendRuntimeMatch, 'backend-runtime group must exist');
 assert.match(
