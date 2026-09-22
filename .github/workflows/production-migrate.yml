@@ -1,18 +1,14 @@
-name: Production Prisma Baseline
+name: Production Database Migration
 
 on:
   workflow_dispatch:
     inputs:
-      confirm:
-        description: Type BASELINE to authorize the one-time schema baseline
+      confirmation:
+        description: Type APPLY_FOOD_RECIPES_PRODUCTION_MIGRATIONS to authorize this migration
         required: true
         type: string
       backup_reference:
-        description: Backup or PITR recovery point verified before baseline
-        required: true
-        type: string
-      schema_confirm:
-        description: Type SCHEMA_VERIFIED after comparing the live schema with 0_init
+        description: Backup or PITR recovery point verified before this migration
         required: true
         type: string
       project_ref:
@@ -26,32 +22,27 @@ permissions:
 
 jobs:
   preflight:
-    name: Require master, schema review, backup, and passing CI
+    name: Require master, backup, and passing CI
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Validate one-time baseline inputs
+      - name: Validate manual migration inputs
         env:
-          CONFIRMATION: ${{ inputs.confirm }}
+          CONFIRMATION: ${{ inputs.confirmation }}
           BACKUP_REFERENCE: ${{ inputs.backup_reference }}
-          SCHEMA_CONFIRMATION: ${{ inputs.schema_confirm }}
           PROJECT_REF: ${{ inputs.project_ref }}
         run: |
           set -euo pipefail
           if [[ "$GITHUB_REF" != "refs/heads/master" ]]; then
-            echo "The production baseline must be dispatched from master." >&2
+            echo "Production migrations must be dispatched from master." >&2
             exit 1
           fi
-          if [[ "$CONFIRMATION" != "BASELINE" ]]; then
-            echo "The baseline confirmation did not match." >&2
+          if [[ "$CONFIRMATION" != "APPLY_FOOD_RECIPES_PRODUCTION_MIGRATIONS" ]]; then
+            echo "The production migration confirmation did not match." >&2
             exit 1
           fi
           if [[ -z "$(printf '%s' "$BACKUP_REFERENCE" | tr -d '[:space:]')" ]]; then
             echo "A verified backup or PITR reference is required." >&2
-            exit 1
-          fi
-          if [[ "$SCHEMA_CONFIRMATION" != "SCHEMA_VERIFIED" ]]; then
-            echo "Confirm the live schema was compared with the checked-in baseline." >&2
             exit 1
           fi
           if [[ -z "$(printf '%s' "$PROJECT_REF" | tr -d '[:space:]')" ]]; then
@@ -77,9 +68,8 @@ jobs:
             exit 1
           fi
 
-  baseline-production:
-    name: Mark production baseline and deploy migrations
-    if: ${{ inputs.confirm == 'BASELINE' }}
+  migrate:
+    name: Apply production Prisma migrations
     needs: preflight
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -121,16 +111,11 @@ jobs:
           DEMO_DATABASE_TARGET_PROJECT_REF: ${{ inputs.project_ref }}
         run: pnpm production:database:validate
 
-      - name: Mark existing production schema as baseline
+      - name: Apply production migrations
         working-directory: src/backend
         env:
           DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
-        run: pnpm exec prisma migrate resolve --applied 0_init --config prisma.config.ts
-
-      - name: Deploy remaining production migrations
-        working-directory: src/backend
-        env:
-          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          NODE_ENV: production
         run: pnpm prisma:migrate:deploy
 
       - name: Verify production migration status

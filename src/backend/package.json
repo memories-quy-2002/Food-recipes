@@ -29,6 +29,8 @@
     "prisma:migrate": "prisma migrate dev --config prisma.config.ts",
     "prisma:migrate:deploy": "prisma migrate deploy --config prisma.config.ts",
     "prisma:seed": "prisma db seed --config prisma.config.ts",
+    "production:database:validate": "ts-node --transpile-only scripts/validate-production-database.ts",
+    "demo:reset:validate": "ts-node --transpile-only scripts/production-demo-reset.ts --validate-only",
     "prisma:studio": "prisma studio --config prisma.config.ts",
     "demo:reset:production": "ts-node --transpile-only scripts/production-demo-reset.ts",
     "demo:verify": "ts-node --transpile-only scripts/verify-demo-seed.ts",
