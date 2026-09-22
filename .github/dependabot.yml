@@ -54,6 +54,8 @@ updates:
         applies-to: "version-updates"
         patterns:
           - "*"
+        exclude-patterns:
+          - "class-validator"
         update-types:
           - "patch"
           - "minor"
