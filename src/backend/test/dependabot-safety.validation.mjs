@@ -54,35 +54,71 @@ assert.match(
   'quality gates must run Dependabot safety validation',
 );
 
-const assertGroup = (groupName, dependencyType) => {
-  const pattern = new RegExp(
-    `^      ${groupName}:\\r?\\n` +
-      `[\\s\\S]*?^        dependency-type: "${dependencyType}"\\r?$` +
-      `[\\s\\S]*?^        patterns:\\r?\\n          - "\\*"\\r?$` +
-      `[\\s\\S]*?^        update-types:\\r?\\n          - "minor"\\r?\\n          - "patch"`,
-    'm',
-  );
-  assert.match(
-    dependabotConfig,
-    pattern,
-    `${groupName} must group only ${dependencyType} minor/patch updates`,
-  );
-};
+const npmEntries = dependabotConfig.match(/^- package-ecosystem: "npm"$|^  - package-ecosystem: "npm"$/gm) ?? [];
+assert.equal(npmEntries.length, 1, 'Dependabot must use exactly one npm update entry');
 
-assertGroup('frontend-runtime', 'production');
-assertGroup('frontend-dev', 'development');
-assertGroup('backend-runtime', 'production');
-assertGroup('backend-dev', 'development');
+const npmStart = dependabotConfig.indexOf('  - package-ecosystem: "npm"');
+const actionsStart = dependabotConfig.indexOf('  - package-ecosystem: "github-actions"');
+assert.ok(npmStart >= 0, 'npm Dependabot entry must exist');
+assert.ok(actionsStart > npmStart, 'GitHub Actions entry must follow npm entry');
 
-const backendRuntimeStart = dependabotConfig.indexOf('      backend-runtime:');
-const backendDevStart = dependabotConfig.indexOf('      backend-dev:', backendRuntimeStart);
-assert.ok(backendRuntimeStart >= 0, 'backend-runtime group must exist');
-assert.ok(backendDevStart > backendRuntimeStart, 'backend-dev group must follow backend-runtime');
-const backendRuntimeBlock = dependabotConfig.slice(backendRuntimeStart, backendDevStart);
+const npmBlock = dependabotConfig.slice(npmStart, actionsStart);
+const actionsBlock = dependabotConfig.slice(actionsStart);
+
 assert.match(
-  backendRuntimeBlock,
-  /exclude-patterns:\r?\n          - "class-validator"/,
-  'backend runtime group must keep class-validator as an individually reviewed dependency',
+  npmBlock,
+  /directories:\r?\n      - "\/src\/frontend"\r?\n      - "\/src\/backend"/,
+  'npm updates must consolidate frontend and backend manifests',
+);
+assert.match(
+  npmBlock,
+  /open-pull-requests-limit: 4/,
+  'npm PR limit must temporarily reserve room for the three existing NestJS 12 PRs plus one routine group',
+);
+assert.match(
+  npmBlock,
+  /versioning-strategy: "increase-if-necessary"/,
+  'npm updates must avoid unnecessary manifest churn',
+);
+assert.match(
+  npmBlock,
+  /cooldown:\r?\n      semver-patch-days: 3\r?\n      semver-minor-days: 7\r?\n      semver-major-days: 30/,
+  'npm updates must use staged patch/minor/major cooldowns',
+);
+
+assert.match(
+  npmBlock,
+  /dependency-name: "\*"\r?\n        update-types:\r?\n          - "version-update:semver-patch"\r?\n          - "version-update:semver-minor"/,
+  'routine npm version updates must be limited to patch and minor releases',
+);
+for (const dependency of ['@nestjs/config', '@nestjs/jwt', '@nestjs/passport']) {
+  assert.match(
+    npmBlock,
+    new RegExp(`dependency-name: "${dependency.replace('/', '\\/')}"`),
+    `${dependency} must remain explicitly allowed while its NestJS 12 PR stays open`,
+  );
+}
+
+assert.match(
+  npmBlock,
+  /routine-npm-updates:\r?\n        applies-to: "version-updates"[\s\S]*?patterns:\r?\n          - "\*"[\s\S]*?exclude-patterns:\r?\n          - "class-validator"[\s\S]*?update-types:\r?\n          - "patch"\r?\n          - "minor"/,
+  'routine npm updates must be grouped while class-validator remains separately reviewed',
+);
+assert.match(
+  npmBlock,
+  /security-npm-updates:\r?\n        applies-to: "security-updates"\r?\n        patterns:\r?\n          - "\*"/,
+  'npm security updates must be grouped separately from routine version updates',
+);
+
+assert.match(
+  actionsBlock,
+  /open-pull-requests-limit: 1/,
+  'GitHub Actions must allow only one update PR at a time',
+);
+assert.match(
+  actionsBlock,
+  /groups:\r?\n      github-actions:\r?\n        patterns:\r?\n          - "\*"/,
+  'GitHub Actions updates must be grouped into one PR',
 );
 
 assert.doesNotMatch(
