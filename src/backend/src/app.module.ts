@@ -22,7 +22,6 @@ import { HomeFeedModule } from './modules/home-feed/home-feed.module';
 import { CookingHistoryModule } from './modules/cooking-history/cooking-history.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
-import { HouseholdsModule } from './modules/households/households.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { RecipeImportsModule } from './modules/recipe-imports/recipe-imports.module';
 import { JournalsModule } from './modules/journals/journals.module';
@@ -56,7 +55,6 @@ import { ProductAnalyticsService } from './common/analytics/product-analytics.se
     CookingHistoryModule,
     PreferencesModule,
     RecommendationsModule,
-    HouseholdsModule,
     NotificationsModule,
     RecipeImportsModule,
     JournalsModule,

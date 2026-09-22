@@ -19,7 +19,6 @@ export type CookingSessionRecord = {
   meal_plan_item_id: number | null;
   source_type?: 'recipe' | 'leftover';
   leftover_batch_id?: number | null;
-  household_id?: number | null;
   planned_date: Date | string | null;
   slot: string | null;
   servings: number;
@@ -77,22 +76,21 @@ export type CookingSessionCompletionResult =
 
 export interface CookingSessionRepositoryPort {
   findActive(userId: number, recipeId?: number): Promise<CookingSessionRecord | null>;
-  start(userId: number, recipeId: number, mealPlanItemId: number | null, servings: number | null, sourceType?: 'recipe' | 'leftover', leftoverBatchId?: number | null, householdId?: number | null): Promise<CookingSessionRecord>;
+  start(userId: number, recipeId: number, mealPlanItemId: number | null, servings: number | null, sourceType?: 'recipe' | 'leftover', leftoverBatchId?: number | null): Promise<CookingSessionRecord>;
   update(userId: number, sessionId: number, currentStep?: number, status?: CookingSessionEditableStatus): Promise<CookingSessionRecord | null>;
   complete(userId: number, sessionId: number, action?: 'complete' | 'shopping'): Promise<CookingSessionCompletionResult | null>;
   abandon(userId: number, sessionId: number): Promise<boolean>;
   recipeExists(recipeId: number): Promise<boolean>;
   mealPlanItemBelongsToUser(userId: number, mealPlanItemId: number, recipeId: number): Promise<boolean>;
   leftoverAvailable?(userId: number, leftoverBatchId: number, recipeId: number): Promise<boolean>;
-  leftoverStartContext?(userId: number, recipeId: number, leftoverBatchId: number, mealPlanItemId: number | null, householdId: number | null): Promise<{ mode: 'direct' | 'reserved'; available_servings: number; leftover_batch_id: number } | null>;
-  mealPlanItemBelongsToHousehold?(householdId: number, mealPlanItemId: number, recipeId: number): Promise<boolean>;
+  leftoverStartContext?(userId: number, recipeId: number, leftoverBatchId: number, mealPlanItemId: number | null): Promise<{ mode: 'direct' | 'reserved'; available_servings: number; leftover_batch_id: number } | null>;
 }
 
 export const COOKING_SESSION_REPOSITORY = Symbol('COOKING_SESSION_REPOSITORY');
 
 const sessionProjection = Prisma.sql`
   s.session_id, s.user_id, s.recipe_id, r.recipe_name,
-  s.meal_plan_item_id, s.source_type, s.leftover_batch_id, s.household_id, i.planned_date, i.slot, s.servings,
+  s.meal_plan_item_id, s.source_type, s.leftover_batch_id, i.planned_date, i.slot, s.servings,
   s.current_step, s.status, s.started_at, s.last_active_at,
   s.paused_at, s.completed_at, s.created_at, s.updated_at
 `;
@@ -107,7 +105,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       FROM cooking_sessions s
       JOIN recipes r ON r.recipe_id = s.recipe_id
       LEFT JOIN meal_plan_items i ON i.item_id = s.meal_plan_item_id
-      WHERE s.user_id = ${userId}
+      WHERE s.user_id = ${userId} AND s.household_id IS NULL
         AND s.status IN ('active', 'paused')
         ${recipeId === undefined ? Prisma.empty : Prisma.sql`AND s.recipe_id = ${recipeId}`}
       ORDER BY s.updated_at DESC, s.session_id DESC
@@ -120,7 +118,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
     userId: number,
     recipeId: number,
     mealPlanItemId: number | null,
-    servings: number | null, sourceType: 'recipe' | 'leftover' = 'recipe', leftoverBatchId: number | null = null, householdId: number | null = null,
+    servings: number | null, sourceType: 'recipe' | 'leftover' = 'recipe', leftoverBatchId: number | null = null,
   ): Promise<CookingSessionRecord> {
     const sessionIdentity = mealPlanItemId === null
       ? Prisma.sql`AND meal_plan_item_id IS NULL`
@@ -128,7 +126,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
     const existing = await this.prisma.$queryRaw<{ session_id: number }[]>(Prisma.sql`
       SELECT session_id
       FROM cooking_sessions
-      WHERE user_id = ${userId}
+      WHERE user_id = ${userId} AND household_id IS NULL
         AND recipe_id = ${recipeId}
         AND status IN ('active', 'paused') AND source_type = ${sourceType} AND leftover_batch_id IS NOT DISTINCT FROM ${leftoverBatchId}
         ${sessionIdentity}
@@ -145,7 +143,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
             paused_at = NULL,
             last_active_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE session_id = ${existing[0].session_id} AND user_id = ${userId}
+        WHERE session_id = ${existing[0].session_id} AND user_id = ${userId} AND household_id IS NULL
       `);
       return (await this.findById(userId, existing[0].session_id))!;
     }
@@ -154,10 +152,10 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
     try {
       rows = await this.prisma.$queryRaw<{ session_id: number }[]>(Prisma.sql`
       INSERT INTO cooking_sessions (
-        user_id, recipe_id, meal_plan_item_id, source_type, leftover_batch_id, household_id, servings, current_step, status,
+        user_id, recipe_id, meal_plan_item_id, source_type, leftover_batch_id, servings, current_step, status,
         started_at, last_active_at
       ) VALUES (
-        ${userId}, ${recipeId}, ${mealPlanItemId}, ${sourceType}, ${leftoverBatchId}, ${householdId}, COALESCE(
+        ${userId}, ${recipeId}, ${mealPlanItemId}, ${sourceType}, ${leftoverBatchId}, COALESCE(
           ${servings},
           (SELECT servings FROM recipe_nutrition WHERE recipe_id = ${recipeId}),
           1
@@ -195,7 +193,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       UPDATE cooking_sessions
       SET ${Prisma.join(updates, ', ')}
       WHERE session_id = ${sessionId}
-        AND user_id = ${userId}
+        AND user_id = ${userId} AND household_id IS NULL
         AND status IN ('active', 'paused')
     `);
     return this.findById(userId, sessionId);
@@ -208,7 +206,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
         FROM cooking_sessions s
         JOIN recipes r ON r.recipe_id = s.recipe_id
         LEFT JOIN meal_plan_items i ON i.item_id = s.meal_plan_item_id
-        WHERE s.user_id = ${userId}
+        WHERE s.user_id = ${userId} AND s.household_id IS NULL
           AND s.session_id = ${sessionId}
           AND s.status IN ('active', 'paused')
         FOR UPDATE OF s
@@ -243,7 +241,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       const pantryRows = isLeftover ? [] : await tx.$queryRaw<Array<InventoryPantryItem & { quantity: number | string | null }>>(Prisma.sql`
         SELECT pantry_id, name, have, quantity, unit
         FROM pantry_items
-        WHERE user_id = ${userId}
+        WHERE user_id = ${userId} AND household_id IS NULL
         FOR UPDATE
       `);
       const pantryItems = pantryRows.map((item) => ({
@@ -271,7 +269,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
             SELECT ${userId}, ${shortage.ingredient_name}, ${quantity}, ${session.recipe_id}
             WHERE NOT EXISTS (
               SELECT 1 FROM shopping_list_items
-              WHERE user_id = ${userId}
+              WHERE user_id = ${userId} AND household_id IS NULL
                 AND checked = FALSE
                 AND LOWER(TRIM(label)) = LOWER(TRIM(${shortage.ingredient_name}))
                 AND COALESCE(quantity, '') = ${quantity}
@@ -295,10 +293,10 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
             last_active_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
         WHERE session_id = ${sessionId}
-          AND user_id = ${userId}
+          AND user_id = ${userId} AND household_id IS NULL
           AND status IN ('active', 'paused')
         RETURNING session_id, user_id, recipe_id, ${session.recipe_name} AS recipe_name,
-                  meal_plan_item_id, source_type, leftover_batch_id, household_id, servings, current_step, status, started_at,
+                  meal_plan_item_id, source_type, leftover_batch_id, servings, current_step, status, started_at,
                   last_active_at, paused_at, completed_at, created_at, updated_at
       `);
       const completed = completedRows[0];
@@ -347,7 +345,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       const history = historyRows[0];
       const pantryById = new Map(pantryItems.map((item) => [item.pantry_id, item]));
       if (isLeftover && completed.meal_plan_item_id === null && completed.leftover_batch_id) {
-        const consumed = await tx.$queryRaw<{ leftover_id: number }[]>(Prisma.sql`UPDATE leftover_batches SET remaining_servings = remaining_servings - ${completed.servings} WHERE leftover_id = ${completed.leftover_batch_id} AND (user_id = ${userId} OR household_id = ${completed.household_id ?? null}) AND remaining_servings >= ${completed.servings} RETURNING leftover_id`);
+        const consumed = await tx.$queryRaw<{ leftover_id: number }[]>(Prisma.sql`UPDATE leftover_batches SET remaining_servings = remaining_servings - ${completed.servings} WHERE leftover_id = ${completed.leftover_batch_id} AND user_id = ${userId} AND household_id IS NULL AND remaining_servings >= ${completed.servings} RETURNING leftover_id`);
         if (!consumed[0]) throw new ConflictException({ code: 'LEFTOVER_SERVINGS_UNAVAILABLE', message: 'The leftover no longer has enough servings to complete this cook' });
       }
       if (isLeftover) return {
@@ -366,7 +364,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
               SET quantity = GREATEST(quantity - ${deductedInPantryUnit}, 0),
                   have = CASE WHEN quantity - ${deductedInPantryUnit} <= 0 THEN FALSE ELSE have END,
                   updated_at = CURRENT_TIMESTAMP
-              WHERE user_id = ${userId} AND pantry_id = ${consumption.pantry_id}
+              WHERE user_id = ${userId} AND household_id IS NULL AND pantry_id = ${consumption.pantry_id}
             `);
           }
         }
@@ -408,7 +406,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       UPDATE cooking_sessions
       SET status = 'abandoned', updated_at = CURRENT_TIMESTAMP, last_active_at = CURRENT_TIMESTAMP
       WHERE session_id = ${sessionId}
-        AND user_id = ${userId}
+        AND user_id = ${userId} AND household_id IS NULL
         AND status IN ('active', 'paused')
     `);
     return affected > 0;
@@ -422,11 +420,11 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
   }
 
   async leftoverAvailable(userId: number, leftoverBatchId: number, recipeId: number): Promise<boolean> {
-    const rows = await this.prisma.$queryRaw<{ leftover_id: number }[]>(Prisma.sql`SELECT leftover_id FROM leftover_batches WHERE leftover_id = ${leftoverBatchId} AND user_id = ${userId} AND recipe_id = ${recipeId} AND remaining_servings > 0 AND expires_at > CURRENT_TIMESTAMP`);
+    const rows = await this.prisma.$queryRaw<{ leftover_id: number }[]>(Prisma.sql`SELECT leftover_id FROM leftover_batches WHERE leftover_id = ${leftoverBatchId} AND user_id = ${userId} AND household_id IS NULL AND recipe_id = ${recipeId} AND remaining_servings > 0 AND expires_at > CURRENT_TIMESTAMP`);
     return rows.length > 0;
   }
 
-  async leftoverStartContext(userId: number, recipeId: number, leftoverBatchId: number, mealPlanItemId: number | null, householdId: number | null) {
+  async leftoverStartContext(userId: number, recipeId: number, leftoverBatchId: number, mealPlanItemId: number | null) {
     const rows = await this.prisma.$queryRaw<Array<{ mode: 'direct' | 'reserved'; available_servings: number; leftover_batch_id: number }>>(Prisma.sql`
       SELECT CASE WHEN i.item_id IS NULL THEN 'direct' ELSE 'reserved' END AS mode,
         CASE WHEN i.item_id IS NULL THEN b.remaining_servings ELSE i.servings END AS available_servings,
@@ -436,17 +434,13 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       LEFT JOIN meal_plans p ON p.plan_id = i.plan_id
       WHERE b.leftover_id = ${leftoverBatchId} AND b.recipe_id = ${recipeId}
         AND ((i.item_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM cooking_history h WHERE h.meal_plan_item_id = i.item_id)
-              AND (p.user_id = ${userId} OR p.household_id = ${householdId}))
+              AND p.user_id = ${userId} AND p.household_id IS NULL)
           OR (i.item_id IS NULL AND ${mealPlanItemId} IS NULL AND b.expires_at > CURRENT_TIMESTAMP AND b.remaining_servings > 0
-              AND (b.user_id = ${userId} OR b.household_id = ${householdId})))
+              AND b.user_id = ${userId} AND b.household_id IS NULL))
       LIMIT 1`);
     return rows[0] ?? null;
   }
 
-  async mealPlanItemBelongsToHousehold(householdId: number, mealPlanItemId: number, recipeId: number) {
-    const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`SELECT i.item_id FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id WHERE i.item_id = ${mealPlanItemId} AND i.recipe_id = ${recipeId} AND i.source_type = 'recipe' AND p.household_id = ${householdId}`);
-    return rows.length > 0;
-  }
 
   async mealPlanItemBelongsToUser(userId: number, mealPlanItemId: number, recipeId: number): Promise<boolean> {
     const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
@@ -456,7 +450,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       WHERE i.item_id = ${mealPlanItemId}
         AND i.recipe_id = ${recipeId}
         AND i.source_type = 'recipe'
-        AND p.user_id = ${userId}
+        AND p.user_id = ${userId} AND p.household_id IS NULL
     `);
     return rows.length > 0;
   }
@@ -467,7 +461,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       FROM cooking_sessions s
       JOIN recipes r ON r.recipe_id = s.recipe_id
       LEFT JOIN meal_plan_items i ON i.item_id = s.meal_plan_item_id
-      WHERE s.user_id = ${userId} AND s.session_id = ${sessionId}
+      WHERE s.user_id = ${userId} AND s.household_id IS NULL AND s.session_id = ${sessionId}
     `);
     return rows[0] ?? null;
   }

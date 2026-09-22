@@ -5,14 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { KitchenScope } from "@/features/households/householdScope";
 import PantryPage from "./PantryPage";
-
-const mockHousehold = vi.hoisted(() => ({
-	scope: { kind: "personal" } as KitchenScope,
-	canEdit: true,
-	scopeLabel: "My pantry",
-}));
 
 const mockPantry = vi.hoisted(() => ({
 	data: { items: [
@@ -28,10 +21,6 @@ const mockPantry = vi.hoisted(() => ({
 	useUpdatePantryItemMutation: vi.fn(),
 	useDeletePantryItemMutation: vi.fn(),
 	refetch: vi.fn(),
-}));
-
-vi.mock("@/features/households/HouseholdScopeProvider", () => ({
-	useHouseholdScope: () => mockHousehold,
 }));
 
 vi.mock("./api/pantryQueries", () => ({
@@ -51,9 +40,6 @@ const renderPage = () => render(
 
 describe("PantryPage", () => {
 	beforeEach(() => {
-		mockHousehold.scope = { kind: "personal" };
-		mockHousehold.canEdit = true;
-		mockHousehold.scopeLabel = "My pantry";
 		mockPantry.usePantryQuery.mockReturnValue({ data: mockPantry.data, isPending: false, isError: false, refetch: mockPantry.refetch });
 		mockPantry.useCreatePantryItemMutation.mockReturnValue({ mutate: mockPantry.add, isPending: false, isError: false });
 		mockPantry.useUpdatePantryItemMutation.mockReturnValue({ mutate: mockPantry.update, isPending: false });
@@ -76,35 +62,7 @@ describe("PantryPage", () => {
 		expect(mockPantry.update).toHaveBeenCalledWith({ pantryId: 4, input: { have: false } });
 	});
 
-	it("passes the selected household scope to pantry reads and mutations", () => {
-		mockHousehold.scope = { kind: "household", householdId: 12 };
-		mockHousehold.canEdit = false;
-		mockHousehold.scopeLabel = "Family pantry";
-		renderPage();
 
-		expect(mockPantry.usePantryQuery).toHaveBeenCalledWith(mockHousehold.scope);
-		expect(mockPantry.useCreatePantryItemMutation).toHaveBeenCalledWith(mockHousehold.scope);
-		expect(mockPantry.useUpdatePantryItemMutation).toHaveBeenCalledWith(mockHousehold.scope);
-		expect(mockPantry.useDeletePantryItemMutation).toHaveBeenCalledWith(mockHousehold.scope);
-		expect(screen.getByText("Family pantry")).toBeInTheDocument();
-	});
-
-	it("renders a household viewer pantry without mutation controls", () => {
-		mockHousehold.scope = { kind: "household", householdId: 12 };
-		mockHousehold.canEdit = false;
-		mockHousehold.scopeLabel = "Family pantry";
-		renderPage();
-
-		expect(screen.getByText("Eggs")).toBeInTheDocument();
-		expect(screen.queryByRole("heading", { name: "Add an ingredient" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Add pantry item" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("checkbox", { name: "Eggs available" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Edit Eggs" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("button", { name: "Delete Eggs" })).not.toBeInTheDocument();
-		expect(mockPantry.add).not.toHaveBeenCalled();
-		expect(mockPantry.update).not.toHaveBeenCalled();
-		expect(mockPantry.remove).not.toHaveBeenCalled();
-	});
 
 	it("keeps ingredient rows focused on quantity", () => {
 		renderPage();

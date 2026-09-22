@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext } from "react";
 import { AuthContext } from "@/app/AuthProvider";
-import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/shared/api/personalKitchenScope";
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,

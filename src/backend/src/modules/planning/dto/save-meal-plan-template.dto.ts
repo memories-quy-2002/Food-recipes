@@ -2,7 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, MaxLength, Min, MinLength } from 'class-validator';
 
 export class SaveMealPlanTemplateDto {
-  @ApiPropertyOptional({ example: 'Family week', maxLength: 80 })
+  @ApiPropertyOptional({ example: 'My week', maxLength: 80 })
   @IsOptional()
   @IsString()
   @MinLength(1)

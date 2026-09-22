@@ -24,7 +24,6 @@ export type CookingSession = {
 	updated_at: string;
 	source_type?: CookingSourceType;
 	leftover_batch_id?: number | null;
-	household_id?: number | null;
 };
 
 export type CookingSessionResponse = { session: CookingSession | null };
@@ -73,7 +72,6 @@ export type StartCookingSessionInput = {
 	servings?: number;
 	sourceType?: CookingSourceType;
 	leftoverBatchId?: number;
-	householdId?: number;
 };
 
 export const getActiveCookingSession = async (

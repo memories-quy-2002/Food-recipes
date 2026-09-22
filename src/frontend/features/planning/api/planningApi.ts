@@ -1,6 +1,6 @@
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN, type KitchenScope } from "@/shared/api/personalKitchenScope";
 
 export const MEAL_SLOTS = ["breakfast", "lunch", "dinner", "snack"] as const;
 export type MealSlot = (typeof MEAL_SLOTS)[number];
@@ -105,27 +105,13 @@ type MealPlanApiRoutes = {
 	mealPlanLeftoverItems: (planId: number) => string;
 };
 
-const createMealPlanRoutes = (scope: KitchenScope): MealPlanApiRoutes => {
-	if (scope.kind === "personal") {
-		return {
-			mealPlans: apiRoutes.mealPlans,
-			mealPlan: apiRoutes.mealPlan,
-			mealPlanItems: apiRoutes.mealPlanItems,
-			mealPlanItem: apiRoutes.mealPlanItem,
-			mealPlanLeftoverItems: (planId) => `${apiRoutes.mealPlanItems(planId)}/leftover`,
-		};
-	}
-
-	const mealPlans = `/households/${scope.householdId}/meal-plans`;
-	return {
-		mealPlans,
-		mealPlan: (planId) => `${mealPlans}/${planId}`,
-		mealPlanItems: (planId) => `${mealPlans}/${planId}/items`,
-		mealPlanItem: (planId, itemId) => `${mealPlans}/${planId}/items/${itemId}`,
-		mealPlanLeftoverItems: (planId) => `${mealPlans}/${planId}/items/leftover`,
-	};
-};
-
+const createMealPlanRoutes = (_scope: KitchenScope): MealPlanApiRoutes => ({
+	mealPlans: apiRoutes.mealPlans,
+	mealPlan: apiRoutes.mealPlan,
+	mealPlanItems: apiRoutes.mealPlanItems,
+	mealPlanItem: apiRoutes.mealPlanItem,
+	mealPlanLeftoverItems: (planId) => `${apiRoutes.mealPlanItems(planId)}/leftover`,
+});
 export const listSavedRecipeIds = async (): Promise<number[]> => {
 	const response = await axios.get<{ wishlist?: SavedRecipeReference[] }>(apiRoutes.userWishlist);
 	const wishlist = response.data.wishlist ?? [];

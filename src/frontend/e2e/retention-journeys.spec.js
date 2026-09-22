@@ -14,7 +14,6 @@ async function stubRetentionApi(page) {
 		preferences: { diet: "", avoidedAllergens: [], dislikedIngredients: [], preferredCuisines: [], cookingSkill: "", maxWeekdayCookMinutes: 30, defaultServings: 2, maxCaloriesPerServing: 650, minProteinGrams: 0, strictDislikes: false },
 		shoppingItem: { item_id: 1, label: "pasta", quantity: "1 pack", source_recipe_id: 42, source_recipe_name: "Weeknight Pasta", checked: false },
 		cookingSession: null,
-		inviteSent: false,
 	};
 	await page.route("**/api/v1/**", async (route) => {
 		const request = route.request();
@@ -24,7 +23,7 @@ async function stubRetentionApi(page) {
 
 		if (path === "/auth/refresh" || path === "/auth/token") return route.fulfill(json({ token: "retention-access-token", user }));
 		if (path === "/users/me/notifications") return route.fulfill(json({ notifications: [] }));
-		if (path === "/users/me/notification-preferences") return route.fulfill(json({ preferences: { pantryExpiry: true, mealReminder: true, resumeCooking: true, weeklyPlan: true, householdActivity: true } }));
+		if (path === "/users/me/notification-preferences") return route.fulfill(json({ preferences: { pantryExpiry: true, mealReminder: true, resumeCooking: true, weeklyPlan: true } }));
 		if (path === "/users/me/food-preferences") {
 			if (method === "PUT") state.preferences = request.postDataJSON();
 			return route.fulfill(json(state.preferences));
@@ -66,9 +65,6 @@ async function stubRetentionApi(page) {
 		if (path === "/users/me/shopping-list" && method === "GET") return route.fulfill(json({ items: [state.shoppingItem] }));
 		if (path === "/users/me/shopping-list/items/1" && method === "PATCH") { state.shoppingItem.checked = request.postDataJSON().checked; return route.fulfill(json({ item: state.shoppingItem })); }
 		if (path === "/users/me/shopping-list/items" && method === "GET") return route.fulfill(json({ items: [state.shoppingItem] }));
-		if (path === "/households" && method === "GET") return route.fulfill(json({ households: [{ household_id: 12, name: "Smith Household", role: "OWNER" }] }));
-		if (path === "/households/12/invites" && method === "POST") { state.inviteSent = true; return route.fulfill(json({ invite: { invite_id: 8, household_id: 12, email: "friend@example.com", expires_at: "2026-09-01T00:00:00.000Z" }, token: "one-time-token" })); }
-		if (path === "/households/12/shopping-list" && method === "GET") return route.fulfill(json({ items: [{ ...state.shoppingItem, household_id: 12 }] }));
 		if (path === "/users/me/recipe-imports/preview" && method === "POST") return route.fulfill(json({ preview: { sourceUrl: request.postDataJSON().url, name: "Imported Pasta", ingredients: ["pasta"], instructions: ["Boil pasta."] } }));
 		if (path === "/users/me/recipe-imports/drafts" && method === "POST") return route.fulfill(json({ recipe: { ...recipe, status: "draft", recipe_name: request.postDataJSON().name } }));
 		return route.fulfill(json({}));
@@ -118,17 +114,6 @@ test("generated plan can be reviewed and saved before cooking", async ({ page })
 	await nextStepButton.click();
 	await page.getByRole("button", { name: "Finish cooking" }).click();
 	await expect(page.getByRole("heading", { name: "Recipe complete" })).toBeVisible();
-});
-
-test("household invite unlocks the shared shopping scope", async ({ page }) => {
-	await authenticatedPage(page);
-	await page.goto("/households");
-	await page.getByLabel("Invite email").fill("friend@example.com");
-	await page.getByRole("button", { name: "Invite to Smith Household" }).click();
-	await expect(page.getByRole("status")).toContainText("Invite created");
-	await page.goto("/shopping-list");
-	await page.locator('select[aria-label="Kitchen scope"]:visible').selectOption("household:12");
-	await expect(page.locator("main .shopping-list-page__eyebrow")).toHaveText("Smith Household");
 });
 
 test("recipe URL preview is editable and saved as a draft", async ({ page }) => {

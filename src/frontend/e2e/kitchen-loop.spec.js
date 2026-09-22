@@ -111,7 +111,6 @@ async function stubFullKitchenLoop(page) {
 	await page.route("**/users/me/wishlist", (route) => route.fulfill(fullFlowJson({ wishlist: [] })));
 	await page.route("**/users/me/ratings", (route) => route.fulfill(fullFlowJson({ ratings: [] })));
 	await page.route("**/users/me/collections", (route) => route.fulfill(fullFlowJson({ collections: [] })));
-	await page.route("**/households", (route) => route.fulfill(fullFlowJson({ households: [] })));
 
 	await page.route("**/users/me/meal-plans**", async (route) => {
 		const request = route.request();

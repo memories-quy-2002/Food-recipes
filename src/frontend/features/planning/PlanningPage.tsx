@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Bookmark, CalendarDays, List, ShoppingBasket, Sparkles, Utensils } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import type { AddMealPlanItemInput, MealPlanItem, MealSlot } from "./api/planningApi";
@@ -14,7 +15,6 @@ import WeekNavigator from "./components/WeekNavigator";
 import GenerateMealPlanDialog from "./GenerateMealPlanDialog";
 import UseLeftoverDialog from "./components/UseLeftoverDialog";
 import SavedPlanningPanel from "./components/SavedPlanningPanel";
-import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 type DialogState = { date: string; slot: MealSlot; item?: MealPlanItem };
 type PlanningView = "calendar" | "agenda";
@@ -33,7 +33,9 @@ const readStoredWeek = (): WeekRange => {
 };
 
 const PlanningPage = () => {
-	const { scope, canEdit, scopeLabel } = useHouseholdScope();
+	const scope = PERSONAL_KITCHEN;
+	const canEdit = true;
+	const scopeLabel = "Personal kitchen";
 	const [visibleWeek, setVisibleWeek] = useState<WeekRange>(readStoredWeek);
 	const [dialogState, setDialogState] = useState<DialogState | null>(null);
 	const [planningView, setPlanningView] = useState<PlanningView>("calendar");
@@ -158,7 +160,7 @@ const PlanningPage = () => {
 			</div>
 			<GenerateMealPlanDialog open={isGenerateDialogOpen && canEdit && scope.kind === "personal"} from={visibleWeek.from} to={visibleWeek.to} onClose={() => setIsGenerateDialogOpen(false)} />
 			{canEdit && <AddMealDialog open={Boolean(dialogState)} initialDate={dialogState?.date ?? visibleWeek.from} initialSlot={dialogState?.slot ?? "dinner"} item={dialogState?.item} onClose={() => setDialogState(null)} onSubmit={handleMealSubmit} isSubmitting={isMealMutationPending} error={mutationError} />}
-			{canEdit && isLeftoverDialogOpen && <UseLeftoverDialog open initialDate={visibleWeek.from} scope={scope} activePlan={activePlan} onClose={() => setIsLeftoverDialogOpen(false)} />}
+			{canEdit && isLeftoverDialogOpen && <UseLeftoverDialog open initialDate={visibleWeek.from} activePlan={activePlan} onClose={() => setIsLeftoverDialogOpen(false)} />}
 		</main>
 	);
 };

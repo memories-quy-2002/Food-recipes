@@ -10,7 +10,7 @@ vi.mock("./api/notificationsQueries", () => mocks);
 
 describe("NotificationPreferencesPage", () => {
 	beforeEach(() => {
-		mocks.useNotificationPreferencesQuery.mockReturnValue({ data: { preferences: { pantryExpiry: true, mealReminder: true, resumeCooking: false, weeklyPlan: true, householdActivity: true } }, isPending: false });
+		mocks.useNotificationPreferencesQuery.mockReturnValue({ data: { preferences: { pantryExpiry: true, mealReminder: true, resumeCooking: false, weeklyPlan: true } }, isPending: false });
 		mocks.useUpdateNotificationPreferencesMutation.mockReturnValue({ mutate: vi.fn(), isPending: false });
 	});
 	afterEach(() => { cleanup(); vi.clearAllMocks(); });

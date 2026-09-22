@@ -1,6 +1,6 @@
 import axios from "@/shared/api/axios";
 import { createPantryRoutes } from "@/shared/api/routes";
-import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN, type KitchenScope } from "@/shared/api/personalKitchenScope";
 
 export const PANTRY_UNITS = [
 	"GRAM",

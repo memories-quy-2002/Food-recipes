@@ -49,7 +49,6 @@ describe("useCookingSession leftover source", () => {
 			servings: 2,
 			sourceType: "leftover",
 			leftoverBatchId: 8,
-			householdId: 22,
 		}), { wrapper });
 
 		await waitFor(() => expect(startCookingSession).toHaveBeenCalled());
@@ -59,7 +58,6 @@ describe("useCookingSession leftover source", () => {
 			servings: 2,
 			sourceType: "leftover",
 			leftoverBatchId: 8,
-			householdId: 22,
 		});
 		expect(window.localStorage.getItem("food-recipes:cooking-session:7:42:leftover:8")).toBeTruthy();
 	});

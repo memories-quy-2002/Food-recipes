@@ -14,9 +14,6 @@ vi.mock("./HeaderBrand", () => ({ default: () => <span>Food recipes</span> }));
 vi.mock("./HeaderMenu", () => ({ default: () => <nav>Primary navigation</nav> }));
 vi.mock("./HeaderAuthButton", () => ({ default: () => <button>Sign in</button> }));
 vi.mock("./HeaderToggle", () => ({ default: () => <button>Open navigation menu</button> }));
-vi.mock("@/features/households/HouseholdScopeSelector", () => ({
-	default: () => <select aria-label="Kitchen scope" />,
-}));
 vi.mock("@/features/notifications/NotificationCenter", () => ({
 	default: () => <button>Notifications</button>,
 }));

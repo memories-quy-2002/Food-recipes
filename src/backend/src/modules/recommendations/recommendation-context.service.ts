@@ -93,13 +93,8 @@ export class RecommendationContextService {
         UNION ALL
         SELECT 'planned' AS signal, i.recipe_id
         FROM meal_plan_items i JOIN meal_plans p ON p.plan_id = i.plan_id
-        WHERE p.user_id = ${userId}
-        UNION ALL
-        SELECT 'planned' AS signal, i.recipe_id
-        FROM meal_plan_items i
-        JOIN meal_plans p ON p.plan_id = i.plan_id
-        JOIN household_members hm ON hm.household_id = p.household_id AND hm.user_id = ${userId}
-        WHERE p.household_id IS NOT NULL
+        WHERE p.user_id = ${userId} AND p.household_id IS NULL
+
         UNION ALL
         SELECT 'not_interested' AS signal, n.recipe_id
         FROM recommendation_not_interested n WHERE n.user_id = ${userId}

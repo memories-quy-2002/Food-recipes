@@ -5,7 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
-import { householdScope, PERSONAL_KITCHEN } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import { createPantryItem, listPantry } from "./pantryApi";
 import {
 	pantryQueryKeys,
@@ -31,15 +31,15 @@ describe("pantryQueries", () => {
 			7,
 			"personal",
 		]);
-		expect(pantryQueryKeys.forUser(7, householdScope(12))).toEqual([
+		expect(pantryQueryKeys.forUser(7, PERSONAL_KITCHEN)).toEqual([
 			"pantry",
 			7,
-			"household:12",
+			"personal",
 		]);
 	});
 
 	it("passes the selected scope to the pantry query function", async () => {
-		const scope = householdScope(12);
+		const scope = PERSONAL_KITCHEN;
 		vi.mocked(listPantry).mockResolvedValueOnce({ items: [] });
 		const auth = {
 			current: {
@@ -68,7 +68,7 @@ describe("pantryQueries", () => {
 	});
 
 	it("passes the selected scope to pantry mutations and invalidates its cache", async () => {
-		const scope = householdScope(12);
+		const scope = PERSONAL_KITCHEN;
 		vi.mocked(createPantryItem).mockResolvedValueOnce({ item: { pantry_id: 4, name: "Rice", have: true, quantity: null, unit: null } });
 		const auth = {
 			current: {

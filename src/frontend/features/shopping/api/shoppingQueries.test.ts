@@ -5,7 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
-import { householdScope, PERSONAL_KITCHEN } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import {
 	addShoppingItem,
 	listShoppingItems,
@@ -59,15 +59,15 @@ describe("shoppingQueries", () => {
 			7,
 			"personal",
 		]);
-		expect(shoppingQueryKeys.forUser(7, householdScope(12))).toEqual([
+		expect(shoppingQueryKeys.forUser(7, PERSONAL_KITCHEN)).toEqual([
 			"shopping-list",
 			7,
-			"household:12",
+			"personal",
 		]);
 	});
 
 	it("passes the selected scope to the shopping query function", async () => {
-		const scope = householdScope(12);
+		const scope = PERSONAL_KITCHEN;
 		vi.mocked(listShoppingItems).mockResolvedValueOnce({ items: [] });
 		const queryClient = new QueryClient({
 			defaultOptions: { queries: { retry: false } },
@@ -81,7 +81,7 @@ describe("shoppingQueries", () => {
 	});
 
 	it("passes the selected scope to mutations and invalidates only that shopping cache", async () => {
-		const scope = householdScope(12);
+		const scope = PERSONAL_KITCHEN;
 		vi.mocked(addShoppingItem).mockResolvedValueOnce({
 			item: {
 				item_id: 4,

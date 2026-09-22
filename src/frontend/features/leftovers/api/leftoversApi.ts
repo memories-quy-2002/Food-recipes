@@ -1,11 +1,10 @@
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import type { KitchenScope } from "@/features/households/householdScope";
+import type { KitchenScope } from "@/shared/api/personalKitchenScope";
 
 export type LeftoverBatch = {
 	leftover_id: number;
 	user_id: number | null;
-	household_id: number | null;
 	recipe_id: number;
 	recipe_name: string;
 	history_id: number;
@@ -23,11 +22,7 @@ export type CreateLeftoverInput = {
 	expiresAt: string;
 };
 
-const getLeftoversRoute = (scope: KitchenScope): string =>
-	scope.kind === "personal"
-		? apiRoutes.userLeftovers
-		: apiRoutes.householdLeftovers(scope.householdId);
-
+const getLeftoversRoute = (_scope: KitchenScope): string => apiRoutes.userLeftovers;
 export const listLeftovers = async (
 	scope: KitchenScope,
 	signal?: AbortSignal,

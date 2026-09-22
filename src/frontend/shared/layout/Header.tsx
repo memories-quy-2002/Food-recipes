@@ -10,7 +10,6 @@ import {
 	getRecipeAction,
 } from "./navigation";
 import type { RootState } from "@/app/store";
-import HouseholdScopeSelector from "@/features/households/HouseholdScopeSelector";
 import NotificationCenter from "@/features/notifications/NotificationCenter";
 
 const Header = (): ReactElement => {
@@ -29,7 +28,6 @@ const Header = (): ReactElement => {
 				<HeaderBrand />
 				<HeaderMenu items={items} moreGroups={moreGroups} action={action} />
 				<div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5">
-					<div className="min-w-0 shrink-0"><HouseholdScopeSelector /></div>
 					{isAuthenticated && <div className="hidden sm:block"><NotificationCenter /></div>}
 					<HeaderAuthButton auth={auth} />
 					<HeaderToggle

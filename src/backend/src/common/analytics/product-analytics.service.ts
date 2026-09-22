@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PRODUCT_ANALYTICS_EVENTS, type ProductAnalyticsEvent, type ProductAnalyticsPayload, type ProductAnalyticsPort, type ProductAnalyticsValue } from './product-analytics.port';
 
-const SAFE_KEYS = new Set(['surface', 'candidate_count', 'result_count', 'position', 'recipe_id', 'plan_id', 'session_id', 'household_id', 'status', 'source', 'scope', 'duration_ms']);
+const SAFE_KEYS = new Set(['surface', 'candidate_count', 'result_count', 'position', 'recipe_id', 'plan_id', 'session_id', 'status', 'source', 'scope', 'duration_ms']);
 const FORBIDDEN = /(email|token|jwt|password|journal|note|invite|ingredient|phone|address)/i;
 
 @Injectable()

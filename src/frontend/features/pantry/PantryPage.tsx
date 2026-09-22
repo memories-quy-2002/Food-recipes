@@ -1,8 +1,8 @@
 import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, Check, CheckCircle2, PackageCheck, Pencil, Plus, Search, ShoppingBasket, Trash2, X } from "lucide-react";
-import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
@@ -32,7 +32,9 @@ const unitLabel = (value: string | null) => value ? unitLabels[value] ?? value.t
 const selectClass = "min-h-12 w-full rounded-xl border border-input bg-background px-4 py-2.5 text-sm text-foreground outline-none transition focus-visible:border-ring focus-visible:ring-4 focus-visible:ring-ring/20";
 
 const PantryPage = () => {
-	const { scope, canEdit, scopeLabel } = useHouseholdScope();
+	const scope = PERSONAL_KITCHEN;
+	const canEdit = true;
+	const scopeLabel = "Your pantry";
 	const pantryQuery = usePantryQuery(scope);
 	const createMutation = useCreatePantryItemMutation(scope);
 	const updateMutation = useUpdatePantryItemMutation(scope);

@@ -17,7 +17,6 @@ export type NotificationPreferences = {
 	mealReminder: boolean;
 	resumeCooking: boolean;
 	weeklyPlan: boolean;
-	householdActivity: boolean;
 };
 
 export const listNotifications = async (signal?: AbortSignal): Promise<{ notifications: Notification[] }> => {

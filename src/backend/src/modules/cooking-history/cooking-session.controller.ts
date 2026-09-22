@@ -11,7 +11,6 @@ import {
 } from '../../common/swagger/response.schemas';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
-import { HouseholdAccessService } from '../households/household-access.service';
 import { ActiveCookingSessionQueryDto } from './dto/active-cooking-session-query.dto';
 import { CompleteCookingSessionDto } from './dto/complete-cooking-session.dto';
 import { StartCookingSessionDto } from './dto/start-cooking-session.dto';
@@ -25,7 +24,7 @@ import { CookingSessionService, CookingSessionServicePort } from './cooking-sess
 @UseGuards(JwtAuthGuard)
 @Controller({ path: 'users/me/cooking-session', version: '1' })
 export class CookingSessionController {
-  constructor(@Inject(CookingSessionService) private readonly service: CookingSessionServicePort, private readonly householdAccess: HouseholdAccessService) {}
+  constructor(@Inject(CookingSessionService) private readonly service: CookingSessionServicePort) {}
 
   @Get()
   @ApiOperation({ summary: 'Get the authenticated user active cooking session' })
@@ -39,7 +38,6 @@ export class CookingSessionController {
   @ApiCreatedResponse({ type: CookingSessionResponseDto })
   @ApiNotFoundResponse({ type: ApiErrorResponseDto })
   async start(@CurrentUser() user: AuthUser, @Body() dto: StartCookingSessionDto) {
-    if (dto.householdId !== undefined) await this.householdAccess.requireRole(user.id, dto.householdId, ['OWNER', 'MEMBER']);
     return this.service.start(user.id, dto);
   }
 

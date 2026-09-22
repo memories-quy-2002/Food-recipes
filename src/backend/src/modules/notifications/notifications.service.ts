@@ -8,7 +8,7 @@ export type NotificationCreateInput = {
   body?: string;
   actionPath?: string;
   dedupeKey: string;
-  preferenceKey?: keyof NotificationPreferenceRecord | 'pantryExpiry' | 'mealReminder' | 'resumeCooking' | 'weeklyPlan' | 'householdActivity';
+  preferenceKey?: keyof NotificationPreferenceRecord | 'pantryExpiry' | 'mealReminder' | 'resumeCooking' | 'weeklyPlan';
 };
 
 export type NotificationPreferencesInput = {
@@ -16,16 +16,13 @@ export type NotificationPreferencesInput = {
   mealReminder: boolean;
   resumeCooking: boolean;
   weeklyPlan: boolean;
-  householdActivity: boolean;
 };
 
-const ALWAYS_CREATE_KINDS = new Set(['household-invite', 'household-activity']);
 const preferenceColumns: Record<NonNullable<NotificationCreateInput['preferenceKey']>, keyof NotificationPreferenceRecord> = {
   pantry_expiry: 'pantry_expiry', pantryExpiry: 'pantry_expiry',
   meal_reminder: 'meal_reminder', mealReminder: 'meal_reminder',
   resume_cooking: 'resume_cooking', resumeCooking: 'resume_cooking',
   weekly_plan: 'weekly_plan', weeklyPlan: 'weekly_plan',
-  household_activity: 'household_activity', householdActivity: 'household_activity',
 };
 
 @Injectable()
@@ -57,7 +54,6 @@ export class NotificationsService {
       meal_reminder: preferences.mealReminder ?? current.meal_reminder,
       resume_cooking: preferences.resumeCooking ?? current.resume_cooking,
       weekly_plan: preferences.weeklyPlan ?? current.weekly_plan,
-      household_activity: preferences.householdActivity ?? current.household_activity,
     };
     if (Object.values(next).some((value) => typeof value !== 'boolean')) throw new BadRequestException({ code: 'NOTIFICATION_PREFERENCES_INVALID', message: 'Notification preferences must be boolean values' });
     return { preferences: this.toClientPreferences(await this.repository.replacePreferences(userId, next)) };
@@ -65,7 +61,7 @@ export class NotificationsService {
 
   async create(input: NotificationCreateInput) {
     if (!input.userId || !input.dedupeKey.trim() || !input.title.trim()) throw new BadRequestException({ code: 'NOTIFICATION_INVALID', message: 'Notification title and dedupe key are required' });
-    if (input.preferenceKey && !ALWAYS_CREATE_KINDS.has(input.kind)) {
+    if (input.preferenceKey) {
       const preferences = await this.repository.findPreferences(input.userId);
       if (!preferences[preferenceColumns[input.preferenceKey]]) return { notification: null, created: false };
     }
@@ -87,7 +83,6 @@ export class NotificationsService {
       mealReminder: preferences.meal_reminder,
       resumeCooking: preferences.resume_cooking,
       weeklyPlan: preferences.weekly_plan,
-      householdActivity: preferences.household_activity,
     };
   }
 }

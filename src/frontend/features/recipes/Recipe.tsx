@@ -19,6 +19,7 @@ import { clearCookingToolsState, getCookingToolsStorageKey } from "@/features/re
 import { useAddRecipeIngredientsMutation, usePrepareRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
 import type { PrepareRecipeResponse } from "@/features/shopping/api/shoppingApi";
 import PreparationSummary from "@/features/shopping/PreparationSummary";
+import RecipeCookingMemory from "@/features/recipes/RecipeCookingMemory";
 import type {
 	CookingCompletionAction,
 	CookingSessionCompletionResponse,
@@ -30,10 +31,10 @@ import { addLeftoverMealPlanItem, createMealPlan, getMealPlan, listMealPlans } f
 import { getWeekRange } from "@/features/planning/api/planningDates";
 import AddToPlanDialog from "@/features/planning/components/AddToPlanDialog";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import PageState from "@/shared/ui/PageState";
 import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
-import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 import { getArrayPayload } from "@/shared/api/payload";
 import ErrorPage from "@/features/content/ErrorPage";
 import PrivateRecipeNotes from "@/features/recipes/notes/PrivateRecipeNotes";
@@ -151,7 +152,7 @@ const isUserRating = (value: unknown): value is UserRating =>
 
 const Recipe = (): React.ReactElement => {
 	const { auth } = useContext(AuthContext);
-	const { scope } = useHouseholdScope();
+	const scope = PERSONAL_KITCHEN;
 	const { isAuthenticated, userId } = auth.current;
 	const [recipe, setRecipe] = useState<RecipeReadRecipe | null>(null);
 	const [isLoadingRecipe, setIsLoadingRecipe] = useState(true);
@@ -195,10 +196,6 @@ const Recipe = (): React.ReactElement => {
 	const planningItemId = searchParams.get("planItemId");
 	const sourceType = searchParams.get("sourceType") === "leftover" ? "leftover" : "recipe";
 	const leftoverBatchId = Number(searchParams.get("leftoverBatchId"));
-	const requestedHouseholdId = Number(searchParams.get("householdId"));
-	const cookingHouseholdId = Number.isInteger(requestedHouseholdId) && requestedHouseholdId > 0
-		? requestedHouseholdId
-		: scope.kind === "household" ? scope.householdId : undefined;
 	const validLeftoverBatchId = sourceType === "leftover" && Number.isInteger(leftoverBatchId) && leftoverBatchId > 0
 		? leftoverBatchId
 		: undefined;
@@ -233,7 +230,6 @@ const Recipe = (): React.ReactElement => {
 		servings: planningContext?.servings ?? recipe?.nutrition?.servings ?? 1,
 		sourceType,
 		leftoverBatchId: validLeftoverBatchId,
-		householdId: cookingHouseholdId,
 	});
 	const queryClient = useQueryClient();
 	const currentPath = `${location.pathname}${location.search}${location.hash}`;
@@ -749,6 +745,7 @@ const Recipe = (): React.ReactElement => {
 						/>
 						{preparationResult && <div className="mx-auto w-full max-w-[100rem] px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]"><PreparationSummary result={preparationResult} /></div>}
 					</div>
+					{isAuthenticated && <RecipeCookingMemory userId={userId} recipeId={recipe.recipe_id} />}
 					<div className="recipe-print__utilities mx-auto flex w-full max-w-[100rem] justify-end px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]" data-print-hidden>
 				<div className="flex items-center gap-1 rounded-xl border border-border/70 bg-card/80 p-1 shadow-sm" role="group" aria-label="Recipe utilities">
 							<ShareRecipeButton

@@ -48,18 +48,6 @@ describe('PlanningRepository recommendation removal writes', () => {
     expect(tx.$executeRaw.mock.calls[0][0].strings.join(' ')).toMatch(/recommendation_meal_plan_removals/);
   });
 
-  it('keeps household deletion scoped to the requested household', async () => {
-    const tx = {
-      $queryRaw: jest.fn().mockResolvedValue([]),
-      $executeRaw: jest.fn(),
-    };
-    const prisma = { $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<boolean>) => callback(tx)) };
-    const repository = new PlanningRepository(prisma as never);
-
-    await expect(repository.deletePlanItemAndRecordRemovalForHousehold(7, 22, 4, 9)).resolves.toBe(false);
-    expect(tx.$executeRaw).not.toHaveBeenCalled();
-    expect(tx.$queryRaw.mock.calls[1][0].strings.join(' ')).toMatch(/p.household_id/);
-  });
 
   it('locks a personal plan before reserving a leftover', async () => {
     const tx = {
@@ -74,18 +62,6 @@ describe('PlanningRepository recommendation removal writes', () => {
     expect(tx.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/FROM meal_plans.*p\.user_id.*FOR UPDATE/is);
   });
 
-  it('locks a household plan before reserving a leftover', async () => {
-    const tx = {
-      $queryRaw: jest.fn().mockResolvedValueOnce([{ plan_id: 4 }]).mockResolvedValueOnce([{ item_id: 19 }]).mockResolvedValueOnce([{ item_id: 19, plan_id: 4, recipe_id: 15, recipe_name: 'Soup', source_type: 'leftover', leftover_batch_id: 8, planned_date: '2026-08-31', slot: 'dinner', servings: 2, cooking_status: 'planned', created_at: new Date() }]),
-      $executeRaw: jest.fn(),
-    };
-    const prisma = { $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)), $queryRaw: jest.fn() };
-    const repository = new PlanningRepository(prisma as never);
-
-    await repository.addLeftoverPlanItemForHousehold(22, 4, { leftoverBatchId: 8, date: '2026-08-31', slot: 'dinner', servings: 2 });
-
-    expect(tx.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/FROM meal_plans.*p\.household_id.*FOR UPDATE/is);
-  });
 });
 
 describe('PlanningRepository shopping-list duplicate prevention', () => {
@@ -110,15 +86,6 @@ describe('PlanningRepository shopping-list duplicate prevention', () => {
     expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
   });
 
-  it('returns the existing household item when an unchecked duplicate races', async () => {
-    const prisma = {
-      $queryRaw: jest.fn().mockResolvedValueOnce([{ item_id: 12 }]).mockResolvedValueOnce([{ ...shoppingItem, item_id: 12, household_id: 22 }]),
-    };
-    const repository = new PlanningRepository(prisma as never);
-
-    await expect(repository.addShoppingItemForHousehold(22, 'rice', '2 kg', 15)).resolves.toMatchObject({ item_id: 12, household_id: 22 });
-    expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
-  });
 
   it('makes pantry-aware recipe imports safe when the duplicate is inserted concurrently', async () => {
     const prisma = {

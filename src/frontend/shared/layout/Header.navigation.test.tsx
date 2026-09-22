@@ -158,7 +158,6 @@ describe("primary navigation", () => {
 				label: "Account",
 				items: [
 					{ title: "Preferences", href: "/profile/preferences" },
-					{ title: "Households", href: "/households" },
 					{ title: "Notifications", href: "/profile/notifications" },
 				],
 			},

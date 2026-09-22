@@ -1,6 +1,9 @@
 import { ArrowRight, CalendarCheck2, ChefHat, Clock3, ShoppingBasket } from "lucide-react";
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import { AuthContext } from "@/app/AuthProvider";
+import PersonalCookingRecap from "./PersonalCookingRecap";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { useActiveCookingSessionQuery, useCookingHistoryQuery } from "./api/historyQueries";
@@ -27,6 +30,7 @@ const replayHref = (item: CookingResumeContext) => {
 };
 
 const HistoryPage = () => {
+	const { auth } = useContext(AuthContext);
 	const historyQuery = useCookingHistoryQuery();
 	const activeSessionQuery = useActiveCookingSessionQuery();
 	const items = historyQuery.data?.items ?? [];
@@ -58,6 +62,8 @@ const HistoryPage = () => {
 						<Button asChild><Link to={replayHref(activeSession)}>Continue cooking</Link></Button>
 					</div>
 				</Card>}
+
+				<PersonalCookingRecap userId={auth.current.userId} />
 
 				{historyQuery.isPending ? (
 					<section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading cooking history">

@@ -23,5 +23,4 @@ export class StartCookingSessionDto {
   @Max(24)
   servings?: number;
   @ApiPropertyOptional({ example: 8 }) @IsOptional() @IsInt() @Min(1) leftoverBatchId?: number;
-  @ApiPropertyOptional({ example: 12 }) @IsOptional() @IsInt() @Min(1) householdId?: number;
 }

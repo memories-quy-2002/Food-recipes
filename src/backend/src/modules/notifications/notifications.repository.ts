@@ -19,7 +19,6 @@ export type NotificationPreferenceRecord = {
   meal_reminder: boolean;
   resume_cooking: boolean;
   weekly_plan: boolean;
-  household_activity: boolean;
 };
 
 export type NotificationGenerationContext = {
@@ -27,7 +26,6 @@ export type NotificationGenerationContext = {
   nextMeals: Array<{ plan_item_id: number; recipe_name: string; planned_date: string }>;
   pausedSessions: Array<{ session_id: number; recipe_name: string; last_active_at: string }>;
   endingPlans: Array<{ plan_id: number; end_date: string }>;
-  householdInvites: Array<{ invite_id: number; household_name: string }>;
 };
 
 export type CreateNotificationRecord = Omit<NotificationRecord, 'notification_id' | 'read_at' | 'created_at'>;
@@ -52,7 +50,7 @@ export class NotificationsRepository implements NotificationsRepositoryPort {
     return this.prisma.$queryRaw<NotificationRecord[]>(Prisma.sql`
       SELECT notification_id, user_id, kind, title, body, action_path, dedupe_key, read_at, created_at
       FROM notifications
-      WHERE user_id = ${userId}
+      WHERE user_id = ${userId} AND kind NOT IN ('household-invite', 'household-activity')
       ORDER BY created_at DESC, notification_id DESC
       LIMIT 100
     `);
@@ -79,22 +77,20 @@ export class NotificationsRepository implements NotificationsRepositoryPort {
       meal_reminder: preference?.mealReminder ?? true,
       resume_cooking: preference?.resumeCooking ?? true,
       weekly_plan: preference?.weeklyPlan ?? true,
-      household_activity: preference?.householdActivity ?? true,
     };
   }
 
   async replacePreferences(userId: number, preferences: NotificationPreferenceRecord): Promise<NotificationPreferenceRecord> {
     const saved = await this.prisma.notificationPreference.upsert({
       where: { userId },
-      create: { userId, pantryExpiry: preferences.pantry_expiry, mealReminder: preferences.meal_reminder, resumeCooking: preferences.resume_cooking, weeklyPlan: preferences.weekly_plan, householdActivity: preferences.household_activity },
-      update: { pantryExpiry: preferences.pantry_expiry, mealReminder: preferences.meal_reminder, resumeCooking: preferences.resume_cooking, weeklyPlan: preferences.weekly_plan, householdActivity: preferences.household_activity, updatedAt: new Date() },
+      create: { userId, pantryExpiry: preferences.pantry_expiry, mealReminder: preferences.meal_reminder, resumeCooking: preferences.resume_cooking, weeklyPlan: preferences.weekly_plan },
+      update: { pantryExpiry: preferences.pantry_expiry, mealReminder: preferences.meal_reminder, resumeCooking: preferences.resume_cooking, weeklyPlan: preferences.weekly_plan, updatedAt: new Date() },
     });
     return {
       pantry_expiry: saved.pantryExpiry,
       meal_reminder: saved.mealReminder,
       resume_cooking: saved.resumeCooking,
       weekly_plan: saved.weeklyPlan,
-      household_activity: saved.householdActivity,
     };
   }
 
@@ -109,12 +105,12 @@ export class NotificationsRepository implements NotificationsRepositoryPort {
   }
 
   async findGenerationContext(userId: number, today: string): Promise<NotificationGenerationContext> {
-    const [expiringPantry, nextMeals, pausedSessions, endingPlans, householdInvites] = await Promise.all([
+    const [expiringPantry, nextMeals, pausedSessions, endingPlans] = await Promise.all([
       this.prisma.$queryRaw<NotificationGenerationContext['expiringPantry']>(Prisma.sql`
         SELECT pantry_id, name, expires_at::text,
           CASE WHEN expires_at < ${today}::date THEN 'expired' ELSE 'use_soon' END AS expiry_status
         FROM pantry_items
-        WHERE (user_id = ${userId} OR household_id IN (SELECT household_id FROM household_members WHERE user_id = ${userId}))
+        WHERE user_id = ${userId} AND household_id IS NULL
           AND expires_at <= (${today}::date + INTERVAL '3 days')
       `),
       this.prisma.$queryRaw<NotificationGenerationContext['nextMeals']>(Prisma.sql`
@@ -123,23 +119,18 @@ export class NotificationsRepository implements NotificationsRepositoryPort {
         JOIN meal_plans mp ON mp.plan_id = mpi.plan_id
         JOIN recipes r ON r.recipe_id = mpi.recipe_id
         WHERE mpi.planned_date = ${today}::date
-          AND (mp.user_id = ${userId} OR mp.household_id IN (SELECT household_id FROM household_members WHERE user_id = ${userId}))
+          AND mp.user_id = ${userId} AND mp.household_id IS NULL
       `),
       this.prisma.$queryRaw<NotificationGenerationContext['pausedSessions']>(Prisma.sql`
         SELECT cs.session_id, r.recipe_name, cs.last_active_at::text
         FROM cooking_sessions cs JOIN recipes r ON r.recipe_id = cs.recipe_id
-        WHERE cs.user_id = ${userId} AND cs.status = 'paused' AND cs.last_active_at < CURRENT_TIMESTAMP - INTERVAL '1 day'
+        WHERE cs.user_id = ${userId} AND cs.household_id IS NULL AND cs.status = 'paused' AND cs.last_active_at < CURRENT_TIMESTAMP - INTERVAL '1 day'
       `),
       this.prisma.$queryRaw<NotificationGenerationContext['endingPlans']>(Prisma.sql`
         SELECT plan_id, end_date::text FROM meal_plans
-        WHERE user_id = ${userId} AND end_date BETWEEN ${today}::date AND (${today}::date + INTERVAL '2 days')
-      `),
-      this.prisma.$queryRaw<NotificationGenerationContext['householdInvites']>(Prisma.sql`
-        SELECT hi.invite_id, h.name AS household_name
-        FROM household_invites hi JOIN households h ON h.household_id = hi.household_id JOIN accounts a ON a.email = hi.email
-        WHERE a.user_id = ${userId} AND hi.accepted_at IS NULL AND hi.expires_at > CURRENT_TIMESTAMP
+        WHERE user_id = ${userId} AND household_id IS NULL AND end_date BETWEEN ${today}::date AND (${today}::date + INTERVAL '2 days')
       `),
     ]);
-    return { expiringPantry, nextMeals, pausedSessions, endingPlans, householdInvites };
+    return { expiringPantry, nextMeals, pausedSessions, endingPlans };
   }
 }

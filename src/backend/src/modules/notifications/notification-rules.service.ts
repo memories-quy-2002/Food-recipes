@@ -35,7 +35,6 @@ export class NotificationRulesService {
         ...context.nextMeals.map((item) => this.mealReminder(userId, item.plan_item_id, item.planned_date, item.recipe_name)),
         ...context.pausedSessions.map((item) => this.resumeCooking(userId, item.session_id, today, item.recipe_name)),
         ...context.endingPlans.map((item) => this.createForUser({ userId, kind: 'weekly-plan-ending', title: 'Your weekly plan is nearly done', body: `Your plan ends on ${item.end_date}.`, actionPath: '/planning', dedupeKey: `weekly-plan-ending:${item.plan_id}:${item.end_date}`, preferenceKey: 'weekly_plan' })),
-        ...context.householdInvites.map((item) => this.createForUser({ userId, kind: 'household-invite', title: `Invite to ${item.household_name}`, body: 'You have a household invite waiting.', actionPath: '/households', dedupeKey: `household-invite:${item.invite_id}`, preferenceKey: 'household_activity' })),
       ]);
       return { created: results.filter((result) => result.created).length };
     });
