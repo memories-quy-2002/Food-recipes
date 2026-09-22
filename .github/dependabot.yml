@@ -82,7 +82,6 @@ updates:
 
     labels:
       - "dependencies"
-      - "github-actions"
 
     groups:
       github-actions:
