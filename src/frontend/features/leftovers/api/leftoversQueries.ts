@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext } from "react";
 import { AuthContext } from "@/app/AuthProvider";
 import { useToast } from "@/app/ToastProvider";
-import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/shared/api/personalKitchenScope";
 import { createLeftover, listLeftovers, type CreateLeftoverInput, type LeftoverResponse } from "./leftoversApi";
 
 export const leftoversQueryKeys = {

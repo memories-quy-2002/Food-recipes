@@ -38,7 +38,7 @@ describe('CookingSessionRepository concurrency', () => {
     };
     const repository = new CookingSessionRepository(prisma as never);
 
-    await expect(repository.start(7, 15, 42, 2, 'leftover', 8, 22)).rejects.toMatchObject({
+    await expect(repository.start(7, 15, 42, 2, 'leftover', 8)).rejects.toMatchObject({
       response: { code: 'COOKING_SESSION_ALREADY_ACTIVE' },
     });
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
@@ -50,7 +50,7 @@ describe('CookingSessionRepository concurrency', () => {
     const completedAt = new Date('2026-08-30T10:30:00Z');
     const session = {
       session_id: 31, user_id: 7, recipe_id: 15, recipe_name: 'Soup', meal_plan_item_id: 42,
-      source_type: 'leftover', leftover_batch_id: 8, household_id: null, planned_date: '2026-08-30', slot: 'dinner',
+      source_type: 'leftover', leftover_batch_id: 8, planned_date: '2026-08-30', slot: 'dinner',
       servings: 2, current_step: 1, status: 'active', started_at: startedAt, last_active_at: startedAt,
       paused_at: null, completed_at: null, created_at: startedAt, updated_at: startedAt,
     };

@@ -22,8 +22,4 @@ export class UpdateNotificationPreferencesDto {
   @IsBoolean()
   weeklyPlan?: boolean;
 
-  @ApiPropertyOptional({ default: true })
-  @IsOptional()
-  @IsBoolean()
-  householdActivity?: boolean;
 }

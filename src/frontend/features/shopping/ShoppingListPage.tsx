@@ -2,6 +2,7 @@ import { FormEvent, useState } from "react";
 import { Link } from "react-router-dom";
 import { Pencil, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import { getWeekRange } from "@/features/planning/api/planningDates";
 import { useMealPlanForWeekQuery } from "@/features/planning/api/planningQueries";
 import { usePantryQuery } from "@/features/pantry/api/pantryQueries";
@@ -17,10 +18,11 @@ import {
 } from "./api/shoppingQueries";
 import { isShoppingItemInPantry } from "./shoppingAvailability";
 import "./ShoppingList.css";
-import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 const ShoppingListPage = () => {
-	const { scope, canEdit, scopeLabel } = useHouseholdScope();
+	const scope = PERSONAL_KITCHEN;
+	const canEdit = true;
+	const scopeLabel = "Your shopping list";
 	const shoppingQuery = useShoppingListQuery(scope);
 	const addMutation = useAddShoppingItemMutation(scope);
 	const updateMutation = useUpdateShoppingItemMutation(scope);

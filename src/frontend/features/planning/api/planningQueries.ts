@@ -28,7 +28,7 @@ import {
 } from "./planningApi";
 import { useToast } from "@/app/ToastProvider";
 import { AuthContext } from "@/app/AuthProvider";
-import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/shared/api/personalKitchenScope";
 import { leftoversQueryKeys } from "@/features/leftovers/api/leftoversQueries";
 
 export const planningQueryKeys = {

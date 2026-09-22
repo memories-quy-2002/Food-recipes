@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /account
 Disallow: /profile
-Disallow: /households
 Disallow: /history
 Disallow: /pantry
 Disallow: /planning

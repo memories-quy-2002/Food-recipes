@@ -1,0 +1,125 @@
+name: Production Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type APPLY_FOOD_RECIPES_PRODUCTION_MIGRATIONS to authorize this migration
+        required: true
+        type: string
+      backup_reference:
+        description: Backup or PITR recovery point verified before this migration
+        required: true
+        type: string
+      project_ref:
+        description: Production Supabase project ref
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  preflight:
+    name: Require master, backup, and passing CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate manual migration inputs
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          BACKUP_REFERENCE: ${{ inputs.backup_reference }}
+          PROJECT_REF: ${{ inputs.project_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/heads/master" ]]; then
+            echo "Production migrations must be dispatched from master." >&2
+            exit 1
+          fi
+          if [[ "$CONFIRMATION" != "APPLY_FOOD_RECIPES_PRODUCTION_MIGRATIONS" ]]; then
+            echo "The production migration confirmation did not match." >&2
+            exit 1
+          fi
+          if [[ -z "$(printf '%s' "$BACKUP_REFERENCE" | tr -d '[:space:]')" ]]; then
+            echo "A verified backup or PITR reference is required." >&2
+            exit 1
+          fi
+          if [[ -z "$(printf '%s' "$PROJECT_REF" | tr -d '[:space:]')" ]]; then
+            echo "The production project ref is required." >&2
+            exit 1
+          fi
+
+      - name: Require successful Quality Gates on this master commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          successful_runs="$(gh run list \
+            --workflow quality-gates.yml \
+            --branch master \
+            --commit "$GITHUB_SHA" \
+            --event workflow_dispatch \
+            --limit 100 \
+            --json event,status,conclusion,createdAt \
+            --jq '[.[] | select(.event == "workflow_dispatch")] | sort_by(.createdAt) | last | if . != null and .status == "completed" and .conclusion == "success" then 1 else 0 end')"
+          if [[ "$successful_runs" -lt 1 ]]; then
+            echo "No successful manually dispatched full Quality Gates run found for $GITHUB_SHA on master." >&2
+            exit 1
+          fi
+
+  migrate:
+    name: Apply production Prisma migrations
+    needs: preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production-demo-reset
+    concurrency:
+      group: food-recipes-production-database
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.18.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: src/backend/pnpm-lock.yaml
+
+      - name: Install locked backend dependencies
+        working-directory: src/backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Prisma schema and generate client
+        working-directory: src/backend
+        run: |
+          pnpm prisma:validate
+          pnpm prisma:generate
+
+      - name: Validate production database target
+        working-directory: src/backend
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          PRODUCTION_DEMO_DB_HOST: ${{ secrets.PRODUCTION_DEMO_DB_HOST }}
+          PRODUCTION_DEMO_PROJECT_REF: ${{ secrets.PRODUCTION_DEMO_PROJECT_REF }}
+          DEMO_DATABASE_TARGET_PROJECT_REF: ${{ inputs.project_ref }}
+        run: pnpm production:database:validate
+
+      - name: Apply production migrations
+        working-directory: src/backend
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+          NODE_ENV: production
+        run: pnpm prisma:migrate:deploy
+
+      - name: Verify production migration status
+        working-directory: src/backend
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: pnpm exec prisma migrate status --config prisma.config.ts

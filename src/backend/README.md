@@ -23,6 +23,7 @@ or application scripts.
 ```powershell
 corepack pnpm@11.18.0 install
 corepack pnpm@11.18.0 dev
+corepack pnpm@11.18.0 infra:up
 corepack pnpm@11.18.0 check
 corepack pnpm@11.18.0 build
 corepack pnpm@11.18.0 test:e2e
@@ -34,7 +35,9 @@ Run the API Compose stack from this directory:
 docker compose --project-directory . -f infrastructure/docker/docker-compose.dev.yml up --build
 ```
 
-The API image uses this directory as its build context and `Dockerfile`. Keep
+The `infra:up` shortcut builds and starts PostgreSQL,
+the one-shot migration service, and the API in Compose dependency order. The API
+image uses this directory as its build context and `Dockerfile`. Keep
 `JWT_SECRET` in the local environment only; never
 commit `.env` or database credentials.
 

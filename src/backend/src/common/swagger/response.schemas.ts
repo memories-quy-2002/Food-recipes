@@ -90,9 +90,6 @@ export class PantryItemDto {
   @ApiProperty({ type: Number, nullable: true, example: 7 })
   user_id!: number | null;
 
-  @ApiProperty({ type: Number, nullable: true, example: 3 })
-  household_id!: number | null;
-
   @ApiProperty({ example: 'Eggs' })
   name!: string;
 
@@ -572,7 +569,7 @@ export class MealPlanResponseDto {
   @ApiProperty({ example: 4 })
   plan_id!: number;
 
-  @ApiProperty({ example: 'Weekly family meals' })
+  @ApiProperty({ example: 'My weekly meals' })
   name!: string;
 
   @ApiProperty({ example: '2026-08-24', format: 'date' })
@@ -723,10 +720,64 @@ export class CookingHistoryResponseDto {
   items!: CookingHistoryItemDto[];
 }
 
+export class CookingRecapMostCookedRecipeDto {
+  @ApiProperty({ example: 15 })
+  recipe_id!: number;
+
+  @ApiProperty({ example: 'Pasta Carbonara' })
+  recipe_name!: string;
+
+  @ApiProperty({ example: 3 })
+  cook_count!: number;
+}
+
+export class CookingRecapResponseDto {
+  @ApiProperty({ example: 18 })
+  completed_cooks!: number;
+
+  @ApiProperty({ example: 12 })
+  unique_recipes!: number;
+
+  @ApiProperty({ type: CookingRecapMostCookedRecipeDto, nullable: true })
+  most_cooked!: CookingRecapMostCookedRecipeDto | null;
+}
+
+export class RecipeCookingMemoryJournalDto {
+  @ApiProperty({ type: Number, nullable: true, example: 5 })
+  rating!: number | null;
+
+  @ApiProperty({ type: Boolean, nullable: true, example: true })
+  would_cook_again!: boolean | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'Use less salt next time.' })
+  notes!: string | null;
+}
+
+export class RecipeCookingMemoryLatestCookDto {
+  @ApiProperty({ example: 24 })
+  history_id!: number;
+
+  @ApiProperty({ example: 2 })
+  servings!: number;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  completed_at!: string;
+
+  @ApiProperty({ type: RecipeCookingMemoryJournalDto, nullable: true })
+  journal!: RecipeCookingMemoryJournalDto | null;
+}
+
+export class RecipeCookingMemoryResponseDto {
+  @ApiProperty({ example: 4 })
+  cook_count!: number;
+
+  @ApiProperty({ type: RecipeCookingMemoryLatestCookDto, nullable: true })
+  latest_cook!: RecipeCookingMemoryLatestCookDto | null;
+}
+
 export class LeftoverBatchDto {
   @ApiProperty({ example: 8 }) leftover_id!: number;
   @ApiProperty({ type: Number, nullable: true, example: 7 }) user_id!: number | null;
-  @ApiProperty({ type: Number, nullable: true, example: null }) household_id!: number | null;
   @ApiProperty({ example: 15 }) recipe_id!: number;
   @ApiProperty({ example: 'Soup' }) recipe_name!: string;
   @ApiProperty({ example: 4 }) history_id!: number;
@@ -762,9 +813,6 @@ export class CookingSessionDto {
 
   @ApiProperty({ type: Number, nullable: true, example: null })
   leftover_batch_id!: number | null;
-
-  @ApiProperty({ type: Number, nullable: true, example: null })
-  household_id!: number | null;
 
   @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-08-25' })
   planned_date!: string | null;

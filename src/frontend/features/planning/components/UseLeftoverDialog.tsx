@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { useLeftoversQuery } from "@/features/leftovers/api/leftoversQueries";
-import type { KitchenScope } from "@/features/households/householdScope";
+import type { KitchenScope } from "@/shared/api/personalKitchenScope";
 import { MEAL_SLOTS, type MealPlan, type MealSlot } from "../api/planningApi";
 import { useAddLeftoverMealPlanItemMutation, useCreateMealPlanMutation } from "../api/planningQueries";
 import { getWeekRange } from "../api/planningDates";
@@ -18,10 +18,10 @@ type UseLeftoverDialogProps = {
 
 const slotLabel = (slot: MealSlot): string => slot[0].toUpperCase() + slot.slice(1);
 
-const UseLeftoverDialog = ({ open, initialDate, scope, activePlan, onClose }: UseLeftoverDialogProps) => {
-	const leftoversQuery = useLeftoversQuery(scope, { enabled: open });
-	const addMutation = useAddLeftoverMealPlanItemMutation(scope);
-	const createMutation = useCreateMealPlanMutation(scope);
+const UseLeftoverDialog = ({ open, initialDate, activePlan, onClose }: UseLeftoverDialogProps) => {
+	const leftoversQuery = useLeftoversQuery(undefined, { enabled: open });
+	const addMutation = useAddLeftoverMealPlanItemMutation();
+	const createMutation = useCreateMealPlanMutation();
 	const [selectedId, setSelectedId] = useState<number | null>(null);
 	const [date, setDate] = useState(initialDate);
 	const [slot, setSlot] = useState<MealSlot>("lunch");

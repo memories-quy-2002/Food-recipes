@@ -5,7 +5,7 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthContext } from "@/app/AuthProvider";
-import { householdScope, PERSONAL_KITCHEN } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN } from "@/shared/api/personalKitchenScope";
 import { createLeftover, listLeftovers } from "./leftoversApi";
 import { leftoversQueryKeys, useCreateLeftoverMutation, useLeftoversQuery } from "./leftoversQueries";
 
@@ -39,13 +39,9 @@ describe("leftoversQueries", () => {
 		vi.mocked(createLeftover).mockReset();
 	});
 
-	it("keeps personal and household leftovers in separate user-scoped keys", () => {
-		expect(leftoversQueryKeys.forUser(7, PERSONAL_KITCHEN)).toEqual(["leftovers", 7, "personal"]);
-		expect(leftoversQueryKeys.forUser(7, householdScope(22))).toEqual(["leftovers", 7, "household:22"]);
-	});
 
 	it("passes scope to reads and invalidates leftovers plus planning after create", async () => {
-		const scope = householdScope(22);
+		const scope = PERSONAL_KITCHEN;
 		vi.mocked(listLeftovers).mockResolvedValue({ items: [] });
 		vi.mocked(createLeftover).mockResolvedValue({ leftover: { leftover_id: 8 } as never });
 		const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -59,6 +55,6 @@ describe("leftoversQueries", () => {
 		mutation.result.current.mutate({ cookingHistoryId: 4, servings: 2, expiresAt: "2026-09-02T23:59:59.000Z" });
 		await waitFor(() => expect(mutation.result.current.isSuccess).toBe(true));
 		expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: leftoversQueryKeys.forUser(7, scope) });
-		expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["planning", 7, "household:22"] });
+		expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["planning", 7, "personal"] });
 	});
 });

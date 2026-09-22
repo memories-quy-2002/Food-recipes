@@ -19,26 +19,26 @@ const repository = (): jest.Mocked<SavedPlanningRepositoryPort> => ({
 describe('SavedPlanningService', () => {
   it('saves a plan as a relative-day template', async () => {
     const repo = repository();
-    repo.findOwnedPlan.mockResolvedValue({ id: 7, name: 'Family week', start_date: '2026-08-24', end_date: '2026-08-30' });
+    repo.findOwnedPlan.mockResolvedValue({ id: 7, name: 'My week', start_date: '2026-08-24', end_date: '2026-08-30' });
     repo.listPlanItemsForTemplate.mockResolvedValue([
       { recipe_id: 11, planned_date: '2026-08-24', slot: 'dinner', servings: 4 },
       { recipe_id: 12, planned_date: '2026-08-26', slot: 'lunch', servings: 2 },
     ]);
-    repo.createTemplate.mockResolvedValue({ id: 3, name: 'Family week', duration_days: 7 });
+    repo.createTemplate.mockResolvedValue({ id: 3, name: 'My week', duration_days: 7 });
 
     const result = await new SavedPlanningService(repo).saveTemplate(42, { planId: 7 });
 
-    expect(repo.createTemplate).toHaveBeenCalledWith(42, 'Family week', 7);
+    expect(repo.createTemplate).toHaveBeenCalledWith(42, 'My week', 7);
     expect(repo.createTemplateItems).toHaveBeenCalledWith(3, [
       { relative_day: 0, recipe_id: 11, slot: 'dinner', servings: 4 },
       { relative_day: 2, recipe_id: 12, slot: 'lunch', servings: 2 },
     ]);
-    expect(result).toEqual({ template: { id: 3, name: 'Family week', duration_days: 7 } });
+    expect(result).toEqual({ template: { id: 3, name: 'My week', duration_days: 7 } });
   });
 
   it('applies template items from the target start date', async () => {
     const repo = repository();
-    repo.findTemplate.mockResolvedValue({ id: 3, name: 'Family week', duration_days: 7 });
+    repo.findTemplate.mockResolvedValue({ id: 3, name: 'My week', duration_days: 7 });
     repo.findOwnedPlan.mockResolvedValue({ id: 9, name: 'Next week', start_date: '2026-09-07', end_date: '2026-09-13' });
     repo.listTemplateItems.mockResolvedValue([
       { relative_day: 0, recipe_id: 11, slot: 'dinner', servings: 4 },
@@ -56,7 +56,7 @@ describe('SavedPlanningService', () => {
 
   it('rejects applying a template outside the target plan range', async () => {
     const repo = repository();
-    repo.findTemplate.mockResolvedValue({ id: 3, name: 'Family week', duration_days: 7 });
+    repo.findTemplate.mockResolvedValue({ id: 3, name: 'My week', duration_days: 7 });
     repo.findOwnedPlan.mockResolvedValue({ id: 9, name: 'Next week', start_date: '2026-09-07', end_date: '2026-09-13' });
 
     await expect(new SavedPlanningService(repo).applyTemplate(42, 3, { planId: 9, from: '2026-09-06', to: '2026-09-12' }))

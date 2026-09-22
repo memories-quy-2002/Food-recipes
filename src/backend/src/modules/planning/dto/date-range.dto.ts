@@ -4,7 +4,7 @@ import { IsDateString, IsString, Matches, MaxLength, MinLength } from 'class-val
 export const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export class DateRangeDto {
-  @ApiProperty({ example: 'Weekly family meals', maxLength: 80 })
+  @ApiProperty({ example: 'My weekly meals', maxLength: 80 })
   @IsString()
   @MinLength(1)
   @MaxLength(80)

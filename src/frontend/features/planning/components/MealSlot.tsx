@@ -5,8 +5,6 @@ import Button from "@/shared/ui/Button";
 import type { MealPlanItem, MealSlot as MealSlotName } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
 import { mealDropTargetId, mealItemId } from "../planningDnD";
-import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
-import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
 type MealSlotProps = {
 	day: PlanningDay;
@@ -30,7 +28,7 @@ const SLOT_META: Record<MealSlotName, { shortLabel: string; Icon: LucideIcon }> 
 const slotLabel = (slot: MealSlotName) => slot[0].toUpperCase() + slot.slice(1);
 const fullWeekday = (day: PlanningDay) => day.label.split(",")[0];
 
-export const buildMealCookingHref = (item: MealPlanItem, scope: KitchenScope = PERSONAL_KITCHEN): string => {
+export const buildMealCookingHref = (item: MealPlanItem): string => {
 	const params = new URLSearchParams({
 		id: String(item.recipe_id),
 		planItemId: String(item.item_id),
@@ -43,7 +41,6 @@ export const buildMealCookingHref = (item: MealPlanItem, scope: KitchenScope = P
 		params.set("sourceType", "leftover");
 		if (item.leftover_batch_id != null) params.set("leftoverBatchId", String(item.leftover_batch_id));
 	}
-	if (scope.kind === "household") params.set("householdId", String(scope.householdId));
 	return `/recipe/cooking?${params.toString()}`;
 };
 
@@ -70,7 +67,7 @@ const SlotBadge = ({ slot }: { slot: MealSlotName }) => {
 };
 
 const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRemoving = false, readOnly = false }: MealSlotProps) => {
-	const { scope } = useHouseholdScope();
+
 	const targetId = mealDropTargetId({ date: day.date, slot });
 	const { setNodeRef: setDroppableNodeRef, isOver } = useDroppable({ id: targetId });
 	const { attributes, listeners, setNodeRef: setDraggableNodeRef, isDragging } = useDraggable({
@@ -147,7 +144,7 @@ const MealSlot = ({ day, slot, item, onAdd, onEdit, onRemove, onOpenRecipe, isRe
 				<div className="mt-2 flex items-center justify-between gap-2">
 					<Link
 						className="inline-flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-						to={buildMealCookingHref(item, scope)}
+						to={buildMealCookingHref(item)}
 						aria-label={`${cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"} ${item.recipe_name}`}
 						title={`${cookingStatus === "cooking" ? "Continue cooking" : cookingStatus === "completed" ? "Cook again" : "Start cooking"} ${item.recipe_name}`}
 						onPointerDown={stopDragStart}

@@ -5,12 +5,10 @@ import AuthProvider from "./AuthProvider";
 import ToastProvider from "./ToastProvider";
 import Layout from "@/shared/layout/Layout";
 import { queryClient } from "@/shared/api/queryClient";
-import { HouseholdScopeProvider } from "@/features/households/HouseholdScopeProvider";
 
 const App = (): React.ReactElement => (
 	<QueryClientProvider client={queryClient}>
 		<AuthProvider>
-			<HouseholdScopeProvider>
 				<ToastProvider>
 					<BrowserRouter>
 						<Layout>
@@ -18,7 +16,6 @@ const App = (): React.ReactElement => (
 						</Layout>
 					</BrowserRouter>
 				</ToastProvider>
-			</HouseholdScopeProvider>
 		</AuthProvider>
 	</QueryClientProvider>
 );

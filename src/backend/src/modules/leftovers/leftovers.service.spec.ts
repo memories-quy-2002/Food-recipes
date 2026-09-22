@@ -15,7 +15,7 @@ describe('LeftoversService', () => {
   it('creates an idempotent leftover from owned completed history', async () => {
     repository.findCompletedHistory.mockResolvedValue({ history_id: 4, user_id: 7, recipe_id: 15, recipe_name: 'Soup', servings: 4, completed_at: new Date('2026-08-30T10:00:00Z'), recipe_status: 'published', recipe_user_id: 99 });
     repository.findByHistory.mockResolvedValue(null);
-    repository.create.mockResolvedValue({ leftover_id: 8, user_id: 7, household_id: null, recipe_id: 15, recipe_name: 'Soup', history_id: 4, cooked_servings: 4, remaining_servings: 2, prepared_at: new Date('2026-08-30T10:00:00Z'), expires_at: new Date('2026-09-02T10:00:00Z') });
+    repository.create.mockResolvedValue({ leftover_id: 8, user_id: 7, recipe_id: 15, recipe_name: 'Soup', history_id: 4, cooked_servings: 4, remaining_servings: 2, prepared_at: new Date('2026-08-30T10:00:00Z'), expires_at: new Date('2026-09-02T10:00:00Z') });
 
     const service = new LeftoversService(repository);
     await expect(service.create(7, { cookingHistoryId: 4, servings: 2, expiresAt: '2026-09-02T10:00:00Z' })).resolves.toEqual(expect.objectContaining({ leftover: expect.anything() }));

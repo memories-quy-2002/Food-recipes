@@ -6,6 +6,8 @@ export const refreshKitchenQueries = async (queryClient: QueryClient): Promise<v
 	await Promise.all([
 		queryClient.invalidateQueries({ queryKey: ["home-feed"] }),
 		queryClient.invalidateQueries({ queryKey: historyQueryKeys.all }),
+		queryClient.invalidateQueries({ queryKey: ["cooking-recap"] }),
+		queryClient.invalidateQueries({ queryKey: ["recipe-cooking-memory"] }),
 		queryClient.invalidateQueries({ queryKey: ["planning"] }),
 		queryClient.invalidateQueries({ queryKey: pantryQueryKeys.all }),
 	]);

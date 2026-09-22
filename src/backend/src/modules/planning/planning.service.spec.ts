@@ -9,36 +9,21 @@ describe('PlanningService', () => {
     createPlan: jest.fn(),
     updatePlan: jest.fn(),
     deletePlan: jest.fn(),
-    listPlansForHousehold: jest.fn(),
-    findPlanForHousehold: jest.fn(),
-    createPlanForHousehold: jest.fn(),
-    updatePlanForHousehold: jest.fn(),
-    deletePlanForHousehold: jest.fn(),
     listPlanItems: jest.fn(),
     findPlanItem: jest.fn(),
     recipeExists: jest.fn(),
     addPlanItem: jest.fn(),
+    addLeftoverPlanItem: jest.fn(),
     updatePlanItem: jest.fn(),
     deletePlanItem: jest.fn(),
     deletePlanItemAndRecordRemoval: jest.fn(),
-    listPlanItemsForHousehold: jest.fn(),
-    findPlanItemForHousehold: jest.fn(),
-    addPlanItemForHousehold: jest.fn(),
-    updatePlanItemForHousehold: jest.fn(),
-    deletePlanItemForHousehold: jest.fn(),
-    deletePlanItemAndRecordRemovalForHousehold: jest.fn(),
     listShoppingItems: jest.fn(),
     addShoppingItem: jest.fn(),
     updateShoppingItem: jest.fn(),
     deleteShoppingItem: jest.fn(),
-    listShoppingItemsForHousehold: jest.fn(),
-    addShoppingItemForHousehold: jest.fn(),
-    updateShoppingItemForHousehold: jest.fn(),
-    deleteShoppingItemForHousehold: jest.fn(),
     recipeIngredients: jest.fn(),
     prepareRecipeIngredients: jest.fn(),
     clearCompletedShoppingItems: jest.fn(),
-    clearCompletedShoppingItemsForHousehold: jest.fn(),
   };
 
   beforeEach(() => jest.clearAllMocks());
@@ -66,15 +51,6 @@ describe('PlanningService', () => {
     await expect(service.updatePlanItem(7, 4, 9, { servings: 3 })).rejects.toMatchObject({ response: { code: 'MEAL_PLAN_ITEM_NOT_FOUND' } });
   });
 
-  it('records a removed recipe for an authorized household item using the current user', async () => {
-    repository.findPlanForHousehold.mockResolvedValue({ plan_id: 4, household_id: 22, name: 'Week', start_date: '2026-08-01', end_date: '2026-08-07', created_at: new Date(), updated_at: new Date() });
-    repository.deletePlanItemAndRecordRemovalForHousehold.mockResolvedValue(true);
-    const service = new PlanningService(repository);
-
-    await service.deletePlanItemForHousehold(7, 22, 4, 9);
-
-    expect(repository.deletePlanItemAndRecordRemovalForHousehold).toHaveBeenCalledWith(7, 22, 4, 9);
-  });
 
   it('rejects a plan item outside the owned plan range', async () => {
     repository.findPlan.mockResolvedValue({ plan_id: 4, name: 'Week', start_date: '2026-08-01', end_date: '2026-08-07', created_at: new Date(), updated_at: new Date() });

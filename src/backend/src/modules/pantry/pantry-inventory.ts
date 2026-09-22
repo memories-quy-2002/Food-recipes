@@ -24,7 +24,7 @@ const unitGroups: Record<PantryUnit, PantryUnitGroup> = {
 };
 
 // Use grams, milliliters, and pieces as the respective base units.
-// Household volume measures are intentionally approximate.
+// Volume measures are intentionally approximate.
 const unitFactors: Record<PantryUnit, number> = {
   GRAM: 1,
   KILOGRAM: 1000,

@@ -1,4 +1,4 @@
-import type { KitchenScope } from "@/features/households/householdScope";
+import type { KitchenScope } from "@/shared/api/personalKitchenScope";
 
 export type ApiRouteId = number | string;
 
@@ -58,7 +58,6 @@ type ApiRoutes = {
 	userFoodPreferences: string;
 	userRecommendationNotInterested: (recipeId: ApiRouteId) => string;
 	userLeftovers: string;
-	householdLeftovers: (householdId: ApiRouteId) => string;
 	userPassword: string;
 	mealPlans: string;
 	mealPlanGeneratePreview: string;
@@ -77,6 +76,8 @@ type ApiRoutes = {
 	shoppingListPrepare: string;
 	shoppingListCompleted: string;
 	cookingHistory: string;
+	cookingRecap: string;
+	recipeCookingMemory: (recipeId: ApiRouteId) => string;
 	cookingSession: string;
 	cookingSessionItem: (sessionId: ApiRouteId) => string;
 	cookingSessionComplete: (sessionId: ApiRouteId) => string;
@@ -135,7 +136,6 @@ const apiRoutes: ApiRoutes = {
 	userFoodPreferences: "/users/me/food-preferences",
 	userRecommendationNotInterested: (recipeId) => `/users/me/recommendations/not-interested/${recipeId}`,
 	userLeftovers: "/users/me/leftovers",
-	householdLeftovers: (householdId) => `/households/${householdId}/leftovers`,
 	userPassword: "/users/me/password",
 	mealPlans: "/users/me/meal-plans",
 	mealPlanGeneratePreview: "/users/me/meal-plans/generate-preview",
@@ -155,6 +155,8 @@ const apiRoutes: ApiRoutes = {
 	shoppingListPrepare: "/users/me/shopping-list/prepare",
 	shoppingListCompleted: "/users/me/shopping-list/completed",
 	cookingHistory: "/users/me/cooking-history",
+	cookingRecap: "/users/me/cooking-history/recap",
+	recipeCookingMemory: (recipeId) => `/users/me/recipes/${recipeId}/cooking-memory`,
 	cookingSession: "/users/me/cooking-session",
 	cookingSessionItem: (sessionId) =>
 		`/users/me/cooking-session/${sessionId}`,
@@ -166,23 +168,11 @@ const apiRoutes: ApiRoutes = {
 	serverHealth: "/health/live",
 };
 
-export const createPantryRoutes = (scope: KitchenScope): PantryApiRoutes => {
-	if (scope.kind === "personal") {
-		return {
-			pantry: apiRoutes.pantry,
-			pantryItem: apiRoutes.pantryItem,
-			pantryFromShoppingList: apiRoutes.pantryFromShoppingList,
-		};
-	}
-
-	const pantry = `/households/${scope.householdId}/pantry`;
-	return {
-		pantry,
-		pantryItem: (pantryId) => `${pantry}/${pantryId}`,
-		pantryFromShoppingList: `${pantry}/from-shopping-list`,
-	};
-};
-
+export const createPantryRoutes = (_scope: KitchenScope): PantryApiRoutes => ({
+	pantry: apiRoutes.pantry,
+	pantryItem: apiRoutes.pantryItem,
+	pantryFromShoppingList: apiRoutes.pantryFromShoppingList,
+});
 export const getUserRecipeRatingRoute = (recipeId: ApiRouteId): string =>
 	apiRoutes.userRecipeRating(recipeId);
 

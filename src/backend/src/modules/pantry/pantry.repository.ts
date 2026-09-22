@@ -6,7 +6,6 @@ import { convertQuantity, normalizeIngredientName, normalizePantryUnit, parseSho
 export type PantryItemRecord = {
   pantry_id: number;
   user_id: number | null;
-  household_id?: number | null;
   name: string;
   have: boolean;
   quantity: number | null;
@@ -37,11 +36,6 @@ export interface PantryRepositoryPort {
   update(userId: number, pantryId: number, name?: string, quantity?: number | null, unit?: string | null, have?: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord | null>;
   remove(userId: number, pantryId: number): Promise<boolean>;
   importCheckedShoppingItems(userId: number): Promise<ShoppingListPantryImportResult>;
-  listForHousehold(householdId: number): Promise<PantryItemRecord[]>;
-  createForHousehold(householdId: number, name: string, quantity: number | null, unit: string | null, have: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord>;
-  updateForHousehold(householdId: number, pantryId: number, name?: string, quantity?: number | null, unit?: string | null, have?: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord | null>;
-  removeForHousehold(householdId: number, pantryId: number): Promise<boolean>;
-  importCheckedShoppingItemsForHousehold(householdId: number): Promise<ShoppingListPantryImportResult>;
 }
 
 export const PANTRY_REPOSITORY = Symbol('PANTRY_REPOSITORY');
@@ -54,10 +48,6 @@ export class PantryRepository implements PantryRepositoryPort {
     return this.listByScope(this.scopeWhere(userId));
   }
 
-  listForHousehold(householdId: number): Promise<PantryItemRecord[]> {
-    return this.listByScope(this.scopeWhere(undefined, householdId));
-  }
-
   async create(userId: number, name: string, quantity: number | null, unit: string | null, have: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord> {
     const rows = await this.prisma.$queryRaw<{ pantry_id: number }[]>(Prisma.sql`
       INSERT INTO pantry_items (user_id, household_id, name, quantity, unit, have, purchased_at, opened_at, expires_at, storage_location)
@@ -65,15 +55,6 @@ export class PantryRepository implements PantryRepositoryPort {
       RETURNING pantry_id
     `);
     return (await this.findByScope(this.scopeWhere(userId), rows[0].pantry_id))!;
-  }
-
-  async createForHousehold(householdId: number, name: string, quantity: number | null, unit: string | null, have: boolean, purchasedAt?: string | null, openedAt?: string | null, expiresAt?: string | null, storageLocation?: string | null): Promise<PantryItemRecord> {
-    const rows = await this.prisma.$queryRaw<{ pantry_id: number }[]>(Prisma.sql`
-      INSERT INTO pantry_items (user_id, household_id, name, quantity, unit, have, purchased_at, opened_at, expires_at, storage_location)
-      VALUES (NULL, ${householdId}, ${name}, ${quantity}, ${unit}, ${have}, ${purchasedAt ?? null}, ${openedAt ?? null}, ${expiresAt ?? null}, ${storageLocation ?? null})
-      RETURNING pantry_id
-    `);
-    return (await this.findByScope(this.scopeWhere(undefined, householdId), rows[0].pantry_id))!;
   }
 
   async update(
@@ -90,21 +71,6 @@ export class PantryRepository implements PantryRepositoryPort {
   ): Promise<PantryItemRecord | null> {
     const scope = this.scopeWhere(userId);
     return this.updateByScope(scope, pantryId, name, quantity, unit, have, purchasedAt, openedAt, expiresAt, storageLocation);
-  }
-
-  updateForHousehold(
-    householdId: number,
-    pantryId: number,
-    name?: string,
-    quantity?: number | null,
-    unit?: string | null,
-    have?: boolean,
-    purchasedAt?: string | null,
-    openedAt?: string | null,
-    expiresAt?: string | null,
-    storageLocation?: string | null,
-  ): Promise<PantryItemRecord | null> {
-    return this.updateByScope(this.scopeWhere(undefined, householdId), pantryId, name, quantity, unit, have, purchasedAt, openedAt, expiresAt, storageLocation);
   }
 
   private async updateByScope(
@@ -143,23 +109,10 @@ export class PantryRepository implements PantryRepositoryPort {
 
   importCheckedShoppingItems(userId: number): Promise<ShoppingListPantryImportResult> {
     return this.importCheckedShoppingItemsByScope(
-      Prisma.sql`user_id = ${userId}`,
-      Prisma.sql`user_id = ${userId}`,
+      Prisma.sql`user_id = ${userId} AND household_id IS NULL`,
+      Prisma.sql`user_id = ${userId} AND household_id IS NULL`,
       Prisma.sql`user_id, household_id`,
       Prisma.sql`${userId}, NULL`,
-    );
-  }
-
-  removeForHousehold(householdId: number, pantryId: number): Promise<boolean> {
-    return this.removeByScope(this.scopeWhere(undefined, householdId), pantryId);
-  }
-
-  importCheckedShoppingItemsForHousehold(householdId: number): Promise<ShoppingListPantryImportResult> {
-    return this.importCheckedShoppingItemsByScope(
-      Prisma.sql`household_id = ${householdId}`,
-      Prisma.sql`household_id = ${householdId}`,
-      Prisma.sql`user_id, household_id`,
-      Prisma.sql`NULL, ${householdId}`,
     );
   }
 
@@ -262,7 +215,7 @@ export class PantryRepository implements PantryRepositoryPort {
 
   private listByScope(scope: Prisma.Sql): Promise<PantryItemRecord[]> {
     return this.prisma.$queryRaw<Array<PantryItemRecord & { quantity: number | string | null }>>(Prisma.sql`
-      SELECT pantry_id, user_id, household_id, name, have, quantity, unit, purchased_at, opened_at, expires_at, storage_location, updated_at
+      SELECT pantry_id, user_id, name, have, quantity, unit, purchased_at, opened_at, expires_at, storage_location, updated_at
       FROM pantry_items
       WHERE ${scope}
       ORDER BY have DESC, LOWER(name) ASC, pantry_id ASC
@@ -271,14 +224,14 @@ export class PantryRepository implements PantryRepositoryPort {
 
   private async findByScope(scope: Prisma.Sql, pantryId: number): Promise<PantryItemRecord | null> {
     const rows = await this.prisma.$queryRaw<Array<PantryItemRecord & { quantity: number | string | null }>>(Prisma.sql`
-      SELECT pantry_id, user_id, household_id, name, have, quantity, unit, purchased_at, opened_at, expires_at, storage_location, updated_at
+      SELECT pantry_id, user_id, name, have, quantity, unit, purchased_at, opened_at, expires_at, storage_location, updated_at
       FROM pantry_items WHERE ${scope} AND pantry_id = ${pantryId}
     `);
     return rows[0] ? this.toRecord(rows[0]) : null;
   }
 
-  private scopeWhere(userId?: number, householdId?: number): Prisma.Sql {
-    return householdId === undefined ? Prisma.sql`user_id = ${userId}` : Prisma.sql`household_id = ${householdId}`;
+  private scopeWhere(userId: number): Prisma.Sql {
+    return Prisma.sql`user_id = ${userId} AND household_id IS NULL`;
   }
 
   private toRecord(row: PantryItemRecord & { quantity: number | string | null }): PantryItemRecord {

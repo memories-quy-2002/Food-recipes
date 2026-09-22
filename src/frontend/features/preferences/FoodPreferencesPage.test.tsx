@@ -14,7 +14,7 @@ const preferences: FoodPreferences = {
 	preferredCuisines: ["Vietnamese"],
 	cookingSkill: "intermediate",
 	maxWeekdayCookMinutes: 30,
-	defaultServings: 2,
+	defaultServings: 1,
 	maxCaloriesPerServing: 650,
 	minProteinGrams: 30,
 	strictDislikes: false,

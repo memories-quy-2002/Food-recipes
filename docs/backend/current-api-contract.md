@@ -1,6 +1,6 @@
 # Current API contract
 
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-22
 
 The current backend is a single NestJS package under `src/backend`. It exposes
 URI-versioned REST routes under `/api/v1`. This document is a developer-facing
@@ -93,75 +93,69 @@ The collection route suffixes are `/:collectionId/recipes` and
 `/:collectionId/recipes/:recipeId`. Ownership is evaluated on the server from
 the JWT subject; client-provided user IDs are not trusted.
 
-## Planning and kitchen routes
+## Planning and personal kitchen routes
 
-Personal routes are under `/users/me` and household equivalents are under
-`/households/:householdId`.
+All kitchen data routes are personal and are scoped on the server to the
+authenticated user represented by the JWT subject. There are no household
+membership, invitation, or shared-kitchen routes in the current API.
 
-| Method | Personal route | Household route |
+| Method | Route | Auth target |
 | --- | --- | --- |
-| GET/POST | `/meal-plans` | `/meal-plans` |
-| GET/PATCH/DELETE | `/meal-plans/:planId` | `/meal-plans/:planId` |
-| POST | `/meal-plans/:planId/items` | `/meal-plans/:planId/items` |
-| POST | `/meal-plans/:planId/items/leftover` | `/meal-plans/:planId/items/leftover` |
-| PATCH/DELETE | `/meal-plans/:planId/items/:itemId` | `/meal-plans/:planId/items/:itemId` |
-| POST | `/meal-plans/generate-preview` | Not available |
-| POST | `/meal-plans/from-preview` | Not available |
-| GET/POST | `/meal-plan-templates` | Not available |
-| POST | `/meal-plan-templates/:templateId/apply` | Not available |
-| GET/POST | `/recurring-meal-rules` | Not available |
-| DELETE | `/recurring-meal-rules/:ruleId` | Not available |
-| GET/POST | `/shopping-list` and `/shopping-list/items` | Same suffixes |
-| PATCH/DELETE | `/shopping-list/items/:itemId` | Same suffix |
-| POST | `/shopping-list/from-recipe` | Same suffix |
-| POST | `/shopping-list/prepare` | Not available |
-| DELETE | `/shopping-list/completed` | Same suffix |
+| GET/POST | /users/me/meal-plans | JWT; personal owner |
+| GET/PATCH/DELETE | /users/me/meal-plans/:planId | JWT; personal owner |
+| POST | /users/me/meal-plans/:planId/items | JWT; personal owner |
+| POST | /users/me/meal-plans/:planId/items/leftover | JWT; personal owner |
+| PATCH/DELETE | /users/me/meal-plans/:planId/items/:itemId | JWT; personal owner |
+| POST | /users/me/meal-plans/generate-preview | JWT |
+| POST | /users/me/meal-plans/from-preview | JWT |
+| GET/POST | /users/me/meal-plan-templates | JWT |
+| POST | /users/me/meal-plan-templates/:templateId/apply | JWT |
+| GET/POST | /users/me/recurring-meal-rules | JWT |
+| DELETE | /users/me/recurring-meal-rules/:ruleId | JWT |
+| GET | /users/me/shopping-list | JWT |
+| POST | /users/me/shopping-list/items | JWT |
+| PATCH/DELETE | /users/me/shopping-list/items/:itemId | JWT; personal owner |
+| POST | /users/me/shopping-list/from-recipe | JWT |
+| POST | /users/me/shopping-list/prepare | JWT |
+| DELETE | /users/me/shopping-list/completed | JWT |
 
-All planning and shopping routes require JWT. Household routes additionally
-check membership and role: viewers can read, while owners/members can mutate.
-The frontend must expose read-only state rather than hiding a denied mutation.
-Unchecked shopping items are idempotent within a personal or household scope by
-normalized label and quantity; checked rows may be added again. An update that
-would create an active duplicate returns HTTP 409 with code
-`SHOPPING_ITEM_DUPLICATE`.
+Unchecked shopping items are idempotent for matching active entries by label and
+quantity; checked rows may be added again. An update that would create an active
+duplicate returns HTTP 409 with code SHOPPING_ITEM_DUPLICATE.
 
 ## Pantry, leftovers, cooking, and journals
 
 | Method | Route | Auth target |
 | --- | --- | --- |
-| GET/POST/PATCH/DELETE | `/users/me/pantry...` | JWT; personal scope |
-| GET/POST/PATCH/DELETE | `/households/:householdId/pantry...` | JWT + household role |
-| POST | `/users/me/pantry/from-shopping-list` | JWT |
-| POST | `/households/:householdId/pantry/from-shopping-list` | JWT + household editor role |
-| GET/POST | `/users/me/leftovers` | JWT |
-| GET/POST | `/households/:householdId/leftovers` | JWT + household role |
-| GET/POST | `/users/me/cooking-history` | JWT |
-| GET/POST/PATCH/DELETE | `/users/me/cooking-session...` | JWT + session owner |
-| POST | `/users/me/cooking-session/:sessionId/complete` | JWT + session owner |
-| GET/PUT | `/users/me/cooking-history/:historyId/journal` | JWT + history owner |
+| GET/POST/PATCH/DELETE | /users/me/pantry... | JWT; personal owner |
+| POST | /users/me/pantry/from-shopping-list | JWT; personal owner |
+| GET/POST | /users/me/leftovers | JWT; personal owner |
+| GET/POST | /users/me/cooking-history | JWT; personal owner |
+| GET | /users/me/cooking-history/recap | JWT; lifetime totals and most-cooked recipe for the authenticated user |
+| GET | /users/me/recipes/:recipeId/cooking-memory | JWT; cook count and latest serving/journal memory for the authenticated user |
+| GET/POST/PATCH/DELETE | /users/me/cooking-session... | JWT + session owner |
+| POST | /users/me/cooking-session/:sessionId/complete | JWT + session owner |
+| GET/PUT | /users/me/cooking-history/:historyId/journal | JWT + history owner |
 
 Cooking completion is transactional: it records history and ingredient usage,
-and may return a shortage result or shopping-list handoff. Browser storage is a
-guest fallback only and is not the source of truth for authenticated progress.
+and may return a shortage result or shopping-list handoff. Personal pantry and
+leftover routes never include legacy records with a non-null household scope.
+Browser storage is a guest fallback only and is not the source of truth for
+authenticated progress.
 
-## Preferences, recommendations, notifications, households, imports, and media
+## Preferences, recommendations, notifications, imports, and media
 
 | Method | Route | Auth target |
 | --- | --- | --- |
-| GET/PUT | `/users/me/food-preferences` | JWT |
-| GET | `/users/me/home-feed` | JWT; personalized kitchen sections |
-| PUT/DELETE | `/users/me/recommendations/not-interested/:recipeId` | JWT |
-| GET/PATCH/POST | `/users/me/notifications...` | JWT |
-| GET/PUT | `/users/me/notification-preferences` | JWT |
-| POST/GET | `/households` | JWT |
-| GET | `/households/:householdId` | JWT + membership |
-| POST | `/households/:householdId/invites` | JWT + owner/member role |
-| POST | `/household-invites/:token/accept` | JWT + invite token |
-| PATCH/DELETE | `/households/:householdId/members/:memberId` | JWT + household role |
-| POST | `/users/me/recipe-imports/preview` | JWT |
-| POST | `/users/me/recipe-imports/drafts` | JWT |
-| POST | `/media/recipe-image/upload-url` | JWT; validated signed grant |
-| POST | `/media/journal-photo/upload-url` | JWT; validated signed grant |
+| GET/PUT | /users/me/food-preferences | JWT |
+| GET | /users/me/home-feed | JWT; personalized kitchen sections |
+| PUT/DELETE | /users/me/recommendations/not-interested/:recipeId | JWT |
+| GET/PATCH/POST | /users/me/notifications... | JWT |
+| GET/PUT | /users/me/notification-preferences | JWT |
+| POST | /users/me/recipe-imports/preview | JWT |
+| POST | /users/me/recipe-imports/drafts | JWT |
+| POST | /media/recipe-image/upload-url | JWT; validated signed grant |
+| POST | /media/journal-photo/upload-url | JWT; validated signed grant |
 
 ## Data and compatibility rules
 
@@ -172,6 +166,8 @@ guest fallback only and is not the source of truth for authenticated progress.
 5. Recipe image grants accept only JPEG, PNG, WebP, or AVIF metadata up to 5 MiB and expire after 10 minutes.
 6. JSON and URL-encoded request bodies are capped at 256 KiB; security headers and auth throttling are configured at bootstrap.
 7. PostgreSQL migrations are additive and must be validated and rehearsed in local/staging environments before an operator applies them to production.
+8. Existing household tables and nullable scope columns are retained as legacy data. Personal API reads must not expose household-scoped records; do not drop or reassign legacy data without an approved backup and migration plan.
+9. The default serving count for newly created food preferences is one. Changing this default does not overwrite existing user preferences.
 
 ## Verification
 

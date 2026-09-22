@@ -1,6 +1,6 @@
 import axios from "@/shared/api/axios";
 import { apiRoutes } from "@/shared/api/routes";
-import { PERSONAL_KITCHEN, type KitchenScope } from "@/features/households/householdScope";
+import { PERSONAL_KITCHEN, type KitchenScope } from "@/shared/api/personalKitchenScope";
 
 export type ShoppingListItem = {
 	item_id: number;
@@ -60,29 +60,14 @@ export type ShoppingApiRoutes = {
 	shoppingListCompleted: string;
 };
 
-export const createShoppingRoutes = (scope: KitchenScope): ShoppingApiRoutes => {
-	if (scope.kind === "personal") {
-		return {
-			shoppingList: apiRoutes.shoppingList,
-			shoppingListItems: apiRoutes.shoppingListItems,
-			shoppingListItem: apiRoutes.shoppingListItem,
-			shoppingListFromRecipe: apiRoutes.shoppingListFromRecipe,
-			shoppingListPrepare: apiRoutes.shoppingListPrepare,
-			shoppingListCompleted: apiRoutes.shoppingListCompleted,
-		};
-	}
-
-	const shoppingList = `/households/${scope.householdId}/shopping-list`;
-	return {
-		shoppingList,
-		shoppingListItems: `${shoppingList}/items`,
-		shoppingListItem: (itemId) => `${shoppingList}/items/${itemId}`,
-		shoppingListFromRecipe: `${shoppingList}/from-recipe`,
-		shoppingListPrepare: `${shoppingList}/prepare`,
-		shoppingListCompleted: `${shoppingList}/completed`,
-	};
-};
-
+export const createShoppingRoutes = (_scope: KitchenScope): ShoppingApiRoutes => ({
+	shoppingList: apiRoutes.shoppingList,
+	shoppingListItems: apiRoutes.shoppingListItems,
+	shoppingListItem: apiRoutes.shoppingListItem,
+	shoppingListFromRecipe: apiRoutes.shoppingListFromRecipe,
+	shoppingListPrepare: apiRoutes.shoppingListPrepare,
+	shoppingListCompleted: apiRoutes.shoppingListCompleted,
+});
 export const listShoppingItems = async (
 	scope: KitchenScope = PERSONAL_KITCHEN,
 	signal?: AbortSignal,

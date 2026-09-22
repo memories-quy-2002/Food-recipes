@@ -8,8 +8,6 @@ import PreparationSummary from "@/features/shopping/PreparationSummary";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { useLeftoversQuery } from "@/features/leftovers/api/leftoversQueries";
-import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
-import type { KitchenScope } from "@/features/households/householdScope";
 
 type KitchenCommandCenterProps = {
 	kitchen: KitchenState;
@@ -37,7 +35,7 @@ const cookingHref = (session: KitchenState["active_session"]): string => {
 	return `/recipe/cooking?${params.toString()}`;
 };
 
-const mealCookingHref = (meal: NonNullable<KitchenState["next_meal"]>, scope: KitchenScope): string => {
+const mealCookingHref = (meal: NonNullable<KitchenState["next_meal"]>): string => {
 	const params = new URLSearchParams({
 		id: String(meal.recipe_id),
 		planItemId: String(meal.item_id),
@@ -46,7 +44,6 @@ const mealCookingHref = (meal: NonNullable<KitchenState["next_meal"]>, scope: Ki
 		servings: String(meal.servings),
 		returnTo: "/",
 	});
-	if (scope.kind === "household") params.set("householdId", String(scope.householdId));
 	return `/recipe/cooking?${params.toString()}`;
 };
 
@@ -62,14 +59,14 @@ const progressSteps = (kitchen: KitchenState): Array<{ key: string; label: strin
 };
 
 const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCenterProps): ReactElement => {
-	const { scope } = useHouseholdScope();
+
 	const [isOnboardingDismissed, setIsOnboardingDismissed] = useState(() => {
 		if (typeof window === "undefined") return false;
 		return window.localStorage.getItem(`${ONBOARDING_STORAGE_PREFIX}${userId}`) === "dismissed";
 	});
 	const [preparationResult, setPreparationResult] = useState<PrepareRecipeResponse | null>(null);
 	const prepareMutation = usePrepareRecipeIngredientsMutation();
-	const leftoversQuery = useLeftoversQuery(scope);
+	const leftoversQuery = useLeftoversQuery();
 	const leftovers = leftoversQuery.data?.items ?? [];
 	const leftoverServings = leftovers.reduce((total, item) => total + item.remaining_servings, 0);
 	const steps = progressSteps(kitchen);
@@ -129,7 +126,7 @@ const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCen
 							<p className="mt-2 text-sm leading-6 text-muted-foreground">{formatDate(nextMeal.planned_date)} · {nextMeal.slot[0].toUpperCase() + nextMeal.slot.slice(1)} · {nextMeal.servings} servings</p>
 							<div className="mt-5 flex flex-wrap gap-2">
 								<Button type="button" onClick={prepareNextMeal} disabled={prepareMutation.isPending} aria-busy={prepareMutation.isPending}>{prepareMutation.isPending ? "Checking pantry…" : "Prepare this meal"}</Button>
-								<Button asChild variant="outline"><Link to={mealCookingHref(nextMeal, scope)}>Start cooking</Link></Button>
+								<Button asChild variant="outline"><Link to={mealCookingHref(nextMeal)}>Start cooking</Link></Button>
 							</div>
 							{preparationResult && <PreparationSummary result={preparationResult} />}
 						</> : <>

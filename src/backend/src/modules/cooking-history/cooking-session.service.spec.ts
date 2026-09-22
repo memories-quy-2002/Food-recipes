@@ -49,7 +49,6 @@ describe('CookingSessionService', () => {
     abandon: jest.fn(),
     recipeExists: jest.fn(),
     mealPlanItemBelongsToUser: jest.fn(),
-    mealPlanItemBelongsToHousehold: jest.fn(),
     leftoverStartContext: jest.fn(),
   };
 
@@ -57,7 +56,6 @@ describe('CookingSessionService', () => {
     jest.clearAllMocks();
     repository.recipeExists.mockResolvedValue(true);
     repository.mealPlanItemBelongsToUser.mockResolvedValue(true);
-    jest.mocked(repository.mealPlanItemBelongsToHousehold!).mockResolvedValue(true);
     repository.findActive.mockResolvedValue(null);
   });
 
@@ -78,14 +76,6 @@ describe('CookingSessionService', () => {
     expect(repository.start).toHaveBeenCalledWith(7, 15, 42, 4);
   });
 
-  it('uses household source-aware ownership for recipe plan items', async () => {
-    repository.start.mockResolvedValue(session);
-    const service = new CookingSessionService(repository);
-
-    await expect(service.start(7, { recipeId: 15, mealPlanItemId: 42, householdId: 22 })).resolves.toEqual({ session });
-    expect(repository.mealPlanItemBelongsToHousehold).toHaveBeenCalledWith(22, 42, 15);
-    expect(repository.mealPlanItemBelongsToUser).not.toHaveBeenCalled();
-  });
 
   it('starts a leftover source only when the owned batch is available', async () => {
     const service = new CookingSessionService(repository);

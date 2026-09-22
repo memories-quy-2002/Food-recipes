@@ -40,7 +40,7 @@ describe('NotificationsService', () => {
   });
 
   it('does not create a duplicate semantic reminder', async () => {
-    repository.findPreferences.mockResolvedValue({ pantry_expiry: true, meal_reminder: true, resume_cooking: true, weekly_plan: true, household_activity: true });
+    repository.findPreferences.mockResolvedValue({ pantry_expiry: true, meal_reminder: true, resume_cooking: true, weekly_plan: true });
     repository.createIfAbsent.mockResolvedValue(null);
 
     await expect(service.create({
@@ -54,7 +54,7 @@ describe('NotificationsService', () => {
   });
 
   it('suppresses optional notifications when the user disabled that preference', async () => {
-    repository.findPreferences.mockResolvedValue({ pantry_expiry: true, meal_reminder: false, resume_cooking: true, weekly_plan: true, household_activity: true });
+    repository.findPreferences.mockResolvedValue({ pantry_expiry: true, meal_reminder: false, resume_cooking: true, weekly_plan: true });
 
     await expect(service.create({
       userId: 7,
@@ -66,18 +66,6 @@ describe('NotificationsService', () => {
     expect(repository.createIfAbsent).not.toHaveBeenCalled();
   });
 
-  it('creates household activity even when optional reminders are disabled', async () => {
-    repository.findPreferences.mockResolvedValue({ pantry_expiry: true, meal_reminder: true, resume_cooking: true, weekly_plan: true, household_activity: false });
-    repository.createIfAbsent.mockResolvedValue(notification({ kind: 'household-invite', dedupe_key: 'household-invite:8' }));
-
-    await expect(service.create({
-      userId: 7,
-      kind: 'household-invite',
-      title: 'You have a household invite',
-      dedupeKey: 'household-invite:8',
-      preferenceKey: 'householdActivity',
-    })).resolves.toMatchObject({ created: true });
-  });
 
   it('rejects marking another user notification as read', async () => {
     repository.markRead.mockResolvedValue(false);

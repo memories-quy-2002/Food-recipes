@@ -859,9 +859,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 							{isCreateMode ? "Create a new recipe" : "Edit recipe"}
 						</h1>
 						<p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-							Uploading personal recipes is easy! Add yours to
-							your favorites, share with friends, family, or the
-							community.
+							Add recipes to your personal collection and share them with the community.
 						</p>
 					</div>
 					<div className="p-4 sm:p-6 lg:p-8">

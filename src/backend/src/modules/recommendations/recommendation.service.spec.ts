@@ -161,7 +161,7 @@ describe('RecommendationService', () => {
     expect(historyService.list).toHaveBeenCalledWith(7);
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
     const signalQuery = prisma.$queryRaw.mock.calls[1][0];
-    expect(signalQuery.strings.join(' ')).toMatch(/household_members/);
+    expect(signalQuery.strings.join(' ')).not.toMatch(/household_members/);
     expect(signalQuery.strings.join(' ')).toMatch(/recommendation_meal_plan_removals/);
   });
 

@@ -16,7 +16,7 @@ NestJS API and PostgreSQL persistence.
 - Organize saved recipes into collections and leave private recipe notes.
 - Plan meals, apply templates/recurring rules, import ingredients to a shopping list, and compare pantry availability.
 - Cook with persisted progress, shortage handling, leftovers, cooking history, and a private journal.
-- Share household planning, shopping, pantry, and leftover scopes with role-aware access.
+- Keep planning, shopping, pantry, cooking history, and leftovers within the signed-in user account.
 - Import a public recipe URL into a private draft and upload validated recipe/journal media through signed grants.
 - Generate route-aware SEO metadata with the shared `PageHelmet` helper and public recipe structured data.
 - Run NestJS request logging, centralized exception filters, CORS, validation, Swagger, and PostgreSQL persistence.
@@ -32,7 +32,7 @@ NestJS API and PostgreSQL persistence.
 - Infrastructure: Docker Compose with direct NestJS API hosting
 - Deployment: Vercel frontend and containerized NestJS API
 
-PostgreSQL, Prisma, JWT signing, and Docker are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend. The current NestJS API implements JWT bearer authentication, refresh-token rotation, and role-aware protected routes.
+PostgreSQL, Prisma, JWT signing, and Docker are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend. The current NestJS API implements JWT bearer authentication, refresh-token rotation, and ownership-checked protected routes.
 
 ## Project Structure
 
@@ -64,8 +64,7 @@ Food-recipes/
         recipes/        Recipe details, editing, cooking, sharing, and notes
         planning/       Meal plans, templates, recurring meals, and continuity
         shopping/       Shopping list and pantry preparation
-        pantry/         Personal and household pantry inventory
-        households/     Household membership and scope selection
+        pantry/         Personal pantry inventory
         history/        Cooking history and completion handoff
         journal/        Private post-cook journal
         saved/          Saved collections
@@ -273,18 +272,20 @@ stack. All backend commands run directly from the single package at
 
 ## GitHub CI/CD
 
-Pull requests and pushes to `master` run the required quality gates in
-`.github/workflows/quality-gates.yml`. Backend and frontend checks run in
-parallel, and failed Playwright runs retain short-lived test artifacts for
-diagnosis. The workflow is read-only and never commits or pushes changes.
+[Quality Gates](./.github/workflows/quality-gates.yml) runs for pull requests,
+pushes to `master`, and manual dispatch. Package jobs use path filters; the
+frontend job includes mocked Playwright quality journeys, and the backend job
+migrates and verifies a disposable PostgreSQL database before its checks and
+runtime Docker image build. See the [CI/CD
+release guide](./docs/ci-cd.md) for exact triggers and deployment boundaries.
 
-`.github/workflows/dependency-security.yml` reviews dependency changes in pull
-requests and runs a weekly audit for both packages. Dependabot watches the
-frontend, backend, and GitHub Actions dependency sources separately.
+[Dependency Security](./.github/workflows/dependency-security.yml) checks
+relevant dependency pull requests and audits both packages weekly. Dependabot
+updates frontend, backend, and GitHub Actions dependencies.
 
-Vercel handles frontend preview and production deployments from the connected
-GitHub repository. Production Prisma migrations remain a deliberate manual
-operation through `.github/workflows/production-prisma-baseline.yml`.
+The checked-in Vercel config enables frontend deployment from `master`. The
+repository does not publish or deploy the backend API image automatically;
+production database workflows are separately manual.
 
 ## Database and migrations
 
@@ -326,6 +327,10 @@ operational complexity without a clear need in the current single-API system.
 ## Documentation
 
 - [Documentation index](./docs/README.md)
+- [CI/CD and release operations](./docs/ci-cd.md)
+- [Product knowledge Wiki](./Wiki/index.md)
+- [AI task prompts](./docs/ai-prompts/README.md)
+- [BMAD planning workflow](./docs/bmad/README.md)
 - [Production roadmap](./docs/roadmap.md)
 - [Production-quality audit](./docs/audits/2026-09-14-production-quality-audit.md)
 - [Changelog](./CHANGELOG.md)

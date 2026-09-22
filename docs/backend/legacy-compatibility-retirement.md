@@ -1,6 +1,6 @@
 # Legacy compatibility retirement plan
 
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-22
 
 This plan records compatibility paths that are still active in the NestJS API
 and frontend. It is a sequencing document, not permission to remove them
@@ -59,6 +59,13 @@ boundary. Then simplify feature contracts and components so they consume only
 the canonical fields. This should follow the backend data migration rather
 than being done as a broad, unverified type cleanup.
 
+## Retired household feature data
+
+Household creation, invitation, membership, and shared-kitchen application
+routes have been retired from the current frontend and API. The existing
+household tables and nullable scope columns are retained as legacy data. Do not
+delete records, change their ownership, or drop these columns until a separate
+backup, retention, and migration plan has been approved and rehearsed.
 ## Verification gate
 
 Every retirement step should include focused API tests, frontend tests for the

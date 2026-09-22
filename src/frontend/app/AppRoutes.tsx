@@ -17,7 +17,6 @@ import ShoppingListPage from "@/features/shopping/ShoppingListPage";
 import PantryPage from "@/features/pantry/PantryPage";
 import HistoryPage from "@/features/history/HistoryPage";
 import FoodPreferencesPage from "@/features/preferences/FoodPreferencesPage";
-import HouseholdsPage from "@/features/households/HouseholdsPage";
 import NotificationPreferencesPage from "@/features/notifications/NotificationPreferencesPage";
 import RecipeImportPage from "@/features/recipe-import/RecipeImportPage";
 import JournalPage from "@/features/journal/JournalPage";
@@ -48,10 +47,6 @@ const AppRoutes = (): ReactElement => (
 					<FoodPreferencesPage />
 				</ProtectedRoute>
 			}
-		/>
-		<Route
-			path="/households"
-			element={<ProtectedRoute><HouseholdsPage /></ProtectedRoute>}
 		/>
 		<Route
 			path="/profile/notifications"
