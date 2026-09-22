@@ -19,12 +19,12 @@ assert.match(
 );
 assert.match(
   dependencyWorkflow,
-  /actions\/checkout@v4[\s\S]*fetch-depth:\s*0/,
+  /actions\/checkout@v(?:[4-9]|[1-9]\d+)[\s\S]*fetch-depth:\s*0/,
   'dependency downgrade guard must fetch full Git history so the PR base SHA is available',
 );
 assert.match(
   dependencyWorkflow,
-  /actions\/setup-node@v4[\s\S]*node-version:\s*24/,
+  /actions\/setup-node@v(?:[4-9]|[1-9]\d+)[\s\S]*node-version:\s*24/,
   'dependency downgrade guard must run on Node 24',
 );
 assert.match(

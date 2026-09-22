@@ -44,7 +44,7 @@ assertJobContains('changes', /dorny\/paths-filter@v4/, 'changes must use the mai
 assertJobContains('changes', /frontend:\s*\r?\n\s+- 'src\/frontend\/\*\*'/, 'changes must detect frontend paths');
 assertJobContains('changes', /backend:\s*\r?\n\s+- 'src\/backend\/\*\*'/, 'changes must detect backend paths');
 assertJobContains('changes', /cross:\s*\r?\n\s+- '\.github\/\*\*'/, 'changes must detect cross-package paths');
-assertJobContains('static', /actions\/setup-node@v4[\s\S]*node-version: 24/, 'static validators must use Node 24');
+assertJobContains('static', /actions\/setup-node@v(?:[4-9]|[1-9]\d+)[\s\S]*node-version: 24/, 'static validators must use Node 24');
 for (const validator of [
   'ci-workflow.validation.mjs',
   'prisma-baseline.validation.mjs',
@@ -59,8 +59,8 @@ for (const validator of [
 }
 
 for (const jobName of ['backend', 'frontend', 'frontend-e2e']) {
-  assertJobContains(jobName, /pnpm\/action-setup@v4[\s\S]*version: 11\.18\.0/);
-  assertJobContains(jobName, /actions\/setup-node@v4[\s\S]*node-version: 24/);
+  assertJobContains(jobName, /pnpm\/action-setup@v(?:[4-9]|[1-9]\d+)[\s\S]*version: 11\.18\.0/);
+  assertJobContains(jobName, /actions\/setup-node@v(?:[4-9]|[1-9]\d+)[\s\S]*node-version: 24/);
   assertJobContains(jobName, /pnpm install --frozen-lockfile/);
 }
 
@@ -79,10 +79,10 @@ assertJobContains('frontend', /pnpm build/);
 assertJobContains('frontend-e2e', /needs:\s*changes/);
 assertJobContains('frontend-e2e', /pnpm exec playwright install --with-deps chromium/);
 assertJobContains('frontend-e2e', /pnpm test:e2e:quality/);
-assertJobContains('frontend-e2e', /actions\/upload-artifact@v4/);
+assertJobContains('frontend-e2e', /actions\/upload-artifact@v(?:[4-9]|[1-9]\d+)/);
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
 assert.doesNotMatch(jobs.frontend, /playwright/i, 'frontend quality gates must not run Playwright journeys');
-assert.doesNotMatch(jobs.frontend, /actions\/upload-artifact@v4/, 'frontend quality gates must not upload Playwright artifacts');
+assert.doesNotMatch(jobs.frontend, /actions\/upload-artifact@v\d+/, 'frontend quality gates must not upload Playwright artifacts');
 assert.doesNotMatch(workflow, /contents:\s*write/i, 'quality gates must never request write permissions');
 assert.doesNotMatch(workflow, /git push/i, 'quality gates must never push generated changes');
 assert.doesNotMatch(workflow, /prisma migrate reset/i, 'CI must never reset a data-bearing database');
