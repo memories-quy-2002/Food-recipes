@@ -1,6 +1,6 @@
 # Current frontend user journeys
 
-Last reviewed: 2026-09-14
+Last reviewed: 2026-09-22
 
 This document describes observable behavior in the current React application.
 The primary audience is developers reviewing the recipe discovery and kitchen
@@ -25,7 +25,6 @@ Open Saved, create/edit/archive/restore/delete an own recipe
 Update profile, preferences, notification settings, and password
 Recipe -> plan -> shopping list -> pantry -> cooking -> history/journal
 Recipe URL import -> preview -> private draft -> publish when complete
-Household invite -> shared planning, shopping, and pantry scopes
 Logout -> refresh failure -> signed-out state
 ```
 
@@ -42,17 +41,16 @@ Logout -> refresh failure -> signed-out state
 | Own recipe lifecycle | `/food/add` creates a recipe; `/food/edit` loads the owner record and saves changes; profile actions expose lifecycle operations. | `features/recipes/AddRecipe.tsx`, `EditRecipe.tsx`, `features/profile/PersonalRecipes.tsx` | Owner/guest/forbidden Playwright journeys |
 | Password and profile settings | Profile and password updates use protected API routes and show inline validation/status states. | `features/profile/Profile.tsx`, `ChangePassword.tsx` | Backend authorization tests + authenticated journey |
 | Recovery and verification | Guests can request generic recovery instructions, complete a valid reset or see a safe invalid-link state, consume email verification links, and authenticated unverified users can resend from a dismissible reminder. Tokens are never rendered. | src/frontend/features/auth/**, src/backend/src/modules/auth/** | Focused frontend API/component tests + 6 mocked Playwright journeys; backend recovery/config tests |
-| Recipe -> plan -> shopping -> pantry -> cooking -> history/journal | A planned recipe can be imported once into the active shopping list, recovered after a failed purchase toggle, moved into pantry, cooked through a server-reported shortage, completed, and journaled. | `features/recipes/**`, `features/planning/**`, `features/shopping/**`, `features/pantry/**`, `features/history/**`, `features/journal/**` | `e2e/kitchen-loop.spec.js` deterministic full-flow regression |
+| Recipe -> plan -> shopping -> pantry -> cooking -> history/journal | A planned recipe can be imported once into the active shopping list, recovered after a failed purchase toggle, moved into pantry, cooked through a server-reported shortage, completed, and journaled. History shows an authenticated lifetime recap; recipe detail shows that user's cook count, latest servings, and private journal reflection. | `features/recipes/**`, `features/planning/**`, `features/shopping/**`, `features/pantry/**`, `features/history/**`, `features/journal/**`; `src/backend/src/modules/cooking-history/cooking-insights.*` | Existing kitchen-loop journey; recap and memory journeys are not yet automated |
 | Planning -> cooking | Plans, recurring rules, templates, leftover items, cooking sessions, shortage handling, and return-to-plan context are persisted server-side. | `features/planning/**`, `features/history/**`, `features/recipes/cooking/**` | Backend tests + planning/kitchen Playwright journeys |
 | Shopping -> pantry | Manual and recipe/planned imports can be checked, edited, cleared, or imported into pantry when quantity/unit data is sufficient; active duplicate imports are idempotent. | `features/shopping/**`, `features/pantry/**`, `src/backend/src/modules/planning/**` | Backend repository/service tests + shopping/pantry Playwright journeys |
-| Household scope | Household membership and roles scope plan, shopping, pantry, and leftover reads/writes; viewers remain read-only. | `features/households/**`, `HouseholdScopeProvider.tsx` | Backend role tests + authenticated journey |
 | Recipe import -> draft | A public URL is previewed server-side, shown for editing, and saved as an owner draft without publishing incomplete data. | `features/recipe-import/**`, `src/backend/src/modules/recipe-imports/**` | Backend validation + retention journey |
 | Logout and refresh recovery | Access tokens remain in memory, refresh uses the HttpOnly cookie, and failed refresh clears the authenticated state. | `features/auth/api/authSessionApi.ts`, `shared/api/axios.ts`, `app/AuthProvider.tsx` | Unit tests + real-stack security journey |
 
 ## SEO and indexability boundary
 
 - Public Home, `/food`, and published recipe detail are indexable surfaces.
-- Account, profile, household, planning, shopping, pantry, import, history,
+- Account, profile, planning, shopping, pantry, import, history,
   journal, edit, health, and error surfaces use `noindex,nofollow`.
 - Recipe detail keeps the compatibility URL `/recipe?id=<id>` while canonical
   and structured-data output are generated from validated public recipe fields.
@@ -76,4 +74,6 @@ Logout -> refresh failure -> signed-out state
 - Real-stack tests require a reachable API, PostgreSQL, and seeded data.
 - Static/type/unit checks do not prove browser routing, CORS, cookie behavior,
   or live database parity.
+- Personal kitchen data is scoped to the authenticated user. Existing group-scoped database rows remain legacy data and are not part of the personal journeys.
+- The default serving count for new preferences is one; saved per-user preferences remain unchanged by the default.
 - The product does not currently promise offline/PWA behavior.
