@@ -69,7 +69,7 @@ for (const model of [
 }
 
 assert.match(schema, /userId\s+Int\s+@id\s+@map\("user_id"\)/);
-assert.match(schema, /defaultServings\s+Int\s+@default\(2\)\s+@map\("default_servings"\)/);
+assert.match(schema, /defaultServings\s+Int\s+@default\(1\)\s+@map\("default_servings"\)/);
 assert.match(schema, /maxWeekdayCookMinutes\s+Int\?\s+@map\("max_weekday_cook_minutes"\)/);
 assert.match(schema, /maxCaloriesPerServing\s+Int\?\s+@map\("max_calories_per_serving"\)/);
 assert.match(schema, /minProteinGrams\s+Float\?\s+@map\("min_protein_grams"\)/);

@@ -60,7 +60,7 @@ describe('PreferencesService', () => {
       preferredCuisines: [],
       cookingSkill: null,
       maxWeekdayCookMinutes: null,
-      defaultServings: 2,
+      defaultServings: 1,
       maxCaloriesPerServing: null,
       minProteinGrams: null,
       strictDislikes: false,

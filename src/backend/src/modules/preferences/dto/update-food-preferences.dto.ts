@@ -62,7 +62,7 @@ export class UpdateFoodPreferencesDto {
   @Max(240)
   maxWeekdayCookMinutes?: number | null;
 
-  @ApiPropertyOptional({ example: 2, default: 2, minimum: 1, maximum: 24 })
+  @ApiPropertyOptional({ example: 1, default: 1, minimum: 1, maximum: 24 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

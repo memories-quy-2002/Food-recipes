@@ -96,7 +96,7 @@ model UserFoodPreference {
   diet                  String?  @db.VarChar(32)
   cookingSkill          String?  @map("cooking_skill") @db.VarChar(16)
   maxWeekdayCookMinutes Int?     @map("max_weekday_cook_minutes")
-  defaultServings       Int      @default(2) @map("default_servings")
+  defaultServings       Int      @default(1) @map("default_servings")
   maxCaloriesPerServing Int?     @map("max_calories_per_serving")
   minProteinGrams       Float?   @map("min_protein_grams")
   strictDislikes        Boolean  @default(false) @map("strict_dislikes")

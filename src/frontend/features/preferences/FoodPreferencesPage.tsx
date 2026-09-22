@@ -90,7 +90,7 @@ const toFormData = (
 		preferences?.maxWeekdayCookMinutes == null
 			? ""
 			: String(preferences.maxWeekdayCookMinutes),
-	defaultServings: String(preferences?.defaultServings ?? 2),
+	defaultServings: String(preferences?.defaultServings ?? 1),
 	maxCaloriesPerServing:
 		preferences?.maxCaloriesPerServing == null
 			? ""
