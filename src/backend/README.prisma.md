@@ -58,6 +58,14 @@ or that migration history is complete.
 
 ## Safe baseline procedure
 
+For the checked-in production workflow, use the manual, same-commit CI-gated
+[Production Prisma Baseline workflow](../../.github/workflows/production-prisma-baseline.yml)
+only after completing these inspections. Read the
+[production migration runbook](../../docs/production-migrations.md) for the
+backup, full CI, dispatch, and Environment steps. The commands below explain
+the baseline operation; they are not approval to run it manually against
+production outside that workflow.
+
 The commands below are an operator procedure. They were not run for this
 change because this task must not connect to or mutate a database.
 

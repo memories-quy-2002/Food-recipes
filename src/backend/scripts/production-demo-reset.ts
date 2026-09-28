@@ -100,6 +100,18 @@ const validateConfiguration = (): URL => {
     throw new Error('The application table allowlist contains a protected table or schema');
   }
 
+  if (!process.env.DEMO_RESET_BACKUP_REFERENCE?.trim()) {
+    throw new Error('A verified production backup or PITR reference is required');
+  }
+
+  if (process.env.DEMO_RESET_STORAGE === 'true') {
+    const storageUrl = new URL(requiredEnvironment('SUPABASE_URL'));
+    if (storageUrl.protocol !== 'https:') {
+      throw new Error('SUPABASE_URL must use HTTPS when Storage cleanup is enabled');
+    }
+    requiredEnvironment('SUPABASE_SERVICE_ROLE_KEY');
+    requiredEnvironment('SUPABASE_RECIPE_BUCKET');
+  }
   return parsedDatabaseUrl;
 };
 
@@ -253,7 +265,17 @@ export const main = async (): Promise<void> => {
 };
 
 if (require.main === module) {
-  main().catch((error: unknown) => {
+  const run = async (): Promise<void> => {
+    if (process.argv.includes('--validate-only')) {
+      validateConfiguration();
+      console.log('Production demo reset configuration validated.');
+      return;
+    }
+
+    await main();
+  };
+
+  run().catch((error: unknown) => {
     console.error('Production demo reset failed:', error);
     process.exitCode = 1;
   });
