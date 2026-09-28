@@ -4,13 +4,16 @@ This directory contains the current developer documentation for the Food Recipes
 
 ## Current documentation
 
+- [CI/CD and release operations](./ci-cd.md) - GitHub Actions, Vercel, delivery boundaries, and production database workflows.
+- [Production database migrations](./production-migrations.md) - full CI gate, manual Prisma deployment, baseline, and recovery boundaries.
+
 - [Production-quality audit](./audits/2026-09-14-production-quality-audit.md) - tracked-file scope, evidence, cleanup decisions, and verification boundaries.
 - [Production roadmap](./roadmap.md) - the active P0/P1 delivery plan and acceptance criteria.
 - [Current API contract](./backend/current-api-contract.md) - versioned NestJS routes, authentication rules, and data compatibility constraints.
 - [Frontend API cutover matrix](./frontend/api-cutover-matrix.md) - frontend consumers mapped to the current API.
 - [Current user journeys](./frontend/current-user-journeys.md) - observable product flows and browser verification coverage.
 - [Legacy compatibility retirement](./backend/legacy-compatibility-retirement.md) - evidence-led deprecation rules for compatibility paths.
-- [Production demo reset](./production-demo-reset.md) - manual, approval-gated operational runbook.
+- [Production demo reset](./production-demo-reset.md) - manual, CI-gated operational runbook.
 
 ## Archive
 

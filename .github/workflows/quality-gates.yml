@@ -71,6 +71,23 @@ jobs:
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.cross == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: food_recipes_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d food_recipes_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/food_recipes_ci
+      JWT_SECRET: food-recipes-ci-only-secret-with-at-least-32-characters
     steps:
       - uses: actions/checkout@v7
 
@@ -95,6 +112,16 @@ jobs:
       - name: Generate Prisma client
         working-directory: src/backend
         run: pnpm prisma:generate
+
+      - name: Apply migrations to isolated PostgreSQL
+        working-directory: src/backend
+        run: pnpm prisma:migrate:deploy
+
+      - name: Seed and verify isolated demo graph
+        working-directory: src/backend
+        run: |
+          pnpm prisma:seed
+          pnpm demo:verify
 
       - name: Run backend checks
         working-directory: src/backend
