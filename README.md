@@ -55,7 +55,7 @@ flowchart LR
     C --> D["Shop &amp;<br/>check pantry"]
     D --> E["Cook &amp;<br/>track"]
     E --> F["History &amp;<br/>journal"]
-    F -. "Cook again" .-> C
+    F -.->|Cook again| C
 ```
 
 ## Tech Stack
