@@ -72,8 +72,8 @@ assert.match(
 );
 assert.match(
   npmBlock,
-  /open-pull-requests-limit: 4/,
-  'npm PR limit must temporarily reserve room for the three existing NestJS 12 PRs plus one routine group',
+  /open-pull-requests-limit: 1/,
+  'npm PR limit must keep routine dependency updates to one grouped PR',
 );
 assert.match(
   npmBlock,
@@ -92,10 +92,10 @@ assert.match(
   'routine npm version updates must be limited to patch and minor releases',
 );
 for (const dependency of ['@nestjs/config', '@nestjs/jwt', '@nestjs/passport']) {
-  assert.match(
+  assert.doesNotMatch(
     npmBlock,
     new RegExp(`dependency-name: "${dependency.replace('/', '\\/')}"`),
-    `${dependency} must remain explicitly allowed while its NestJS 12 PR stays open`,
+    `${dependency} must not be exempted from the patch/minor-only policy`,
   );
 }
 
