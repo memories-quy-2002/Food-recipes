@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-labelledby="title description">
+  <title id="title">Food Recipes — from inspiration to the last bite</title>
+  <desc id="description">Editorial cookbook-style banner in warm cream, terracotta, and sage. A stylized bowl of pasta sits beside the Food Recipes headline.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FCF8F1"/>
+      <stop offset="1" stop-color="#F1E7D9"/>
+    </linearGradient>
+    <radialGradient id="plate" cx=".40" cy=".33" r=".8">
+      <stop stop-color="#FFFDF7"/>
+      <stop offset="1" stop-color="#E9DCCB"/>
+    </radialGradient>
+    <linearGradient id="pasta" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#FFCB76"/>
+      <stop offset="1" stop-color="#F1A746"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="390" rx="22" fill="url(#paper)"/>
+  <path d="M0 329c136-36 221-13 340 61H0z" fill="#E6EFD8" opacity=".76"/>
+  <path d="M1141 0h59v119c-31-33-54-72-59-119Z" fill="#D9E5CA"/>
+  <path d="M50 49h39" stroke="#BF7D4D" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="102" cy="49" r="3" fill="#BF7D4D"/>
+  <text x="52" y="79" fill="#836349" font-family="Arial,Helvetica,sans-serif" font-size="14" font-weight="700" letter-spacing="3.3">A BETTER WAY TO EAT EVERY DAY</text>
+  <text x="48" y="171" fill="#291D18" font-family="Georgia,'Times New Roman',serif" font-size="75" font-weight="700" letter-spacing="-3">Food Recipes</text>
+  <path d="M52 195h493" stroke="#CBA98F" stroke-width="1"/>
+  <text x="52" y="240" fill="#44362E" font-family="Arial,Helvetica,sans-serif" font-size="24" font-weight="500">Discover. Plan. Cook. Remember.</text>
+  <text x="52" y="278" fill="#6C594A" font-family="Arial,Helvetica,sans-serif" font-size="18">Your recipes, kitchen routine, and cooking history</text>
+  <text x="52" y="304" fill="#6C594A" font-family="Arial,Helvetica,sans-serif" font-size="18">beautifully connected in one place.</text>
+  <rect x="52" y="328" width="224" height="35" rx="17.5" fill="#2C4233"/>
+  <circle cx="73" cy="345.5" r="5" fill="#C7DAAE"/>
+  <text x="88" y="351" fill="#FAF7EF" font-family="Arial,Helvetica,sans-serif" font-size="13" font-weight="700" letter-spacing="1">MADE FOR HOME COOKS</text>
+  <ellipse cx="927" cy="206" rx="213" ry="165" fill="#C5B19A" opacity=".24"/>
+  <circle cx="931" cy="190" r="176" fill="#E3D1BB"/>
+  <circle cx="923" cy="180" r="168" fill="url(#plate)"/>
+  <circle cx="923" cy="180" r="140" fill="none" stroke="#E5D7C4" stroke-width="3"/>
+  <circle cx="923" cy="180" r="120" fill="#EAB576" opacity=".30"/>
+  <path d="M848 138c34-34 116-25 144 8 26 31 23 75-9 98-43 31-103 14-132-16-34-36-30-68-3-90Z" fill="#BF4F2C" opacity=".87"/>
+  <path d="M841 148c53-50 144-22 138 36-6 49-88 62-127 22-28-30 0-69 46-66 63 3 81 54 23 74-39 13-70-13-51-35 15-18 40-14 54-4" fill="none" stroke="url(#pasta)" stroke-linecap="round" stroke-width="13"/>
+  <path d="M851 171c32-36 109-39 133 7 14 30-12 64-52 65-33 1-83-18-64-53 14-27 65-27 89-6" fill="none" stroke="#FFE3A5" stroke-linecap="round" stroke-width="7"/>
+  <path d="M849 192c28 35 84 44 126 17" fill="none" stroke="#F6BD66" stroke-linecap="round" stroke-width="10"/>
+  <path d="M871 128c30-9 77-4 104 21" fill="none" stroke="#F5C66D" stroke-linecap="round" stroke-width="8"/>
+  <g fill="#487C4F" stroke="#2D5938" stroke-width="1.5">
+    <path d="M918 119c-22-10-36-7-42 5 11 18 26 22 42-5Z"/>
+    <path d="M918 119c11-20 28-24 39-18 1 21-13 29-39 18Z"/>
+    <path d="M947 217c-24-11-39-3-45 10 13 17 31 17 45-10Z"/>
+    <path d="M947 217c12-20 29-20 38-13-3 18-15 25-38 13Z"/>
+    <path d="M856 220c-20-13-33-11-41-2 8 17 25 22 41 2Z"/>
+  </g>
+  <g fill="#D9472B" stroke="#FAD18A" stroke-width="3">
+    <circle cx="997" cy="173" r="15"/>
+    <circle cx="876" cy="244" r="12"/>
+    <circle cx="865" cy="104" r="11"/>
+  </g>
+  <g fill="#FAF5E8" opacity=".85"><circle cx="996" cy="167" r="3"/><circle cx="872" cy="240" r="2.5"/></g>
+  <path d="M1109 301c-20-50-25-104-2-149" fill="none" stroke="#6C8B5D" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#82A174">
+    <ellipse cx="1096" cy="250" rx="10" ry="25" transform="rotate(-44 1096 250)"/>
+    <ellipse cx="1120" cy="228" rx="9" ry="25" transform="rotate(41 1120 228)"/>
+    <ellipse cx="1099" cy="197" rx="9" ry="23" transform="rotate(-36 1099 197)"/>
+    <ellipse cx="1119" cy="171" rx="8" ry="22" transform="rotate(38 1119 171)"/>
+  </g>
+  <g transform="rotate(-13 690 260)" stroke="#B28F73" stroke-width="5" stroke-linecap="round" fill="none" opacity=".8">
+    <path d="M701 138v129c0 12-15 12-15 0V138"/>
+    <path d="M680 136v45m12-45v45m12-45v45"/>
+    <path d="M680 182c0 30 24 30 24 0"/>
+  </g>
+  <text x="1132" y="368" text-anchor="end" fill="#8A705A" font-family="Arial,Helvetica,sans-serif" font-size="12" letter-spacing="1.2">THE EVERYDAY KITCHEN</text>
+</svg>

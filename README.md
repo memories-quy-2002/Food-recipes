@@ -1,40 +1,97 @@
-# Food Recipes
+<p align="center">
+  <img src="./docs/assets/readme-hero.svg" alt="Food Recipes — discover, plan, cook and remember, illustrated with a fresh pasta dish" width="100%" />
+</p>
 
-Food Recipes is a full-stack recipe platform for home cooks. It supports public
-recipe discovery, safe recipe publishing, saved collections, meal planning,
-shopping and pantry workflows, and a persisted cooking history. The frontend is
-a React + TypeScript + Vite application, while the backend provides the versioned
-NestJS API and PostgreSQL persistence.
+<p align="center">
+  <strong>A connected kitchen companion for discovering recipes, planning meals, preparing ingredients, and enjoying the cooking process.</strong>
+</p>
 
-## Features
+<p align="center">
+  <a href="https://foodrecipes1.vercel.app/"><img alt="Explore live app" src="https://img.shields.io/badge/Explore_the_app-2C4233?style=for-the-badge&amp;logo=vercel&amp;logoColor=white" /></a>
+  <a href="./docs/README.md"><img alt="Read documentation" src="https://img.shields.io/badge/Documentation-ED732F?style=for-the-badge&amp;logo=readthedocs&amp;logoColor=white" /></a>
+  <a href="#getting-started"><img alt="Get started" src="https://img.shields.io/badge/Get_started-85664F?style=for-the-badge&amp;logo=rocket&amp;logoColor=white" /></a>
+</p>
 
-- Browse recipes with search, category filters, meal filters, and sorting.
-- View recipe details with cooking time, ratings, reviews, and related recipes.
-- Create an account, log in, manage profile details, and change passwords.
-- Save recipes to a wishlist and manage saved recipes interactively.
-- Add, edit, publish, archive, restore, and delete owned recipes with structured ingredients and metadata.
-- Organize saved recipes into collections and leave private recipe notes.
-- Plan meals, apply templates/recurring rules, import ingredients to a shopping list, and compare pantry availability.
-- Cook with persisted progress, shortage handling, leftovers, cooking history, and a private journal.
-- Share household planning, shopping, pantry, and leftover scopes with role-aware access.
-- Import a public recipe URL into a private draft and upload validated recipe/journal media through signed grants.
-- Generate route-aware SEO metadata with the shared `PageHelmet` helper and public recipe structured data.
-- Run NestJS request logging, centralized exception filters, CORS, validation, Swagger, and PostgreSQL persistence.
+<p align="center">
+  <a href="https://github.com/memories-quy-2002/Food-recipes/actions/workflows/quality-gates.yml"><img alt="Quality gates on master" src="https://github.com/memories-quy-2002/Food-recipes/actions/workflows/quality-gates.yml/badge.svg?branch=master" /></a>
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" />
+  <img alt="NestJS" src="https://img.shields.io/badge/NestJS-API-E0234E?logo=nestjs&amp;logoColor=white" />
+  <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&amp;logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Full_stack-3178C6?logo=typescript&amp;logoColor=white" />
+</p>
+
+---
+
+## Why Food Recipes?
+
+Most recipe apps stop at inspiration. **Food Recipes connects the entire home-cooking journey**: find a dish, save it, fit it into your week, check what is already in the pantry, prepare a shopping list, follow your cooking progress, and keep a record of what you made.
+
+Built with **React + TypeScript** and a **NestJS + PostgreSQL** backend, the project balances user-facing kitchen workflows with a maintainable full-stack architecture.
+
+## Explore the kitchen
+
+| Find something worth cooking | Make a plan that works |
+| :--- | :--- |
+| **Recipe discovery** — Search, filter, sort, and explore recipes with details, ratings, reviews, and related dishes. | **Meal planning** — Organize meals with reusable templates and recurring rules, then import ingredients into a shopping list. |
+| **Personal cookbook** — Save favorites, create collections, and keep private notes on recipes. | **Pantry-aware preparation** — Compare required ingredients with personal or household stock before cooking. |
+| **Publish & share** — Draft, edit, publish, archive, or restore your own recipes; import a public recipe URL into a private draft. | **Cook & remember** — Track a cooking session, manage shortages and leftovers, then revisit cooking history and a private journal. |
+
+> **Built for real households:** shared planning, shopping, pantry, and leftovers use role-aware access. Public recipe discovery remains available without a household.
+
+## A little food inspiration
+
+<p align="center"><em>Recipe photography already included in the application.</em></p>
+
+| Breakfast inspiration | Everyday pasta | A quick seafood plate |
+| :---: | :---: | :---: |
+| <img src="./src/frontend/shared/assets/images/breakfast.png" alt="Breakfast food photography from the app's asset library" width="280" /> | <img src="./src/frontend/shared/assets/images/pesto_pasta.png" alt="Pesto pasta photo from the app's asset library" width="280" /> | <img src="./src/frontend/shared/assets/images/quick_shrimp_scampi.png" alt="Shrimp scampi photo from the app's asset library" width="280" /> |
+
+## From a recipe to a routine
+
+```mermaid
+flowchart LR
+    A["Discover<br/>recipes"] --> B["Save &amp;<br/>organize"]
+    B --> C["Plan<br/>meals"]
+    C --> D["Shop &amp;<br/>check pantry"]
+    D --> E["Cook &amp;<br/>track"]
+    E --> F["History &amp;<br/>journal"]
+    F -.->|Cook again| C
+```
 
 ## Tech Stack
 
-- Frontend: React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind CSS v4, shadcn/ui, and shared CSS styles
-- Server state: TanStack Query
-- Forms and validation: React Hook Form + Zod for recipe forms
-- API: REST/OpenAPI-compatible NestJS `/api/v1`
-- Backend: Node.js, NestJS, PostgreSQL, Prisma 7, and REST/OpenAPI
-- Authentication: JWT bearer authentication for protected routes
-- Infrastructure: Docker Compose with direct NestJS API hosting
-- Deployment: Vercel frontend and containerized NestJS API
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 19, TypeScript, Vite, React Router, Tailwind CSS 4, shadcn/ui |
+| **State & forms** | TanStack Query, Redux Toolkit, React Hook Form, Zod |
+| **Backend** | Node.js, NestJS, REST API, OpenAPI / Swagger |
+| **Database** | PostgreSQL, Prisma 7 |
+| **Auth & security** | JWT access tokens, refresh-token rotation, role-aware authorization, validation |
+| **Development & delivery** | pnpm, Docker Compose, GitHub Actions, Vercel, Playwright, Jest / Vitest |
 
-PostgreSQL, Prisma, JWT signing, and Docker are backend or infrastructure-owned concerns. They do not run in browser code. Only intentionally public `VITE_*` build variables are exposed to the frontend. The current NestJS API implements JWT bearer authentication, refresh-token rotation, and role-aware protected routes.
+Only public `VITE_*` variables are used in browser builds. PostgreSQL, Prisma, signing keys, and migrations remain backend or infrastructure responsibilities.
+
+### Architecture at a glance
+
+```mermaid
+flowchart LR
+    subgraph Browser["Frontend · Vercel"]
+      UI["React + TypeScript<br/>Redux Toolkit · TanStack Query"]
+    end
+    subgraph API["Backend · NestJS"]
+      HTTP["REST /api/v1<br/>Auth · Recipes · Kitchen workflows"]
+      Prisma["Prisma ORM"]
+      HTTP --> Prisma
+    end
+    DB[("PostgreSQL")]
+    UI -->|"HTTPS / JSON"| HTTP
+    Prisma --> DB
+```
 
 ## Project Structure
+
+<details>
+<summary><strong>Expand the repository layout</strong></summary>
 
 ```text
 Food-recipes/
@@ -97,6 +154,8 @@ Food-recipes/
 
 Frontend imports can use `@` for `src/frontend`, for example
 `@/shared/api/axios` or `@/features/recipes/Recipe`.
+
+</details>
 
 ## Getting Started
 
@@ -336,3 +395,7 @@ operational complexity without a clear need in the current single-API system.
 ## License
 
 No license has been declared yet. Add a `LICENSE` file before publishing if you want to define reuse terms.
+
+---
+
+<p align="center">Designed and maintained by <a href="https://github.com/memories-quy-2002">Nguyen Manh Phu Quy</a>.</p>
