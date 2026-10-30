@@ -6,6 +6,8 @@
   <strong>A connected kitchen companion for discovering recipes, planning meals, preparing ingredients, and enjoying the cooking process.</strong>
 </p>
 
+<p align="center"><strong>Behind the build:</strong> <a href="https://www.nguyenmanhphuquy.info/case-studies/food-recipes/">Read the Food Recipes engineering case study ↗</a> &nbsp;·&nbsp; <a href="https://www.nguyenmanhphuquy.info/">Explore my software engineering portfolio ↗</a></p>
+
 <p align="center">
   <a href="https://foodrecipes1.vercel.app/"><img alt="Explore live app" src="https://img.shields.io/badge/Explore_the_app-2C4233?style=for-the-badge&amp;logo=vercel&amp;logoColor=white" /></a>
   <a href="./docs/README.md"><img alt="Read documentation" src="https://img.shields.io/badge/Documentation-ED732F?style=for-the-badge&amp;logo=readthedocs&amp;logoColor=white" /></a>
@@ -398,4 +400,4 @@ No license has been declared yet. Add a `LICENSE` file before publishing if you 
 
 ---
 
-<p align="center">Designed and maintained by <a href="https://github.com/memories-quy-2002">Nguyen Manh Phu Quy</a>.</p>
+<p align="center">Designed and maintained by <a href="https://github.com/memories-quy-2002">Nguyen Manh Phu Quy</a> · <a href="https://www.nguyenmanhphuquy.info/">Personal portfolio</a>.</p>
