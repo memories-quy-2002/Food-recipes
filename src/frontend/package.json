@@ -10,7 +10,7 @@
     "@radix-ui/react-slot": "^1.3.3",
     "@reduxjs/toolkit": "^2.12.0",
     "@tailwindcss/vite": "^4.3.3",
-    "@tanstack/react-query": "5.104.1",
+    "@tanstack/react-query": "5.104.5",
     "axios": "^1.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -44,7 +44,7 @@
     "test:e2e:real": "node tools/run-real-stack-e2e.mjs"
   },
   "devDependencies": {
-    "@axe-core/playwright": "4.13.0",
+    "@axe-core/playwright": "4.14.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
