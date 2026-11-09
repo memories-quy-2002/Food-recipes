@@ -234,6 +234,7 @@ test("connects Recipe Detail to a new plan, Cooking Mode, and Back to plan", asy
 	await page.getByRole("button", { name: "Next step" }).click();
 	await page.getByRole("button", { name: "Finish cooking" }).click();
 	await expect(page.getByRole("heading", { name: "Recipe complete" })).toBeVisible();
+	await page.getByRole("dialog").getByRole("button", { name: "Skip", exact: true }).click();
 	await page.getByRole("button", { name: "Back to plan" }).click();
 	await expect(page).toHaveURL(/\/planning$/);
 	await expect(page.getByText("6 servings", { exact: true })).toBeVisible();
