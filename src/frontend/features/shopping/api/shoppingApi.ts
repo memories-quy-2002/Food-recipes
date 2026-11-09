@@ -38,6 +38,7 @@ export type PrepareRecipeResponse = {
 	servings: number;
 	ingredients: PreparedIngredient[];
 	added_shopping_items: number;
+	shopping_list_confirmed?: boolean;
 };
 
 export type AddShoppingItemInput = {
@@ -57,6 +58,7 @@ export type ShoppingApiRoutes = {
 	shoppingListItem: (itemId: number) => string;
 	shoppingListFromRecipe: string;
 	shoppingListPrepare: string;
+	shoppingListPrepareAdd: string;
 	shoppingListCompleted: string;
 };
 
@@ -68,6 +70,7 @@ export const createShoppingRoutes = (scope: KitchenScope): ShoppingApiRoutes => 
 			shoppingListItem: apiRoutes.shoppingListItem,
 			shoppingListFromRecipe: apiRoutes.shoppingListFromRecipe,
 			shoppingListPrepare: apiRoutes.shoppingListPrepare,
+			shoppingListPrepareAdd: `${apiRoutes.shoppingListPrepare}/add`,
 			shoppingListCompleted: apiRoutes.shoppingListCompleted,
 		};
 	}
@@ -79,6 +82,7 @@ export const createShoppingRoutes = (scope: KitchenScope): ShoppingApiRoutes => 
 		shoppingListItem: (itemId) => `${shoppingList}/items/${itemId}`,
 		shoppingListFromRecipe: `${shoppingList}/from-recipe`,
 		shoppingListPrepare: `${shoppingList}/prepare`,
+		shoppingListPrepareAdd: `${shoppingList}/prepare/add`,
 		shoppingListCompleted: `${shoppingList}/completed`,
 	};
 };
@@ -165,6 +169,18 @@ export const prepareRecipeIngredients = async (
 ): Promise<PrepareRecipeResponse> => {
 	const response = await axios.post<PrepareRecipeResponse>(
 		createShoppingRoutes(scope).shoppingListPrepare,
+		{ recipeId, ...(servings ? { servings } : {}) },
+	);
+	return response.data;
+};
+
+export const addPreparedRecipeIngredients = async (
+	recipeId: number,
+	servings?: number,
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<PrepareRecipeResponse> => {
+	const response = await axios.post<PrepareRecipeResponse>(
+		createShoppingRoutes(scope).shoppingListPrepareAdd,
 		{ recipeId, ...(servings ? { servings } : {}) },
 	);
 	return response.data;

@@ -70,7 +70,7 @@ describe("PantryPage", () => {
 		fireEvent.change(screen.getByLabelText("Pantry item"), { target: { value: "Rice" } });
 		fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "2" } });
 		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
-		expect(mockPantry.add).toHaveBeenCalledWith({ name: "Rice", quantity: 2, unit: "PIECE", have: true }, expect.any(Object));
+		expect(mockPantry.add).toHaveBeenCalledWith({ name: "Rice", quantity: 2, unit: "PIECE", have: true, expiresAt: null }, expect.any(Object));
 
 		fireEvent.click(screen.getByRole("checkbox", { name: "Eggs available" }));
 		expect(mockPantry.update).toHaveBeenCalledWith({ pantryId: 4, input: { have: false } });
@@ -106,29 +106,32 @@ describe("PantryPage", () => {
 		expect(mockPantry.remove).not.toHaveBeenCalled();
 	});
 
-	it("keeps ingredient rows focused on quantity", () => {
+	it("shows expiry status and links a use-soon ingredient to recipe search", () => {
 		renderPage();
 
 		expect(screen.getByText("4 pc")).toBeInTheDocument();
-		expect(screen.queryByText("Use soon · Expires 2026-08-30")).not.toBeInTheDocument();
-		expect(screen.queryByText("Expired · 2026-08-27. Check before using.")).not.toBeInTheDocument();
-		expect(screen.queryByRole("link", { name: "Find recipes using Tomatoes" })).not.toBeInTheDocument();
+		expect(screen.getByText("Use soon · Expires 2026-08-30")).toBeInTheDocument();
+		expect(screen.getByText("Expired · 2026-08-27. Check before using.")).toBeInTheDocument();
+		expect(screen.getByRole("link", { name: "Find recipes using Tomatoes" })).toHaveAttribute("href", "/food?q=Tomatoes&pantryIngredient=Tomatoes");
 	});
 
-	it("does not render removed expiry or storage controls", () => {
+	it("allows adding an expiry date to a pantry item", () => {
 		renderPage();
 
-		expect(screen.queryByLabelText("Expires on")).not.toBeInTheDocument();
-		expect(screen.queryByLabelText("Storage location")).not.toBeInTheDocument();
-		expect(screen.queryByText("No expiry date set")).not.toBeInTheDocument();
-		expect(screen.queryByRole("link", { name: "Find recipes using Tomatoes" })).not.toBeInTheDocument();
+		fireEvent.change(screen.getByLabelText("Expires on (optional)"), { target: { value: "2026-12-01" } });
+		fireEvent.change(screen.getByLabelText("Pantry item"), { target: { value: "Chicken" } });
+		fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "2" } });
+		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
+
+		expect(mockPantry.add).toHaveBeenCalledWith(expect.objectContaining({ name: "Chicken", expiresAt: "2026-12-01" }), expect.any(Object));
 	});
 
-	it("submits the minimal pantry item fields", () => {
+	it("submits pantry item quantity and expiry fields", () => {
 		renderPage();
 		fireEvent.change(screen.getByLabelText("Pantry item"), { target: { value: "Chicken" } });
 		fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "2" } });
 		fireEvent.change(screen.getByLabelText("Unit"), { target: { value: "GRAM" } });
+		fireEvent.change(screen.getByLabelText("Expires on (optional)"), { target: { value: "2026-12-01" } });
 		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
 
 		expect(mockPantry.add).toHaveBeenCalledWith({
@@ -136,6 +139,7 @@ describe("PantryPage", () => {
 			quantity: 2,
 			unit: "GRAM",
 			have: true,
+			expiresAt: "2026-12-01",
 		}, expect.any(Object));
 	});
 

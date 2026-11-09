@@ -37,6 +37,7 @@ describe('PlanningService', () => {
     deleteShoppingItemForHousehold: jest.fn(),
     recipeIngredients: jest.fn(),
     prepareRecipeIngredients: jest.fn(),
+    addPreparedRecipeIngredients: jest.fn(),
     clearCompletedShoppingItems: jest.fn(),
     clearCompletedShoppingItemsForHousehold: jest.fn(),
   };

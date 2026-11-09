@@ -5,6 +5,7 @@ import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/househ
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
+	addPreparedRecipeIngredients,
 	prepareRecipeIngredients,
 	addShoppingItem,
 	clearCompletedShoppingItems,
@@ -152,21 +153,26 @@ export const useAddRecipeIngredientsFromRecipesMutation = (scope: KitchenScope =
 };
 
 export const usePrepareRecipeIngredientsMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
+	const { showToast } = useToast();
+	return useMutation({
+		mutationFn: ({ recipeId, servings }: { recipeId: number; servings?: number }) =>
+			prepareRecipeIngredients(recipeId, servings, scope),
+		onError: () => showToast({ title: "Couldn’t prepare this meal", message: "Please try again.", type: "error" }),
+	});
+};
+
+export const useAddPreparedRecipeIngredientsMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const queryClient = useQueryClient();
 	const { showToast } = useToast();
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
 	return useMutation({
 		mutationFn: ({ recipeId, servings }: { recipeId: number; servings?: number }) =>
-			prepareRecipeIngredients(recipeId, servings, scope),
+			addPreparedRecipeIngredients(recipeId, servings, scope),
 		onSuccess: async (result) => {
 			await invalidateShoppingList(queryClient, userId, scope);
-			showToast({
-				title: result.added_shopping_items
-					? `${result.added_shopping_items} missing ingredient${result.added_shopping_items === 1 ? "" : "s"} added`
-					: "This meal is ready to prepare",
-			});
+			showToast({ title: result.added_shopping_items ? `${result.added_shopping_items} missing ingredient${result.added_shopping_items === 1 ? "" : "s"} added` : "No new shopping items were needed" });
 		},
-		onError: () => showToast({ title: "Couldn’t prepare this meal", message: "Please try again.", type: "error" }),
+		onError: () => showToast({ title: "Couldn’t add missing ingredients", message: "Please try again.", type: "error" }),
 	});
 };

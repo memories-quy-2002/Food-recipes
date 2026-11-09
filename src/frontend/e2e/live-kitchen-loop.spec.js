@@ -41,14 +41,33 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	const prepareResponsePromise = page.waitForResponse((response) =>
 		isApiResponse(response, "/users/me/shopping-list/prepare", "POST"),
 	);
-	await page.getByRole("button", { name: "Prepare this meal" }).click();
+	await page.getByRole("button", { name: "Check ingredients" }).click();
 	const prepareResponse = await prepareResponsePromise;
 	const prepared = await prepareResponse.json();
 	expect(prepareResponse.ok()).toBeTruthy();
 	expect(prepared.recipe_id).toBe(recipeId);
 	expect(prepared.recipe_name).toBe(recipeName);
+	expect(prepared.added_shopping_items).toBe(0);
 	expect(prepared.ingredients.some(({ status }) => status === "missing")).toBeTruthy();
 	await expect(page.getByRole("status", { name: "Meal preparation status" })).toBeVisible();
+	const requestedServings = prepared.servings === 3 ? 4 : 3;
+	const servingsPreviewPromise = page.waitForResponse((response) =>
+		isApiResponse(response, "/users/me/shopping-list/prepare", "POST"),
+	);
+	await page.getByRole("spinbutton", { name: "Servings" }).fill(String(requestedServings));
+	await page.getByRole("button", { name: `Update preview for ${requestedServings} servings` }).click();
+	const servingsPreviewResponse = await servingsPreviewPromise;
+	const servingsPreview = await servingsPreviewResponse.json();
+	expect(servingsPreviewResponse.ok()).toBeTruthy();
+	expect(servingsPreview.servings).toBe(requestedServings);
+	await expect(page.getByRole("heading", { name: `For ${requestedServings} servings` })).toBeVisible();
+	const addMissingPromise = page.waitForResponse((response) =>
+		isApiResponse(response, "/users/me/shopping-list/prepare/add", "POST"),
+	);
+	await page.getByRole("button", { name: "Add missing ingredients to shopping list" }).click();
+	const addMissingResponse = await addMissingPromise;
+	expect(addMissingResponse.ok()).toBeTruthy();
+	expect((await addMissingResponse.json()).added_shopping_items).toBeGreaterThan(0);
 
 	await page.getByRole("link", { name: "Start cooking" }).click();
 	await expect(page).toHaveURL(new RegExp(`/recipe/cooking\\?id=${recipeId}$`));
@@ -84,6 +103,10 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	expect(completionResponse.ok()).toBeTruthy();
 
 	await expect(page.getByRole("heading", { name: "Recipe complete", exact: true })).toBeVisible();
+	const leftoverDialog = page.getByRole("dialog", { name: `Save ${recipeName} leftovers` });
+	await expect(leftoverDialog).toBeVisible();
+	await leftoverDialog.getByRole("button", { name: "Skip" }).click();
+	await expect(leftoverDialog).toHaveCount(0);
 	await page.getByRole("button", { name: "Review recipe" }).click();
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
 	await expect(page.locator("#recipe-title")).toHaveText(recipeName);
@@ -103,4 +126,41 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 		(error) => !error.url.includes("/auth/refresh") && !error.url.includes("/cooking-session/"),
 	);
 	expect(unexpectedConsoleErrors).toEqual([]);
+});
+
+test("real browser: saves a leftover before reviewing the completed recipe", async ({ page, request }) => {
+	const recipe = await findRecipeByName(request, recipeName);
+	const recipeId = recipe.recipe_id;
+	await stubThirdPartyMedia(page);
+
+	await page.goto("/account?signup=false");
+	await page.getByRole("textbox", { name: "Email address *" }).fill(demoCredentials.email);
+	await page.getByRole("textbox", { name: "Password *" }).fill(demoCredentials.password);
+	await page.getByRole("button", { name: "Log in" }).click();
+	await expect(page).toHaveURL(/\/$/);
+	await page.getByRole("region", { name: "Top rated recipes" }).getByRole("link", { name: `Open ${recipeName}` }).click();
+	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
+	await page.getByRole("link", { name: "Start cooking" }).click();
+	await expect(page.locator("#cooking-mode-title")).toHaveText(recipeName);
+	for (const checkbox of await page.getByRole("checkbox").all()) await checkbox.click({ force: true });
+	const nextStep = page.getByRole("button", { name: "Next step" });
+	await nextStep.click();
+	await nextStep.click();
+	await page.getByRole("button", { name: "Finish cooking" }).click();
+	await page.getByRole("dialog", { name: "Some ingredients are missing" }).getByRole("button", { name: "Continue anyway" }).click();
+
+	const leftoverDialog = page.getByRole("dialog", { name: `Save ${recipeName} leftovers` });
+	await expect(leftoverDialog).toBeVisible();
+	await leftoverDialog.getByLabel("Remaining servings amount").fill("1");
+	const savedLeftoverResponse = page.waitForResponse((response) => {
+		const url = new URL(response.url());
+		return response.request().method() === "POST" && url.pathname.endsWith("/users/me/leftovers");
+	});
+	await leftoverDialog.getByRole("button", { name: "Save leftover" }).click();
+	const savedLeftover = await savedLeftoverResponse;
+	expect(savedLeftover.status()).toBe(201);
+	expect((await savedLeftover.json()).leftover.remaining_servings).toBe(1);
+	await expect(leftoverDialog).toHaveCount(0);
+	await page.getByRole("button", { name: "Review recipe" }).click();
+	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
 });

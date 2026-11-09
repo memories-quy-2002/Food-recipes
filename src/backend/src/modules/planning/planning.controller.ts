@@ -142,11 +142,18 @@ export class PlanningController {
   }
 
   @Post('shopping-list/prepare')
-  @ApiOperation({ summary: 'Compare a recipe with the owned pantry and add missing ingredients' })
+  @ApiOperation({ summary: 'Compare a recipe with the owned pantry without changing the shopping list' })
   @ApiOkResponse({ type: PrepareRecipeResponseDto })
   @ApiNotFoundResponse({ type: ApiErrorResponseDto })
   prepareRecipe(@CurrentUser() user: AuthUser, @Body() dto: PrepareRecipeIngredientsDto) {
     return this.service.prepareRecipeIngredients(user.id, dto.recipeId, dto.servings);
+  }
+
+  @Post('shopping-list/prepare/add')
+  @ApiOperation({ summary: 'Add prepared recipe ingredients to the shopping list after confirmation' })
+  @ApiOkResponse({ type: PrepareRecipeResponseDto })
+  addPreparedRecipe(@CurrentUser() user: AuthUser, @Body() dto: PrepareRecipeIngredientsDto) {
+    return this.service.addPreparedRecipeIngredients(user.id, dto.recipeId, dto.servings);
   }
 
   @Delete('shopping-list/completed')
@@ -271,6 +278,22 @@ export class HouseholdPlanningController {
     return dto.recipeIds?.length
       ? this.service.addRecipeIngredientsFromRecipesForHousehold(householdId, dto.recipeIds)
       : this.service.addRecipeIngredientsForHousehold(householdId, dto.recipeId!);
+  }
+
+  @Post('shopping-list/prepare')
+  @ApiOperation({ summary: 'Compare a recipe with the household pantry without changing the shopping list' })
+  @ApiOkResponse({ type: PrepareRecipeResponseDto })
+  async prepareRecipe(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Body() dto: PrepareRecipeIngredientsDto) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER', 'VIEWER']);
+    return this.service.prepareRecipeIngredientsForHousehold(user.id, householdId, dto.recipeId, dto.servings);
+  }
+
+  @Post('shopping-list/prepare/add')
+  @ApiOperation({ summary: 'Add prepared recipe ingredients to the household shopping list after confirmation' })
+  @ApiOkResponse({ type: PrepareRecipeResponseDto })
+  async addPreparedRecipe(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Body() dto: PrepareRecipeIngredientsDto) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
+    return this.service.addPreparedRecipeIngredientsForHousehold(user.id, householdId, dto.recipeId, dto.servings);
   }
 
   @Delete('shopping-list/completed')

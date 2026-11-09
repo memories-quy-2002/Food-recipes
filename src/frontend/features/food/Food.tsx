@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState, type ChangeEvent, type ReactElement } from "react";
 import { isAxiosError } from "axios";
 import { SlidersHorizontal } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { CatalogItem } from "@/shared/api/contracts";
 import axios from "@/shared/api/axios";
 import { getArrayPayload } from "@/shared/api/payload";
@@ -42,6 +42,7 @@ const Food = (): ReactElement => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const queryState = parseRecipeDiscoveryState(location.search);
+	const pantryIngredient = new URLSearchParams(location.search).get("pantryIngredient")?.trim() || "";
 	const recipesQuery = useRecipesQuery(queryState);
 	const [isFilterSheetOpen, setIsFilterSheetOpen] = useState<boolean>(false);
 	const activeFilterCount = [queryState.q, queryState.categoryId, queryState.mealId, queryState.filter].filter(Boolean).length;
@@ -91,6 +92,7 @@ const Food = (): ReactElement => {
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
 			<PageHelmet title="Recipes" description="Search, filter, and compare recipes by category, meal type, name, and rating." path="/food" />
 			<div className="mx-auto w-full max-w-[96rem]">
+				{pantryIngredient && <section className="mb-6 rounded-2xl border border-amber-300/70 bg-amber-50 p-5 text-amber-950" aria-labelledby="pantry-ingredient-title"><p className="text-xs font-black uppercase tracking-[0.16em]">Use it soon</p><h2 id="pantry-ingredient-title" className="mt-1 text-2xl font-black">Recipes using {pantryIngredient}</h2><p className="mt-2 max-w-3xl text-sm leading-6">Open a recipe to compare its ingredient amounts with your pantry. From the recipe page, add any missing amounts to your shopping list and put the meal on your plan.</p><Link className="mt-3 inline-flex min-h-10 items-center text-sm font-black underline underline-offset-4" to="/pantry">Back to pantry</Link></section>}
 				<section className="mb-7 grid gap-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
 					<div className="max-w-3xl">
 						<h1 className="text-3xl font-black tracking-[-0.035em] text-foreground sm:text-4xl lg:text-5xl">Find something worth cooking</h1>

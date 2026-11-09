@@ -4,6 +4,7 @@ import { householdScope, PERSONAL_KITCHEN } from "@/features/households/househol
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
+	addPreparedRecipeIngredients,
 	addShoppingItem,
 	clearCompletedShoppingItems,
 	createShoppingRoutes,
@@ -102,7 +103,7 @@ describe("shopping list API", () => {
 	});
 
 	it("prepares a recipe against the pantry through the server-owned route", async () => {
-		mockedAxios.post.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 2 } });
+		mockedAxios.post.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 0 } });
 
 		await prepareRecipeIngredients(15, 4);
 
@@ -112,13 +113,22 @@ describe("shopping list API", () => {
 		});
 	});
 
+	it("adds missing ingredients only after explicit confirmation", async () => {
+		mockedAxios.post.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 2 } });
+
+		await addPreparedRecipeIngredients(15, 4);
+
+		expect(mockedAxios.post).toHaveBeenCalledWith("/users/me/shopping-list/prepare/add", { recipeId: 15, servings: 4 });
+	});
+
 	it("uses the household scope for shopping reads and mutations", async () => {
 		const scope = householdScope(12);
 		mockedAxios.get.mockResolvedValueOnce({ data: { items: [] } });
 		mockedAxios.post
 			.mockResolvedValueOnce({ data: { item: { item_id: 4 } } })
 			.mockResolvedValueOnce({ data: { recipe: "Curry", items: [] } })
-			.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 1 } });
+			.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 0 } })
+			.mockResolvedValueOnce({ data: { recipe_id: 15, ingredients: [], added_shopping_items: 1, shopping_list_confirmed: true } });
 		mockedAxios.patch.mockResolvedValueOnce({ data: { item: { item_id: 4 } } });
 		mockedAxios.delete
 			.mockResolvedValueOnce({ data: { message: "removed" } })
@@ -130,6 +140,7 @@ describe("shopping list API", () => {
 		await deleteShoppingItem(4, scope);
 		await addRecipeIngredients(15, scope);
 		await prepareRecipeIngredients(15, 4, scope);
+		await addPreparedRecipeIngredients(15, 4, scope);
 		await clearCompletedShoppingItems(scope);
 
 		expect(mockedAxios.get).toHaveBeenCalledWith("/households/12/shopping-list");
@@ -138,6 +149,7 @@ describe("shopping list API", () => {
 		expect(mockedAxios.delete).toHaveBeenNthCalledWith(1, "/households/12/shopping-list/items/4");
 		expect(mockedAxios.post).toHaveBeenNthCalledWith(2, "/households/12/shopping-list/from-recipe", { recipeId: 15 });
 		expect(mockedAxios.post).toHaveBeenNthCalledWith(3, "/households/12/shopping-list/prepare", { recipeId: 15, servings: 4 });
+		expect(mockedAxios.post).toHaveBeenNthCalledWith(4, "/households/12/shopping-list/prepare/add", { recipeId: 15, servings: 4 });
 		expect(mockedAxios.delete).toHaveBeenNthCalledWith(2, "/households/12/shopping-list/completed");
 	});
 });
