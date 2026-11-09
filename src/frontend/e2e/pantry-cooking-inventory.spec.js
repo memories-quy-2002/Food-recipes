@@ -183,6 +183,8 @@ test("Pantry route loads without console errors and remains usable at mobile and
 	page.on("console", (message) => { if (message.type() === "error") consoleErrors.push(message.text()); });
 	page.on("pageerror", (error) => consoleErrors.push(error.message));
 	await bootstrapTestAuth(page);
+	await page.route("**/users/me/notifications", (route) => route.fulfill(json({ notifications: [] })));
+	await page.route("**/households", (route) => route.fulfill(json({ households: [] })));
 	await stubPantryApi(page);
 	await stubRecipeApi(page);
 
@@ -190,7 +192,7 @@ test("Pantry route loads without console errors and remains usable at mobile and
 		await page.setViewportSize({ width, height: 900 });
 		await page.goto("/pantry");
 		await page.waitForLoadState("networkidle");
-		await expect(page.getByRole("heading", { name: "Know what you already have" })).toBeVisible();
+		await expect(page.getByRole("heading", { name: "Pantry", exact: true })).toBeVisible();
 		const audit = await page.evaluate(() => ({ viewportWidth: window.innerWidth, documentWidth: document.documentElement.scrollWidth, overlayCount: document.querySelectorAll('[role="dialog"][aria-modal="true"]').length }));
 		expect(audit.documentWidth).toBeLessThanOrEqual(audit.viewportWidth);
 		expect(audit.overlayCount).toBe(0);
@@ -203,7 +205,7 @@ test("user validates, adds, edits, moves, deletes, and handles a failed Pantry m
 	await bootstrapTestAuth(page);
 	const pantry = await stubPantryApi(page);
 	await page.goto("/pantry");
-	await expect(page.getByRole("heading", { name: "Already have" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "On hand" })).toBeVisible();
 
 	await page.getByRole("button", { name: "Add pantry item" }).click();
 	await expect(page.getByRole("alert")).toHaveText("Add an item name before saving.");
@@ -226,7 +228,7 @@ test("user validates, adds, edits, moves, deletes, and handles a failed Pantry m
 
 	await page.getByRole("checkbox", { name: "flour available" }).click();
 	await expect(page.getByRole("checkbox", { name: "flour available" })).not.toBeChecked();
-	await expect(page.getByRole("heading", { name: "Need to get" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Need to buy" })).toBeVisible();
 
 	await page.getByRole("button", { name: "Delete flour" }).click();
 	await expect(page.getByText("flour", { exact: true })).toHaveCount(0);
