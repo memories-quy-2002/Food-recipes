@@ -13,6 +13,7 @@
 - M0 hoàn tất trên worktree `feat/food-recipes-platform-roadmap`; các package cài frozen, PostgreSQL sạch được migrate/seed và bộ baseline đã chạy lại. Chi tiết lệnh và exit code nằm trong `.superpowers/sdd/2026-11-09-food-recipes-platform-roadmap/progress.md`.
 - M1 đã triển khai preview không ghi dữ liệu, xác nhận tính lại theo pantry hiện tại, xem lượng thiếu theo khẩu phần, cập nhật preview khi đổi khẩu phần, cùng luồng hoàn tất và Skip/Save leftover. PostgreSQL thật kiểm tra thao tác lặp/song song và rollback giao dịch.
 - M2 đã bổ sung Recipe JSON-LD chỉ cho công thức public, lọc backend theo nguyên liệu cụ thể (cả nguyên liệu có cấu trúc và chuỗi cũ), và lazy-load các route ít dùng. Real-stack xác nhận tìm “Avocado” ra công thức đúng; main JS giảm từ 819.89 kB xuống 391.37 kB (gzip 120.97 kB). Facet cuisine/difficulty chưa có trường dữ liệu công thức tương ứng nên chưa tự tạo.
+- 2026-11-10 tiếp tục M2: Saved có pagination/search/sort phía server, URL giữ page/filter, thao tác xóa món cuối trang tự về trang hợp lệ, và phản hồi cũ không ghi đè kết quả tìm kiếm mới. PostgreSQL riêng xác nhận real-stack Saved; 8/8 bài idempotency bao gồm hai tab cùng chuẩn bị và hoàn tất nấu gửi lại. Full mock E2E đạt 70/70.
 - M3 có lát cắt pantry expiry → tìm đúng công thức theo nguyên liệu → xem thiếu → thêm vào lịch; real-stack xác minh lọc ingredient, mock journey xác minh tiếp tới plan. Phần preview/tổng hợp danh sách mua cả tuần và tương tác đồng thời vẫn cần thực hiện.
 - M4 còn mở: hồ sơ/collections công khai, moderation và audit log là các lát cắt riêng cần tiêu chí sản phẩm và kiểm tra quyền. M5 được hoãn theo điều kiện đầu tư đã nêu; chưa có mục tiêu đo lường, ngân sách, hay bộ đánh giá AI.
 
@@ -20,7 +21,7 @@
 |---|---|---|
 | Auth và hồ sơ | Một phần | Đã có local auth, session, recovery, verification, cài đặt. Xác minh delivery và quyền truy cập. Google OAuth, hồ sơ công khai và moderator thuộc các lát cắt riêng. |
 | Recipe | Một phần | Có CRUD, draft, publish/archive, media, nguyên liệu có cấu trúc, chia sẻ và JSON-LD public. Còn semantics unpublish và toàn bộ chuỗi tạo/publish thật. |
-| Discover và Saved | Một phần | Có tìm kiếm theo tên/mô tả/nguyên liệu, facet cơ bản, sort, phân trang công thức, Saved và collections. Cuisine/difficulty chưa có dữ liệu nguồn; còn kiểm tra pagination Saved và chất lượng gợi ý. |
+| Discover và Saved | Một phần | Đã có pagination/search/sort Saved phía server và đồng bộ URL. Cuisine/difficulty chưa có dữ liệu nguồn; chất lượng gợi ý cần đo. |
 | Bếp cá nhân | Một phần | Có Kitchen Command Center, lịch tuần, mẫu, pantry, shopping, nấu, hẹn giờ, lịch sử và món dư. Khoảng trống ở preview/confirm, retry, tổng hợp tuần và các ca E2E. |
 | Cộng đồng | Một phần | Có đánh giá, review và báo cáo. Còn hồ sơ công khai, quyền hiển thị collection, comment/follow, UI moderation và audit log. |
 | Nâng cao | Một phần | Có feed dựa trên luật và thông báo. AI assistant và nhận diện ảnh chờ điều kiện đầu tư. |
@@ -45,7 +46,7 @@ Nhánh `feat/food-recipes-platform-roadmap` được rebase trên `origin/master
 ## M2 — P0: Hoàn thiện nền tảng công thức và khám phá
 
 - [ ] Auth/recipe editor: xác minh đăng ký, xác thực email, reset, session rotation, quyền chủ sở hữu, upload hợp lệ, draft → publish và semantics archive/unpublish. Chỉ triển khai khoảng trống có ca chấp nhận cụ thể. OAuth phụ thuộc nhu cầu phát hành và cấu hình nhà cung cấp.
-- [ ] Discover/Saved: kiểm tra facet cuisine, difficulty, dietary, sort và pagination phía server. Bổ sung từng facet còn thiếu qua DTO, query và URL state. Giữ URL có thể chia sẻ, quay lại giữ bộ lọc. Chỉ thêm index sau khi đo query plan trên dữ liệu đại diện.
+- [ ] Discover/Saved: phần pagination/search/sort Saved phía server đã hoàn tất, có URL state, empty state, last-page removal và real-stack coverage. Còn kiểm tra facet cuisine, difficulty, dietary và chất lượng gợi ý; chỉ bổ sung facet khi có dữ liệu nguồn, giữ URL có thể chia sẻ, và chỉ thêm index sau khi đo query plan trên dữ liệu đại diện.
 - [x] Recipe detail/share: canonical/metadata sẵn có; thêm Recipe JSON-LD chỉ từ công thức published, không đưa dinh dưỡng vào schema nếu chưa có nguồn đáng tin. E2E xác nhận JSON-LD trên API thật. Đã đo và lazy-load route ít dùng, entry JS giảm còn 391.37 kB (120.97 kB gzip). Ca ảnh lỗi và draft owner vẫn cần acceptance bổ sung.
 - [ ] Cổng qua mốc: đăng ký → tạo/publish → tìm/lọc → mở/chia sẻ → lưu công thức qua API thật. Kiểm tra quyền riêng tư bằng tài khoản thứ hai. Chạy mobile, desktop và keyboard.
 

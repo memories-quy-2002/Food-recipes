@@ -53,20 +53,22 @@
 - Modify: `src/frontend/features/wishlist/Wishlist.tsx`
 - Modify: `src/frontend/features/wishlist/Wishlist.css`
 - Modify: `src/frontend/e2e/saved-collection-journey.spec.js`
+- Modify: `src/frontend/e2e/real-stack/acceptance.spec.js`
+- Test: `src/frontend/features/wishlist/Wishlist.remove-accessibility.test.tsx`
 - Test: Saved component behavior and mock/real-stack journeys.
 
 **Interfaces:**
 - Consumes: Task 1 paginated response; existing collection API and URL `collectionId`.
 - Produces: stable `/wishlist?page=&search=&sort=` state for the All saved view; collection routes retain current behavior.
 
-- [ ] Add tests for query parameters, result counts, empty state, pagination controls, and remove-on-last-page behavior.
-- [ ] Run the focused frontend tests and confirm the new pagination expectations fail before implementation.
-- [ ] Add keyboard-accessible Previous/Next and page status UI in existing Wishlist styling; reset page on search/sort changes and preserve collection state.
-- [ ] Run focused component and Playwright tests at mobile and desktop viewports.
+- [x] Add tests for query parameters, result counts, empty state, pagination controls, and remove-on-last-page behavior.
+- [x] Run the focused frontend tests and confirm the new pagination expectations fail before implementation.
+- [x] Add keyboard-accessible Previous/Next and page status UI in existing Wishlist styling; reset page on search/sort changes and preserve collection state.
+- [x] Run focused component and Playwright tests at mobile and desktop viewports.
 
 ### Task 3: Completion verification
 
-- [ ] Run `pnpm check` and `pnpm build` in `src/frontend`.
-- [ ] Run `pnpm check`, `pnpm test:e2e`, and `pnpm prisma:validate` in `src/backend`.
-- [ ] Run the full frontend mock E2E and configured real-stack Saved acceptance against isolated PostgreSQL when available.
-- [ ] Review the complete diff, update the roadmap progress, and commit as `feat(saved): paginate saved recipes`.
+- [x] Run `pnpm check` and `pnpm build` in `src/frontend`.
+- [x] Run `pnpm check`, wishlist API E2E, PostgreSQL idempotency E2E, and `pnpm prisma:validate` in `src/backend`.
+- [x] Run the full frontend mock E2E and configured real-stack Saved acceptance against isolated PostgreSQL.
+- [x] Review the complete diff, update the roadmap progress, and commit as `feat(saved): paginate saved recipes`.
