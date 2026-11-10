@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -23,6 +24,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AuthUser } from '../auth/types/auth-user.type';
 import { AddWishlistDto } from './dto/add-wishlist.dto';
+import { WishlistQueryDto } from './dto/wishlist-query.dto';
 import { WishlistService, WishlistServicePort } from './wishlist.service';
 import {
   ApiErrorResponseDto,
@@ -47,8 +49,8 @@ export class WishlistController {
   @ApiOperation({ summary: 'List saved recipes for the authenticated user' })
   @ApiOkResponse({ description: 'Saved recipes', type: WishlistResponseDto })
   @ApiResponse({ status: 401, description: 'JWT is missing or invalid', type: ApiErrorResponseDto })
-  list(@CurrentUser() user: AuthUser) {
-    return this.wishlistService.list(user.id);
+  list(@CurrentUser() user: AuthUser, @Query() query?: WishlistQueryDto) {
+    return this.wishlistService.list(user.id, query);
   }
 
   @Post()

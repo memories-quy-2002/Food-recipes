@@ -80,8 +80,42 @@ describe('Wishlist HTTP contract', () => {
       .expect(200)
       .expect({ message: 'Wishlist item removed' });
 
-    expect(service.list).toHaveBeenCalledWith(7);
+    expect(service.list).toHaveBeenCalledWith(7, {});
     expect(service.add).toHaveBeenCalledWith(7, 15);
     expect(service.remove).toHaveBeenCalledWith(7, 15);
+  });
+
+  it('validates and forwards saved recipe pagination parameters', async () => {
+    const result = {
+      wishlist: [],
+      pagination: { page: 2, limit: 12, total: 13, totalPages: 2, hasNext: false },
+    };
+    service.list.mockResolvedValue(result);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/users/me/wishlist?page=2&limit=12&search=pasta&sort=name')
+      .expect(200)
+      .expect(result);
+
+    expect(service.list).toHaveBeenCalledWith(7, {
+      page: 2,
+      limit: 12,
+      search: 'pasta',
+      sort: 'name',
+    });
+  });
+
+  it('rejects invalid page sizes and sort values', async () => {
+    service.list.mockResolvedValue({ wishlist: [] });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/users/me/wishlist?page=0')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/v1/users/me/wishlist?limit=1000')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/api/v1/users/me/wishlist?sort=unknown')
+      .expect(400);
   });
 });

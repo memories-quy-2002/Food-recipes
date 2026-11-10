@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service';
+import { WishlistQueryDto, WishlistSort } from './dto/wishlist-query.dto';
+
+const DEFAULT_WISHLIST_PAGE = 1;
+const DEFAULT_WISHLIST_LIMIT = 12;
+const MAX_WISHLIST_PAGE = 1_000_000;
+const MAX_WISHLIST_LIMIT = 100;
 
 export type RecipeSummary = {
   recipe_id: number;
@@ -26,6 +32,19 @@ export type WishlistItem = {
   savedAt: string;
 };
 
+export type WishlistPagination = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
+export type WishlistListResult = {
+  wishlist: WishlistItem[];
+  pagination?: WishlistPagination;
+};
+
 type WishlistRow = {
   saved_at: Date | string;
   recipe_id: number;
@@ -47,7 +66,7 @@ type WishlistRow = {
 };
 
 export interface WishlistRepositoryPort {
-  listByUserId(userId: number): Promise<WishlistItem[]>;
+  listByUserId(userId: number, query?: WishlistQueryDto): Promise<WishlistListResult>;
   add(userId: number, recipeId: number): Promise<WishlistItem | null>;
   remove(userId: number, recipeId: number): Promise<boolean>;
 }
@@ -58,8 +77,37 @@ export const WISHLIST_REPOSITORY = Symbol('WISHLIST_REPOSITORY');
 export class WishlistRepository implements WishlistRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  listByUserId(userId: number): Promise<WishlistItem[]> {
-    return this.findItems(Prisma.sql`w.user_id = ${userId}`);
+  async listByUserId(userId: number, query?: WishlistQueryDto): Promise<WishlistListResult> {
+    const requested = query && Object.keys(query).length > 0;
+    if (!requested) {
+      return { wishlist: await this.findItems(Prisma.sql`w.user_id = ${userId}`) };
+    }
+
+    const search = query.search?.trim() || '';
+    const searchWhere = search
+      ? Prisma.sql`AND POSITION(LOWER(${search}) IN LOWER(COALESCE(r.recipe_name, ''))) > 0`
+      : Prisma.empty;
+    const where = Prisma.sql`w.user_id = ${userId} ${searchWhere}`;
+    const totals = await this.prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
+      SELECT COUNT(*)::int AS total
+      FROM wishlist w
+      JOIN recipes r ON r.recipe_id = w.recipe_id
+      WHERE ${where}
+    `);
+    const total = Number(totals[0]?.total ?? 0);
+    const limit = Math.min(Math.max(query.limit ?? DEFAULT_WISHLIST_LIMIT, 1), MAX_WISHLIST_LIMIT);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const page = Math.min(
+      Math.min(Math.max(query.page ?? DEFAULT_WISHLIST_PAGE, 1), MAX_WISHLIST_PAGE),
+      totalPages,
+    );
+    const offset = (page - 1) * limit;
+    const wishlist = await this.findItems(where, { limit, offset, sort: query.sort ?? 'recent' });
+
+    return {
+      wishlist,
+      pagination: { page, limit, total, totalPages, hasNext: page < totalPages },
+    };
   }
 
   async add(userId: number, recipeId: number): Promise<WishlistItem | null> {
@@ -86,7 +134,14 @@ export class WishlistRepository implements WishlistRepositoryPort {
     return deleted > 0;
   }
 
-  private async findItems(where: Prisma.Sql): Promise<WishlistItem[]> {
+  private async findItems(
+    where: Prisma.Sql,
+    pagination?: { limit: number; offset: number; sort: WishlistSort },
+  ): Promise<WishlistItem[]> {
+    const orderBy = pagination ? this.orderBy(pagination.sort) : Prisma.sql`w.date_added DESC, w.wishlist_id DESC`;
+    const pageSql = pagination
+      ? Prisma.sql`LIMIT ${pagination.limit} OFFSET ${pagination.offset}`
+      : Prisma.empty;
     const rows = await this.prisma.$queryRaw<WishlistRow[]>(Prisma.sql`
       SELECT
         w.date_added AS saved_at,
@@ -113,10 +168,23 @@ export class WishlistRepository implements WishlistRepositoryPort {
       LEFT JOIN rating rt ON rt.recipe_id = r.recipe_id
       WHERE ${where}
       GROUP BY w.wishlist_id, w.date_added, r.recipe_id, m.meal_id, c.category_id
-      ORDER BY w.date_added DESC, w.wishlist_id DESC
+      ORDER BY ${orderBy}
+      ${pageSql}
     `);
 
     return rows.map((row) => this.toItem(row));
+  }
+
+  private orderBy(sort: WishlistSort): Prisma.Sql {
+    switch (sort) {
+      case 'name':
+        return Prisma.sql`LOWER(COALESCE(r.recipe_name, '')) ASC, r.recipe_id ASC, w.wishlist_id ASC`;
+      case 'rating':
+        return Prisma.sql`overall_score DESC, num_ratings DESC, w.wishlist_id DESC`;
+      case 'recent':
+      default:
+        return Prisma.sql`w.date_added DESC NULLS LAST, w.wishlist_id DESC`;
+    }
   }
 
   private toItem(row: WishlistRow): WishlistItem {

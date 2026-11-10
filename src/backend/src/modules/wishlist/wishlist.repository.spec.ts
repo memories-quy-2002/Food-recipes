@@ -32,8 +32,8 @@ describe('WishlistRepository', () => {
     prisma.$queryRaw.mockResolvedValue([row]);
     const repository = new WishlistRepository(prisma as never);
 
-    await expect(repository.listByUserId(7)).resolves.toEqual([
-      {
+    await expect(repository.listByUserId(7)).resolves.toEqual({
+      wishlist: [{
         recipe: {
           recipe_id: 15,
           recipe_name: 'Pasta Carbonara',
@@ -53,14 +53,61 @@ describe('WishlistRepository', () => {
           num_ratings: 2,
         },
         savedAt: '2026-08-23T06:30:00.000Z',
-      },
-    ]);
+      }],
+    });
     const query = prisma.$queryRaw.mock.calls[0][0];
     const source = query.strings.join(' ');
     expect(source).toContain('r.prep_time_minutes');
     expect(source).toContain('r.cook_time_minutes');
     expect(source).toContain('total_time_minutes');
     expect(source).not.toContain('EXTRACT(EPOCH FROM r.prep_time)');
+  });
+
+  it('filters and sorts saved recipes before applying bounded server pagination', async () => {
+    prisma.$queryRaw
+      .mockResolvedValueOnce([{ total: 26 }])
+      .mockResolvedValueOnce([row]);
+    const repository = new WishlistRepository(prisma as never);
+    const listWithQuery = repository.listByUserId as unknown as (
+      userId: number,
+      query: { page: number; limit: number; search: string; sort: 'rating' },
+    ) => Promise<unknown>;
+
+    await expect(listWithQuery.call(repository, 7, {
+      page: 3,
+      limit: 10,
+      search: 'pasta',
+      sort: 'rating',
+    })).resolves.toMatchObject({
+      wishlist: [expect.objectContaining({ recipe: expect.objectContaining({ recipe_id: 15 }) })],
+      pagination: { page: 3, limit: 10, total: 26, totalPages: 3, hasNext: false },
+    });
+
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(2);
+    const countQuery = prisma.$queryRaw.mock.calls[0][0];
+    const pageQuery = prisma.$queryRaw.mock.calls[1][0];
+    expect(countQuery.strings.join(' ')).toContain('LOWER(COALESCE(r.recipe_name');
+    expect(pageQuery.strings.join(' ')).toContain('ORDER BY overall_score DESC');
+    expect(pageQuery.strings.join(' ')).toContain('LIMIT');
+    expect(pageQuery.strings.join(' ')).toContain('OFFSET');
+    expect(pageQuery.values).toContain('pasta');
+    expect(pageQuery.values).toContain(20);
+  });
+
+  it('clamps a paginated request beyond the final page', async () => {
+    prisma.$queryRaw
+      .mockResolvedValueOnce([{ total: 2 }])
+      .mockResolvedValueOnce([row]);
+    const repository = new WishlistRepository(prisma as never);
+    const listWithQuery = repository.listByUserId as unknown as (
+      userId: number,
+      query: { page: number; limit: number },
+    ) => Promise<unknown>;
+
+    await expect(listWithQuery.call(repository, 7, { page: 8, limit: 10 })).resolves.toMatchObject({
+      pagination: { page: 1, limit: 10, total: 2, totalPages: 1, hasNext: false },
+    });
+    expect(prisma.$queryRaw.mock.calls[1][0].values).toContain(0);
   });
 
   it('targets the user-recipe unique key while returning the existing row on a repeated add', async () => {
