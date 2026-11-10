@@ -21,6 +21,26 @@ test("real stack: discovers a seeded recipe through the public UI and opens its 
 	await expect(page.getByRole("heading", { name: recipe.recipe_name, exact: true })).toBeVisible();
 });
 
+test("real stack: finds recipes by a pantry ingredient and exposes public Recipe JSON-LD", async ({ page, request }) => {
+	const recipe = await findRecipeByName(request, "Avocado Toast with Chili");
+	const ingredientSearch = page.waitForRequest((candidate) => {
+		const url = new URL(candidate.url());
+		return url.pathname.endsWith("/recipes") && url.searchParams.get("ingredient") === "Avocado";
+	});
+
+	await page.goto("/food?pantryIngredient=Avocado");
+	await ingredientSearch;
+	await expect(page.getByRole("link", { name: `Open ${recipe.recipe_name}` })).toBeVisible();
+	await page.getByRole("link", { name: `Open ${recipe.recipe_name}` }).click();
+
+	const schemaNode = page.locator('script[type="application/ld+json"]');
+	await expect(schemaNode).toHaveCount(1);
+	const schema = await schemaNode.evaluate((node) => JSON.parse(node.textContent || "{}"));
+	expect(schema).toMatchObject({ "@type": "Recipe", name: recipe.recipe_name });
+	expect(schema.recipeIngredient.join(" ").toLowerCase()).toContain("avocado");
+	await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/recipe\?id=\d+$/);
+});
+
 test("real stack: logs in, saves a recipe, persists it across reload, and removes it", async ({ page, request }) => {
 	const auth = await loginApi(request);
 	const recipe = await findRecipeByName(request, "Avocado Toast with Chili");

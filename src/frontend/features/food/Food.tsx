@@ -54,6 +54,7 @@ const Food = (): ReactElement => {
 		if (nextState.categoryId) params.set("categoryId", nextState.categoryId);
 		if (nextState.mealId) params.set("mealId", nextState.mealId);
 		if (nextState.filter) params.set("filter", nextState.filter);
+		if (nextState.pantryIngredient?.trim()) params.set("pantryIngredient", nextState.pantryIngredient.trim());
 		if (nextState.sort !== "popular") params.set("sort", nextState.sort);
 		if (nextState.page !== 1) params.set("page", String(nextState.page));
 		if (nextState.limit !== 12) params.set("limit", String(nextState.limit));

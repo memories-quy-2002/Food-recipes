@@ -269,6 +269,20 @@ export class RecipesRepository implements RecipesRepositoryPort {
 
       conditions.push(Prisma.sql`(${Prisma.join(searchConditions, ' OR ')})`);
     }
+    const ingredientTerm = query.ingredient?.trim().replace(/\s+/g, ' ').slice(0, 120);
+    if (ingredientTerm) {
+      conditions.push(Prisma.sql`(
+        EXISTS (
+          SELECT 1 FROM recipe_ingredients ri
+          WHERE ri.recipe_id = r.recipe_id
+            AND to_tsvector('simple', COALESCE(ri.name, '')) @@ plainto_tsquery('simple', ${ingredientTerm})
+        )
+        OR EXISTS (
+          SELECT 1 FROM unnest(r.ingredients) AS recipe_ingredient
+          WHERE to_tsvector('simple', COALESCE(recipe_ingredient, '')) @@ plainto_tsquery('simple', ${ingredientTerm})
+        )
+      )`);
+    }
     if (query.categoryId) conditions.push(Prisma.sql`r.category_id = ${query.categoryId}`);
     if (query.mealId) conditions.push(Prisma.sql`r.meal_id = ${query.mealId}`);
     if (query.filter === 'quick') {

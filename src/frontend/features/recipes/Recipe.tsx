@@ -691,6 +691,7 @@ const Recipe = (): React.ReactElement => {
 				}
 				path={`/recipe?id=${id}`}
 				type="article"
+				noIndex={Boolean(recipe && recipe.status !== "published")}
 			/>
 			{isLoadingRecipe ? (
 				<PageState

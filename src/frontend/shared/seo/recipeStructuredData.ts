@@ -2,6 +2,7 @@ import type { RecipeDetail, RecipeNutrition, StructuredIngredient } from '@/shar
 import { formatStructuredIngredient } from '@/features/recipes/structuredIngredients';
 
 export type RecipeStructuredDataRecipe = {
+	status?: string | null;
 	recipe_id?: number | string | null;
 	recipe_name?: string | null;
 	recipe_description?: string | null;
@@ -143,6 +144,7 @@ export const createRecipeStructuredData = (
 	recipe: RecipeStructuredDataRecipe,
 	canonicalUrl: string,
 ): Record<string, unknown> | null => {
+	if (recipe.status !== 'published') return null;
 	const name = toText(recipe.recipe_name);
 	if (!name) return null;
 

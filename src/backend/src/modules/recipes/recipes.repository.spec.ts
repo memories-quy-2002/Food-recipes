@@ -86,6 +86,20 @@ describe('RecipesRepository duration normalization', () => {
     );
   });
 
+  it('searches structured and legacy recipe ingredients for pantry ingredient matching', async () => {
+    mockList([recipe]);
+    const repository = new RecipesRepository(prisma as never);
+
+    await repository.list({ ingredient: '  baby spinach  ' });
+    const query = prisma.$queryRaw.mock.calls[1][0];
+    const source = sqlSource(query);
+
+    expect(query.values).toContain('baby spinach');
+    expect(source).toContain('recipe_ingredients ri');
+    expect(source).toContain('unnest(r.ingredients)');
+    expect(source.match(/plainto_tsquery\('simple'/g)).toHaveLength(2);
+  });
+
   it('clamps an out-of-range page to the final page before calculating the offset', async () => {
     mockList([recipe], 21);
     const repository = new RecipesRepository(prisma as never);

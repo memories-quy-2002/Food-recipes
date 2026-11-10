@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export const RECIPE_SORTS = ['popular', 'rating', 'newest', 'quickest', 'name'] as const;
 export type RecipeSort = (typeof RECIPE_SORTS)[number];
@@ -31,6 +31,12 @@ export class RecipeQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({ description: 'Match recipes using this pantry ingredient' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  ingredient?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

@@ -5,6 +5,7 @@ describe('createRecipeStructuredData', () => {
 	it('maps public recipe content to Recipe JSON-LD', () => {
 		const data = createRecipeStructuredData(
 			{
+				status: 'published',
 				recipe_name: 'Roasted vegetables',
 				recipe_description: 'A simple weeknight tray bake.',
 				image_url: '/uploads/roasted.jpg',
@@ -59,6 +60,7 @@ describe('createRecipeStructuredData', () => {
 	it('omits incomplete or unsafe rich-result fields', () => {
 		const data = createRecipeStructuredData(
 			{
+				status: 'published',
 				recipe_name: 'Safe recipe',
 				image_url: 'http://[invalid',
 				prep_time_minutes: -1,
@@ -77,6 +79,10 @@ describe('createRecipeStructuredData', () => {
 	});
 
 	it('returns null when the public recipe has no name', () => {
-		expect(createRecipeStructuredData({ recipe_name: '  ' }, 'https://example.com/recipe?id=1')).toBeNull();
+		expect(createRecipeStructuredData({ status: 'published', recipe_name: '  ' }, 'https://example.com/recipe?id=1')).toBeNull();
+	});
+
+	it('omits recipe JSON-LD for drafts', () => {
+		expect(createRecipeStructuredData({ status: 'draft', recipe_name: 'Private recipe' }, 'https://example.com/recipe?id=1')).toBeNull();
 	});
 });

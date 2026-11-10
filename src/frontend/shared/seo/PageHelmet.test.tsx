@@ -67,4 +67,16 @@ describe('PageHelmet', () => {
 			document.head.querySelector('script[type="application/ld+json"]'),
 		).toBeNull();
 	});
+
+	it("renders and cleans up serialized JSON-LD without allowing script markup", () => {
+		const { rerender, unmount } = render(<PageHelmet structuredData={{ "@type": "Recipe", name: "Soup </script><script>alert(1)</script>" }} />);
+		const schema = document.head.querySelector('script[type="application/ld+json"]');
+		expect(schema?.textContent).toContain('"@type":"Recipe"');
+		expect(schema?.textContent).toContain("\\u003c/script>");
+		expect(document.head.querySelectorAll("script")).toHaveLength(1);
+
+		rerender(<PageHelmet title="Home" />);
+		expect(document.head.querySelector('script[type="application/ld+json"]')).toBeNull();
+		unmount();
+	});
 });

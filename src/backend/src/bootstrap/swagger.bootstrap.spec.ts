@@ -278,6 +278,7 @@ describe('Swagger document', () => {
     expect(queryParameterNames).toEqual([
       'q',
       'search',
+      'ingredient',
       'categoryId',
       'mealId',
       'sort',

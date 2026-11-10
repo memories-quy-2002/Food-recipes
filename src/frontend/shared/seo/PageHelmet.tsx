@@ -95,7 +95,7 @@ const PageHelmet = ({
 			const jsonLd = document.createElement('script');
 			jsonLd.setAttribute('type', JSON_LD_TYPE);
 			jsonLd.setAttribute(SEO_ATTRIBUTE, 'true');
-			jsonLd.textContent = JSON.stringify(structuredData);
+			jsonLd.textContent = JSON.stringify(structuredData).replace(/</g, '\\u003c');
 			document.head.appendChild(jsonLd);
 		}
 
