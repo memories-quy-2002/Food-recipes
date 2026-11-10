@@ -72,3 +72,19 @@
 - [x] Run `pnpm check`, wishlist API E2E, PostgreSQL idempotency E2E, and `pnpm prisma:validate` in `src/backend`.
 - [x] Run the full frontend mock E2E and configured real-stack Saved acceptance against isolated PostgreSQL.
 - [x] Review the complete diff, update the roadmap progress, and commit as `feat(saved): paginate saved recipes`.
+
+### Task 4: Preserve no-query wishlist compatibility after DTO transformation
+
+**Files:**
+- Modify: `src/backend/src/modules/wishlist/wishlist.repository.ts`
+- Test: `src/backend/src/modules/wishlist/wishlist.repository.spec.ts`
+- Modify: `src/frontend/e2e/real-stack/acceptance.spec.js`
+
+**Interfaces:**
+- Consumes: Nest's transformed `WishlistQueryDto`, whose optional fields can exist with `undefined` values.
+- Produces: full unpaginated wishlist for a request with no meaningful query values; explicit page, limit, search, or sort enables pagination.
+
+- [x] Add a repository regression test for an empty transformed DTO and observe it fail against the previous own-key check.
+- [x] Choose pagination only when at least one supported query value is defined; keep explicit query requests validated and bounded.
+- [x] Run backend `pnpm check`, wishlist HTTP E2E, and the real-stack Saved acceptance against isolated PostgreSQL; confirm no-query responses remain unpaginated.
+- [x] Review the follow-up diff and commit as `fix(saved): preserve legacy wishlist reads`.

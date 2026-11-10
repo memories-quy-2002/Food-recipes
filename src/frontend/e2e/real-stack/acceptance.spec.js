@@ -76,11 +76,8 @@ test("real stack: logs in, saves a recipe, persists it across reload, and remove
 		const legacyResponse = await request.get(apiUrl("/users/me/wishlist"), { headers: auth.headers });
 		await expect(legacyResponse, "legacy Saved request failed").toBeOK();
 		const legacyWishlist = await legacyResponse.json();
+		expect(legacyWishlist.pagination).toBeUndefined();
 		expect(legacyWishlist.wishlist.some((item) => item.recipe?.recipe_id === recipe.recipe_id || item.recipe_id === recipe.recipe_id)).toBe(true);
-		if (legacyWishlist.pagination) {
-			expect(legacyWishlist.pagination.limit).toBeGreaterThanOrEqual(legacyWishlist.pagination.total);
-			expect(legacyWishlist.wishlist).toHaveLength(legacyWishlist.pagination.total);
-		}
 
 		await page.reload();
 		await expect(page.getByRole("button", { name: "Remove recipe from saved" })).toHaveAttribute("aria-pressed", "true");

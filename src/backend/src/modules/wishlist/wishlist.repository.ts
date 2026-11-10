@@ -78,7 +78,9 @@ export class WishlistRepository implements WishlistRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
   async listByUserId(userId: number, query?: WishlistQueryDto): Promise<WishlistListResult> {
-    const requested = query && Object.keys(query).length > 0;
+    const requested =
+      query !== undefined &&
+      [query.search, query.sort, query.page, query.limit].some((value) => value !== undefined);
     if (!requested) {
       return { wishlist: await this.findItems(Prisma.sql`w.user_id = ${userId}`) };
     }

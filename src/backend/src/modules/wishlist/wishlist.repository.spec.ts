@@ -1,4 +1,5 @@
 import { WishlistRepository } from './wishlist.repository';
+import { WishlistQueryDto } from './dto/wishlist-query.dto';
 
 describe('WishlistRepository', () => {
   const prisma = {
@@ -61,6 +62,24 @@ describe('WishlistRepository', () => {
     expect(source).toContain('r.cook_time_minutes');
     expect(source).toContain('total_time_minutes');
     expect(source).not.toContain('EXTRACT(EPOCH FROM r.prep_time)');
+  });
+
+  it('keeps legacy full-list behavior when a transformed query DTO has no values', async () => {
+    prisma.$queryRaw.mockResolvedValue([row]);
+    const repository = new WishlistRepository(prisma as never);
+    const emptyQuery = Object.assign(new WishlistQueryDto(), {
+      search: undefined,
+      sort: undefined,
+      page: undefined,
+      limit: undefined,
+    });
+
+    const result = await repository.listByUserId(7, emptyQuery);
+
+    expect(result.pagination).toBeUndefined();
+    expect(result.wishlist).toHaveLength(1);
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).not.toContain('LIMIT');
   });
 
   it('filters and sorts saved recipes before applying bounded server pagination', async () => {
