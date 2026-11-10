@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { demoCredentials, findRecipeByName, stubThirdPartyMedia } from "./real-stack/helpers.js";
+import { apiUrl, demoCredentials, findRecipeByName, loginApi, stubThirdPartyMedia } from "./real-stack/helpers.js";
 
 const recipeName = "Avocado Toast with Chili";
 
@@ -67,7 +67,15 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	await page.getByRole("button", { name: "Add missing ingredients to shopping list" }).click();
 	const addMissingResponse = await addMissingPromise;
 	expect(addMissingResponse.ok()).toBeTruthy();
-	expect((await addMissingResponse.json()).added_shopping_items).toBeGreaterThan(0);
+	const addMissingResult = await addMissingResponse.json();
+	expect(addMissingResult.shopping_list_confirmed).toBe(true);
+	const auth = await loginApi(request);
+	const shoppingListResponse = await request.get(apiUrl("/users/me/shopping-list"), { headers: auth.headers });
+	expect(shoppingListResponse.ok()).toBeTruthy();
+	const shoppingList = await shoppingListResponse.json();
+	for (const ingredient of servingsPreview.ingredients.filter(({ status }) => status === "missing")) {
+		expect(shoppingList.items.some(({ label }) => label.toLowerCase() === ingredient.ingredient_name.toLowerCase())).toBe(true);
+	}
 
 	await page.getByRole("link", { name: "Start cooking" }).click();
 	await expect(page).toHaveURL(new RegExp(`/recipe/cooking\\?id=${recipeId}$`));
