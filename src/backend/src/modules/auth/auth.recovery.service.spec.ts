@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
 
@@ -7,6 +7,7 @@ jest.mock('bcryptjs', () => ({
 }));
 
 describe('AuthService recovery flows', () => {
+  const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
   const usersService = {
     findByEmailWithPassword: jest.fn(),
     findById: jest.fn(),
@@ -52,6 +53,12 @@ describe('AuthService recovery flows', () => {
     sessions.consumePasswordResetToken.mockResolvedValue(7);
     sessions.createEmailVerificationToken.mockResolvedValue('verification-token');
     sessions.consumeEmailVerificationToken.mockResolvedValue(7);
+    recoveryDelivery.sendPasswordReset.mockResolvedValue(undefined);
+    recoveryDelivery.sendEmailVerification.mockResolvedValue(undefined);
+  });
+
+  afterAll(() => {
+    warnSpy.mockRestore();
   });
 
   it('returns the same generic response for an unknown recovery email', async () => {
@@ -82,6 +89,55 @@ describe('AuthService recovery flows', () => {
     expect(recoveryDelivery.sendPasswordReset).toHaveBeenCalledWith(
       'cook@example.test',
       'reset-token',
+    );
+  });
+
+  it('keeps the recovery response generic when the email provider fails', async () => {
+    usersService.findByEmailWithPassword.mockResolvedValue({
+      id: 7,
+      email: 'cook@example.test',
+    });
+    recoveryDelivery.sendPasswordReset.mockRejectedValue(
+      new Error('provider detail must not reach the response'),
+    );
+
+    await expect(
+      createService().forgotPassword({ email: 'cook@example.test' }),
+    ).resolves.toEqual({
+      message: 'If the account exists, recovery instructions will be sent.',
+    });
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Recovery email delivery failed (password-reset)',
+    );
+  });
+
+  it('returns signup success when verification delivery fails after account creation', async () => {
+    usersService.create.mockResolvedValue({
+      user_id: 7,
+      email: 'cook@example.test',
+      email_verified: false,
+    });
+    jwtService.signAsync.mockResolvedValue('access-token');
+    sessions.createSession.mockResolvedValue('refresh-token');
+    recoveryDelivery.sendEmailVerification.mockRejectedValue(
+      new Error('provider detail must not reach the response'),
+    );
+
+    await expect(
+      createService().signup({
+        name: { first: 'Cook', last: 'Example' },
+        email: 'cook@example.test',
+        password: 'correct horse battery staple',
+      } as never),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        user: expect.objectContaining({ user_id: 7 }),
+        token: 'access-token',
+        refreshToken: 'refresh-token',
+      }),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      'Recovery email delivery failed (email-verification)',
     );
   });
 

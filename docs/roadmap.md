@@ -33,8 +33,9 @@ Completed in the current wave:
   manager support, keyboard access, and token-free rendered output.
 - Authenticated unverified users receive a dismissible verification reminder;
   successful verification updates the in-memory and persisted user metadata.
-- Production auth delivery configuration now fails fast when the mail webhook
-  or public web origin is missing.
+- Production auth delivery configuration now fails fast when the Brevo API key,
+  verified sender email, or public web origin is missing. Recovery and email
+  verification messages use Brevo's transactional email API.
 - Focused API/service/component tests and six mocked browser journeys pass.
 - Preserve generic recovery responses, HttpOnly refresh cookies, token rotation, session revocation, and auth throttling.
 - Keep recovery delivery behind configuration; local and staging migrations may be rehearsed, but production operations remain operator-controlled.

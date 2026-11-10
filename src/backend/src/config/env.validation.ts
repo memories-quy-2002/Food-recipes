@@ -33,10 +33,15 @@ export function validateEnvironment(environment: Environment): Environment {
   const nodeEnv = asString(environment.NODE_ENV) ?? 'development';
   const databaseUrl = asString(environment.DATABASE_URL);
   const jwtSecret = asString(environment.JWT_SECRET);
-  const authMailWebhookUrl = asOptionalHttpUrl(
-    environment.AUTH_MAIL_WEBHOOK_URL,
-    'AUTH_MAIL_WEBHOOK_URL',
-  );
+  const brevoApiKey = asString(environment.BREVO_API_KEY);
+  const authMailFromEmail = asString(environment.AUTH_MAIL_FROM_EMAIL);
+  const authMailFromName = asString(environment.AUTH_MAIL_FROM_NAME);
+  if (
+    authMailFromEmail &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authMailFromEmail)
+  ) {
+    throw new Error('AUTH_MAIL_FROM_EMAIL must be a valid email address');
+  }
   const authPublicWebUrl = asOptionalHttpUrl(
     environment.AUTH_PUBLIC_WEB_URL,
     'AUTH_PUBLIC_WEB_URL',
@@ -55,8 +60,12 @@ export function validateEnvironment(environment: Environment): Environment {
     );
   }
 
-  if (nodeEnv === 'production' && !authMailWebhookUrl) {
-    throw new Error('AUTH_MAIL_WEBHOOK_URL is required in production');
+  if (nodeEnv === 'production' && !brevoApiKey) {
+    throw new Error('BREVO_API_KEY is required in production');
+  }
+
+  if (nodeEnv === 'production' && !authMailFromEmail) {
+    throw new Error('AUTH_MAIL_FROM_EMAIL is required in production');
   }
 
   if (nodeEnv === 'production' && !authPublicWebUrl) {
@@ -76,7 +85,9 @@ export function validateEnvironment(environment: Environment): Environment {
     DATABASE_URL: databaseUrl,
     JWT_SECRET: jwtSecret,
     CORS_ORIGINS: asString(environment.CORS_ORIGINS) ?? 'http://localhost:5173',
-    ...(authMailWebhookUrl ? { AUTH_MAIL_WEBHOOK_URL: authMailWebhookUrl } : {}),
+    ...(brevoApiKey ? { BREVO_API_KEY: brevoApiKey } : {}),
+    ...(authMailFromEmail ? { AUTH_MAIL_FROM_EMAIL: authMailFromEmail } : {}),
+    ...(authMailFromName ? { AUTH_MAIL_FROM_NAME: authMailFromName } : {}),
     ...(authPublicWebUrl ? { AUTH_PUBLIC_WEB_URL: authPublicWebUrl } : {}),
   };
 }

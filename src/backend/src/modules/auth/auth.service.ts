@@ -1,4 +1,4 @@
-import { Inject, Injectable, Optional, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -25,6 +25,8 @@ type AuthJwtPort = Pick<JwtService, 'signAsync' | 'verifyAsync'>;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @Inject(UsersService) private readonly usersService: AuthUsersPort,
     @Inject(JwtService) private readonly jwtService: AuthJwtPort,
@@ -73,7 +75,12 @@ export class AuthService {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
     if (user && this.sessions) {
       const token = await this.sessions.createPasswordResetToken(user.id);
-      await this.recoveryDelivery?.sendPasswordReset(user.email, token);
+      const recoveryDelivery = this.recoveryDelivery;
+      if (recoveryDelivery) {
+        await this.deliverRecoveryEmail('password-reset', () =>
+          recoveryDelivery.sendPasswordReset(user.email, token),
+        );
+      }
     }
     return { message: 'If the account exists, recovery instructions will be sent.' };
   }
@@ -148,6 +155,22 @@ export class AuthService {
   private async issueVerification(user: PublicUser): Promise<void> {
     if (!this.sessions || user.email_verified) return;
     const token = await this.sessions.createEmailVerificationToken(user.user_id);
-    await this.recoveryDelivery?.sendEmailVerification(user.email, token);
+    const recoveryDelivery = this.recoveryDelivery;
+    if (recoveryDelivery) {
+      await this.deliverRecoveryEmail('email-verification', () =>
+        recoveryDelivery.sendEmailVerification(user.email, token),
+      );
+    }
+  }
+
+  private async deliverRecoveryEmail(
+    kind: 'password-reset' | 'email-verification',
+    deliver: () => Promise<void>,
+  ): Promise<void> {
+    try {
+      await deliver();
+    } catch {
+      this.logger.warn(`Recovery email delivery failed (${kind})`);
+    }
   }
 }
