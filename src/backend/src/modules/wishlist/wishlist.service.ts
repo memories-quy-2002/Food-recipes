@@ -1,9 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   WishlistItem,
+  WishlistListResult,
   WishlistRepositoryPort,
   WISHLIST_REPOSITORY,
 } from './wishlist.repository';
+import { WishlistQueryDto } from './dto/wishlist-query.dto';
 
 @Injectable()
 export class WishlistService {
@@ -12,8 +14,8 @@ export class WishlistService {
     private readonly repository: WishlistRepositoryPort,
   ) {}
 
-  async list(userId: number): Promise<{ wishlist: WishlistItem[] }> {
-    return { wishlist: await this.repository.listByUserId(userId) };
+  async list(userId: number, query?: WishlistQueryDto): Promise<WishlistListResult> {
+    return this.repository.listByUserId(userId, query);
   }
 
   async add(userId: number, recipeId: number): Promise<WishlistItem> {

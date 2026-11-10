@@ -16,11 +16,28 @@ describe('WishlistService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('lists saved recipes for the authenticated user with recipe summaries and savedAt', async () => {
-    repository.listByUserId.mockResolvedValue([item]);
+    repository.listByUserId.mockResolvedValue({ wishlist: [item] });
     const service = new WishlistService(repository);
 
     await expect(service.list(7)).resolves.toEqual({ wishlist: [item] });
-    expect(repository.listByUserId).toHaveBeenCalledWith(7);
+    expect(repository.listByUserId).toHaveBeenCalledWith(7, undefined);
+  });
+
+  it('passes pagination, search, and sort options to the user-scoped repository', async () => {
+    const query = { page: 2, limit: 12, search: 'pasta', sort: 'name' as const };
+    const paginated = {
+      wishlist: [item],
+      pagination: { page: 2, limit: 12, total: 13, totalPages: 2, hasNext: false },
+    };
+    repository.listByUserId.mockResolvedValue(paginated);
+    const service = new WishlistService(repository);
+    const listWithQuery = service.list as unknown as (
+      userId: number,
+      options: typeof query,
+    ) => Promise<unknown>;
+
+    await expect(listWithQuery.call(service, 7, query)).resolves.toEqual(paginated);
+    expect(repository.listByUserId).toHaveBeenCalledWith(7, query);
   });
 
   it('returns the existing saved item when add is repeated for the same user and recipe', async () => {

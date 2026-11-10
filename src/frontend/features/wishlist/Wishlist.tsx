@@ -9,7 +9,6 @@ import { apiRoutes } from "@/shared/api/routes";
 import FavoriteRecipe from "@/features/wishlist/FavoriteRecipe";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import PageState from "@/shared/ui/PageState";
-import { useAllRecipesQuery } from "@/features/recipes/api/useRecipeQueries";
 import SavedCollections from "@/features/saved/collections/SavedCollections";
 import CollectionDialog from "@/features/saved/collections/CollectionDialog";
 import {
@@ -32,6 +31,14 @@ import type { WishlistRecipe } from "./FavoriteRecipe";
 export type SavedRecipeEntry = {
 	recipe: WishlistRecipe;
 	savedAt: string | null;
+};
+
+type SavedRecipesPagination = {
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
+	hasNext: boolean;
 };
 
 type SavedRecipeResponseRecipe = Omit<Partial<RecipeSummary>, "recipe_id" | "recipe_name"> & {
@@ -176,10 +183,9 @@ const Wishlist = (): ReactElement => {
 	const [showModal, setShowModal] = useState(false);
 	const [isRemoving, setIsRemoving] = useState(false);
 	const [removeError, setRemoveError] = useState<string | null>(null);
-	const [searchTerm, setSearchTerm] = useState("");
-	const [sortBy, setSortBy] = useState<SavedRecipeSort>("recent");
 	const [isLoadingWishlist, setIsLoadingWishlist] = useState(true);
 	const [wishlistError, setWishlistError] = useState<string | null>(null);
+	const [pagination, setPagination] = useState<SavedRecipesPagination | null>(null);
 	const [collectionDialog, setCollectionDialog] = useState<CollectionDialogState | null>(null);
 	const [collectionDialogError, setCollectionDialogError] = useState<string | null>(null);
 	const confirmButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -189,12 +195,11 @@ const Wishlist = (): ReactElement => {
 	const navigate = useNavigate();
 	const { showToast } = useToast();
 	const [searchParams, setSearchParams] = useSearchParams();
-	const recipesQuery = useAllRecipesQuery();
-	const recipes = recipesQuery.data ?? [];
-	const isLoadingRecipes = recipesQuery.isLoading;
-	const recipesError = recipesQuery.error
-		? getApiErrorMessage(recipesQuery.error, "Unable to load recipes from the server.")
-		: null;
+	const requestedPage = Number(searchParams.get("page") ?? 1);
+	const savedPage = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+	const searchTerm = searchParams.get("search") ?? "";
+	const rawSortBy = searchParams.get("sort");
+	const sortBy: SavedRecipeSort = rawSortBy === "name" || rawSortBy === "rating" ? rawSortBy : "recent";
 	const { local, session } = useSelector((state: RootState) => state.auth);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const authenticatedUser = local.isAuthenticated ? local.user : session.user;
@@ -227,7 +232,25 @@ const Wishlist = (): ReactElement => {
 		setSearchParams(nextParams);
 	};
 
+	const updateSavedQuery = (
+		updates: { page?: number; search?: string; sort?: SavedRecipeSort },
+		replace = true,
+	): void => {
+		const nextParams = new URLSearchParams(searchParams);
+		if (updates.page !== undefined) nextParams.set("page", String(updates.page));
+		if (updates.search !== undefined) {
+			if (updates.search) nextParams.set("search", updates.search);
+			else nextParams.delete("search");
+		}
+		if (updates.sort !== undefined) {
+			if (updates.sort === "recent") nextParams.delete("sort");
+			else nextParams.set("sort", updates.sort);
+		}
+		setSearchParams(nextParams, { replace });
+	};
+
 	useEffect(() => {
+		let isCurrentRequest = true;
 		const fetchFavorites = async (): Promise<void> => {
 			if (!user_id) {
 				setIsLoadingWishlist(false);
@@ -235,29 +258,65 @@ const Wishlist = (): ReactElement => {
 			}
 
 			try {
-				setIsLoadingWishlist(true);
-				setWishlistError(null);
-				const response = await axios.get<unknown>(apiRoutes.userWishlist);
+				if (isCurrentRequest) {
+					setIsLoadingWishlist(true);
+					setWishlistError(null);
+				}
+				const response = await axios.get<unknown>(apiRoutes.userWishlist, {
+					params: {
+						page: savedPage,
+						limit: 12,
+						...(searchTerm.trim() ? { search: searchTerm.trim() } : {}),
+						sort: sortBy,
+					},
+				});
+				if (!isCurrentRequest) return;
 				setWishlist(getArrayPayload(response.data, "wishlist", isSavedRecipeResponseItem));
+				const responsePagination = isRecord(response.data) && isRecord(response.data.pagination)
+					? response.data.pagination
+					: null;
+				if (
+					responsePagination &&
+					typeof responsePagination.page === "number" &&
+					typeof responsePagination.limit === "number" &&
+					typeof responsePagination.total === "number" &&
+					typeof responsePagination.totalPages === "number" &&
+					typeof responsePagination.hasNext === "boolean"
+				) {
+					setPagination(responsePagination as SavedRecipesPagination);
+					if (responsePagination.page !== savedPage) {
+						const nextParams = new URLSearchParams(searchParams);
+						nextParams.set("page", String(responsePagination.page));
+						setSearchParams(nextParams, { replace: true });
+					}
+				} else {
+					setPagination(null);
+				}
 			} catch (err: unknown) {
+				if (!isCurrentRequest) return;
 				console.error(err);
 				setWishlistError(getApiErrorMessage(err, "Unable to load your saved recipes."));
 			} finally {
-				setIsLoadingWishlist(false);
+				if (isCurrentRequest) setIsLoadingWishlist(false);
 			}
 		};
 		fetchFavorites();
-	}, [user_id]);
+		return () => {
+			isCurrentRequest = false;
+		};
+	}, [user_id, savedPage, searchTerm, sortBy, searchParams, setSearchParams]);
 
+	const collectionRecipes = collectionRecipesQuery.data?.recipes ?? [];
 	const favoriteRecipes = useMemo(
-		() => getSavedRecipeEntries(recipes, wishlist),
-		[recipes, wishlist]
+		() => selectedCollectionId === null
+			? wishlist.map((item) => normalizeSavedRecipe(item).recipe as WishlistRecipe)
+			: collectionRecipes,
+		[collectionRecipes, selectedCollectionId, wishlist]
 	);
 
 	const visibleEntries = useMemo(
 		() => {
 			if (selectedCollectionId !== null) {
-				const collectionRecipes = collectionRecipesQuery.data?.recipes ?? [];
 				return getVisibleSavedEntries(
 					collectionRecipes,
 					collectionRecipes.map((recipe) => ({ recipe })),
@@ -265,10 +324,10 @@ const Wishlist = (): ReactElement => {
 					sortBy,
 				);
 			}
-			return getVisibleSavedEntries(recipes, wishlist, searchTerm, sortBy);
+			const savedRecipes = wishlist.map((item) => normalizeSavedRecipe(item).recipe as WishlistRecipe);
+			return getSavedRecipeEntries(savedRecipes, wishlist);
 		},
 		[
-			recipes,
 			wishlist,
 			searchTerm,
 			sortBy,
@@ -350,14 +409,21 @@ const Wishlist = (): ReactElement => {
 					apiRoutes.userWishlistItem(capturedRecipeId)
 				);
 				if (response.status === 200) {
-				setWishlist((currentWishlist) =>
-					currentWishlist.filter(
-						(item) => Number(normalizeSavedRecipe(item).recipe.recipe_id) !== Number(capturedRecipeId),
-					)
-				);
-				setShowModal(false);
-				pendingRecipeIdRef.current = null;
-				showToast({ title: "Recipe removed from Saved" });
+					setWishlist((currentWishlist) =>
+						currentWishlist.filter(
+							(item) => Number(normalizeSavedRecipe(item).recipe.recipe_id) !== Number(capturedRecipeId),
+						)
+					);
+					if (pagination) {
+						const total = Math.max(0, pagination.total - 1);
+						const totalPages = Math.max(1, Math.ceil(total / pagination.limit));
+						const nextPage = Math.min(savedPage, totalPages);
+						setPagination({ ...pagination, page: nextPage, total, totalPages, hasNext: nextPage < totalPages });
+						if (nextPage !== savedPage) updateSavedQuery({ page: nextPage }, false);
+					}
+					setShowModal(false);
+					pendingRecipeIdRef.current = null;
+					showToast({ title: "Recipe removed from Saved" });
 				}
 			}
 		} catch (err: unknown) {
@@ -388,12 +454,12 @@ const Wishlist = (): ReactElement => {
 				</div>
 				<section className="wishlist__summary">
 					<div>
-						<strong>{favoriteRecipes.length}</strong>
+						<strong>{pagination?.total ?? favoriteRecipes.length}</strong>
 						<span>Saved</span>
 					</div>
 					<div>
-						<strong>{recipes.length}</strong>
-						<span>All recipes</span>
+						<strong>{pagination?.totalPages ?? 1}</strong>
+						<span>Pages</span>
 					</div>
 					<div>
 						<strong>{isAuthenticated ? "Active" : "Guest"}</strong>
@@ -440,7 +506,7 @@ const Wishlist = (): ReactElement => {
 							autoComplete="off"
 							value={searchTerm}
 							onChange={(event) =>
-								setSearchTerm(event.target.value)
+								updateSavedQuery({ search: event.target.value, page: 1 })
 							}
 						/>
 					</label>
@@ -450,7 +516,9 @@ const Wishlist = (): ReactElement => {
 							id="saved-recipes-sort"
 							value={sortBy}
 							onChange={(event) => {
-								if (event.target.value === "recent" || event.target.value === "rating" || event.target.value === "name") setSortBy(event.target.value);
+								if (event.target.value === "recent" || event.target.value === "rating" || event.target.value === "name") {
+									updateSavedQuery({ sort: event.target.value, page: 1 });
+								}
 							}}
 						>
 							<option value="recent">Recently saved</option>
@@ -460,20 +528,20 @@ const Wishlist = (): ReactElement => {
 					</label>
 				</div>
 				<div className="wishlist__main__content">
-					{(selectedCollectionId === null && (isLoadingRecipes || isLoadingWishlist)) ||
+					{(selectedCollectionId === null && isLoadingWishlist) ||
 					selectedCollectionRecipesLoading ? (
 						<PageState
 							title="Loading saved recipes"
 							message="Fetching your saved recipes."
 						/>
-					) : recipesError || wishlistError || selectedCollectionRecipesError ? (
+					) : wishlistError || selectedCollectionRecipesError ? (
 						<PageState
 							type="error"
 							title="Saved recipes could not load"
 							message={
 								selectedCollectionRecipesError
 									? "Unable to load this collection. Try selecting it again."
-									: recipesError || wishlistError
+								: wishlistError
 							}
 							actionLabel="Try again"
 							onAction={() => window.location.reload()}
@@ -498,7 +566,7 @@ const Wishlist = (): ReactElement => {
 							actionLabel={searchTerm ? "Clear search" : "Find something to cook"}
 								onAction={() =>
 									searchTerm
-										? setSearchTerm("")
+										? updateSavedQuery({ search: "", page: 1 })
 										: navigate("/food")
 							}
 						/>
@@ -515,6 +583,25 @@ const Wishlist = (): ReactElement => {
 								/>
 							))}
 						</ul>
+					)}
+					{selectedCollectionId === null && pagination && (
+						<nav className="wishlist__pagination" aria-label="Saved recipe pages">
+							<button
+								type="button"
+								onClick={() => updateSavedQuery({ page: pagination.page - 1 }, false)}
+								disabled={pagination.page <= 1}
+							>
+								Previous page
+							</button>
+							<p role="status">Page {pagination.page} of {pagination.totalPages} · {pagination.total} saved recipes</p>
+							<button
+								type="button"
+								onClick={() => updateSavedQuery({ page: pagination.page + 1 }, false)}
+								disabled={!pagination.hasNext}
+							>
+								Next page
+							</button>
+						</nav>
 					)}
 				</div>
 			</div>

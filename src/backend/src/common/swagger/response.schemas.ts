@@ -492,6 +492,18 @@ export class WishlistItemResponseDto {
 export class WishlistResponseDto {
   @ApiProperty({ type: [WishlistItemResponseDto] })
   wishlist!: WishlistItemResponseDto[];
+
+  @ApiPropertyOptional({
+    type: Object,
+    example: { page: 1, limit: 12, total: 35, totalPages: 3, hasNext: true },
+  })
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+  };
 }
 
 export class CollectionResponseDto {

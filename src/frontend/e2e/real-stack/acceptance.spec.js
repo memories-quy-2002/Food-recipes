@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+	apiUrl,
 	findRecipeByName,
 	loginApi,
 	loginInBrowser,
@@ -63,6 +64,20 @@ test("real stack: logs in, saves a recipe, persists it across reload, and remove
 		const addResponse = await addResponsePromise;
 		expect(addResponse.status()).toBe(201);
 		await expect(page.getByRole("button", { name: "Remove recipe from saved" })).toHaveAttribute("aria-pressed", "true");
+
+		const query = new URLSearchParams({ page: "1", limit: "1", search: recipe.recipe_name, sort: "name" });
+		const paginatedResponse = await request.get(apiUrl(`/users/me/wishlist?${query}`), { headers: auth.headers });
+		await expect(paginatedResponse, "paginated Saved request failed").toBeOK();
+		const paginatedWishlist = await paginatedResponse.json();
+		expect(paginatedWishlist.wishlist).toHaveLength(1);
+		expect(paginatedWishlist.wishlist[0].recipe.recipe_id).toBe(recipe.recipe_id);
+		expect(paginatedWishlist.pagination).toMatchObject({ page: 1, limit: 1, total: 1, totalPages: 1, hasNext: false });
+
+		const legacyResponse = await request.get(apiUrl("/users/me/wishlist"), { headers: auth.headers });
+		await expect(legacyResponse, "legacy Saved request failed").toBeOK();
+		const legacyWishlist = await legacyResponse.json();
+		expect(legacyWishlist.pagination).toBeUndefined();
+		expect(legacyWishlist.wishlist.some((item) => item.recipe?.recipe_id === recipe.recipe_id || item.recipe_id === recipe.recipe_id)).toBe(true);
 
 		await page.reload();
 		await expect(page.getByRole("button", { name: "Remove recipe from saved" })).toHaveAttribute("aria-pressed", "true");

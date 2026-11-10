@@ -20,7 +20,7 @@ describe('WishlistController', () => {
     await controller.add(user, { recipeId: 15 });
     await controller.remove(15, user);
 
-    expect(service.list).toHaveBeenCalledWith(7);
+    expect(service.list).toHaveBeenCalledWith(7, undefined);
     expect(service.add).toHaveBeenCalledWith(7, 15);
     expect(service.remove).toHaveBeenCalledWith(7, 15);
   });
