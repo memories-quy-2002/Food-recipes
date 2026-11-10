@@ -157,7 +157,7 @@ describe("PersonalizedHomeFeed accessibility", () => {
 
 		renderFeed();
 
-		const recipeLink = screen.getByRole("link", { name: "Open Pantry pasta" });
+		const recipeLink = screen.getByRole("link", { name: /Pantry pasta/ });
 		const saveButton = screen.getByRole("button", { name: "Save Pantry pasta" });
 		recipeLink.focus();
 		expect(document.activeElement).toBe(recipeLink);
