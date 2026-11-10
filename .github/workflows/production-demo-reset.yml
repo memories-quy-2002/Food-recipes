@@ -68,6 +68,7 @@ jobs:
         run: |
           set -euo pipefail
           successful_runs="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
             --workflow quality-gates.yml \
             --branch master \
             --commit "$GITHUB_SHA" \
