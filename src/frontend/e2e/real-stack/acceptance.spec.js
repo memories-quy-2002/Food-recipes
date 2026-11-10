@@ -13,7 +13,7 @@ test("real stack: discovers a seeded recipe through the public UI and opens its 
 
 	await page.goto(`/food?q=${encodeURIComponent(recipe.recipe_name)}`);
 	await expect(page.getByRole("heading", { name: "Find something worth cooking" })).toBeVisible();
-	const recipeLink = page.getByRole("link", { name: `Open ${recipe.recipe_name}` });
+	const recipeLink = page.getByRole("link", { name: recipe.recipe_name });
 	await expect(recipeLink).toBeVisible();
 	await recipeLink.click();
 
@@ -30,8 +30,8 @@ test("real stack: finds recipes by a pantry ingredient and exposes public Recipe
 
 	await page.goto("/food?pantryIngredient=Avocado");
 	await ingredientSearch;
-	await expect(page.getByRole("link", { name: `Open ${recipe.recipe_name}` })).toBeVisible();
-	await page.getByRole("link", { name: `Open ${recipe.recipe_name}` }).click();
+	await expect(page.getByRole("link", { name: recipe.recipe_name })).toBeVisible();
+	await page.getByRole("link", { name: recipe.recipe_name }).click();
 
 	const schemaNode = page.locator('script[type="application/ld+json"]');
 	await expect(schemaNode).toHaveCount(1);

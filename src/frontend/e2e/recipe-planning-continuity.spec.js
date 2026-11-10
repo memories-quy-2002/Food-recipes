@@ -203,8 +203,8 @@ test("connects Recipe Detail to a new plan, Cooking Mode, and Back to plan", asy
 	const planningState = await stubPlanningApi(page);
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await expect(page.getByRole("button", { name: "Add recipe to meal plan" })).toBeVisible();
-	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
+	await expect(page.getByRole("button", { name: "Add to meal plan" })).toBeVisible();
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
 	const dialog = page.getByRole("dialog", { name: "Add Chicken Curry to your plan" });
 	await expect(dialog).toBeVisible();
 	const dialogStyles = await dialog.evaluate((element) => {
@@ -227,7 +227,7 @@ test("connects Recipe Detail to a new plan, Cooking Mode, and Back to plan", asy
 	expect(planningState.addPayload).toMatchObject({ recipeId: 7, date: selectedDate, slot: "lunch", servings: 6 });
 
 	await page.goto("/planning");
-	await expect(page.getByRole("link", { name: "Open Chicken Curry" })).toBeVisible();
+	await expect(page.getByRole("link", { name: "Open Chicken Curry", exact: true })).toBeVisible();
 	await page.getByRole("link", { name: "Start cooking Chicken Curry" }).click();
 	await expect(page).toHaveURL(/\/recipe\/cooking\?id=7&planItemId=4/);
 	await expect(page.getByText(/Lunch.*6 servings/)).toBeVisible();
@@ -261,7 +261,7 @@ test("adds directly to an existing plan without creating a duplicate", async ({ 
 	const planningState = await stubPlanningApi(page, { initialPlan: true });
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
 	const dialog = page.getByRole("dialog", { name: "Add Chicken Curry to your plan" });
 	await dialog.getByLabel("Meal").selectOption("breakfast");
 	await dialog.getByRole("button", { name: "Add to plan", exact: true }).click();
@@ -277,7 +277,7 @@ test("creates a full target week when an overlapping plan misses the selected da
 	const planningState = await stubPlanningApi(page, { initialPlan: true, partialPlan: true });
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
 	const dialog = page.getByRole("dialog", { name: "Add Chicken Curry to your plan" });
 	await dialog.getByLabel("Date").fill("2026-08-24");
 	await dialog.getByRole("button", { name: "Add to plan", exact: true }).click();
@@ -291,7 +291,7 @@ test("sends guests to account before opening Add to plan", async ({ page }) => {
 	await stubRecipeApi(page);
 
 	await page.goto(`/recipe?id=${recipe.recipe_id}`);
-	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
 
 	await expect(page).toHaveURL(/\/account\?signup=false$/);
 });

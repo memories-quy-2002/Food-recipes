@@ -81,6 +81,9 @@ async function stubRecipeEditingApi(page, {
 		if (path.endsWith("/users/me/notifications") && method === "GET") {
 			return route.fulfill(json({ notifications: [] }));
 		}
+		if (path.endsWith("/home-feed")) {
+			return route.fulfill(json({ sections: [] }));
+		}
 
 		if (path.endsWith("/households") && method === "GET") {
 			return route.fulfill(json({ households: [] }));

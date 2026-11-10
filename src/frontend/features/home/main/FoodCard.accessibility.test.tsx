@@ -34,7 +34,7 @@ describe("FoodCard semantics", () => {
 		const button = renderer.root.findByType("button");
 
 		expect(link.props.to).toBe("/recipe?id=7");
-		expect(link.props["aria-label"]).toBe("Open Pasta Primavera");
+		expect(link.findByType("h3").children).toContain("Pasta Primavera");
 		expect(button.props["aria-label"]).toBe("Save Pasta Primavera");
 		expect(button.props.type).toBe("button");
 		expect(renderer.root.findByType("article")).toBeTruthy();

@@ -73,7 +73,6 @@ const RecipeCard = ({
 					viewMode === "list" && "sm:grid sm:grid-cols-subgrid sm:col-span-2",
 				)}
 				to={`/recipe?id=${recipe.recipe_id}`}
-				aria-label={`Open ${name}`}
 			>
 				<div
 					className={cn(

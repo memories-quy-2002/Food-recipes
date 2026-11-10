@@ -70,7 +70,7 @@ describe("FoodContent", () => {
 			);
 		});
 
-		expect(renderer.root.findByProps({ "aria-label": "Open Pasta" })).toBeTruthy();
+		expect(renderer.root.findAllByType("a").some((link) => link.findAllByType("h3").some(({ children }) => children.includes("Pasta")))).toBe(true);
 
 		act(() => {
 			renderer.update(
@@ -86,7 +86,7 @@ describe("FoodContent", () => {
 		expect(content.props["aria-busy"]).toBe(true);
 		expect(renderer.root.findByProps({ role: "status" })).toBeTruthy();
 		expect(renderer.root.findAll((node: ReactTestInstance) => typeof node.props?.className === "string" && node.props.className.includes("sm:grid-cols-2"))[0]).toBeTruthy();
-		expect(renderer.root.findByProps({ "aria-label": "Open Pasta" })).toBeTruthy();
+		expect(renderer.root.findAllByType("a").some((link) => link.findAllByType("h3").some(({ children }) => children.includes("Pasta")))).toBe(true);
 
 		act(() => {
 			renderer.update(
@@ -97,7 +97,7 @@ describe("FoodContent", () => {
 			);
 		});
 
-		expect(renderer.root.findByProps({ "aria-label": "Open Soup" })).toBeTruthy();
+		expect(renderer.root.findAllByType("a").some((link) => link.findAllByType("h3").some(({ children }) => children.includes("Soup")))).toBe(true);
 		expect(renderer.root.findAllByProps({ role: "status" })).toHaveLength(0);
 		expect(renderer.root.findByProps({ "aria-busy": false }).props["aria-busy"]).toBe(false);
 	});
@@ -121,11 +121,8 @@ describe("FoodContent", () => {
 			);
 		});
 
-		expect(renderer.root.findByProps({ "aria-label": "Open Toast" })).toBeTruthy();
-		expect(renderer.root.findByProps({ "aria-label": "Open Soup" })).toBeTruthy();
 		expect(renderer.root.findAllByType("a")
-			.map(({ props }) => props["aria-label"])
-			.filter(Boolean)).toEqual(["Open Toast", "Open Soup"]);
+			.map((link) => link.findByType("h3").children.join(""))).toEqual(["Toast", "Soup"]);
 		expect(renderer.root.findAllByType("h2")[0].props.children).toBe("4 recipes found");
 	});
 

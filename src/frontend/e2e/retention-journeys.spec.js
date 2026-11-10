@@ -105,12 +105,12 @@ test("pantry expiry leads to a use-soon recipe search", async ({ page }) => {
 	await page.getByRole("link", { name: "Find recipes using Spinach" }).click();
 	await expect(page).toHaveURL(/\/food\?q=Spinach&pantryIngredient=Spinach$/);
 	await expect(page.getByRole("heading", { name: "Recipes using Spinach" })).toBeVisible();
-	await page.getByRole("link", { name: `Open ${recipe.recipe_name}` }).click();
+	await page.getByRole("link", { name: recipe.recipe_name }).click();
 	await page.getByRole("button", { name: "Check ingredients" }).click();
 	await expect(page.getByRole("status", { name: "Meal preparation status" })).toContainText("1 to buy");
 	await page.getByRole("button", { name: "Add missing ingredients to shopping list" }).click();
 	await expect(page.getByRole("status", { name: "Meal preparation status" })).toContainText("1 missing item added");
-	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
 	await expect(page.getByRole("dialog", { name: `Add ${recipe.recipe_name} to your plan` })).toBeVisible();
 	await page.getByRole("button", { name: "Add to plan", exact: true }).click();
 	await expect(page.getByRole("dialog", { name: `Add ${recipe.recipe_name} to your plan` })).toHaveCount(0);

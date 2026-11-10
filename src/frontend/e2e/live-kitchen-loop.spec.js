@@ -32,7 +32,7 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	await expect(page.getByRole("heading", { name: "Know what to do next." })).toBeVisible();
 	await page
 		.getByRole("region", { name: "Top rated recipes" })
-		.getByRole("link", { name: `Open ${recipeName}` })
+		.getByRole("link", { name: recipeName })
 		.click();
 
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
@@ -146,7 +146,7 @@ test("real browser: saves a leftover before reviewing the completed recipe", asy
 	await page.getByRole("textbox", { name: "Password *" }).fill(demoCredentials.password);
 	await page.getByRole("button", { name: "Log in" }).click();
 	await expect(page).toHaveURL(/\/$/);
-	await page.getByRole("region", { name: "Top rated recipes" }).getByRole("link", { name: `Open ${recipeName}` }).click();
+	await page.getByRole("region", { name: "Top rated recipes" }).getByRole("link", { name: recipeName }).click();
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
 	await page.getByRole("link", { name: "Start cooking" }).click();
 	await expect(page.locator("#cooking-mode-title")).toHaveText(recipeName);
