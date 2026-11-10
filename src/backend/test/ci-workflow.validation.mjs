@@ -6,13 +6,28 @@ import { fileURLToPath } from 'node:url';
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(testDirectory, '../../..');
 const workflowPath = path.join(repositoryRoot, '.github/workflows/quality-gates.yml');
+const productionMigrationWorkflowPath = path.join(
+  repositoryRoot,
+  '.github/workflows/production-migrate.yml',
+);
 const baselineWorkflowPath = path.join(
   repositoryRoot,
   '.github/workflows/production-prisma-baseline.yml',
 );
-const [workflow, baselineWorkflow] = await Promise.all([
+const productionDemoResetWorkflowPath = path.join(
+  repositoryRoot,
+  '.github/workflows/production-demo-reset.yml',
+);
+const [
+  workflow,
+  productionMigrationWorkflow,
+  baselineWorkflow,
+  productionDemoResetWorkflow,
+] = await Promise.all([
   readFile(workflowPath, 'utf8'),
+  readFile(productionMigrationWorkflowPath, 'utf8'),
   readFile(baselineWorkflowPath, 'utf8'),
+  readFile(productionDemoResetWorkflowPath, 'utf8'),
 ]);
 
 const jobsSectionMatch = workflow.match(/^jobs:\r?\n([\s\S]*)$/m);
@@ -86,6 +101,18 @@ assert.doesNotMatch(jobs.frontend, /actions\/upload-artifact@v\d+/, 'frontend qu
 assert.doesNotMatch(workflow, /contents:\s*write/i, 'quality gates must never request write permissions');
 assert.doesNotMatch(workflow, /git push/i, 'quality gates must never push generated changes');
 assert.doesNotMatch(workflow, /prisma migrate reset/i, 'CI must never reset a data-bearing database');
+
+for (const [workflowName, productionWorkflow] of [
+  ['production migration', productionMigrationWorkflow],
+  ['production baseline', baselineWorkflow],
+  ['production demo reset', productionDemoResetWorkflow],
+]) {
+  assert.match(
+    productionWorkflow,
+    /gh run list \\\r?\n\s+--repo "\$GITHUB_REPOSITORY" \\\r?\n\s+--workflow quality-gates\.yml/,
+    `${workflowName} CI lookup must select its repository without depending on a checked-out git worktree`,
+  );
+}
 
 assert.match(
   baselineWorkflow,
