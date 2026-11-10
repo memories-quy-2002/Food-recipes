@@ -66,7 +66,7 @@ test.describe("email verification", () => {
 		await page.getByRole("button", { name: "Resend verification email" }).click();
 
 		expect(requestBody).toEqual({});
-		await expect(page.getByRole("status")).toContainText(
+		await expect(page.getByRole("status").filter({ hasText: /verification instructions will be sent/i })).toContainText(
 			/verification instructions will be sent/i,
 		);
 	});

@@ -30,14 +30,14 @@ const RecipeJsonLd = ({
 			.querySelectorAll('script[' + DATA_ATTRIBUTE + ']')
 			.forEach((element) => element.remove());
 
-		if (!recipe) return undefined;
+		if (!recipe || recipe.status !== 'published') return undefined;
 		const data = createRecipeStructuredData(recipe, getCanonicalUrl(canonicalPath));
 		if (!data) return undefined;
 
 		const script = document.createElement('script');
 		script.setAttribute('type', 'application/ld+json');
 		script.setAttribute(DATA_ATTRIBUTE, 'true');
-		script.textContent = JSON.stringify(data);
+		script.textContent = JSON.stringify(data).replace(/</g, '\\u003c');
 		document.head.appendChild(script);
 
 		return () => {

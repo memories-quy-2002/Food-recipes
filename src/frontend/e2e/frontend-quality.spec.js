@@ -69,7 +69,7 @@ test("recipe discovery exposes a retryable error and recovers after the catalog 
 
 	catalog.allowDiscovery();
 	await retryButton.click();
-	await expect(page.getByRole("link", { name: `Open ${recipe.recipe_name}` })).toBeVisible();
+	await expect(page.getByRole("link", { name: recipe.recipe_name })).toBeVisible();
 });
 
 test("food discovery stays keyboard reachable, within the viewport, and accessible on mobile", async ({ page }) => {

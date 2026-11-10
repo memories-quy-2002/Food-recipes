@@ -673,6 +673,9 @@ export class PrepareRecipeResponseDto {
 
   @ApiProperty()
   added_shopping_items!: number;
+
+  @ApiProperty()
+  shopping_list_confirmed!: boolean;
 }
 
 export class CookingHistoryItemDto {

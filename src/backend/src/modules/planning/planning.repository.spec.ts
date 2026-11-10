@@ -120,18 +120,22 @@ describe('PlanningRepository shopping-list duplicate prevention', () => {
     expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
   });
 
-  it('makes pantry-aware recipe imports safe when the duplicate is inserted concurrently', async () => {
+  it('keeps pantry-aware preparation previews read-only until shopping is confirmed', async () => {
     const prisma = {
       $queryRaw: jest.fn()
         .mockResolvedValueOnce([{ recipe_id: 15, recipe_name: 'Rice bowl', ingredients: ['rice'] }])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([{ servings: 2 }])
-        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]),
     };
     const repository = new PlanningRepository(prisma as never);
 
-    await expect(repository.prepareRecipeIngredients(7, 15)).resolves.toMatchObject({ added_shopping_items: 0 });
-    expect(prisma.$queryRaw.mock.calls[4][0].strings.join(' ')).toMatch(/ON CONFLICT DO NOTHING/);
+    await expect(repository.prepareRecipeIngredients(7, 15)).resolves.toMatchObject({
+      added_shopping_items: 0,
+      shopping_list_confirmed: false,
+      ingredients: [{ ingredient_name: 'rice', status: 'needs_details' }],
+    });
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(4);
+    expect(prisma.$queryRaw.mock.calls.map(([query]) => query.strings.join(' ')).join(' ')).not.toMatch(/INSERT INTO shopping_list_items/);
   });
 });

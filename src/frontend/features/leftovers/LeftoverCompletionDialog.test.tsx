@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import LeftoverCompletionDialog from "./LeftoverCompletionDialog";
 
 describe("LeftoverCompletionDialog", () => {
+	afterEach(cleanup);
+
 	it("shows cooked servings, converts eaten servings to remaining, and exposes planning fields", () => {
 		const onSave = vi.fn().mockResolvedValue(undefined);
 
@@ -30,5 +32,16 @@ describe("LeftoverCompletionDialog", () => {
 			planDate: expect.any(String),
 			slot: "lunch",
 		}));
+	});
+
+	it("lets the cook skip saving leftovers and continue", () => {
+		const onClose = vi.fn();
+		const onSave = vi.fn();
+		render(<LeftoverCompletionDialog open recipeName="Tomato Soup" cookedServings={4} onClose={onClose} onSave={onSave} />);
+
+		fireEvent.click(within(screen.getByRole("dialog", { name: "Save Tomato Soup leftovers" })).getByRole("button", { name: "Skip" }));
+
+		expect(onClose).toHaveBeenCalledOnce();
+		expect(onSave).not.toHaveBeenCalled();
 	});
 });

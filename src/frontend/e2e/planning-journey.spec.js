@@ -215,7 +215,7 @@ test("authenticated user completes the planning-to-cooking journey", async ({ pa
 
 	await expect(page.getByRole("link", { name: `Open ${recipe.recipe_name}` })).toBeVisible();
 	await page.getByRole("button", { name: `Change ${recipe.recipe_name}` }).click();
-	await page.getByLabel("Servings").fill("6");
+	await page.getByLabel("Servings", { exact: true }).fill("6");
 	await page.getByRole("button", { name: "Save changes" }).click();
 	await expect(page.getByText("6 servings", { exact: true })).toBeVisible();
 
@@ -225,6 +225,7 @@ test("authenticated user completes the planning-to-cooking journey", async ({ pa
 	await page.getByRole("button", { name: "Next step" }).click();
 	await page.getByRole("button", { name: "Finish cooking" }).click();
 	await expect(page.getByRole("heading", { name: "Recipe complete" })).toBeVisible();
+	await page.getByRole("dialog").getByRole("button", { name: "Skip", exact: true }).click();
 	await page.getByRole("button", { name: "Back to plan" }).click();
 	await expect(page).toHaveURL(/\/planning$/);
 	await expect(page.getByText("6 servings", { exact: true })).toBeVisible();
@@ -266,6 +267,6 @@ test("keeps planner layout usable across requested responsive breakpoints", asyn
 		expect(audit.documentWidth).toBeLessThanOrEqual(audit.viewportWidth);
 		expect(audit.controlViolations).toEqual([]);
 		expect(audit.plannerWidth).toBeLessThanOrEqual(width);
-		expect(audit.gridColumns).toBe(width >= 1024 ? 7 : width >= 640 ? 2 : 1);
+		expect(audit.gridColumns).toBe(width >= 1280 ? 7 : width >= 640 ? 2 : 1);
 	}
 });

@@ -278,6 +278,24 @@ export class PlanningService {
     return result;
   }
 
+  async addPreparedRecipeIngredients(userId: number, recipeId: number, servings?: number) {
+    const result = await this.repository.addPreparedRecipeIngredients(userId, recipeId, servings);
+    if (!result) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
+    return result;
+  }
+
+  async prepareRecipeIngredientsForHousehold(userId: number, householdId: number, recipeId: number, servings?: number) {
+    const result = await this.repository.prepareRecipeIngredients(userId, recipeId, servings, householdId);
+    if (!result) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
+    return result;
+  }
+
+  async addPreparedRecipeIngredientsForHousehold(userId: number, householdId: number, recipeId: number, servings?: number) {
+    const result = await this.repository.addPreparedRecipeIngredients(userId, recipeId, servings, householdId);
+    if (!result) throw new NotFoundException({ code: 'RECIPE_NOT_FOUND', message: 'Recipe not found' });
+    return result;
+  }
+
   async clearCompletedShoppingItems(userId: number) {
     const removed = await this.repository.clearCompletedShoppingItems(userId);
     return { removed };

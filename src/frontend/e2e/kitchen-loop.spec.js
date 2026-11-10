@@ -212,7 +212,7 @@ test("completes the production kitchen loop with duplicate and recovery safeguar
 
 	await page.goto(`/recipe?id=${fullFlowRecipe.recipe_id}`);
 	await expect(page.getByRole("heading", { name: fullFlowRecipe.recipe_name })).toBeVisible();
-	await page.getByRole("button", { name: "Add recipe to meal plan" }).click();
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
 	await page.getByRole("dialog", { name: `Add ${fullFlowRecipe.recipe_name} to your plan` }).getByRole("button", { name: "Add to plan", exact: true }).click();
 	await expect(page.getByText(`Added ${fullFlowRecipe.recipe_name} to your plan`, { exact: true })).toBeVisible();
 

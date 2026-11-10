@@ -21,6 +21,7 @@ export type RecipeDiscoveryState = {
 	filter: RecipeFilter | "";
 	page: number;
 	limit: number;
+	pantryIngredient?: string;
 };
 
 export type RecipeQueryOptions = {
@@ -53,6 +54,7 @@ export const parseRecipeDiscoveryState = (
 		filter: supportedFilters.has(filter as RecipeFilter) ? (filter as RecipeFilter) : "",
 		page: positiveInteger(params.get("page"), 1, MAX_RECIPE_PAGE),
 		limit: positiveInteger(params.get("limit"), DEFAULT_RECIPE_LIMIT, MAX_RECIPE_LIMIT),
+		pantryIngredient: params.get("pantryIngredient")?.trim() || "",
 	};
 };
 
@@ -73,6 +75,7 @@ export const createRecipeRequestParams = (state: RecipeDiscoveryState) => {
 	if (/^\d+$/.test(state.categoryId)) params.categoryId = Number(state.categoryId);
 	if (/^\d+$/.test(state.mealId)) params.mealId = Number(state.mealId);
 	if (state.filter) params.filter = state.filter;
+	if (state.pantryIngredient?.trim()) params.ingredient = state.pantryIngredient.trim();
 	return params;
 };
 

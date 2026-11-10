@@ -16,7 +16,7 @@ import RecipeOtherList from "@/features/recipes/RecipeOtherList";
 import CookingMode from "@/features/recipes/cooking/CookingMode";
 import { useCookingSession } from "@/features/recipes/cooking/useCookingSession";
 import { clearCookingToolsState, getCookingToolsStorageKey } from "@/features/recipes/cooking/cookingToolsStorage";
-import { useAddRecipeIngredientsMutation, usePrepareRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import { useAddPreparedRecipeIngredientsMutation, useAddRecipeIngredientsMutation, usePrepareRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
 import type { PrepareRecipeResponse } from "@/features/shopping/api/shoppingApi";
 import PreparationSummary from "@/features/shopping/PreparationSummary";
 import type {
@@ -178,7 +178,8 @@ const Recipe = (): React.ReactElement => {
 	const { showToast } = useToast();
 	const navigate = useNavigate();
 	const addIngredientsMutation = useAddRecipeIngredientsMutation();
-	const prepareRecipeMutation = usePrepareRecipeIngredientsMutation();
+	const prepareRecipeMutation = usePrepareRecipeIngredientsMutation(scope);
+	const addPreparedRecipeMutation = useAddPreparedRecipeIngredientsMutation(scope);
 	const createLeftoverMutation = useCreateLeftoverMutation(scope);
 	const collectionsQuery = useCollectionsQuery(isAuthenticated);
 	const addRecipeToCollectionMutation = useAddRecipeToCollectionMutation();
@@ -690,6 +691,7 @@ const Recipe = (): React.ReactElement => {
 				}
 				path={`/recipe?id=${id}`}
 				type="article"
+				noIndex={Boolean(recipe && recipe.status !== "published")}
 			/>
 			{isLoadingRecipe ? (
 				<PageState
@@ -747,7 +749,7 @@ const Recipe = (): React.ReactElement => {
 								onAddIngredients={handleAddIngredientsToShoppingList}
 							isAddingIngredients={addIngredientsMutation.isPending}
 						/>
-						{preparationResult && <div className="mx-auto w-full max-w-[100rem] px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]"><PreparationSummary result={preparationResult} /></div>}
+						{preparationResult && <div className="mx-auto w-full max-w-[100rem] px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]"><PreparationSummary result={preparationResult} isAdding={addPreparedRecipeMutation.isPending} isPreviewing={prepareRecipeMutation.isPending} onPreviewServings={(servings) => prepareRecipeMutation.mutate({ recipeId: preparationResult.recipe_id, servings }, { onSuccess: setPreparationResult })} onAddMissing={() => addPreparedRecipeMutation.mutate({ recipeId: preparationResult.recipe_id, servings: preparationResult.servings }, { onSuccess: setPreparationResult })} /></div>}
 					</div>
 					<div className="recipe-print__utilities mx-auto flex w-full max-w-[100rem] justify-end px-4 pb-2 sm:px-6 lg:px-8 2xl:max-w-[108rem]" data-print-hidden>
 				<div className="flex items-center gap-1 rounded-xl border border-border/70 bg-card/80 p-1 shadow-sm" role="group" aria-label="Recipe utilities">

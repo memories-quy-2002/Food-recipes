@@ -2,7 +2,7 @@ import { useState, type ReactElement } from "react";
 import { ArrowRight, CalendarDays, Check, ChefHat, PackageCheck, ShoppingBasket, TimerReset } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { KitchenState } from "@/shared/api/contracts";
-import { usePrepareRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
+import { useAddPreparedRecipeIngredientsMutation, usePrepareRecipeIngredientsMutation } from "@/features/shopping/api/shoppingQueries";
 import type { PrepareRecipeResponse } from "@/features/shopping/api/shoppingApi";
 import PreparationSummary from "@/features/shopping/PreparationSummary";
 import Button from "@/shared/ui/Button";
@@ -68,7 +68,8 @@ const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCen
 		return window.localStorage.getItem(`${ONBOARDING_STORAGE_PREFIX}${userId}`) === "dismissed";
 	});
 	const [preparationResult, setPreparationResult] = useState<PrepareRecipeResponse | null>(null);
-	const prepareMutation = usePrepareRecipeIngredientsMutation();
+	const prepareMutation = usePrepareRecipeIngredientsMutation(scope);
+	const addPreparedMutation = useAddPreparedRecipeIngredientsMutation(scope);
 	const leftoversQuery = useLeftoversQuery(scope);
 	const leftovers = leftoversQuery.data?.items ?? [];
 	const leftoverServings = leftovers.reduce((total, item) => total + item.remaining_servings, 0);
@@ -128,10 +129,10 @@ const KitchenCommandCenter = ({ kitchen, userId = "current" }: KitchenCommandCen
 							<h3 className="mt-4 text-xl font-black">{nextMeal.recipe_name}</h3>
 							<p className="mt-2 text-sm leading-6 text-muted-foreground">{formatDate(nextMeal.planned_date)} · {nextMeal.slot[0].toUpperCase() + nextMeal.slot.slice(1)} · {nextMeal.servings} servings</p>
 							<div className="mt-5 flex flex-wrap gap-2">
-								<Button type="button" onClick={prepareNextMeal} disabled={prepareMutation.isPending} aria-busy={prepareMutation.isPending}>{prepareMutation.isPending ? "Checking pantry…" : "Prepare this meal"}</Button>
+								<Button type="button" onClick={prepareNextMeal} disabled={prepareMutation.isPending} aria-busy={prepareMutation.isPending}>{prepareMutation.isPending ? "Checking pantry…" : "Check ingredients"}</Button>
 								<Button asChild variant="outline"><Link to={mealCookingHref(nextMeal, scope)}>Start cooking</Link></Button>
 							</div>
-							{preparationResult && <PreparationSummary result={preparationResult} />}
+							{preparationResult && <PreparationSummary result={preparationResult} isAdding={addPreparedMutation.isPending} isPreviewing={prepareMutation.isPending} onPreviewServings={(servings) => prepareMutation.mutate({ recipeId: preparationResult.recipe_id, servings }, { onSuccess: setPreparationResult })} onAddMissing={() => addPreparedMutation.mutate({ recipeId: preparationResult.recipe_id, servings: preparationResult.servings }, { onSuccess: setPreparationResult })} />}
 						</> : <>
 							<h3 className="mt-4 text-xl font-black">Plan your next meal</h3>
 							<p className="mt-2 text-sm leading-6 text-muted-foreground">A planned meal tells you what to prepare and makes returning later simple.</p>

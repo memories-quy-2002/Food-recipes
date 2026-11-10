@@ -32,7 +32,7 @@ describe("RecipeContainerSummary planning action", () => {
 		if (!renderer) throw new Error("Expected the recipe summary renderer");
 
 		const button = renderer.root.findAllByType("button").find(
-			(node: ReactTestInstance) => node.props["aria-label"] === "Add recipe to meal plan",
+			(node: ReactTestInstance) => node.props["aria-label"] === "Add to meal plan",
 		);
 		if (!button) throw new Error("Expected the add-to-plan button");
 		expect(button.children).toContain("Add to meal plan");
@@ -60,7 +60,7 @@ describe("RecipeContainerSummary planning action", () => {
 		if (!renderer) throw new Error("Expected the recipe summary renderer");
 
 		const button = renderer.root.findAllByType("button").find(
-			(node: ReactTestInstance) => node.props["aria-label"] === "Adding recipe to meal plan",
+			(node: ReactTestInstance) => node.props["aria-label"] === "Adding…",
 		);
 		if (!button) throw new Error("Expected the pending add-to-plan button");
 		expect(button.props.disabled).toBe(true);
@@ -86,7 +86,7 @@ describe("RecipeContainerSummary planning action", () => {
 		if (!renderer) throw new Error("Expected the recipe summary renderer");
 
 		const button = renderer.root.findAllByType("button").find(
-			(node: ReactTestInstance) => node.props["aria-label"] === "Save recipe to collection",
+			(node: ReactTestInstance) => node.props["aria-label"] === "Save to collection",
 		);
 		if (!button) throw new Error("Expected the save-to-collection button");
 		expect(button.children).toContain("Save to collection");

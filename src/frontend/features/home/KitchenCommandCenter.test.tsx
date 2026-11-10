@@ -14,6 +14,10 @@ vi.mock("@/features/shopping/api/shoppingQueries", () => ({
 		isPending: false,
 		mutate: prepare,
 	}),
+	useAddPreparedRecipeIngredientsMutation: () => ({
+		isPending: false,
+		mutate: vi.fn(),
+	}),
 }));
 
 import KitchenCommandCenter, { progressSteps } from "./KitchenCommandCenter";
@@ -59,7 +63,7 @@ describe("KitchenCommandCenter", () => {
 
 		expect(screen.getByRole("heading", { name: "Continue Pasta" })).toBeInTheDocument();
 		expect(screen.getByRole("link", { name: /Continue cooking/ })).toHaveAttribute("href", expect.stringContaining("planItemId=12"));
-		expect(screen.getByRole("button", { name: "Prepare this meal" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Check ingredients" })).toBeInTheDocument();
 		expect(screen.getByText("How your kitchen works")).toBeInTheDocument();
 	});
 

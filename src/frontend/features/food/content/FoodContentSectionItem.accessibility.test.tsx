@@ -35,7 +35,7 @@ describe("FoodContentSectionItem semantics", () => {
 		const article = renderer.root.findByType("article");
 
 		expect(link.props.to).toBe("/recipe?id=12");
-		expect(link.props["aria-label"]).toBe("Open Mushroom Risotto");
+		expect(link.findByType("h3").children).toContain("Mushroom Risotto");
 		expect(article.props.role).toBeUndefined();
 		expect(article.props.onKeyDown).toBeUndefined();
 	});

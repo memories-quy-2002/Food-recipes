@@ -49,7 +49,7 @@ async function stubRecipeApi(page) {
 			contentType: "application/json",
 			body: JSON.stringify({
 				personalized: route.request().url().includes("/users/me/"),
-				sections: [],
+				sections: [{ key: "popular", title: "Popular recipes", description: "Fixture feed", recipes }],
 			}),
 		})
 	);
@@ -165,7 +165,8 @@ test("guest searches Home and opens recipe detail", async ({ page }) => {
 test("Home featured recipe card exposes a focusable link with native Enter navigation", async ({ page }) => {
 	await page.goto("/");
 
-	const recipeLink = page.getByRole("link", { name: "Open Chocolate Banana Bread" });
+	const recipeLink = page.getByRole("region", { name: "Top rated recipes" })
+		.getByRole("link", { name: "Chocolate Banana Bread" });
 	await expect(recipeLink).toHaveAttribute("href", "/recipe?id=1");
 	await recipeLink.focus();
 	await expect(recipeLink).toBeFocused();
@@ -204,8 +205,9 @@ test("authenticated Home favorite is a separate keyboard control and stays on Ho
 	await authenticateAsTestUser(page);
 	await page.goto("/");
 
-	const recipeLink = page.getByRole("link", { name: "Open Chocolate Banana Bread" });
-	const favoriteButton = page.getByRole("button", { name: "Save Chocolate Banana Bread" });
+	const featured = page.getByRole("region", { name: "Top rated recipes" });
+	const recipeLink = featured.getByRole("link", { name: "Chocolate Banana Bread" });
+	const favoriteButton = featured.getByRole("button", { name: "Save Chocolate Banana Bread" });
 
 	await expect(recipeLink).toHaveAttribute("href", "/recipe?id=1");
 	await favoriteButton.focus();
@@ -213,7 +215,7 @@ test("authenticated Home favorite is a separate keyboard control and stays on Ho
 	await favoriteButton.press("Enter");
 
 	await expect(page).toHaveURL(/\/$/);
-	await expect(page.getByRole("button", { name: "Remove Chocolate Banana Bread from saved recipes" })).toBeVisible();
+	await expect(featured.getByRole("button", { name: "Remove Chocolate Banana Bread from saved recipes" })).toBeVisible();
 });
 
 test("guest navigates Home search results with accessible keyboard behavior", async ({ page }) => {
@@ -256,7 +258,7 @@ test("guest navigates Home search results with accessible keyboard behavior", as
 
 	await input.press("Enter");
 	await expect(page).toHaveURL(/\/recipe\?id=1$/);
-	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
+	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" }).first()).toBeVisible();
 
 	await page.goto("/?q=Chicken");
 	const reopenedInput = page.getByRole("combobox", { name: "Search recipes" });
@@ -292,7 +294,7 @@ test("guest filters and sorts Recipes before opening a result", async ({ page })
 	await page.getByRole("button", { name: "Desserts" }).click();
 	await expect(page).toHaveURL(/categoryId=1/);
 	await page.getByRole("combobox", { name: "Sort recipes by" }).selectOption("quickest");
-	await page.getByRole("link", { name: "Open Chocolate Banana Bread" }).click();
+	await page.getByRole("link", { name: "Chocolate Banana Bread" }).click();
 
 	await expect(page).toHaveURL(/\/recipe\?id=1/);
 });
@@ -300,7 +302,7 @@ test("guest filters and sorts Recipes before opening a result", async ({ page })
 test("food listing recipe card exposes the correct href and navigates on Enter", async ({ page }) => {
 	await page.goto("/food");
 
-	const recipeLink = page.getByRole("link", { name: "Open Chocolate Banana Bread" });
+	const recipeLink = page.getByRole("link", { name: "Chocolate Banana Bread" });
 	await expect(recipeLink).toHaveAttribute("href", "/recipe?id=1");
 	await recipeLink.focus();
 	await expect(recipeLink).toBeFocused();
@@ -356,13 +358,15 @@ test("guest Home Save preserves the query path through login and saves once", as
 	});
 
 	await page.goto("/?q=Chocolate");
-	await page.getByRole("button", { name: "Save Chocolate Banana Bread" }).click();
+	await page.getByRole("region", { name: "Top rated recipes" })
+		.getByRole("button", { name: "Save Chocolate Banana Bread" }).click();
 	await page.getByPlaceholder("you@example.com").fill("cook@example.com");
 	await page.getByPlaceholder("Password").fill("password123");
 	await page.getByRole("button", { name: "Log in" }).click();
 
 	await expect(page).toHaveURL(/\/\?q=Chocolate$/);
-	await expect(page.getByRole("button", { name: "Remove Chocolate Banana Bread from saved recipes" })).toBeVisible();
+	await expect(page.getByRole("region", { name: "Top rated recipes" })
+		.getByRole("button", { name: "Remove Chocolate Banana Bread from saved recipes" })).toBeVisible();
 	await expect.poll(() => saved).toBe(true);
 });
 

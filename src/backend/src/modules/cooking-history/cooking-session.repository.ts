@@ -243,7 +243,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
       const pantryRows = isLeftover ? [] : await tx.$queryRaw<Array<InventoryPantryItem & { quantity: number | string | null }>>(Prisma.sql`
         SELECT pantry_id, name, have, quantity, unit
         FROM pantry_items
-        WHERE user_id = ${userId}
+        WHERE ${session.household_id == null ? Prisma.sql`user_id = ${userId}` : Prisma.sql`household_id = ${session.household_id}`}
         FOR UPDATE
       `);
       const pantryItems = pantryRows.map((item) => ({
@@ -267,11 +267,11 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
         for (const shortage of calculation.shortages) {
           const quantity = `${formatInventoryQuantity(shortage.missing_quantity)} ${this.unitLabel(shortage.required_unit)}`;
           const inserted = await tx.$queryRaw<{ item_id: number }[]>(Prisma.sql`
-            INSERT INTO shopping_list_items (user_id, label, quantity, source_recipe_id)
-            SELECT ${userId}, ${shortage.ingredient_name}, ${quantity}, ${session.recipe_id}
+            INSERT INTO shopping_list_items (${session.household_id == null ? Prisma.sql`user_id` : Prisma.sql`household_id`}, label, quantity, source_recipe_id)
+            SELECT ${session.household_id ?? userId}, ${shortage.ingredient_name}, ${quantity}, ${session.recipe_id}
             WHERE NOT EXISTS (
               SELECT 1 FROM shopping_list_items
-              WHERE user_id = ${userId}
+              WHERE ${session.household_id == null ? Prisma.sql`user_id = ${userId}` : Prisma.sql`household_id = ${session.household_id}`}
                 AND checked = FALSE
                 AND LOWER(TRIM(label)) = LOWER(TRIM(${shortage.ingredient_name}))
                 AND COALESCE(quantity, '') = ${quantity}
@@ -366,7 +366,7 @@ export class CookingSessionRepository implements CookingSessionRepositoryPort {
               SET quantity = GREATEST(quantity - ${deductedInPantryUnit}, 0),
                   have = CASE WHEN quantity - ${deductedInPantryUnit} <= 0 THEN FALSE ELSE have END,
                   updated_at = CURRENT_TIMESTAMP
-              WHERE user_id = ${userId} AND pantry_id = ${consumption.pantry_id}
+              WHERE ${completed.household_id == null ? Prisma.sql`user_id = ${userId}` : Prisma.sql`household_id = ${completed.household_id}`} AND pantry_id = ${consumption.pantry_id}
             `);
           }
         }

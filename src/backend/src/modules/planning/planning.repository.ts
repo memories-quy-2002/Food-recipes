@@ -6,7 +6,6 @@ import { AddLeftoverMealPlanItemDto } from './dto/add-leftover-meal-plan-item.dt
 import {
   calculateInventoryConsumption,
   formatInventoryQuantity,
-  normalizeIngredientName,
   normalizePantryUnit,
   type InventoryPantryItem,
   type InventoryRecipeIngredient,
@@ -34,6 +33,7 @@ export type PrepareRecipeIngredientsRecord = {
   servings: number;
   ingredients: PreparedIngredientRecord[];
   added_shopping_items: number;
+  shopping_list_confirmed: boolean;
 };
 
 export interface PlanningRepositoryPort {
@@ -71,7 +71,8 @@ export interface PlanningRepositoryPort {
   updateShoppingItemForHousehold(householdId: number, itemId: number, label?: string, quantity?: string | null, checked?: boolean): Promise<ShoppingListItemRecord | null>;
   deleteShoppingItemForHousehold(householdId: number, itemId: number): Promise<boolean>;
   recipeIngredients(recipeId: number): Promise<RecipeIngredientsRecord | null>;
-  prepareRecipeIngredients(userId: number, recipeId: number, servings?: number): Promise<PrepareRecipeIngredientsRecord | null>;
+  prepareRecipeIngredients(userId: number, recipeId: number, servings?: number, householdId?: number): Promise<PrepareRecipeIngredientsRecord | null>;
+  addPreparedRecipeIngredients(userId: number, recipeId: number, servings?: number, householdId?: number): Promise<PrepareRecipeIngredientsRecord | null>;
   clearCompletedShoppingItems(userId: number): Promise<number>;
   clearCompletedShoppingItemsForHousehold(householdId: number): Promise<number>;
 }
@@ -495,7 +496,7 @@ export class PlanningRepository implements PlanningRepositoryPort {
     })) };
   }
 
-  async prepareRecipeIngredients(userId: number, recipeId: number, servings?: number): Promise<PrepareRecipeIngredientsRecord | null> {
+  async prepareRecipeIngredients(userId: number, recipeId: number, servings?: number, householdId?: number): Promise<PrepareRecipeIngredientsRecord | null> {
     const [recipeRows, structuredRows, nutritionRows, pantryRows] = await Promise.all([
       this.prisma.$queryRaw<{ recipe_id: number; recipe_name: string; ingredients: string[] | null }[]>(Prisma.sql`
         SELECT recipe_id, recipe_name, ingredients
@@ -514,7 +515,7 @@ export class PlanningRepository implements PlanningRepositoryPort {
       this.prisma.$queryRaw<Array<InventoryPantryItem & { unit: string | null; quantity: number | string | null }>>(Prisma.sql`
         SELECT pantry_id, name, have, quantity, unit
         FROM pantry_items
-        WHERE user_id = ${userId}
+        WHERE ${householdId === undefined ? Prisma.sql`user_id = ${userId}` : Prisma.sql`household_id = ${householdId}`}
       `),
     ]);
 
@@ -565,48 +566,21 @@ export class PlanningRepository implements PlanningRepositoryPort {
         };
       });
     } else {
-      const availablePantry = pantryItems.filter((item) => item.have && (item.quantity === null || item.quantity > 0));
       ingredients = (recipe.ingredients ?? [])
         .map((name, position) => name.trim())
         .filter(Boolean)
         .map((name, position) => {
-          const normalizedName = normalizeIngredientName(name);
-          const pantryItem = availablePantry.find((item) => {
-            const pantryName = normalizeIngredientName(item.name);
-            return normalizedName === pantryName || normalizedName.includes(pantryName) || pantryName.includes(normalizedName);
-          });
           return {
             position,
             ingredient_name: name,
             required_quantity: null,
             required_unit: null,
             available_quantity: null,
-            missing_quantity: pantryItem ? 0 : null,
-            pantry_id: pantryItem?.pantry_id ?? null,
-            status: pantryItem ? 'available' : 'needs_details',
+            missing_quantity: null,
+            pantry_id: null,
+            status: 'needs_details',
           };
         });
-    }
-
-    let addedShoppingItems = 0;
-    for (const ingredient of ingredients.filter((item) => item.status !== 'available')) {
-      const quantity = ingredient.missing_quantity !== null && ingredient.missing_quantity > 0 && ingredient.required_unit
-        ? `${formatInventoryQuantity(ingredient.missing_quantity)} ${this.unitLabel(ingredient.required_unit)}`
-        : null;
-      const inserted = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
-        INSERT INTO shopping_list_items (user_id, label, quantity, source_recipe_id)
-        SELECT ${userId}, ${ingredient.ingredient_name}, ${quantity}, ${recipeId}
-        WHERE NOT EXISTS (
-          SELECT 1 FROM shopping_list_items
-          WHERE user_id = ${userId}
-            AND checked = FALSE
-            AND LOWER(TRIM(label)) = LOWER(TRIM(${ingredient.ingredient_name}))
-            AND COALESCE(quantity, '') = COALESCE(${quantity}, '')
-        )
-        ON CONFLICT DO NOTHING
-        RETURNING item_id
-      `);
-      addedShoppingItems += inserted.length;
     }
 
     return {
@@ -614,8 +588,52 @@ export class PlanningRepository implements PlanningRepositoryPort {
       recipe_name: recipe.recipe_name,
       servings: effectiveServings,
       ingredients,
-      added_shopping_items: addedShoppingItems,
+      added_shopping_items: 0,
+      shopping_list_confirmed: false,
     };
+  }
+
+  async addPreparedRecipeIngredients(userId: number, recipeId: number, servings?: number, householdId?: number): Promise<PrepareRecipeIngredientsRecord | null> {
+    const result = await this.prepareRecipeIngredients(userId, recipeId, servings, householdId);
+    if (!result) return null;
+
+    const missingIngredients = result.ingredients
+      .filter((item) => item.status === 'missing')
+      .map((ingredient) => ({
+        ingredient,
+        quantity: ingredient.missing_quantity !== null && ingredient.missing_quantity > 0 && ingredient.required_unit
+          ? `${formatInventoryQuantity(ingredient.missing_quantity)} ${this.unitLabel(ingredient.required_unit)}`
+          : null,
+      }))
+      .sort((left, right) => {
+        const leftKey = JSON.stringify([left.ingredient.ingredient_name.trim().toLowerCase(), left.quantity]);
+        const rightKey = JSON.stringify([right.ingredient.ingredient_name.trim().toLowerCase(), right.quantity]);
+        return leftKey.localeCompare(rightKey);
+      });
+
+    const addedShoppingItems = await this.prisma.$transaction(async (tx) => {
+      let added = 0;
+      for (const { ingredient, quantity } of missingIngredients) {
+        const lockKey = JSON.stringify([householdId === undefined ? `user:${userId}` : `household:${householdId}`, ingredient.ingredient_name.trim().toLowerCase(), quantity]);
+        await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
+        const inserted = await tx.$queryRaw<{ item_id: number }[]>(Prisma.sql`
+          INSERT INTO shopping_list_items (${householdId === undefined ? Prisma.sql`user_id` : Prisma.sql`household_id`}, label, quantity, source_recipe_id)
+          SELECT ${householdId === undefined ? userId : householdId}, ${ingredient.ingredient_name}, ${quantity}, ${recipeId}
+          WHERE NOT EXISTS (
+            SELECT 1 FROM shopping_list_items
+            WHERE ${householdId === undefined ? Prisma.sql`user_id = ${userId}` : Prisma.sql`household_id = ${householdId}`}
+              AND checked = FALSE
+              AND LOWER(TRIM(label)) = LOWER(TRIM(${ingredient.ingredient_name}))
+              AND COALESCE(quantity, '') = COALESCE(${quantity}, '')
+          )
+          RETURNING item_id
+        `);
+        added += inserted.length;
+      }
+      return added;
+    });
+
+    return { ...result, added_shopping_items: addedShoppingItems, shopping_list_confirmed: true };
   }
 
   clearCompletedShoppingItems(userId: number): Promise<number> {

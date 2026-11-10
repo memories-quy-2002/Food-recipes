@@ -78,6 +78,17 @@ async function stubRecipeEditingApi(page, {
 			return route.fulfill(json({ recipes: ownedRecipes.map(clone) }));
 		}
 
+		if (path.endsWith("/users/me/notifications") && method === "GET") {
+			return route.fulfill(json({ notifications: [] }));
+		}
+		if (path.endsWith("/home-feed")) {
+			return route.fulfill(json({ sections: [] }));
+		}
+
+		if (path.endsWith("/households") && method === "GET") {
+			return route.fulfill(json({ households: [] }));
+		}
+
 		if (path.endsWith("/users/me/ratings")) {
 			return route.fulfill(json({ ratings: [] }));
 		}

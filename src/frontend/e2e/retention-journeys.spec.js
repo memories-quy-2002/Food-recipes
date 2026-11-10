@@ -4,7 +4,7 @@ const user = { user_id: 7, full_name: "Retention User", email: "retention@exampl
 const recipe = {
 	recipe_id: 42, recipe_name: "Weeknight Pasta", recipe_description: "A quick dinner.", category_id: 2, category_name: "Main Course", meal_id: 3, meal_name: "Dinner", date_added: null,
 	prep_time_minutes: 15, cook_time_minutes: 20, total_time_minutes: 35, servings: 2, user_id: 7, status: "published", image_url: null,
-	ingredients: ["pasta"], instructions: ["Boil pasta.", "Serve pasta."], structured_ingredients: [], dietary_tags: [], allergen_tags: [],
+	ingredients: ["spinach", "pasta"], instructions: ["Boil pasta.", "Serve pasta."], structured_ingredients: [], dietary_tags: [], allergen_tags: [],
 };
 
 const json = (body, status = 200) => ({ status, contentType: "application/json", body: JSON.stringify(body) });
@@ -40,9 +40,14 @@ async function stubRetentionApi(page) {
 		if (path === "/users/me/recipes/42/note") return route.fulfill(json({ note: null }));
 		if (path === "/users/me/pantry") return route.fulfill(json({ items: [{ pantry_id: 4, name: "Spinach", have: true, quantity: 1, unit: "PIECE", expires_at: "2026-08-29", expiry_status: "use_soon", storage_location: "fridge" }] }));
 		if (path === "/users/me/meal-plans" && method === "GET") return route.fulfill(json({ plans: [] }));
+		if (path === "/users/me/meal-plan-templates" && method === "GET") return route.fulfill(json({ templates: [] }));
+		if (path === "/users/me/recurring-meal-rules" && method === "GET") return route.fulfill(json({ rules: [] }));
+		if (path === "/users/me/meal-plans" && method === "POST") return route.fulfill(json({ plan: { plan_id: 9, name: "This week", start_date: request.postDataJSON().from, end_date: request.postDataJSON().to } }, 201));
+		if (path === "/users/me/meal-plans/9/items" && method === "POST") return route.fulfill(json({ item: { item_id: 10, plan_id: 9, recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, planned_date: request.postDataJSON().date, slot: request.postDataJSON().slot, servings: request.postDataJSON().servings, cooking_status: "planned" } }, 201));
 		if (path === "/users/me/meal-plans/generate-preview" && method === "POST") return route.fulfill(json({ previewToken: "preview-token", name: "This week", from: "2026-08-28", to: "2026-08-30", targetMeals: 1, items: [{ recipeId: 42, recipeName: recipe.recipe_name, date: "2026-08-28", slot: "dinner", servings: 2, locked: false, score: 1, reasons: ["Fits your preferences"] }] }));
 		if (path === "/users/me/meal-plans/from-preview" && method === "POST") return route.fulfill(json({ plan: { plan_id: 9, name: "This week", start_date: "2026-08-28", end_date: "2026-08-30" }, items: [] }));
-		if (path === "/users/me/shopping-list/prepare" && method === "POST") return route.fulfill(json({ recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, servings: 2, ingredients: [{ position: 1, ingredient_name: "pasta", required_quantity: 1, required_unit: "PIECE", available_quantity: 1, missing_quantity: 0, pantry_id: 4, status: "available" }], added_shopping_items: 0 }));
+		if (path === "/users/me/shopping-list/prepare" && method === "POST") return route.fulfill(json({ recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, servings: 2, ingredients: [{ position: 1, ingredient_name: "spinach", required_quantity: 1, required_unit: "PIECE", available_quantity: 1, missing_quantity: 0, pantry_id: 4, status: "available" }, { position: 2, ingredient_name: "pasta", required_quantity: 1, required_unit: "PIECE", available_quantity: 0, missing_quantity: 1, pantry_id: null, status: "missing" }], added_shopping_items: 0, shopping_list_confirmed: false }));
+		if (path === "/users/me/shopping-list/prepare/add" && method === "POST") return route.fulfill(json({ recipe_id: recipe.recipe_id, recipe_name: recipe.recipe_name, servings: 2, ingredients: [{ position: 1, ingredient_name: "spinach", required_quantity: 1, required_unit: "PIECE", available_quantity: 1, missing_quantity: 0, pantry_id: 4, status: "available" }, { position: 2, ingredient_name: "pasta", required_quantity: 1, required_unit: "PIECE", available_quantity: 0, missing_quantity: 1, pantry_id: null, status: "missing" }], added_shopping_items: 1, shopping_list_confirmed: true }));
 		if (path === "/users/me/cooking-session" && method === "GET") return route.fulfill(json({ session: state.cookingSession }));
 		if (path === "/users/me/cooking-session" && method === "POST") {
 			const input = request.postDataJSON();
@@ -98,7 +103,17 @@ test("pantry expiry leads to a use-soon recipe search", async ({ page }) => {
 	await page.goto("/pantry");
 	await expect(page.getByText("Use soon · Expires 2026-08-29")).toBeVisible();
 	await page.getByRole("link", { name: "Find recipes using Spinach" }).click();
-	await expect(page).toHaveURL(/\/food\?useSoon=true$/);
+	await expect(page).toHaveURL(/\/food\?q=Spinach&pantryIngredient=Spinach$/);
+	await expect(page.getByRole("heading", { name: "Recipes using Spinach" })).toBeVisible();
+	await page.getByRole("link", { name: recipe.recipe_name }).click();
+	await page.getByRole("button", { name: "Check ingredients" }).click();
+	await expect(page.getByRole("status", { name: "Meal preparation status" })).toContainText("1 to buy");
+	await page.getByRole("button", { name: "Add missing ingredients to shopping list" }).click();
+	await expect(page.getByRole("status", { name: "Meal preparation status" })).toContainText("1 missing item added");
+	await page.getByRole("button", { name: "Add to meal plan" }).click();
+	await expect(page.getByRole("dialog", { name: `Add ${recipe.recipe_name} to your plan` })).toBeVisible();
+	await page.getByRole("button", { name: "Add to plan", exact: true }).click();
+	await expect(page.getByRole("dialog", { name: `Add ${recipe.recipe_name} to your plan` })).toHaveCount(0);
 });
 
 test("generated plan can be reviewed and saved before cooking", async ({ page }) => {
@@ -110,7 +125,7 @@ test("generated plan can be reviewed and saved before cooking", async ({ page })
 	await page.getByRole("button", { name: "Save meal plan" }).click();
 	await expect(page.getByRole("button", { name: "Generate week" })).toBeVisible();
 	await page.goto("/");
-	await page.getByRole("button", { name: "Prepare this meal" }).click();
+	await page.getByRole("button", { name: "Check ingredients" }).click();
 	await expect(page.getByRole("status", { name: "Meal preparation status" })).toContainText("1 ready");
 	await page.getByRole("link", { name: "Start cooking" }).click();
 	const nextStepButton = page.getByRole("button", { name: "Next step" });

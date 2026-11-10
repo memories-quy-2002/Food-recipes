@@ -14,7 +14,7 @@ describe("recipe discovery query state", () => {
 	it("derives the complete discovery state from the URL", () => {
 		expect(
 			parseRecipeDiscoveryState(
-				"?q=pasta&categoryId=2&mealId=3&sort=rating&page=2&limit=12"
+				"?q=pasta&categoryId=2&mealId=3&sort=rating&page=2&limit=12&pantryIngredient=Spinach"
 			)
 		).toEqual({
 			q: "pasta",
@@ -24,6 +24,7 @@ describe("recipe discovery query state", () => {
 			filter: "",
 			page: 2,
 			limit: 12,
+			pantryIngredient: "Spinach",
 		});
 	});
 
@@ -40,6 +41,12 @@ describe("recipe discovery query state", () => {
 			page: 2,
 			limit: 12,
 		});
+	});
+
+	it("sends pantry ingredient matching as a separate server-side filter", () => {
+		const state = parseRecipeDiscoveryState("?pantryIngredient=Spinach");
+
+		expect(createRecipeRequestParams(state)).toMatchObject({ ingredient: "Spinach" });
 	});
 
 	it("supports pantry-friendly filters and production sorting in the URL contract", () => {
