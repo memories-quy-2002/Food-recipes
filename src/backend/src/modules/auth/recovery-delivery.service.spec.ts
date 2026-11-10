@@ -9,10 +9,12 @@ describe('RecoveryDeliveryService', () => {
     jest.clearAllMocks();
     process.env = { ...originalEnvironment };
     process.env.NODE_ENV = 'development';
-    process.env.AUTH_MAIL_WEBHOOK_URL = 'https://mail.example.test/recovery';
+    process.env.BREVO_API_KEY = 'brevo-test-key';
+    process.env.AUTH_MAIL_FROM_EMAIL = 'no-reply@recipes.example.test';
+    process.env.AUTH_MAIL_FROM_NAME = 'Food Recipes';
     process.env.AUTH_PUBLIC_WEB_URL = 'https://recipes.example.test';
     global.fetch = fetchMock;
-    fetchMock.mockResolvedValue({ ok: true, status: 200 });
+    fetchMock.mockResolvedValue({ ok: true, status: 201 });
     service = new RecoveryDeliveryService();
   });
 
@@ -20,45 +22,55 @@ describe('RecoveryDeliveryService', () => {
     process.env = originalEnvironment;
   });
 
-  it('adds a password reset link without logging or returning the token', async () => {
+  it('sends password reset mail through Brevo with a link but no standalone token', async () => {
     await expect(service.sendPasswordReset('cook@example.test', 'secret-token')).resolves.toBeUndefined();
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://mail.example.test/recovery',
-      expect.objectContaining({
-        body: JSON.stringify({
-          kind: 'password-reset',
-          email: 'cook@example.test',
-          token: 'secret-token',
-          link: 'https://recipes.example.test/account/reset-password?token=secret-token',
-        }),
-      }),
-    );
-  });
-
-  it('encodes tokens and builds verification links', async () => {
-    await service.sendEmailVerification('cook@example.test', 'token with?&=');
-
-    const [, request] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(JSON.parse(String(request.body))).toEqual({
-      kind: 'email-verification',
-      email: 'cook@example.test',
-      token: 'token with?&=',
-      link: 'https://recipes.example.test/account/verify-email?token=token+with%3F%26%3D',
+    expect(fetchMock).toHaveBeenCalledWith('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'api-key': 'brevo-test-key',
+        'content-type': 'application/json',
+      },
+      redirect: 'error',
+      signal: expect.any(AbortSignal),
+      body: expect.any(String),
     });
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    expect(body).toMatchObject({
+      sender: { email: 'no-reply@recipes.example.test', name: 'Food Recipes' },
+      to: [{ email: 'cook@example.test' }],
+      subject: 'Reset your Food Recipes password',
+    });
+    expect(body.textContent).toContain(
+      'https://recipes.example.test/account/reset-password?token=secret-token',
+    );
+    expect(body.htmlContent).toContain(
+      'https://recipes.example.test/account/reset-password?token=secret-token',
+    );
+    expect(body).not.toHaveProperty('token');
   });
 
-  it('sends a null link when the public web URL is not configured', async () => {
+  it('encodes verification tokens in the link', async () => {
+    await service.sendEmailVerification('cook@example.test', 'token with?&="');
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body));
+    const link =
+      'https://recipes.example.test/account/verify-email?token=token+with%3F%26%3D%22';
+    expect(body.subject).toBe('Verify your Food Recipes email');
+    expect(body.textContent).toContain(link);
+    expect(body.htmlContent).toContain(link);
+  });
+
+  it('does not send when the public web URL is not configured outside production', async () => {
     delete process.env.AUTH_PUBLIC_WEB_URL;
 
     await service.sendPasswordReset('cook@example.test', 'secret-token');
 
-    expect(JSON.parse(String(fetchMock.mock.calls[0][1].body))).toEqual(
-      expect.objectContaining({ link: null }),
-    );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('does not call the webhook in test mode', async () => {
+  it('does not call Brevo in test mode', async () => {
     process.env.NODE_ENV = 'test';
 
     await service.sendEmailVerification('cook@example.test', 'token');
@@ -66,9 +78,9 @@ describe('RecoveryDeliveryService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fails explicitly in production when the delivery webhook is missing', async () => {
+  it('fails explicitly in production when Brevo configuration is missing', async () => {
     process.env.NODE_ENV = 'production';
-    delete process.env.AUTH_MAIL_WEBHOOK_URL;
+    delete process.env.BREVO_API_KEY;
 
     await expect(
       service.sendPasswordReset('cook@example.test', 'token'),
@@ -84,5 +96,16 @@ describe('RecoveryDeliveryService', () => {
       service.sendEmailVerification('cook@example.test', 'token'),
     ).rejects.toThrow('Recovery public web URL is not configured');
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not expose the provider response body when Brevo rejects delivery', async () => {
+    fetchMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+
+    await expect(service.sendPasswordReset('cook@example.test', 'token')).rejects.toThrow(
+      'Recovery delivery failed with status 401',
+    );
   });
 });

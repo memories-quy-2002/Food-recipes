@@ -42,6 +42,10 @@ services:
       DATABASE_URL: ${DATABASE_URL_DOCKER:-postgresql://postgres:postgres@postgres:5432/food_recipes}
       JWT_SECRET: "${JWT_SECRET:?Set JWT_SECRET to a random value of at least 32 characters}"
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      BREVO_API_KEY: "${BREVO_API_KEY:?Set BREVO_API_KEY for transactional email}"
+      AUTH_MAIL_FROM_EMAIL: "${AUTH_MAIL_FROM_EMAIL:?Set a verified transactional sender email}"
+      AUTH_MAIL_FROM_NAME: ${AUTH_MAIL_FROM_NAME:-Food Recipes}
+      AUTH_PUBLIC_WEB_URL: "${AUTH_PUBLIC_WEB_URL:?Set the public frontend URL for recovery links}"
     ports:
       - "${API_PORT:-3000}:3000"
     healthcheck:
@@ -58,6 +62,7 @@ services:
       start_period: 10s
     networks:
       - internal
+      - egress
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,3 +75,5 @@ volumes:
 networks:
   internal:
     internal: true
+  egress:
+    driver: bridge

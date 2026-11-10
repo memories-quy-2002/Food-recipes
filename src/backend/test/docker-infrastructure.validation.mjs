@@ -60,6 +60,8 @@ assert.doesNotMatch(contents.compose, /migrate reset/, 'migration config must ne
 assert.match(contents.compose, /condition:\s*service_healthy/, 'database dependencies must wait for a healthy PostgreSQL service');
 assert.match(contents.compose, /condition:\s*service_completed_successfully/, 'API must wait for successful migrations');
 assert.match(contents.compose, /internal:\s*true/, 'production-like Compose must use an internal network');
+assert.match(composeApi, /-\s+egress\s*$/m, 'production-like API must have outbound network access for the mail provider');
+assert.match(contents.compose, /egress:\s*\r?\n\s+driver:\s+bridge/, 'production-like Compose must define an outbound bridge network');
 assert.match(contents.compose, /DATABASE_URL:\s*\$\{[^}]+\}/, 'API database URL must be configurable through an environment placeholder');
 assert.match(contents.compose, /JWT_SECRET:\s*["']?\$\{[^}]+\}["']?/, 'API JWT secret must be configurable through an environment placeholder');
 assert.match(
@@ -67,6 +69,10 @@ assert.match(
   /JWT_SECRET:\s*["']?\$\{JWT_SECRET:\?[^}]+\}["']?/,
   'production-like Compose must require JWT_SECRET without committing a secret',
 );
+assert.match(composeApi, /BREVO_API_KEY:\s*["']?\$\{BREVO_API_KEY:\?[^}]+\}["']?/, 'production-like Compose must require the Brevo API key without committing it');
+assert.match(composeApi, /AUTH_MAIL_FROM_EMAIL:\s*["']?\$\{AUTH_MAIL_FROM_EMAIL:\?[^}]+\}["']?/, 'production-like Compose must require a verified sender email');
+assert.match(composeApi, /AUTH_MAIL_FROM_NAME:\s*\$\{AUTH_MAIL_FROM_NAME:-Food Recipes\}/, 'production-like Compose must configure a sender name');
+assert.match(composeApi, /AUTH_PUBLIC_WEB_URL:\s*["']?\$\{AUTH_PUBLIC_WEB_URL:\?[^}]+\}["']?/, 'production-like Compose must require a public URL for recovery links');
 assert.doesNotMatch(composeApi, /replace-with|change-me|generate-a-random-secret/i);
 assert.match(contents.compose, /^\s+PORT:\s*3000\s*$/m, 'production-like API must listen on the internal container port 3000');
 assert.match(contents.compose, /ports:\s*\n\s+-\s+"\$\{API_PORT:-3000\}:3000"/, 'production-like API must publish the configurable host port');

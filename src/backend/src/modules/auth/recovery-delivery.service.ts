@@ -2,19 +2,19 @@ import { Injectable } from '@nestjs/common';
 
 export type RecoveryDeliveryKind = 'password-reset' | 'email-verification';
 
-export type RecoveryDeliveryPayload = {
-  kind: RecoveryDeliveryKind;
-  email: string;
-  token: string;
-  link: string | null;
-};
-
 export interface RecoveryDeliveryPort {
   sendPasswordReset(email: string, token: string): Promise<void>;
   sendEmailVerification(email: string, token: string): Promise<void>;
 }
 
 export const RECOVERY_DELIVERY = Symbol('RECOVERY_DELIVERY');
+
+const escapeHtml = (value: string): string =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
 
 @Injectable()
 export class RecoveryDeliveryService implements RecoveryDeliveryPort {
@@ -27,9 +27,11 @@ export class RecoveryDeliveryService implements RecoveryDeliveryPort {
   }
 
   private async send(kind: RecoveryDeliveryKind, email: string, token: string): Promise<void> {
-    const webhook = process.env.AUTH_MAIL_WEBHOOK_URL?.trim();
     if (process.env.NODE_ENV === 'test') return;
-    if (!webhook) {
+
+    const apiKey = process.env.BREVO_API_KEY?.trim();
+    const senderEmail = process.env.AUTH_MAIL_FROM_EMAIL?.trim();
+    if (!apiKey || !senderEmail) {
       if (process.env.NODE_ENV === 'production') {
         throw new Error('Recovery delivery is not configured');
       }
@@ -37,15 +39,49 @@ export class RecoveryDeliveryService implements RecoveryDeliveryPort {
     }
 
     const link = this.buildLink(kind, token);
-    if (process.env.NODE_ENV === 'production' && !link) {
-      throw new Error('Recovery public web URL is not configured');
+    if (!link) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Recovery public web URL is not configured');
+      }
+      return;
     }
-    const response = await fetch(webhook, {
+
+    const isPasswordReset = kind === 'password-reset';
+    const subject = isPasswordReset
+      ? 'Reset your Food Recipes password'
+      : 'Verify your Food Recipes email';
+    const textContent = isPasswordReset
+      ? `You requested a password reset for Food Recipes.\n\nReset your password: ${link}\n\nIf you did not request this, you can ignore this email.`
+      : `Verify your email address for Food Recipes: ${link}\n\nIf you did not create this account, you can ignore this email.`;
+    const htmlContent = isPasswordReset
+      ? `<p>You requested a password reset for Food Recipes.</p><p><a href="${escapeHtml(link)}">Reset your password</a></p><p>If you did not request this, you can ignore this email.</p>`
+      : `<p>Verify your email address for Food Recipes.</p><p><a href="${escapeHtml(link)}">Verify email</a></p><p>If you did not create this account, you can ignore this email.</p>`;
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ kind, email, token, link } satisfies RecoveryDeliveryPayload),
+      headers: {
+        accept: 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json',
+      },
+      redirect: 'error',
+      signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify({
+        sender: {
+          email: senderEmail,
+          name: process.env.AUTH_MAIL_FROM_NAME?.trim() || 'Food Recipes',
+        },
+        to: [{ email }],
+        subject,
+        textContent,
+        htmlContent,
+        tags: [isPasswordReset ? 'password-reset' : 'email-verification'],
+      }),
     });
-    if (!response.ok) throw new Error(`Recovery delivery failed with status ${response.status}`);
+
+    if (!response.ok) {
+      throw new Error(`Recovery delivery failed with status ${response.status}`);
+    }
   }
 
   private buildLink(kind: RecoveryDeliveryKind, token: string): string | null {
