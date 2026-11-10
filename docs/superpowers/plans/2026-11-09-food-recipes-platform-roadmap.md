@@ -8,23 +8,24 @@
 
 ## Hiện trạng đầu vào
 
-### Tiến độ thực hiện — 2026-11-09
+### Tiến độ thực hiện — 2026-11-10
 
-- M0 hoàn tất trên worktree `codex/2026-11-09-platform-roadmap`; các package cài frozen, PostgreSQL sạch được migrate/seed và bộ baseline đã chạy lại. Chi tiết lệnh và exit code nằm trong `.superpowers/sdd/2026-11-09-food-recipes-platform-roadmap/progress.md`.
+- M0 hoàn tất trên worktree `feat/food-recipes-platform-roadmap`; các package cài frozen, PostgreSQL sạch được migrate/seed và bộ baseline đã chạy lại. Chi tiết lệnh và exit code nằm trong `.superpowers/sdd/2026-11-09-food-recipes-platform-roadmap/progress.md`.
 - M1 đã triển khai preview không ghi dữ liệu, xác nhận tính lại theo pantry hiện tại, xem lượng thiếu theo khẩu phần, cập nhật preview khi đổi khẩu phần, cùng luồng hoàn tất và Skip/Save leftover. PostgreSQL thật kiểm tra thao tác lặp/song song và rollback giao dịch.
-- M3 có lát cắt pantry expiry → tìm công thức → so nguyên liệu → thêm thiếu → thêm vào lịch; bài mock journey chạy qua. Phần tổng hợp nguyên liệu tuần có preview và tương tác đồng thời vẫn cần thực hiện.
-- M2/M4 còn mở. Không thêm OAuth, hồ sơ/cộng đồng hay moderation trong lượt này vì đó là các lát cắt riêng cần tiêu chí phát hành và kiểm tra quyền đầy đủ. M5 được hoãn theo điều kiện đầu tư đã nêu; chưa có mục tiêu đo lường, ngân sách, hay bộ đánh giá AI.
+- M2 đã bổ sung Recipe JSON-LD chỉ cho công thức public, lọc backend theo nguyên liệu cụ thể (cả nguyên liệu có cấu trúc và chuỗi cũ), và lazy-load các route ít dùng. Real-stack xác nhận tìm “Avocado” ra công thức đúng; main JS giảm từ 819.89 kB xuống 391.37 kB (gzip 120.97 kB). Facet cuisine/difficulty chưa có trường dữ liệu công thức tương ứng nên chưa tự tạo.
+- M3 có lát cắt pantry expiry → tìm đúng công thức theo nguyên liệu → xem thiếu → thêm vào lịch; real-stack xác minh lọc ingredient, mock journey xác minh tiếp tới plan. Phần preview/tổng hợp danh sách mua cả tuần và tương tác đồng thời vẫn cần thực hiện.
+- M4 còn mở: hồ sơ/collections công khai, moderation và audit log là các lát cắt riêng cần tiêu chí sản phẩm và kiểm tra quyền. M5 được hoãn theo điều kiện đầu tư đã nêu; chưa có mục tiêu đo lường, ngân sách, hay bộ đánh giá AI.
 
 | Phạm vi | Trạng thái | Việc còn lại |
 |---|---|---|
 | Auth và hồ sơ | Một phần | Đã có local auth, session, recovery, verification, cài đặt. Xác minh delivery và quyền truy cập. Google OAuth, hồ sơ công khai và moderator thuộc các lát cắt riêng. |
-| Recipe | Một phần | Có CRUD, draft, publish/archive, media, nguyên liệu có cấu trúc và chia sẻ. Xác minh scaling, semantics unpublish, dữ liệu cũ và Recipe JSON-LD. |
-| Discover và Saved | Một phần | Có tìm kiếm, lọc, phân trang công thức, Saved và collections. Kiểm tra thiếu facet, pagination Saved và chất lượng gợi ý theo nguyên liệu. |
+| Recipe | Một phần | Có CRUD, draft, publish/archive, media, nguyên liệu có cấu trúc, chia sẻ và JSON-LD public. Còn semantics unpublish và toàn bộ chuỗi tạo/publish thật. |
+| Discover và Saved | Một phần | Có tìm kiếm theo tên/mô tả/nguyên liệu, facet cơ bản, sort, phân trang công thức, Saved và collections. Cuisine/difficulty chưa có dữ liệu nguồn; còn kiểm tra pagination Saved và chất lượng gợi ý. |
 | Bếp cá nhân | Một phần | Có Kitchen Command Center, lịch tuần, mẫu, pantry, shopping, nấu, hẹn giờ, lịch sử và món dư. Khoảng trống ở preview/confirm, retry, tổng hợp tuần và các ca E2E. |
 | Cộng đồng | Một phần | Có đánh giá, review và báo cáo. Còn hồ sơ công khai, quyền hiển thị collection, comment/follow, UI moderation và audit log. |
 | Nâng cao | Một phần | Có feed dựa trên luật và thông báo. AI assistant và nhận diện ảnh chờ điều kiện đầu tư. |
 
-Master đang có diff sản phẩm, dependency và bài test PostgreSQL chưa commit. Nhánh codex/food-recipes-quality-baseline có e4e69dc và eaaacd1. Baseline lịch sử có 415 frontend tests, 12 API contract tests, 26 migrations và 8/9 real-stack qua. Nhánh test đạt 60/62 mock E2E, hai ca còn lại là nguyên liệu sắp hết hạn và tạo thực đơn tuần. Các số này cần chạy lại trên trạng thái tích hợp.
+Nhánh `feat/food-recipes-platform-roadmap` được rebase trên `origin/master` tại `7516048`. Các lát cắt đã commit gồm `e83dc29` (dotenv), `21a6010` (bếp), `c911fd8` (kiểm chứng shopping), `e4588be` (tìm kiếm pantry và SEO), và `a2915ae` (lazy loading). Baseline trước rebase: 26 migrations, backend 63 suites / 310 tests, frontend 133 files / 423 tests, 62/62 mock E2E, 11/11 real-stack và 8/8 PostgreSQL idempotency; CI trên nhánh master mới sẽ xác minh lại sau rebase.
 
 ## M0 — Tạo baseline tích hợp
 
@@ -45,14 +46,14 @@ Master đang có diff sản phẩm, dependency và bài test PostgreSQL chưa co
 
 - [ ] Auth/recipe editor: xác minh đăng ký, xác thực email, reset, session rotation, quyền chủ sở hữu, upload hợp lệ, draft → publish và semantics archive/unpublish. Chỉ triển khai khoảng trống có ca chấp nhận cụ thể. OAuth phụ thuộc nhu cầu phát hành và cấu hình nhà cung cấp.
 - [ ] Discover/Saved: kiểm tra facet cuisine, difficulty, dietary, sort và pagination phía server. Bổ sung từng facet còn thiếu qua DTO, query và URL state. Giữ URL có thể chia sẻ, quay lại giữ bộ lọc. Chỉ thêm index sau khi đo query plan trên dữ liệu đại diện.
-- [ ] Recipe detail/share: kiểm tra ảnh, canonical, metadata và Recipe structured data lấy từ công thức public. Test draft riêng tư, công thức không tồn tại và ảnh lỗi. Đo bundle và tách route ít dùng khi có chênh lệch kiểm chứng được.
+- [x] Recipe detail/share: canonical/metadata sẵn có; thêm Recipe JSON-LD chỉ từ công thức published, không đưa dinh dưỡng vào schema nếu chưa có nguồn đáng tin. E2E xác nhận JSON-LD trên API thật. Đã đo và lazy-load route ít dùng, entry JS giảm còn 391.37 kB (120.97 kB gzip). Ca ảnh lỗi và draft owner vẫn cần acceptance bổ sung.
 - [ ] Cổng qua mốc: đăng ký → tạo/publish → tìm/lọc → mở/chia sẻ → lưu công thức qua API thật. Kiểm tra quyền riêng tư bằng tài khoản thứ hai. Chạy mobile, desktop và keyboard.
 
 ## M3 — P1: Lập lịch và mua nguyên liệu theo tuần
 
 - [ ] Tái sử dụng kế hoạch, mẫu tuần, drag/drop và recurring meals. Xác minh đổi khẩu phần, move/duplicate và chế độ dùng bàn phím. Chỉ hiển thị dinh dưỡng khi dữ liệu đủ.
 - [ ] Thêm tổng hợp danh sách mua từ kế hoạch đã chọn. Gộp theo danh tính nguyên liệu và đơn vị tương thích, tính lượng cần theo khẩu phần và tồn kho theo quy tắc đã chốt. Cho xem thay đổi trước khi ghi, giữ mục thủ công và checked. Test số lẻ, đơn vị không tương thích, đổi lịch, retry và cập nhật đồng thời.
-- [x] Nối Pantry → món dùng nguyên liệu sắp hết hạn → chi tiết → kế hoạch. E2E hiện xác nhận được so sánh lượng pantry/thiếu và thêm vào lịch; thứ tự gợi ý hiện dựa trên tìm kiếm theo tên nguyên liệu. Xếp hạng xác định theo mức độ khớp và thời gian, cùng Wake Lock, vẫn còn mở.
+- [x] Nối Pantry → món dùng nguyên liệu sắp hết hạn → tìm kiếm nguyên liệu server-side → chi tiết → kế hoạch. Real-stack xác nhận recipe search theo ingredient; mock E2E xác nhận so sánh lượng thiếu và thêm vào lịch. Xếp hạng mức độ khớp/thời gian và Wake Lock vẫn còn mở.
 - [ ] Thu gọn điều hướng hộ gia đình trong mốc cá nhân nếu cần. Gỡ route, endpoint hoặc cột chỉ sau khi kiểm tra dữ liệu, lưu lượng và kế hoạch tương thích. Giữ dữ liệu và thử phương án khôi phục trước migration phá vỡ tương thích.
 
 ## M4 — P1: Cộng đồng và quản trị
