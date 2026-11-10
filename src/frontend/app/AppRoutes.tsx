@@ -1,31 +1,32 @@
 import { Suspense, lazy, type ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "@/features/auth/components/ProtectedRoute";
-import Account from "@/features/auth/Account";
-import ResetPassword from "@/features/auth/ResetPassword";
-import VerifyEmail from "@/features/auth/VerifyEmail";
 import ErrorPage from "@/features/content/ErrorPage";
-import Health from "@/features/diagnostics/Health";
 import Food from "@/features/food/Food";
 import Home from "@/features/home/Home";
-import AddRecipe from "@/features/recipes/AddRecipe";
-import EditRecipe from "@/features/recipes/EditRecipe";
-import Profile from "@/features/profile/Profile";
-import Wishlist from "@/features/wishlist/Wishlist";
-import PlanningPage from "@/features/planning/PlanningPage";
-import ShoppingListPage from "@/features/shopping/ShoppingListPage";
-import PantryPage from "@/features/pantry/PantryPage";
-import HistoryPage from "@/features/history/HistoryPage";
-import FoodPreferencesPage from "@/features/preferences/FoodPreferencesPage";
-import HouseholdsPage from "@/features/households/HouseholdsPage";
-import NotificationPreferencesPage from "@/features/notifications/NotificationPreferencesPage";
-import RecipeImportPage from "@/features/recipe-import/RecipeImportPage";
-import JournalPage from "@/features/journal/JournalPage";
 
+const Account = lazy(() => import("@/features/auth/Account"));
+const ResetPassword = lazy(() => import("@/features/auth/ResetPassword"));
+const VerifyEmail = lazy(() => import("@/features/auth/VerifyEmail"));
+const Health = lazy(() => import("@/features/diagnostics/Health"));
+const AddRecipe = lazy(() => import("@/features/recipes/AddRecipe"));
+const EditRecipe = lazy(() => import("@/features/recipes/EditRecipe"));
+const Profile = lazy(() => import("@/features/profile/Profile"));
+const Wishlist = lazy(() => import("@/features/wishlist/Wishlist"));
+const PlanningPage = lazy(() => import("@/features/planning/PlanningPage"));
+const ShoppingListPage = lazy(() => import("@/features/shopping/ShoppingListPage"));
+const PantryPage = lazy(() => import("@/features/pantry/PantryPage"));
+const HistoryPage = lazy(() => import("@/features/history/HistoryPage"));
+const FoodPreferencesPage = lazy(() => import("@/features/preferences/FoodPreferencesPage"));
+const HouseholdsPage = lazy(() => import("@/features/households/HouseholdsPage"));
+const NotificationPreferencesPage = lazy(() => import("@/features/notifications/NotificationPreferencesPage"));
+const RecipeImportPage = lazy(() => import("@/features/recipe-import/RecipeImportPage"));
+const JournalPage = lazy(() => import("@/features/journal/JournalPage"));
 const Recipe = lazy(() => import("@/features/recipes/Recipe"));
 const isLocalHealthEnabled = import.meta.env.DEV;
 
 const AppRoutes = (): ReactElement => (
+	<Suspense fallback={<div className="loaderContainer" role="status" aria-label="Loading page"><div className="dot-elastic" /></div>}>
 	<Routes>
 		<Route path="/" element={<Home />} />
 		<Route path="/food" element={<Food />} />
@@ -148,6 +149,7 @@ const AppRoutes = (): ReactElement => (
 		/>
 		<Route path="*" element={<ErrorPage />} />
 	</Routes>
+	</Suspense>
 );
 
 export default AppRoutes;
