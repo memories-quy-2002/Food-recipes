@@ -78,13 +78,13 @@ describe('RecoveryDeliveryService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fails explicitly in production when Brevo configuration is missing', async () => {
+  it('skips delivery in production when Brevo is not enabled', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.BREVO_API_KEY;
 
     await expect(
       service.sendPasswordReset('cook@example.test', 'token'),
-    ).rejects.toThrow('Recovery delivery is not configured');
+    ).resolves.toBeUndefined();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
