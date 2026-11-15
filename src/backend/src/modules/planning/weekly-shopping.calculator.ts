@@ -3,6 +3,7 @@ import {
   formatInventoryQuantity,
   normalizeIngredientName,
   normalizePantryUnit,
+  parseShoppingListQuantity,
   type PantryUnit,
 } from '../pantry/pantry-inventory';
 import type { PreparedIngredientRecord } from './planning.repository';
@@ -120,10 +121,15 @@ export function calculateWeeklyShopping(
       missingQuantity,
       quantity,
       sourceRecipeId: group.sourceRecipeIds.size === 1 ? [...group.sourceRecipeIds][0] : null,
-      alreadyListed: existingItems.some((item) =>
-        !item.checked &&
-        normalizeIngredientName(item.label) === normalizeIngredientName(group.name) &&
-        item.quantity?.trim().toLowerCase() === quantity.toLowerCase()),
+      alreadyListed: existingItems.some((item) => {
+        if (item.checked || normalizeIngredientName(item.label) !== normalizeIngredientName(group.name)) return false;
+        const parsed = parseShoppingListQuantity(item.quantity);
+        if (parsed) {
+          const comparable = convertQuantity(parsed.quantity, parsed.unit, group.unit);
+          return comparable !== null && Math.abs(comparable - missingQuantity) < 0.001;
+        }
+        return item.quantity?.trim().toLowerCase() === quantity.toLowerCase();
+      }),
     });
   }
 
