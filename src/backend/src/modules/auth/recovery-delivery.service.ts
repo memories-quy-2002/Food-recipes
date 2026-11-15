@@ -31,12 +31,9 @@ export class RecoveryDeliveryService implements RecoveryDeliveryPort {
 
     const apiKey = process.env.BREVO_API_KEY?.trim();
     const senderEmail = process.env.AUTH_MAIL_FROM_EMAIL?.trim();
-    if (!apiKey || !senderEmail) {
-      if (process.env.NODE_ENV === 'production') {
-        throw new Error('Recovery delivery is not configured');
-      }
-      return;
-    }
+    // An unconfigured provider is intentionally disabled. Validation rejects
+    // partially configured credentials at startup.
+    if (!apiKey || !senderEmail) return;
 
     const link = this.buildLink(kind, token);
     if (!link) {
