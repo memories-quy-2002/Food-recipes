@@ -5,6 +5,8 @@ import { PERSONAL_KITCHEN, scopeKey, type KitchenScope } from "@/features/househ
 import {
 	addRecipeIngredients,
 	addRecipeIngredientsFromRecipes,
+	previewWeeklyShopping,
+	confirmWeeklyShopping,
 	addPreparedRecipeIngredients,
 	prepareRecipeIngredients,
 	addShoppingItem,
@@ -174,5 +176,30 @@ export const useAddPreparedRecipeIngredientsMutation = (scope: KitchenScope = PE
 			showToast({ title: result.added_shopping_items ? `${result.added_shopping_items} missing ingredient${result.added_shopping_items === 1 ? "" : "s"} added` : "No new shopping items were needed" });
 		},
 		onError: () => showToast({ title: "Couldn’t add missing ingredients", message: "Please try again.", type: "error" }),
+	});
+};
+
+export const usePreviewWeeklyShoppingMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
+	const { showToast } = useToast();
+	return useMutation({
+		mutationFn: (planId: number) => previewWeeklyShopping(planId, scope),
+		onError: () => showToast({ title: "Couldn’t preview weekly ingredients", message: "Please try again.", type: "error" }),
+	});
+};
+
+export const useConfirmWeeklyShoppingMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
+	const queryClient = useQueryClient();
+	const { showToast } = useToast();
+	const { auth } = useContext(AuthContext);
+	const userId = auth.current.userId;
+	return useMutation({
+		mutationFn: (input: { planId: number; snapshot: string }) => confirmWeeklyShopping(input, scope),
+		onSuccess: async (result) => {
+			await invalidateShoppingList(queryClient, userId, scope);
+			showToast({ title: result.addedShoppingItems
+				? `${result.addedShoppingItems} weekly ingredient${result.addedShoppingItems === 1 ? "" : "s"} added`
+				: "Shopping list already up to date" });
+		},
+		onError: () => showToast({ title: "Weekly shopping list changed", message: "Preview again before confirming.", type: "error" }),
 	});
 };
