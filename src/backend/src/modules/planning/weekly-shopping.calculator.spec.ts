@@ -45,6 +45,13 @@ describe('calculateWeeklyShopping', () => {
     expect(result.items[0]).toEqual(expect.objectContaining({ alreadyListed: true }));
   });
 
+  it('recognizes manually entered equivalent quantities in compatible units', () => {
+    const result = calculateWeeklyShopping([meal(11, [['Rice', 500, 'GRAM', null]])], [
+      { label: 'rice', quantity: '0.5 kg', checked: false },
+    ]);
+    expect(result.items[0]).toEqual(expect.objectContaining({ alreadyListed: true }));
+  });
+
   it('never rounds a small positive shortage down to zero', () => {
     const result = calculateWeeklyShopping([meal(11, [['Spice', 0.0002, 'KILOGRAM', 0]])], []);
     expect(result.items[0].missingQuantity).toBeGreaterThan(0);
