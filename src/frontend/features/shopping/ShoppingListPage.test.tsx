@@ -105,6 +105,27 @@ describe("ShoppingListPage", () => {
 		);
 	});
 
+	it("requires explicit acknowledgement for an incomplete weekly estimate", () => {
+		mockShopping.data = { items: [] };
+		mockPlan.data = { plan: { plan_id: 9 }, items: [{ recipe_id: 12 }] };
+		const preview = {
+			planId: 9, from: "2026-11-16", to: "2026-11-22",
+			snapshot: "a".repeat(64), mealCount: 2, needsDetails: [], skippedRecipes: [99],
+			items: [{ name: "Rice", unit: "GRAM", quantity: "600 g", requiredQuantity: 800,
+				availableQuantity: 200, missingQuantity: 600, sourceRecipeId: 12, alreadyListed: false }],
+		};
+		mockShopping.previewWeekly.mockImplementation((_input, options) => options?.onSuccess?.(preview));
+		renderPage();
+		fireEvent.click(screen.getByRole("button", { name: "Preview weekly ingredients" }));
+		expect(screen.getByText(/Incomplete shopping estimate/)).toBeTruthy();
+		const confirm = screen.getByRole("button", { name: "Confirm & add missing items" }) as HTMLButtonElement;
+		expect(confirm.disabled).toBe(true);
+		fireEvent.click(screen.getByRole("checkbox", { name: /I understand this list is incomplete/ }));
+		expect(confirm.disabled).toBe(false);
+		fireEvent.click(confirm);
+		expect(mockShopping.confirmWeekly).toHaveBeenCalledOnce();
+	});
+
 	it("shows an actionable loading state", () => {
 		mockShopping.isPending = true;
 		renderPage();
