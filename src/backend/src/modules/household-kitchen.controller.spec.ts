@@ -80,18 +80,18 @@ describe('household kitchen controllers', () => {
     repository.findMember.mockResolvedValue(memberRecord(viewerUser.id, householdId, 'VIEWER'));
     weeklyShopping.preview.mockResolvedValue({ planId: 9, items: [] });
 
-    await planningController.previewWeeklyShopping(viewerUser, householdId, { planId: 9 });
-    expect(weeklyShopping.preview).toHaveBeenCalledWith(viewerUser.id, 9, householdId);
+    await planningController.previewWeeklyShopping(viewerUser, householdId, { planId: 9, from: '2026-11-16', to: '2026-11-22' });
+    expect(weeklyShopping.preview).toHaveBeenCalledWith(viewerUser.id, { planId: 9, from: '2026-11-16', to: '2026-11-22' }, householdId);
 
     await expect(planningController.confirmWeeklyShopping(
-      viewerUser, householdId, { planId: 9, snapshot: 'a'.repeat(64) },
+      viewerUser, householdId, { planId: 9, from: '2026-11-16', to: '2026-11-22', snapshot: 'a'.repeat(64) },
     )).rejects.toBeInstanceOf(ForbiddenException);
     expect(weeklyShopping.confirm).not.toHaveBeenCalled();
   });
 
   it('allows household members to confirm weekly shopping changes', async () => {
     repository.findMember.mockResolvedValue(memberRecord(memberUser.id, householdId, 'MEMBER'));
-    const dto = { planId: 9, snapshot: 'a'.repeat(64) };
+    const dto = { planId: 9, from: '2026-11-16', to: '2026-11-22', snapshot: 'a'.repeat(64) };
     weeklyShopping.confirm.mockResolvedValue({ addedShoppingItems: 2 });
 
     await planningController.confirmWeeklyShopping(memberUser, householdId, dto);
