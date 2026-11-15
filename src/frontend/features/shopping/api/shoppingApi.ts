@@ -54,6 +54,8 @@ export type WeeklyShoppingLine = {
 
 export type WeeklyShoppingPreview = {
 	planId: number;
+	from: string;
+	to: string;
 	snapshot: string;
 	mealCount: number;
 	items: WeeklyShoppingLine[];
@@ -218,18 +220,18 @@ export const addPreparedRecipeIngredients = async (
 
 /** A preview never persists data. Pass its snapshot back for confirmation. */
 export const previewWeeklyShopping = async (
-	planId: number,
+	input: { planId: number; from: string; to: string }, 
 	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<WeeklyShoppingPreview> => {
 	const response = await axios.post<WeeklyShoppingPreview>(
 		createShoppingRoutes(scope).weeklyPreview,
-		{ planId },
+		input,
 	);
 	return response.data;
 };
 
 export const confirmWeeklyShopping = async (
-	input: { planId: number; snapshot: string },
+	input: { planId: number; from: string; to: string; snapshot: string },
 	scope: KitchenScope = PERSONAL_KITCHEN,
 ): Promise<WeeklyShoppingConfirmResponse> => {
 	const response = await axios.post<WeeklyShoppingConfirmResponse>(
