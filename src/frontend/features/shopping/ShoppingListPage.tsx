@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AlertTriangle, CalendarDays, CheckCircle2, Pencil, ShoppingBasket, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import { getWeekRange } from "@/features/planning/api/planningDates";
@@ -32,7 +32,12 @@ const ShoppingListPage = () => {
 	const weeklyPreviewMutation = usePreviewWeeklyShoppingMutation(scope);
 	const weeklyConfirmMutation = useConfirmWeeklyShoppingMutation(scope);
 	const importToPantryMutation = useImportCheckedShoppingItemsMutation(scope);
-	const selectedWeek = getWeekRange(new Date());
+	const [searchParams] = useSearchParams();
+	const requestedWeek = searchParams.get("week");
+	const parsedWeek = requestedWeek && /^\\d{4}-\\d{2}-\\d{2}$/.test(requestedWeek)
+		? new Date(`${requestedWeek}T12:00:00`)
+		: null;
+	const selectedWeek = getWeekRange(parsedWeek && Number.isFinite(parsedWeek.getTime()) ? parsedWeek : new Date());
 	const mealPlanQuery = useMealPlanForWeekQuery(selectedWeek, {}, scope);
 	const pantryQuery = usePantryQuery(scope);
 	const [label, setLabel] = useState("");
