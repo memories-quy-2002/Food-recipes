@@ -358,7 +358,6 @@ const ShoppingListPage = () => {
 							</div>
 						</section>}
 					</section>
-					</section>
 
 					<section className="shopping-list__items-card" aria-labelledby="shopping-list-items-title">
 						<div className="shopping-list__card-heading">
