@@ -23,7 +23,7 @@ Save / unsave recipe and organize collections
 Rate, update, delete, or report a review
 Open Saved, create/edit/archive/restore/delete an own recipe
 Update profile, preferences, notification settings, and password
-Recipe -> plan -> shopping list -> pantry -> cooking -> history/journal
+Recipe -> plan (selected week) -> shopping review -> confirm -> pantry -> cooking -> history/journal
 Recipe URL import -> preview -> private draft -> publish when complete
 Household invite -> shared planning, shopping, and pantry scopes
 Logout -> refresh failure -> signed-out state
@@ -45,6 +45,7 @@ Logout -> refresh failure -> signed-out state
 | Recipe -> plan -> shopping -> pantry -> cooking -> history/journal | A planned recipe can be imported once into the active shopping list, recovered after a failed purchase toggle, moved into pantry, cooked through a server-reported shortage, completed, and journaled. | `features/recipes/**`, `features/planning/**`, `features/shopping/**`, `features/pantry/**`, `features/history/**`, `features/journal/**` | `e2e/kitchen-loop.spec.js` deterministic full-flow regression |
 | Planning -> cooking | Plans, recurring rules, templates, leftover items, cooking sessions, shortage handling, and return-to-plan context are persisted server-side. | `features/planning/**`, `features/history/**`, `features/recipes/cooking/**` | Backend tests + planning/kitchen Playwright journeys |
 | Weekly plan -> smart shopping preview -> confirm | Shopping List now previews requirements across every planned meal and serving, groups compatible units, subtracts pantry once and confirms idempotent missing lines; text-only ingredients are marked for manual review. | `features/shopping/ShoppingListPage.tsx`, `src/backend/src/modules/planning/weekly-shopping.service.ts` | Jest calculator/service/writer, Vitest flow, API route contract |
+| Weekly plan -> smart shopping review | Planning passes the selected week into Shopping List, which previews consolidated ingredients (per scheduled meal/servings), pantry balances, incomplete-source warnings, household VIEWER read-only access, and explicit confirmation before adding. | `features/planning/PlanningPage.tsx`, `features/shopping/ShoppingListPage.tsx`, `features/shopping/ShoppingList.css` | `e2e/weekly-shopping-ux.spec.js`, ShoppingListPage Vitest, backend Jest |
 | Shopping -> pantry | Manual and recipe/planned imports can be checked, edited, cleared, or imported into pantry when quantity/unit data is sufficient; active duplicate imports are idempotent. | `features/shopping/**`, `features/pantry/**`, `src/backend/src/modules/planning/**` | Backend repository/service tests + shopping/pantry Playwright journeys |
 | Household scope | Household membership and roles scope plan, shopping, pantry, and leftover reads/writes; viewers remain read-only. | `features/households/**`, `HouseholdScopeProvider.tsx` | Backend role tests + authenticated journey |
 | Recipe import -> draft | A public URL is previewed server-side, shown for editing, and saved as an owner draft without publishing incomplete data. | `features/recipe-import/**`, `src/backend/src/modules/recipe-imports/**` | Backend validation + retention journey |
