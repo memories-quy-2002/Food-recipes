@@ -30,7 +30,8 @@ const ShoppingListPage = () => {
 	const weeklyPreviewMutation = usePreviewWeeklyShoppingMutation(scope);
 	const weeklyConfirmMutation = useConfirmWeeklyShoppingMutation(scope);
 	const importToPantryMutation = useImportCheckedShoppingItemsMutation(scope);
-	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()), {}, scope);
+	const selectedWeek = getWeekRange(new Date());
+	const mealPlanQuery = useMealPlanForWeekQuery(selectedWeek, {}, scope);
 	const pantryQuery = usePantryQuery(scope);
 	const [label, setLabel] = useState("");
 	const [quantity, setQuantity] = useState("");
@@ -56,7 +57,7 @@ const ShoppingListPage = () => {
 		if (!canEdit || !selectedPlanId || weeklyPreviewMutation.isPending || weeklyConfirmMutation.isPending) return;
 		setWeeklyPreview(null);
 		setMessage(null);
-		weeklyPreviewMutation.mutate(selectedPlanId, {
+		weeklyPreviewMutation.mutate({ planId: selectedPlanId, ...selectedWeek }, {
 			onSuccess: setWeeklyPreview,
 		});
 	};
@@ -64,7 +65,7 @@ const ShoppingListPage = () => {
 	const confirmPlannedIngredients = () => {
 		if (!canEdit || !weeklyPreview || weeklyConfirmMutation.isPending) return;
 		weeklyConfirmMutation.mutate(
-			{ planId: weeklyPreview.planId, snapshot: weeklyPreview.snapshot },
+			{ planId: weeklyPreview.planId, from: weeklyPreview.from, to: weeklyPreview.to, snapshot: weeklyPreview.snapshot },
 			{
 				onSuccess: (result) => {
 					setWeeklyPreview(null);
