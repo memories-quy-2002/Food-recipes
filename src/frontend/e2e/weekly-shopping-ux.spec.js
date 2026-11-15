@@ -92,3 +92,11 @@ test("household viewer may preview weekly requirements but cannot confirm", asyn
 	await expect(page.getByRole("button", { name: "Confirm & add missing items" })).toHaveCount(0);
 	expect(state.confirmed).toBe(0);
 });
+
+test("shopping keeps the week selected in the meal planner", async ({ page }) => {
+	await setupWeeklyShopping(page);
+	await page.goto("/shopping-list?week=2026-11-16");
+	await expect(page.getByText("2026-11-16 – 2026-11-22")).toBeVisible();
+	await page.getByRole("button", { name: "Preview weekly ingredients" }).click();
+	await expect(page.getByRole("table", { name: "Ingredients required for the selected week" })).toBeVisible();
+});
