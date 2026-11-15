@@ -31,6 +31,6 @@ describe('WeeklyShoppingWriter', () => {
       $transaction: jest.fn(async (callback: (client: typeof tx) => Promise<unknown>) => callback(tx)),
     } as never);
     await expect(writer.addItems(7, 4, [line])).resolves.toBe(0);
-    expect(tx.$queryRaw.mock.calls[1][0].strings.join(' ')).toContain('household_id = ');
+    expect(tx.$queryRaw.mock.calls[0][0].strings.join(' ')).toContain('household_id = ');
   });
 });
