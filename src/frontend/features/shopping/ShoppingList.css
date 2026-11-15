@@ -580,3 +580,255 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Weekly review is its own responsive workspace, rather than a narrow
+   appendix to the manual-add form. */
+.shopping-list__weekly-card {
+  order: -1;
+  min-width: 0;
+  padding: clamp(1rem, 2.3vw, 1.7rem);
+  border: 1px solid var(--shopping-border);
+  border-radius: 1.25rem;
+  background: var(--shopping-surface);
+}
+
+.shopping-list__weekly-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.shopping-list__weekly-heading-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.8rem;
+  background: #fff1d6;
+  color: var(--shopping-primary);
+}
+
+.shopping-list__weekly-heading-copy {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.shopping-list__weekly-eyebrow {
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  color: var(--shopping-primary);
+}
+
+.shopping-list__weekly-heading h2 {
+  margin-bottom: 0.4rem;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+  letter-spacing: -0.035em;
+}
+
+.shopping-list__weekly-heading-copy > p:last-child {
+  max-width: 42rem;
+  margin-bottom: 0;
+  color: var(--shopping-text-muted);
+  font-size: 0.9rem;
+}
+
+.shopping-list__weekly-range {
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
+  background: #f7f3e9;
+  color: var(--shopping-text-muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shopping-list__weekly-start,
+.shopping-list__weekly-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.2rem;
+}
+
+.shopping-list__weekly-start .shopping-list__button,
+.shopping-list__weekly-actions .shopping-list__button {
+  min-height: 2.75rem;
+}
+
+.shopping-list__weekly-info {
+  margin: 1rem 0 0;
+  color: var(--shopping-text-muted);
+  font-size: 0.88rem;
+}
+
+.shopping-list__weekly-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.2rem;
+}
+
+.shopping-list__weekly-empty p {
+  margin: 0;
+  color: var(--shopping-text-muted);
+}
+
+.shopping-list__weekly-review {
+  margin-top: 1.15rem;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--shopping-border);
+}
+
+.shopping-list__weekly-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #236128;
+  font-weight: 750;
+  font-size: 0.9rem;
+}
+
+.shopping-list__weekly-table-wrap {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.shopping-list__weekly-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.shopping-list__weekly-table th,
+.shopping-list__weekly-table td {
+  padding: 0.8rem 0.7rem;
+  border-bottom: 1px solid var(--shopping-border);
+  vertical-align: top;
+}
+
+.shopping-list__weekly-table thead th {
+  color: var(--shopping-text-muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.shopping-list__weekly-table tbody th {
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.shopping-list__weekly-shortage {
+  font-weight: 800;
+  color: var(--shopping-primary-strong);
+}
+
+.shopping-list__weekly-listed {
+  display: block;
+  margin-top: 0.25rem;
+  color: #236128;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.shopping-list__weekly-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #e5b166;
+  border-radius: 0.8rem;
+  background: #fff8e9;
+  color: #79440b;
+  line-height: 1.5;
+  font-size: 0.86rem;
+}
+
+.shopping-list__weekly-alert p {
+  margin: 0;
+}
+
+.shopping-list__weekly-alert--muted {
+  border-color: var(--shopping-border);
+  background: #f8f6f1;
+  color: var(--shopping-text);
+}
+
+.shopping-list__weekly-alert--caution {
+  border-color: #d99550;
+  background: #fff5e6;
+}
+
+.shopping-list__weekly-acknowledge {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-top: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.shopping-list__weekly-acknowledge input {
+  flex: 0 0 auto;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0;
+  accent-color: var(--shopping-primary);
+}
+
+.shopping-list__weekly-alert button {
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+@media (max-width: 39.99rem) {
+  .shopping-list__weekly-table thead {
+    display: none;
+  }
+  .shopping-list__weekly-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--shopping-border);
+  }
+  .shopping-list__weekly-table th,
+  .shopping-list__weekly-table td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+  .shopping-list__weekly-table tbody th {
+    grid-column: 1 / -1;
+    font-size: 1rem;
+  }
+  .shopping-list__weekly-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--shopping-text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .shopping-list__weekly-table td:last-child {
+    grid-column: 1 / -1;
+  }
+  .shopping-list__weekly-actions .shopping-list__button--primary {
+    flex: 1 1 13rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .shopping-list__weekly-card {
+    grid-column: 1 / -1;
+  }
+}
