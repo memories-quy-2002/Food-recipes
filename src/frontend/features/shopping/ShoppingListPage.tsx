@@ -34,7 +34,7 @@ const ShoppingListPage = () => {
 	const importToPantryMutation = useImportCheckedShoppingItemsMutation(scope);
 	const [searchParams] = useSearchParams();
 	const requestedWeek = searchParams.get("week");
-	const parsedWeek = requestedWeek && /^\\d{4}-\\d{2}-\\d{2}$/.test(requestedWeek)
+	const parsedWeek = requestedWeek && /^\d{4}-\d{2}-\d{2}$/.test(requestedWeek)
 		? new Date(`${requestedWeek}T12:00:00`)
 		: null;
 	const selectedWeek = getWeekRange(parsedWeek && Number.isFinite(parsedWeek.getTime()) ? parsedWeek : new Date());
