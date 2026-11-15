@@ -60,12 +60,10 @@ export function validateEnvironment(environment: Environment): Environment {
     );
   }
 
-  if (nodeEnv === 'production' && !brevoApiKey) {
-    throw new Error('BREVO_API_KEY is required in production');
-  }
-
-  if (nodeEnv === 'production' && !authMailFromEmail) {
-    throw new Error('AUTH_MAIL_FROM_EMAIL is required in production');
+  // Mail delivery is optional until Brevo is enabled, but partial configuration
+  // must fail fast to avoid silently dropping transactional emails.
+  if (Boolean(brevoApiKey) !== Boolean(authMailFromEmail)) {
+    throw new Error('BREVO_API_KEY and AUTH_MAIL_FROM_EMAIL must be configured together');
   }
 
   if (nodeEnv === 'production' && !authPublicWebUrl) {
