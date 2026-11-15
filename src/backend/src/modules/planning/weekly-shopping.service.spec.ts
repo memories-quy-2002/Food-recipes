@@ -19,6 +19,8 @@ const prepared = {
   }], added_shopping_items: 0, shopping_list_confirmed: false,
 };
 
+const selectedWeek = { planId: 9, from: '2026-11-16', to: '2026-11-22' };
+
 describe('WeeklyShoppingService', () => {
   const repository = {
     findPlan: jest.fn(), findPlanForHousehold: jest.fn(),
@@ -42,7 +44,7 @@ describe('WeeklyShoppingService', () => {
   });
 
   it('previews without writing and accounts for the planned serving count', async () => {
-    const result = await service.preview(7, 9);
+    const result = await service.preview(7, selectedWeek);
     expect(result.items[0]).toMatchObject({ name: 'Potato', quantity: '400 g' });
     expect(repository.prepareRecipeIngredients).toHaveBeenCalledWith(7, 12, 3, undefined);
     expect(writer.addItems).not.toHaveBeenCalled();
@@ -50,17 +52,17 @@ describe('WeeklyShoppingService', () => {
 
   it('rejects an unowned plan', async () => {
     repository.findPlan.mockResolvedValue(null);
-    await expect(service.preview(7, 9)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.preview(7, selectedWeek)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('rejects a stale preview before writing any shopping data', async () => {
-    await expect(service.confirm(7, { planId: 9, snapshot: 'stale' })).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.confirm(7, { ...selectedWeek, snapshot: 'stale' })).rejects.toBeInstanceOf(ConflictException);
     expect(writer.addItems).not.toHaveBeenCalled();
   });
 
   it('confirms a fresh preview using the existing scoped shopping writer', async () => {
-    const preview = await service.preview(7, 9, 4);
-    const result = await service.confirm(7, { planId: 9, snapshot: preview.snapshot }, 4);
+    const preview = await service.preview(7, selectedWeek, 4);
+    const result = await service.confirm(7, { ...selectedWeek, snapshot: preview.snapshot }, 4);
     expect(writer.addItems).toHaveBeenCalledWith(7, 4, [expect.objectContaining({
       name: 'Potato', quantity: '400 g',
     })]);
@@ -69,9 +71,18 @@ describe('WeeklyShoppingService', () => {
 
   it('does not write when all required lines are already listed', async () => {
     repository.listShoppingItems.mockResolvedValue([{ item_id: 1, label: 'Potato', quantity: '400 g', checked: false }]);
-    const preview = await service.preview(7, 9);
-    const result = await service.confirm(7, { planId: 9, snapshot: preview.snapshot });
+    const preview = await service.preview(7, selectedWeek);
+    const result = await service.confirm(7, { ...selectedWeek, snapshot: preview.snapshot });
     expect(result.addedShoppingItems).toBe(0);
     expect(writer.addItems).not.toHaveBeenCalled();
+  });
+
+  it('does not include meals beyond the selected week', async () => {
+    repository.listPlanItems.mockResolvedValue([
+      meal, { ...meal, item_id: 23, planned_date: '2026-11-23' },
+    ]);
+    const preview = await service.preview(7, selectedWeek);
+    expect(preview.mealCount).toBe(1);
+    expect(repository.prepareRecipeIngredients).toHaveBeenCalledTimes(1);
   });
 });
