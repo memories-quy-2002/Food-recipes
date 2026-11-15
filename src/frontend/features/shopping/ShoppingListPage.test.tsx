@@ -84,7 +84,7 @@ describe("ShoppingListPage", () => {
 		mockShopping.data = { items: [] };
 		mockPlan.data = { plan: { plan_id: 9 }, items: [{ recipe_id: 12 }] };
 		const preview = {
-			planId: 9, snapshot: "a".repeat(64), mealCount: 2,
+			planId: 9, from: "2026-11-16", to: "2026-11-22", snapshot: "a".repeat(64), mealCount: 2,
 			items: [{ name: "Potato", unit: "GRAM", quantity: "400 g", requiredQuantity: 600,
 				availableQuantity: 200, missingQuantity: 400, sourceRecipeId: 12, alreadyListed: false }],
 			needsDetails: ["Salt"], skippedRecipes: [],
@@ -93,14 +93,14 @@ describe("ShoppingListPage", () => {
 		renderPage();
 
 		fireEvent.click(screen.getByRole("button", { name: "Preview weekly ingredients" }));
-		expect(mockShopping.previewWeekly).toHaveBeenCalledWith(9, expect.objectContaining({ onSuccess: expect.any(Function) }));
+		expect(mockShopping.previewWeekly).toHaveBeenCalledWith(expect.objectContaining({ planId: 9, from: expect.any(String), to: expect.any(String) }), expect.objectContaining({ onSuccess: expect.any(Function) }));
 		expect(mockShopping.confirmWeekly).not.toHaveBeenCalled();
 		expect(screen.getByText(/400 g to buy/)).toBeTruthy();
 		expect(screen.getByText(/Check quantities manually: Salt/)).toBeTruthy();
 
 		fireEvent.click(screen.getByRole("button", { name: "Confirm & add missing items" }));
 		expect(mockShopping.confirmWeekly).toHaveBeenCalledWith(
-			{ planId: 9, snapshot: "a".repeat(64) },
+			{ planId: 9, from: "2026-11-16", to: "2026-11-22", snapshot: "a".repeat(64) },
 			expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
 		);
 	});
