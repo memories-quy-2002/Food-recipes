@@ -147,7 +147,7 @@ const PlanningPage = () => {
 						{canEdit && scope.kind === "personal" && <Button className="flex-1 xl:flex-none" onClick={() => setIsGenerateDialogOpen(true)}><Sparkles className="size-4" aria-hidden="true" />Generate week</Button>}
 						{canEdit && <Button variant="outline" className="flex-1 xl:flex-none" onClick={() => setIsLeftoverDialogOpen(true)}><Utensils className="size-4" aria-hidden="true" />Use leftovers</Button>}
 						<Button asChild variant="outline" className="flex-1 xl:flex-none"><Link to="/wishlist"><Bookmark className="size-4" aria-hidden="true" />Saved recipes</Link></Button>
-						<Button asChild className="flex-1 xl:flex-none"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Shopping list</Link></Button>
+						<Button asChild className="flex-1 xl:flex-none"><Link to={`/shopping-list?week=${visibleWeek.from}`}><ShoppingBasket className="size-4" aria-hidden="true" />Shopping list</Link></Button>
 					</div>
 				</header>
 				<Card className="overflow-hidden p-4 sm:p-5 lg:p-6">
