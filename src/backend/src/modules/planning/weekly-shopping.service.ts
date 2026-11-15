@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PlanningRepository } from './planning.repository';
+import { ISO_DATE_PATTERN } from './dto/date-range.dto';
 import { calculateWeeklyShopping, type WeeklyShoppingLine } from './weekly-shopping.calculator';
 import { WeeklyShoppingWriter } from './weekly-shopping.writer';
 
@@ -29,7 +30,7 @@ export class WeeklyShoppingService {
     const { planId, from, to } = input;
     const fromDate = Date.parse(from + 'T00:00:00Z');
     const toDate = Date.parse(to + 'T00:00:00Z');
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(from) || !/^\\d{4}-\\d{2}-\\d{2}$/.test(to) ||
+    if (!ISO_DATE_PATTERN.test(from) || !ISO_DATE_PATTERN.test(to) ||
       !Number.isFinite(fromDate) || !Number.isFinite(toDate) ||
       toDate < fromDate || toDate - fromDate > 6 * 86_400_000) {
       throw new ConflictException({ code: 'INVALID_WEEK_RANGE', message: 'Choose a valid date range of at most seven days.' });
