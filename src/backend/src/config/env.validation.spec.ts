@@ -78,19 +78,20 @@ describe('validateEnvironment', () => {
     ).not.toThrow();
   });
 
-  it('accepts production auth delivery configuration when both endpoints are present', () => {
+  it('accepts production Brevo configuration when sender and public web URL are present', () => {
     expect(() =>
       validateEnvironment({
         NODE_ENV: 'production',
         DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
         JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
-        AUTH_MAIL_WEBHOOK_URL: 'https://mail.example.test/recovery',
+        BREVO_API_KEY: 'brevo-test-key',
+        AUTH_MAIL_FROM_EMAIL: 'no-reply@recipes.example.test',
         AUTH_PUBLIC_WEB_URL: 'https://recipes.example.test',
       }),
     ).not.toThrow();
   });
 
-  it('rejects production without a recovery delivery webhook', () => {
+  it('accepts production when Brevo is not enabled yet', () => {
     expect(() =>
       validateEnvironment({
         NODE_ENV: 'production',
@@ -98,7 +99,29 @@ describe('validateEnvironment', () => {
         JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
         AUTH_PUBLIC_WEB_URL: 'https://recipes.example.test',
       }),
-    ).toThrow(/AUTH_MAIL_WEBHOOK_URL.*production/);
+    ).not.toThrow();
+  });
+
+  it('rejects a partially configured Brevo sender', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
+        BREVO_API_KEY: 'brevo-test-key',
+        AUTH_PUBLIC_WEB_URL: 'https://recipes.example.test',
+      }),
+    ).toThrow(/BREVO_API_KEY.*AUTH_MAIL_FROM_EMAIL.*together/);
+  });
+
+  it('rejects an invalid sender email', () => {
+    expect(() =>
+      validateEnvironment({
+        DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
+        JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
+        AUTH_MAIL_FROM_EMAIL: 'not-an-email',
+      }),
+    ).toThrow(/AUTH_MAIL_FROM_EMAIL.*valid email/);
   });
 
   it('rejects production without a public web URL for recovery links', () => {
@@ -107,7 +130,8 @@ describe('validateEnvironment', () => {
         NODE_ENV: 'production',
         DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/food_recipes',
         JWT_SECRET: 'aB7!secret!qL2@vN8#xR4$kM6%pT9&zC3^wF5*',
-        AUTH_MAIL_WEBHOOK_URL: 'https://mail.example.test/recovery',
+        BREVO_API_KEY: 'brevo-test-key',
+        AUTH_MAIL_FROM_EMAIL: 'no-reply@recipes.example.test',
       }),
     ).toThrow(/AUTH_PUBLIC_WEB_URL.*production/);
   });
