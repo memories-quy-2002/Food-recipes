@@ -20,6 +20,8 @@ const planningService: jest.Mocked<HouseholdPlanningService> = {
   createPlanForHousehold: jest.fn(),
 };
 
+const weeklyShopping = { preview: jest.fn(), confirm: jest.fn() };
+
 const repository: jest.Mocked<Pick<HouseholdsRepositoryPort, 'findMember'>> = {
   findMember: jest.fn(),
 };
@@ -43,7 +45,7 @@ describe('household kitchen controllers', () => {
     jest.resetAllMocks();
     const access = new HouseholdAccessService(repository as unknown as HouseholdsRepositoryPort);
     pantryController = new HouseholdPantryController(pantryService as unknown as PantryServicePort, access);
-    planningController = new HouseholdPlanningController(planningService as unknown as PlanningService, access, { preview: jest.fn(), confirm: jest.fn() } as never);
+    planningController = new HouseholdPlanningController(planningService as unknown as PlanningService, access, weeklyShopping as never);
   });
 
   it('allows a member to mutate household pantry and planning resources', async () => {
@@ -71,6 +73,29 @@ describe('household kitchen controllers', () => {
     await expect(mutation).rejects.toBeInstanceOf(ForbiddenException);
     await expect(mutation).rejects.toMatchObject({ response: { code: 'HOUSEHOLD_ACCESS_DENIED' } });
     expect(pantryService.createForHousehold).not.toHaveBeenCalled();
+  });
+
+
+  it('allows household viewers to preview but forbids weekly shopping confirmation', async () => {
+    repository.findMember.mockResolvedValue(memberRecord(viewerUser.id, householdId, 'VIEWER'));
+    weeklyShopping.preview.mockResolvedValue({ planId: 9, items: [] });
+
+    await planningController.previewWeeklyShopping(viewerUser, householdId, { planId: 9 });
+    expect(weeklyShopping.preview).toHaveBeenCalledWith(viewerUser.id, 9, householdId);
+
+    await expect(planningController.confirmWeeklyShopping(
+      viewerUser, householdId, { planId: 9, snapshot: 'a'.repeat(64) },
+    )).rejects.toBeInstanceOf(ForbiddenException);
+    expect(weeklyShopping.confirm).not.toHaveBeenCalled();
+  });
+
+  it('allows household members to confirm weekly shopping changes', async () => {
+    repository.findMember.mockResolvedValue(memberRecord(memberUser.id, householdId, 'MEMBER'));
+    const dto = { planId: 9, snapshot: 'a'.repeat(64) };
+    weeklyShopping.confirm.mockResolvedValue({ addedShoppingItems: 2 });
+
+    await planningController.confirmWeeklyShopping(memberUser, householdId, dto);
+    expect(weeklyShopping.confirm).toHaveBeenCalledWith(memberUser.id, dto, householdId);
   });
 
   it('denies a member from another household before the planning service is reached', async () => {
