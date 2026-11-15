@@ -43,7 +43,7 @@ describe('household kitchen controllers', () => {
     jest.resetAllMocks();
     const access = new HouseholdAccessService(repository as unknown as HouseholdsRepositoryPort);
     pantryController = new HouseholdPantryController(pantryService as unknown as PantryServicePort, access);
-    planningController = new HouseholdPlanningController(planningService as unknown as PlanningService, access);
+    planningController = new HouseholdPlanningController(planningService as unknown as PlanningService, access, { preview: jest.fn(), confirm: jest.fn() } as never);
   });
 
   it('allows a member to mutate household pantry and planning resources', async () => {
