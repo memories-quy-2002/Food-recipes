@@ -69,9 +69,9 @@ account after a transient send failure.
 
 ## Weekly shopping list (personal and household)
 
-POST `/api/v1/users/me/shopping-list/weekly-preview` with `{ "planId": 42 }` returns a read-only weekly shopping preview containing a SHA-256 `snapshot`, `mealCount`, consolidated `items`, `needsDetails`, and `skippedRecipes`. It considers only planned recipe-source meals, not completed cooking sessions or leftovers. Unknown recipe quantities are never automatically imported.
+POST `/api/v1/users/me/shopping-list/weekly-preview` with `{ "planId": 42, "from": "2026-11-16", "to": "2026-11-22" }` returns a read-only weekly shopping preview containing a SHA-256 `snapshot`, `mealCount`, consolidated `items`, `needsDetails`, and `skippedRecipes`. It considers only planned recipe-source meals, not completed cooking sessions or leftovers. Unknown recipe quantities are never automatically imported.
 
-POST `/api/v1/users/me/shopping-list/weekly-confirm` with `{ "planId": 42, "snapshot": "<preview fingerprint>" }` recomputes the preview before writing, rejects outdated state with 409 `WEEKLY_SHOPPING_STALE_PREVIEW`, and returns `addedShoppingItems`. Existing checked/manual items are never rewritten. Repeated inserts use scoped PostgreSQL transactional locking and duplicate protection.
+POST `/api/v1/users/me/shopping-list/weekly-confirm` with `{ "planId": 42, "from": "2026-11-16", "to": "2026-11-22", "snapshot": "<preview fingerprint>" }` recomputes the preview before writing, rejects outdated state with 409 `WEEKLY_SHOPPING_STALE_PREVIEW`, and returns `addedShoppingItems`. Existing checked/manual items are never rewritten. Repeated inserts use scoped PostgreSQL transactional locking and duplicate protection.
 
 Household variants are under `/api/v1/households/:householdId/shopping-list/weekly-preview` and `/weekly-confirm`. Household VIEWER can preview; only OWNER and MEMBER can confirm.
 
