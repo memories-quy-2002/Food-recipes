@@ -21,7 +21,7 @@ export class WeeklyShoppingWriter {
         const label = item.name.trim();
         const quantity = item.quantity;
         const lockKey = scope + ':' + label.toLowerCase() + ':' + quantity;
-        await tx.$queryRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
+        await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey}, 0))`);
         const result = await tx.$queryRaw<Array<{ item_id: number }>>(Prisma.sql`
           INSERT INTO shopping_list_items (${householdId === undefined ? Prisma.sql`user_id` : Prisma.sql`household_id`}, label, quantity, source_recipe_id)
           SELECT ${householdId === undefined ? userId : householdId}, ${label}, ${quantity}, ${item.sourceRecipeId}
