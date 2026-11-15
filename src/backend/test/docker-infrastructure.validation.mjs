@@ -69,8 +69,8 @@ assert.match(
   /JWT_SECRET:\s*["']?\$\{JWT_SECRET:\?[^}]+\}["']?/,
   'production-like Compose must require JWT_SECRET without committing a secret',
 );
-assert.match(composeApi, /BREVO_API_KEY:\s*["']?\$\{BREVO_API_KEY:\?[^}]+\}["']?/, 'production-like Compose must require the Brevo API key without committing it');
-assert.match(composeApi, /AUTH_MAIL_FROM_EMAIL:\s*["']?\$\{AUTH_MAIL_FROM_EMAIL:\?[^}]+\}["']?/, 'production-like Compose must require a verified sender email');
+assert.match(composeApi, /BREVO_API_KEY:\s*\$\{BREVO_API_KEY:-\}/, 'production-like Compose must accept an optional Brevo API key without committing it');
+assert.match(composeApi, /AUTH_MAIL_FROM_EMAIL:\s*\$\{AUTH_MAIL_FROM_EMAIL:-\}/, 'production-like Compose must allow a deferred sender email');
 assert.match(composeApi, /AUTH_MAIL_FROM_NAME:\s*\$\{AUTH_MAIL_FROM_NAME:-Food Recipes\}/, 'production-like Compose must configure a sender name');
 assert.match(composeApi, /AUTH_PUBLIC_WEB_URL:\s*["']?\$\{AUTH_PUBLIC_WEB_URL:\?[^}]+\}["']?/, 'production-like Compose must require a public URL for recovery links');
 assert.doesNotMatch(composeApi, /replace-with|change-me|generate-a-random-secret/i);
