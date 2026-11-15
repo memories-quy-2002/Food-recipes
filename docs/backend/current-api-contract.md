@@ -58,8 +58,8 @@ Recovery endpoints never return a reset or verification token. A configured
 delivery adapter must send the stored token to the user; an unset local
 delivery configuration is not evidence that a production email was delivered.
 Local and test environments may intentionally omit the delivery values, but
-production startup must fail fast when BREVO_API_KEY,
-AUTH_MAIL_FROM_EMAIL, or AUTH_PUBLIC_WEB_URL is missing. Recovery and email
+production startup requires AUTH_PUBLIC_WEB_URL, but Brevo delivery is optional
+until enabled. BREVO_API_KEY and AUTH_MAIL_FROM_EMAIL must be set together. Recovery and email
 verification messages are sent through Brevo's transactional email API. The
 sender address must be verified in Brevo; without domain authentication,
 Brevo may rewrite the sender address to its own sending domain. Delivery
