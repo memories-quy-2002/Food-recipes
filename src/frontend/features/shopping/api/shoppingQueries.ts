@@ -182,7 +182,7 @@ export const useAddPreparedRecipeIngredientsMutation = (scope: KitchenScope = PE
 export const usePreviewWeeklyShoppingMutation = (scope: KitchenScope = PERSONAL_KITCHEN) => {
 	const { showToast } = useToast();
 	return useMutation({
-		mutationFn: (planId: number) => previewWeeklyShopping(planId, scope),
+		mutationFn: (input: { planId: number; from: string; to: string }) => previewWeeklyShopping(input, scope),
 		onError: () => showToast({ title: "Couldn’t preview weekly ingredients", message: "Please try again.", type: "error" }),
 	});
 };
@@ -193,7 +193,7 @@ export const useConfirmWeeklyShoppingMutation = (scope: KitchenScope = PERSONAL_
 	const { auth } = useContext(AuthContext);
 	const userId = auth.current.userId;
 	return useMutation({
-		mutationFn: (input: { planId: number; snapshot: string }) => confirmWeeklyShopping(input, scope),
+		mutationFn: (input: { planId: number; from: string; to: string; snapshot: string }) => confirmWeeklyShopping(input, scope),
 		onSuccess: async (result) => {
 			await invalidateShoppingList(queryClient, userId, scope);
 			showToast({ title: result.addedShoppingItems
