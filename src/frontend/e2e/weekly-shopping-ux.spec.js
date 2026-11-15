@@ -4,13 +4,13 @@ import { bootstrapTestAuth } from "./auth-fixtures.js";
 
 const json = (body, status = 200) => ({ status, contentType: "application/json", body: JSON.stringify(body) });
 
-async function setupWeeklyShopping(page, { viewer = false, incomplete = false } = {}) {
+async function setupWeeklyShopping(page, { viewer = false, incomplete = false, weekFrom = "2026-11-09", weekTo = "2026-11-15" } = {}) {
 	await page.clock.setFixedTime(new Date("2026-11-15T07:00:00.000Z"));
 	await bootstrapTestAuth(page);
 	if (viewer) await page.addInitScript(() => localStorage.setItem("food-recipes:kitchen-scope", "household:42"));
 	const scope = viewer ? "/households/42" : "/users/me";
 	const state = { confirmed: 0, items: [{ item_id: 1, label: "Bananas", quantity: "2 pcs", checked: false, source_recipe_id: null, source_recipe_name: null }] };
-	const plan = { plan_id: 9, name: "Week", start_date: "2026-11-09", end_date: "2026-11-15" };
+	const plan = { plan_id: 9, name: "Week", start_date: weekFrom, end_date: weekTo };
 	await page.route("**/households", route => route.fulfill(json({ households: viewer ? [{ household_id: 42, name: "Family kitchen", role: "VIEWER" }] : [] })));
 	await page.route(`**${scope}/meal-plans**`, route => {
 		const path = new URL(route.request().url()).pathname;
@@ -94,7 +94,7 @@ test("household viewer may preview weekly requirements but cannot confirm", asyn
 });
 
 test("shopping keeps the week selected in the meal planner", async ({ page }) => {
-	await setupWeeklyShopping(page);
+	await setupWeeklyShopping(page, { weekFrom: "2026-11-16", weekTo: "2026-11-22" });
 	await page.goto("/shopping-list?week=2026-11-16");
 	await expect(page.getByText("2026-11-16 – 2026-11-22")).toBeVisible();
 	await page.getByRole("button", { name: "Preview weekly ingredients" }).click();
