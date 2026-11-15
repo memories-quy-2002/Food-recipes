@@ -24,9 +24,9 @@ const HeaderMoreMenu = ({ groups }: HeaderMoreMenuProps): ReactElement | null =>
 	const toggleRef = useRef<HTMLButtonElement | null>(null);
 	const items = groups.flatMap((group) => group.items);
 
-	const closeMenu = useCallback((): void => {
+	const closeMenu = useCallback((restoreFocus = false): void => {
 		setOpen(false);
-		toggleRef.current?.focus();
+		if (restoreFocus) toggleRef.current?.focus();
 	}, []);
 
 	useEffect(() => {
@@ -39,7 +39,7 @@ const HeaderMoreMenu = ({ groups }: HeaderMoreMenuProps): ReactElement | null =>
 		const handleKeyDown = (event: KeyboardEvent): void => {
 			if (event.key === "Escape") {
 				event.preventDefault();
-				closeMenu();
+				closeMenu(true);
 			}
 		};
 
@@ -52,6 +52,10 @@ const HeaderMoreMenu = ({ groups }: HeaderMoreMenuProps): ReactElement | null =>
 		};
 	}, [closeMenu, open]);
 
+	useEffect(() => {
+		setOpen(false);
+	}, [pathname]);
+
 	if (groups.length === 0) return null;
 
 	return (
@@ -62,7 +66,6 @@ const HeaderMoreMenu = ({ groups }: HeaderMoreMenuProps): ReactElement | null =>
 				className="inline-flex min-h-11 items-center gap-1 rounded-xl px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				aria-label="More navigation"
 				aria-expanded={open}
-				aria-haspopup="menu"
 				onClick={() => setOpen((value) => !value)}
 			>
 				More
@@ -72,15 +75,11 @@ const HeaderMoreMenu = ({ groups }: HeaderMoreMenuProps): ReactElement | null =>
 			{open && (
 				<div
 					className="absolute right-0 top-[calc(100%+0.65rem)] z-50 w-56 rounded-2xl border border-border bg-card p-2 shadow-xl"
-					role="menu"
-					aria-label="More navigation links"
 				>
 					{groups.map((group) => (
 						<section
 							key={group.label}
 							className="not-first:border-t not-first:border-border not-first:pt-2"
-							role="group"
-							aria-label={group.label}
 						>
 							<h2 className="px-3 pb-1 pt-1 text-[0.68rem] font-black uppercase tracking-[0.14em] text-muted-foreground">
 								{group.label}
@@ -100,7 +99,6 @@ const HeaderMoreMenu = ({ groups }: HeaderMoreMenuProps): ReactElement | null =>
 													active && "bg-muted text-foreground",
 												)}
 												aria-current={active ? "page" : undefined}
-												role="menuitem"
 												to={item.href}
 												onClick={() => setOpen(false)}
 											>

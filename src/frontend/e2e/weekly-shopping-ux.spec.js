@@ -55,7 +55,7 @@ test("weekly shopping review stays accessible and responsive on mobile and deskt
 		const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
 		expect(overflow, `Horizontal overflow at ${width}px`).toBe(false);
 		if (width === 390 || width === 1440) {
-			await page.screenshot({ path: `output/playwright/weekly-shopping-${width}.png`, fullPage: true });
+			await expect(page).toHaveScreenshot(`weekly-shopping-${width}.png`, { fullPage: true, animations: "disabled" });
 		}
 	}
 	const a11y = await new AxeBuilder({ page }).include("main").withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();

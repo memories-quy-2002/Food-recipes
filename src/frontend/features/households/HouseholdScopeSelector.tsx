@@ -3,7 +3,7 @@ import { householdScope, PERSONAL_KITCHEN } from "./householdScope";
 
 const HouseholdScopeSelector = () => {
 	const { scope, households, selectScope, isLoading } = useHouseholdScope();
-	if (!isLoading && households.length === 0) return null;
+	if (isLoading || households.length === 0) return null;
 
 	return (
 		<div className="grid min-w-0 gap-1">

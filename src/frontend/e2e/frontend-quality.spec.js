@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { bootstrapTestAuth } from "./auth-fixtures.js";
 
 const recipe = {
 	recipe_id: 7,
@@ -100,10 +101,79 @@ test("food discovery stays keyboard reachable, within the viewport, and accessib
 	await expect(page.getByRole("button", { name: "Close navigation menu" }).last()).toBeFocused();
 	await page.keyboard.press("Escape");
 	await expect(menu).toBeHidden();
+	await expect(menuButton).toBeFocused();
+	expect(await page.locator("body").evaluate((body) => body.style.overflow)).toBe("");
+
+	for (const width of [320, 375, 390, 768, 1024, 1440]) {
+		await page.setViewportSize({ width, height: 900 });
+		const layout = await page.evaluate(() => ({
+			viewportWidth: document.documentElement.clientWidth,
+			documentWidth: document.documentElement.scrollWidth,
+		}));
+		expect(layout.documentWidth, `horizontal overflow at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth);
+	}
+	await page.setViewportSize({ width: 390, height: 844 });
+	await expect(page).toHaveScreenshot("recipe-discovery-mobile.png", { fullPage: true, animations: "disabled" });
 
 	const results = await new AxeBuilder({ page })
 		.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
 		.analyze();
 	const blockingViolations = results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
 	expect(blockingViolations, formatViolations(blockingViolations)).toEqual([]);
+});
+
+test("mobile drawer closes after route changes and restores focus on Escape", async ({ page }) => {
+	await stubCatalogApi(page);
+	await page.setViewportSize({ width: 390, height: 844 });
+	await page.goto("/food");
+
+	const trigger = page.getByRole("button", { name: "Open navigation menu" });
+	await trigger.focus();
+	await page.keyboard.press("Enter");
+	const dialog = page.getByRole("dialog", { name: "Menu" });
+	await expect(dialog).toBeVisible();
+	expect(await page.locator("body").evaluate((body) => body.style.overflow)).toBe("hidden");
+	await page.keyboard.press("Escape");
+	await expect(dialog).toBeHidden();
+	await expect(trigger).toBeFocused();
+	expect(await page.locator("body").evaluate((body) => body.style.overflow)).toBe("");
+
+	await trigger.click();
+	await page.getByRole("button", { name: "Login / Sign up" }).click();
+	await expect(page).toHaveURL(/\/account\?signup=false/);
+	await expect(dialog).toBeHidden();
+});
+
+test("desktop account and More disclosures expose keyboard-operable navigation links", async ({ page }) => {
+	await stubCatalogApi(page);
+	await bootstrapTestAuth(page);
+	await page.route("**/users/me/households", (route) => route.fulfill(json({ households: [] })));
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto("/food");
+	await expect(page.getByRole("button", { name: /Open account menu for Smoke User/ })).toBeVisible();
+
+	const moreToggle = page.getByRole("button", { name: "More navigation" });
+	await expect(moreToggle).toBeVisible();
+	await moreToggle.focus();
+	await page.keyboard.press("Enter");
+	const shoppingLink = page.getByRole("link", { name: "Shopping list" });
+	await expect(shoppingLink).toBeFocused();
+	await page.keyboard.press("Escape");
+	await expect(moreToggle).toBeFocused();
+	await expect(page.getByRole("menu")).toHaveCount(0);
+	await moreToggle.click();
+	await page.getByRole("link", { name: "Shopping list" }).click();
+	await expect(page).toHaveURL(/\/shopping-list$/);
+	await expect(page.getByRole("link", { name: "Shopping list" })).toHaveCount(0);
+
+	const accountToggle = page.getByRole("button", { name: /Open account menu for Smoke User/ });
+	await accountToggle.click();
+	await expect(page.getByRole("link", { name: "My profile" })).toBeVisible();
+	await expect(page.getByRole("menu")).toHaveCount(0);
+	await page.keyboard.press("Escape");
+	await expect(accountToggle).toBeFocused();
+	await accountToggle.click();
+	await page.getByRole("link", { name: "My profile" }).click();
+	await expect(page).toHaveURL(/\/profile$/);
+	await expect(page.getByRole("link", { name: "My profile" })).toHaveCount(0);
 });

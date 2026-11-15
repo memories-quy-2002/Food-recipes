@@ -41,14 +41,14 @@ vi.mock("@/features/planning/api/planningQueries", () => ({
 	useMealPlanForWeekQuery: () => ({ data: mockPlan.data, isPending: false, isError: false }),
 }));
 
-const renderPage = () => {
+const renderPage = (initialEntry = "/shopping-list") => {
 	const queryClient = new QueryClient({
 		defaultOptions: { queries: { retry: false } },
 	});
 
 	return render(
 		<QueryClientProvider client={queryClient}>
-			<MemoryRouter initialEntries={["/shopping-list"]}>
+			<MemoryRouter initialEntries={[initialEntry]}>
 				<ShoppingListPage />
 			</MemoryRouter>
 		</QueryClientProvider>,
@@ -140,6 +140,16 @@ describe("ShoppingListPage", () => {
 		expect(screen.getByRole("heading", { name: "Your shopping list is empty" })).toBeTruthy();
 		expect(screen.getByRole("link", { name: "Browse recipes" }).getAttribute("href")).toBe("/food");
 		expect(screen.getByRole("button", { name: "Add item" })).toBeTruthy();
+	});
+
+	it("keeps the selected week when returning to planning", () => {
+		mockShopping.data = { items: [] };
+		renderPage("/shopping-list?week=2026-08-26");
+
+		expect(screen.getByRole("link", { name: "Back to planning" }).getAttribute("href"))
+			.toBe("/planning?week=2026-08-24");
+		expect(screen.getByRole("link", { name: "Open meal planner" }).getAttribute("href"))
+			.toBe("/planning?week=2026-08-24");
 	});
 
 	it("adds, checks, edits, deletes, and clears shopping items", () => {

@@ -6,7 +6,7 @@ import {
 	type ReactElement,
 } from "react";
 import { useDispatch } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { authActions } from "@/features/auth/state/authSlice";
 import { authSessionApi } from "@/features/auth/api/authSessionApi";
@@ -44,9 +44,10 @@ const HeaderAuthButton = ({
 	const [clicked, setClicked] = useState(false);
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const toggleRef = useRef<HTMLButtonElement | null>(null);
-	const closeMenu = useCallback(() => {
+	const { pathname } = useLocation();
+	const closeMenu = useCallback((restoreFocus = false) => {
 		setClicked(false);
-		toggleRef.current?.focus();
+		if (restoreFocus) toggleRef.current?.focus();
 	}, []);
 	const isAuthenticated = local.isAuthenticated || session.isAuthenticated;
 	const user = local.isAuthenticated ? local.user : session.user;
@@ -69,7 +70,7 @@ const HeaderAuthButton = ({
 		const handleKeyDown = (event: KeyboardEvent): void => {
 			if (event.key === "Escape") {
 				event.preventDefault();
-				closeMenu();
+				closeMenu(true);
 			}
 		};
 		document.addEventListener("pointerdown", handlePointerDown);
@@ -81,6 +82,10 @@ const HeaderAuthButton = ({
 		};
 	}, [clicked, closeMenu]);
 
+	useEffect(() => {
+		setClicked(false);
+	}, [pathname]);
+
 	const handleSignOut = async (): Promise<void> => {
 		try {
 			await authSessionApi.logout();
@@ -89,7 +94,7 @@ const HeaderAuthButton = ({
 		} finally {
 			dispatch(authActions.logout());
 			showToast({ title: "Signed out" });
-			closeMenu();
+			closeMenu(true);
 			navigate("/");
 		}
 	};
@@ -103,7 +108,6 @@ const HeaderAuthButton = ({
 						ref={toggleRef}
 						className="relative flex size-11 items-center justify-center rounded-full bg-muted p-1 text-sm font-bold text-foreground transition hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						aria-expanded={clicked}
-						aria-haspopup="menu"
 						aria-controls={clicked ? "header-auth-menu" : undefined}
 						aria-label={`Open account menu for ${accountLabel}`}
 						title={accountLabel}
@@ -118,13 +122,11 @@ const HeaderAuthButton = ({
 							id="header-auth-menu"
 							ref={menuRef}
 							className="absolute right-0 top-[calc(100%+0.6rem)] z-50 grid min-w-48 gap-1 rounded-xl border border-border bg-card p-2 shadow-xl"
-							role="menu"
 						>
 							<Link
 								className={menuLink}
 								to="/profile"
-								role="menuitem"
-								onClick={closeMenu}
+								onClick={() => closeMenu(true)}
 							>
 								<UserRound className="size-4" aria-hidden="true" />
 								My profile
@@ -132,7 +134,6 @@ const HeaderAuthButton = ({
 							<Link
 								className={`${menuLink} text-destructive`}
 								to="/"
-								role="menuitem"
 								onClick={handleSignOut}
 							>
 								<LogOut className="size-4" aria-hidden="true" />

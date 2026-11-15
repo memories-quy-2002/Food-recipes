@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Bookmark, CalendarDays, List, ShoppingBasket, Sparkles, Utensils } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import type { AddMealPlanItemInput, MealPlanItem, MealSlot } from "./api/planningApi";
-import { getWeekRange, shiftWeek, type WeekRange } from "./api/planningDates";
+import { getWeekRange, parseIsoDate, shiftWeek, type WeekRange } from "./api/planningDates";
 import { useAddMealPlanItemMutation, useCreateMealPlanMutation, useDeleteMealPlanItemMutation, useMealPlanForWeekQuery, useUpdateMealPlanItemMutation } from "./api/planningQueries";
 import AddMealDialog from "./components/AddMealDialog";
 import MealPlanAgenda from "./components/MealPlanAgenda";
@@ -25,8 +25,8 @@ const readStoredWeek = (): WeekRange => {
 	if (typeof window === "undefined") return getWeekRange(new Date());
 	try {
 		const stored = JSON.parse(window.localStorage.getItem(PLANNING_VIEW_STORAGE_KEY) || "null") as { from?: unknown } | null;
-		if (typeof stored?.from !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(stored.from)) return getWeekRange(new Date());
-		return getWeekRange(new Date(`${stored.from}T00:00:00`));
+		const parsed = parseIsoDate(typeof stored?.from === "string" ? stored.from : null);
+		return parsed ? getWeekRange(parsed) : getWeekRange(new Date());
 	} catch {
 		return getWeekRange(new Date());
 	}
@@ -34,7 +34,10 @@ const readStoredWeek = (): WeekRange => {
 
 const PlanningPage = () => {
 	const { scope, canEdit, scopeLabel } = useHouseholdScope();
-	const [visibleWeek, setVisibleWeek] = useState<WeekRange>(readStoredWeek);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const requestedWeek = searchParams.get("week");
+	const initialRequestedDate = parseIsoDate(requestedWeek);
+	const [visibleWeek, setVisibleWeek] = useState<WeekRange>(() => initialRequestedDate ? getWeekRange(initialRequestedDate) : readStoredWeek());
 	const [dialogState, setDialogState] = useState<DialogState | null>(null);
 	const [planningView, setPlanningView] = useState<PlanningView>("calendar");
 	const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
@@ -49,7 +52,20 @@ const PlanningPage = () => {
 	const isMealMutationPending = addMealMutation.isPending || updateMealMutation.isPending;
 	const mutationError = addMealMutation.error || updateMealMutation.error ? "We could not save this meal. Try again." : null;
 
-	const moveWeek = (offset: number) => setVisibleWeek((range) => shiftWeek(range.from, offset));
+	const moveWeek = (offset: number) => {
+		const nextWeek = shiftWeek(visibleWeek.from, offset);
+		setVisibleWeek(nextWeek);
+		setSearchParams((current) => {
+			const nextParams = new URLSearchParams(current);
+			nextParams.set("week", nextWeek.from);
+			return nextParams;
+		});
+	};
+
+	useEffect(() => {
+		const parsed = parseIsoDate(requestedWeek);
+		if (parsed) setVisibleWeek(getWeekRange(parsed));
+	}, [requestedWeek]);
 
 	useEffect(() => {
 		window.localStorage.setItem(PLANNING_VIEW_STORAGE_KEY, JSON.stringify({ from: visibleWeek.from }));

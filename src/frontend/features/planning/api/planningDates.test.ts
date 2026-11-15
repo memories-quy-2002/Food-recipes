@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getWeekRange, getWeekdayLabel, toIsoDate } from "./planningDates";
+import { getWeekRange, getWeekdayLabel, parseIsoDate, toIsoDate } from "./planningDates";
 
 describe("planning date helpers", () => {
 	 it("returns a Monday-Sunday range without timezone drift", () => {
@@ -15,5 +15,12 @@ describe("planning date helpers", () => {
 
 	it("labels weekdays with the product locale", () => {
 		expect(getWeekdayLabel("2026-08-24")).toBe("Monday");
+	});
+
+	it("accepts real calendar dates and rejects overflow dates", () => {
+		expect(parseIsoDate("2026-08-24")?.getDate()).toBe(24);
+		expect(parseIsoDate("2026-02-31")).toBeNull();
+		expect(parseIsoDate("2026-2-03")).toBeNull();
+		expect(parseIsoDate(null)).toBeNull();
 	});
 });

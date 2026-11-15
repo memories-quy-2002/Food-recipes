@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { AlertTriangle, CalendarDays, CheckCircle2, Pencil, ShoppingBasket, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
-import { getWeekRange } from "@/features/planning/api/planningDates";
+import { getWeekRange, parseIsoDate } from "@/features/planning/api/planningDates";
 import { useMealPlanForWeekQuery } from "@/features/planning/api/planningQueries";
 import { usePantryQuery } from "@/features/pantry/api/pantryQueries";
 import type { ShoppingListItem, WeeklyShoppingPreview } from "./api/shoppingApi";
@@ -34,10 +34,8 @@ const ShoppingListPage = () => {
 	const importToPantryMutation = useImportCheckedShoppingItemsMutation(scope);
 	const [searchParams] = useSearchParams();
 	const requestedWeek = searchParams.get("week");
-	const parsedWeek = requestedWeek && /^\d{4}-\d{2}-\d{2}$/.test(requestedWeek)
-		? new Date(`${requestedWeek}T12:00:00`)
-		: null;
-	const selectedWeek = getWeekRange(parsedWeek && Number.isFinite(parsedWeek.getTime()) ? parsedWeek : new Date());
+	const parsedWeek = parseIsoDate(requestedWeek);
+	const selectedWeek = getWeekRange(parsedWeek ?? new Date());
 	const mealPlanQuery = useMealPlanForWeekQuery(selectedWeek, {}, scope);
 	const pantryQuery = usePantryQuery(scope);
 	const [label, setLabel] = useState("");
@@ -265,7 +263,7 @@ const ShoppingListPage = () => {
 						{!canEdit && <p role="status">You have read-only access to this kitchen.</p>}
 					</div>
 					<div className="shopping-list-page__header-links">
-						<Link className="shopping-list-page__secondary-link" to="/planning">Back to planning</Link>
+						<Link className="shopping-list-page__secondary-link" to={`/planning?week=${selectedWeek.from}`}>Back to planning</Link>
 						<Link className="shopping-list-page__secondary-link" to="/pantry">My pantry</Link>
 					</div>
 				</header>
@@ -310,7 +308,7 @@ const ShoppingListPage = () => {
 							<div className="shopping-list__weekly-empty">
 								<ShoppingBasket size={22} aria-hidden="true" />
 								<p>Add meals to this week’s plan to preview your shopping needs.</p>
-								<Link to="/planning" className="shopping-list__button shopping-list__button--quiet">Open meal planner</Link>
+								<Link to={`/planning?week=${selectedWeek.from}`} className="shopping-list__button shopping-list__button--quiet">Open meal planner</Link>
 							</div>
 						) : (
 							<div className="shopping-list__weekly-start">
