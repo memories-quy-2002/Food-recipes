@@ -136,12 +136,26 @@ async function stubFullKitchenLoop(page) {
 		if (route.request().method() === "GET") return route.fulfill(fullFlowJson({ items: state.shoppingItems }));
 		return route.fallback();
 	});
-	await page.route("**/users/me/shopping-list/from-recipe", async (route) => {
-		if (route.request().method() !== "POST") return route.fallback();
-		const existing = state.shoppingItems.find((item) => !item.checked && item.label.toLowerCase() === "rice" && item.quantity === "2 kg");
+	await page.route("**/users/me/shopping-list/weekly-preview", async (route) => {
+		const body = JSON.parse(route.request().postData() || "{}");
+		const alreadyListed = state.shoppingItems.some((item) => !item.checked && item.label.toLowerCase() === "rice");
+		return route.fulfill(fullFlowJson({
+			planId: body.planId, from: body.from, to: body.to,
+			snapshot: "e".repeat(64), mealCount: 1, needsDetails: [], skippedRecipes: [],
+			items: [{
+				name: "rice", unit: "GRAM", requiredQuantity: 2000,
+				availableQuantity: 0, missingQuantity: 2000, quantity: "2000 g",
+				sourceRecipeId: fullFlowRecipe.recipe_id, alreadyListed,
+			}],
+		}));
+	});
+	await page.route("**/users/me/shopping-list/weekly-confirm", async (route) => {
+		const body = JSON.parse(route.request().postData() || "{}");
+		if (body.snapshot !== "e".repeat(64)) return route.fulfill(fullFlowJson({ code: "WEEKLY_SHOPPING_STALE_PREVIEW" }, 409));
+		const existing = state.shoppingItems.find((item) => !item.checked && item.label.toLowerCase() === "rice");
 		const item = existing || { item_id: state.nextShoppingItemId++, label: "rice", quantity: "2 kg", source_recipe_id: fullFlowRecipe.recipe_id, source_recipe_name: fullFlowRecipe.recipe_name, checked: false };
 		if (!existing) state.shoppingItems = [...state.shoppingItems, item];
-		return route.fulfill(fullFlowJson({ recipes: [fullFlowRecipe.recipe_name], items: [item] }));
+		return route.fulfill(fullFlowJson({ addedShoppingItems: existing ? 0 : 1, planId: body.planId, from: body.from, to: body.to, snapshot: body.snapshot, mealCount: 1, items: [], needsDetails: [], skippedRecipes: [] }));
 	});
 	await page.route("**/users/me/shopping-list/items/*", async (route) => {
 		if (route.request().method() !== "PATCH") return route.fallback();
@@ -217,10 +231,14 @@ test("completes the production kitchen loop with duplicate and recovery safeguar
 	await expect(page.getByText(`Added ${fullFlowRecipe.recipe_name} to your plan`, { exact: true })).toBeVisible();
 
 	await page.goto("/shopping-list");
-	const importButton = page.getByRole("button", { name: "Import 1 planned recipe", exact: true });
-	await importButton.click();
+	const previewButton = page.getByRole("button", { name: "Preview weekly ingredients" });
+	await previewButton.click();
+	await expect(page.getByText(/2000 g to buy/)).toBeVisible();
+	await page.getByRole("button", { name: "Confirm & add missing items" }).click();
 	await expect(page.locator(".shopping-list__item")).toHaveCount(1);
-	await importButton.click();
+	await previewButton.click();
+	await expect(page.getByText(/Already on your list/)).toBeVisible();
+	await expect(page.getByRole("button", { name: "Confirm & add missing items" })).toBeDisabled();
 	await expect(page.locator(".shopping-list__item")).toHaveCount(1);
 
 	const purchaseCheckbox = page.getByRole("checkbox", { name: "Mark rice as purchased" });
