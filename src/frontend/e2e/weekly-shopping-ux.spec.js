@@ -100,3 +100,15 @@ test("shopping keeps the week selected in the meal planner", async ({ page }) =>
 	await page.getByRole("button", { name: "Preview weekly ingredients" }).click();
 	await expect(page.getByRole("table", { name: "Ingredients required for the selected week" })).toBeVisible();
 });
+
+test("Planner to Shopping List keeps the selected future week end-to-end", async ({ page }) => {
+	await setupWeeklyShopping(page, { weekFrom: "2026-11-16", weekTo: "2026-11-22" });
+	await page.goto("/planning");
+	await page.getByRole("button", { name: "Next week" }).click();
+	await expect(page.getByRole("heading", { name: "Nov 16 – Nov 22" })).toBeVisible();
+	await page.getByRole("link", { name: "Shopping list" }).click();
+	await expect(page).toHaveURL(/\/shopping-list\?week=2026-11-16$/);
+	await expect(page.getByText("2026-11-16 – 2026-11-22")).toBeVisible();
+	await page.getByRole("button", { name: "Preview weekly ingredients" }).click();
+	await expect(page.getByRole("table", { name: "Ingredients required for the selected week" })).toBeVisible();
+});
