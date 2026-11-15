@@ -791,8 +791,14 @@
 }
 
 @media (max-width: 39.99rem) {
+  /* Keep headers in the accessibility tree while using stacked mobile cells. */
   .shopping-list__weekly-table thead {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .shopping-list__weekly-table tbody tr {
     display: grid;
