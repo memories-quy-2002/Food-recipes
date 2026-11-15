@@ -121,7 +121,7 @@ export class PlanningController {
   @Post('shopping-list/weekly-preview')
   @ApiOperation({ summary: 'Preview missing ingredients across a selected weekly meal plan' })
   previewWeeklyShopping(@CurrentUser() user: AuthUser, @Body() dto: WeeklyShoppingPlanDto) {
-    return this.weeklyShopping.preview(user.id, dto.planId);
+    return this.weeklyShopping.preview(user.id, dto);
   }
 
   @Post('shopping-list/weekly-confirm')
@@ -260,7 +260,7 @@ export class HouseholdPlanningController {
   @ApiOperation({ summary: 'Preview household weekly shopping needs' })
   async previewWeeklyShopping(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Body() dto: WeeklyShoppingPlanDto) {
     await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER', 'VIEWER']);
-    return this.weeklyShopping.preview(user.id, dto.planId, householdId);
+    return this.weeklyShopping.preview(user.id, dto, householdId);
   }
 
   @Post('shopping-list/weekly-confirm')
