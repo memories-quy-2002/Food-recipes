@@ -18,8 +18,12 @@ const mockShopping = vi.hoisted(() => ({
 	clear: vi.fn(),
 	importRecipe: vi.fn(),
 	importPlanned: vi.fn(),
+	previewWeekly: vi.fn(),
+	confirmWeekly: vi.fn(),
 	importToPantry: vi.fn(),
 }));
+
+const mockPlan = vi.hoisted(() => ({ data: null as unknown }));
 
 vi.mock("./api/shoppingQueries", () => ({
 	useShoppingListQuery: () => mockShopping,
@@ -28,12 +32,13 @@ vi.mock("./api/shoppingQueries", () => ({
 	useDeleteShoppingItemMutation: () => ({ mutate: mockShopping.remove, isPending: false, isError: false }),
 	useClearCompletedShoppingItemsMutation: () => ({ mutate: mockShopping.clear, isPending: false, isError: false }),
 	useAddRecipeIngredientsMutation: () => ({ mutate: mockShopping.importRecipe, isPending: false, isError: false }),
-	useAddRecipeIngredientsFromRecipesMutation: () => ({ mutate: mockShopping.importPlanned, isPending: false, isError: false }),
+	usePreviewWeeklyShoppingMutation: () => ({ mutate: mockShopping.previewWeekly, isPending: false, isError: false }),
+	useConfirmWeeklyShoppingMutation: () => ({ mutate: mockShopping.confirmWeekly, isPending: false, isError: false }),
 	useImportCheckedShoppingItemsMutation: () => ({ mutate: mockShopping.importToPantry, isPending: false, isError: false }),
 }));
 
 vi.mock("@/features/planning/api/planningQueries", () => ({
-	useMealPlanForWeekQuery: () => ({ data: null, isPending: false, isError: false }),
+	useMealPlanForWeekQuery: () => ({ data: mockPlan.data, isPending: false, isError: false }),
 }));
 
 const renderPage = () => {
@@ -63,12 +68,41 @@ describe("ShoppingListPage", () => {
 		mockShopping.clear.mockReset();
 		mockShopping.importRecipe.mockReset();
 		mockShopping.importPlanned.mockReset();
+		mockShopping.previewWeekly.mockReset();
+		mockShopping.confirmWeekly.mockReset();
+		mockPlan.data = null;
 		mockShopping.importToPantry.mockReset();
 	});
 
 	afterEach(() => {
 		cleanup();
 		vi.clearAllMocks();
+	});
+
+
+	it("previews weekly shortages and waits for confirmation before writing", () => {
+		mockShopping.data = { items: [] };
+		mockPlan.data = { plan: { plan_id: 9 }, items: [{ recipe_id: 12 }] };
+		const preview = {
+			planId: 9, snapshot: "a".repeat(64), mealCount: 2,
+			items: [{ name: "Potato", unit: "GRAM", quantity: "400 g", requiredQuantity: 600,
+				availableQuantity: 200, missingQuantity: 400, sourceRecipeId: 12, alreadyListed: false }],
+			needsDetails: ["Salt"], skippedRecipes: [],
+		};
+		mockShopping.previewWeekly.mockImplementation((_id, options) => options?.onSuccess?.(preview));
+		renderPage();
+
+		fireEvent.click(screen.getByRole("button", { name: "Preview weekly ingredients" }));
+		expect(mockShopping.previewWeekly).toHaveBeenCalledWith(9, expect.objectContaining({ onSuccess: expect.any(Function) }));
+		expect(mockShopping.confirmWeekly).not.toHaveBeenCalled();
+		expect(screen.getByText(/400 g to buy/)).toBeTruthy();
+		expect(screen.getByText(/Check quantities manually: Salt/)).toBeTruthy();
+
+		fireEvent.click(screen.getByRole("button", { name: "Confirm & add missing items" }));
+		expect(mockShopping.confirmWeekly).toHaveBeenCalledWith(
+			{ planId: 9, snapshot: "a".repeat(64) },
+			expect.objectContaining({ onSuccess: expect.any(Function), onError: expect.any(Function) }),
+		);
 	});
 
 	it("shows an actionable loading state", () => {
