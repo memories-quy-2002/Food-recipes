@@ -188,12 +188,13 @@ async function stubPlanningApi(page) {
 
 		if (method === "PATCH" && path === "/users/me/meal-plans/12/items/4") {
 			const body = JSON.parse(request.postData() || "{}");
-			item = { ...item, ...body, recipe_id: body.recipeId ?? item.recipe_id };
+			item = { ...item, ...body, planned_date: body.date ?? item.planned_date, recipe_id: body.recipeId ?? item.recipe_id };
 			return route.fulfill(json({ item }));
 		}
 
 		return route.fallback();
 	});
+	return { getItem: () => item };
 }
 
 test("authenticated user completes the planning-to-cooking journey", async ({ page }) => {
@@ -229,6 +230,49 @@ test("authenticated user completes the planning-to-cooking journey", async ({ pa
 	await page.getByRole("button", { name: "Back to plan" }).click();
 	await expect(page).toHaveURL(/\/planning$/);
 	await expect(page.getByText("6 servings", { exact: true })).toBeVisible();
+});
+
+test("mobile agenda supports keyboard meal edits as an alternative to drag and drop", async ({ page }) => {
+	await stubRecipeApi(page);
+	await authenticateAsTestUser(page);
+	const planningState = await stubPlanningApi(page);
+	await page.setViewportSize({ width: 375, height: 800 });
+	await page.goto("/planning");
+	await page.getByRole("button", { name: "Start a weekly plan" }).click();
+
+	const viewControls = page.getByRole("group", { name: "Planning views" });
+	await viewControls.getByRole("button", { name: "Agenda" }).click();
+	const agenda = page.getByRole("region", { name: "Agenda meal plan view" });
+	await expect(agenda).toBeVisible();
+	await expect(viewControls.getByRole("button", { name: "Agenda" })).toHaveAttribute("aria-pressed", "true");
+	const initialOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+	expect(initialOverflow).toBe(false);
+
+	await agenda.getByRole("button", { name: /Add recipe to/ }).first().click();
+	await page.getByRole("button", { name: recipe.recipe_name }).click();
+	await page.getByRole("button", { name: "Add to plan" }).click();
+	await expect(agenda.getByRole("link", { name: `Open ${recipe.recipe_name}` })).toBeVisible();
+	const originalDay = await agenda.getByRole("article").filter({ hasText: recipe.recipe_name }).getByRole("heading").innerText();
+	const item = planningState.getItem();
+	expect(item).not.toBeNull();
+	const nextDate = new Date(`${item.planned_date.slice(0, 10)}T00:00:00.000Z`);
+	nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+	const targetDate = nextDate.toISOString().slice(0, 10);
+
+	const changeButton = page.getByRole("button", { name: `Change ${recipe.recipe_name}` });
+	await changeButton.focus();
+	await page.keyboard.press("Enter");
+	const editDialog = page.getByRole("dialog", { name: "Change planned meal" });
+	await editDialog.getByLabel("Date").fill(targetDate);
+	await editDialog.getByRole("combobox").selectOption("lunch");
+	await editDialog.getByRole("button", { name: "Save changes" }).click();
+
+	expect(planningState.getItem()).toMatchObject({ planned_date: targetDate, slot: "lunch" });
+	const movedMeal = agenda.getByRole("article").filter({ hasText: recipe.recipe_name });
+	await expect(movedMeal.getByRole("heading")).not.toHaveText(originalDay);
+	await expect(movedMeal).toContainText("Lunch");
+	const finalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+	expect(finalOverflow).toBe(false);
 });
 
 test("keeps planner layout usable across requested responsive breakpoints", async ({ page }) => {

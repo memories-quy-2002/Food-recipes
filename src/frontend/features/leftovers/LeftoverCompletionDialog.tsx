@@ -102,7 +102,7 @@ const LeftoverCompletionDialog = ({ open, recipeName, cookedServings, onClose, o
 					</div>
 					<Button variant="ghost" size="icon" onClick={onClose} disabled={isSaving} aria-label="Close leftover dialog"><X className="size-5" /></Button>
 				</header>
-				<p id="leftover-dialog-description" className="mt-3 text-sm leading-6 text-muted-foreground">Keep the portions you will actually eat later. You can use them from Planning.</p>
+				<p id="leftover-dialog-description" className="mt-3 text-sm leading-6 text-muted-foreground">Save portions you will eat later, or skip this step. Then you can review the recipe, return to your plan, or open your cooking history.</p>
 
 				<div className="mt-5 grid gap-3 sm:grid-cols-2">
 					<label className="grid gap-2 text-sm font-bold">Cooked servings<Input aria-label="Cooked servings" type="number" value={cookedServings} readOnly /></label>

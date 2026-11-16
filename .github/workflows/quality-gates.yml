@@ -206,7 +206,7 @@ jobs:
 
       - name: Run frontend quality journeys
         working-directory: src/frontend
-        run: pnpm test:e2e:quality
+        run: pnpm test:e2e:ci
 
       - name: Upload frontend browser artifacts
         if: always()

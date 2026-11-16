@@ -95,6 +95,7 @@ async function stubFullKitchenLoop(page) {
 		shoppingItems: [],
 		pantryItems: [],
 		nextShoppingItemId: 1,
+		savedLeftovers: [],
 		cookingSession: null,
 		completionAttempts: 0,
 		failNextShoppingCheck: true,
@@ -217,6 +218,28 @@ async function stubFullKitchenLoop(page) {
 		if (path.endsWith("/cooking-history/21/journal") && request.method() === "PUT") return route.fulfill(fullFlowJson({ journal: { journal_id: 41, history_id: 21, rating: 5, would_cook_again: true, notes: "The rice texture was right.", photos: [] } }));
 		return route.fallback();
 	});
+	await page.route("**/users/me/leftovers", async (route) => {
+		const request = route.request();
+		if (request.method() === "GET") return route.fulfill(fullFlowJson({ items: state.savedLeftovers }));
+		if (request.method() === "POST") {
+			const input = request.postDataJSON();
+			const leftover = {
+				leftover_id: 81,
+				user_id: 7,
+				household_id: null,
+				recipe_id: fullFlowRecipe.recipe_id,
+				recipe_name: fullFlowRecipe.recipe_name,
+				history_id: input.cookingHistoryId,
+				cooked_servings: state.cookingSession.servings,
+				remaining_servings: input.servings,
+				prepared_at: "2026-09-14T17:35:00.000Z",
+				expires_at: input.expiresAt,
+			};
+			state.savedLeftovers.push(leftover);
+			return route.fulfill(fullFlowJson({ leftover }, 201));
+		}
+		return route.fallback();
+	});
 
 	return state;
 }
@@ -275,4 +298,27 @@ test("completes the production kitchen loop with duplicate and recovery safeguar
 	await page.getByLabel("Private notes").fill("The rice texture was right.");
 	await page.getByRole("button", { name: "Save journal" }).click();
 	await expect(page).toHaveURL(/\/history$/);
+});
+
+test("saving a leftover completes its follow-up before recipe review and history", async ({ page }) => {
+	const state = await stubFullKitchenLoop(page);
+	await page.goto(`/recipe/cooking?id=${fullFlowRecipe.recipe_id}`);
+	await expect(page.getByText("Step 1 of 2", { exact: true })).toBeVisible();
+	await page.getByRole("button", { name: "Next step" }).click();
+	await page.getByRole("button", { name: "Finish cooking" }).click();
+	await page.getByRole("dialog", { name: "Some ingredients are missing" }).getByRole("button", { name: "Continue anyway" }).click();
+
+	const leftoverDialog = page.getByRole("dialog", { name: `Save ${fullFlowRecipe.recipe_name} leftovers` });
+	await expect(leftoverDialog).toBeVisible();
+	await expect(leftoverDialog).toContainText("skip this step. Then you can review the recipe, return to your plan, or open your cooking history.");
+	await leftoverDialog.getByRole("button", { name: "Save leftover" }).click();
+	await expect(leftoverDialog).toHaveCount(0);
+	expect(state.savedLeftovers).toHaveLength(1);
+	expect(state.savedLeftovers[0]).toMatchObject({ history_id: 21, cooked_servings: 1, remaining_servings: 1 });
+
+	await page.getByRole("button", { name: "Review recipe" }).click();
+	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${fullFlowRecipe.recipe_id}$`));
+	await expect(page.locator("#recipe-title")).toHaveText(fullFlowRecipe.recipe_name);
+	await page.goto("/history");
+	await expect(page.getByText(fullFlowRecipe.recipe_name, { exact: true })).toBeVisible();
 });

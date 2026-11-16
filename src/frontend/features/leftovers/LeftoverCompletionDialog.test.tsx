@@ -21,6 +21,7 @@ describe("LeftoverCompletionDialog", () => {
 		);
 
 		expect(screen.getByRole("dialog", { name: "Save Tomato Soup leftovers" })).toBeTruthy();
+		expect(screen.getByText(/skip this step\. Then you can review the recipe, return to your plan, or open your cooking history/i)).toBeTruthy();
 		expect(screen.getByLabelText("Cooked servings")).toHaveProperty("value", "4");
 		fireEvent.click(screen.getByLabelText("Eaten servings"));
 		fireEvent.change(screen.getByLabelText("Eaten servings amount"), { target: { value: "1" } });
