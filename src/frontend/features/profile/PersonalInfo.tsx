@@ -36,6 +36,16 @@ const PersonalInfo = ({ user }: PersonalInfoProps): ReactElement => {
 	const isDirty = (Object.keys(formData) as ProfileField[]).some((field) => formData[field] !== initialFormData[field]);
 
 	useEffect(() => {
+		if (!isDirty || isSaving) return;
+		const warnBeforeUnload = (event: BeforeUnloadEvent): void => {
+			event.preventDefault();
+			event.returnValue = "";
+		};
+		window.addEventListener("beforeunload", warnBeforeUnload);
+		return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+	}, [isDirty, isSaving]);
+
+	useEffect(() => {
 		const nextFormData = getFormData(user);
 		setFormData(nextFormData);
 		setInitialFormData(nextFormData);
@@ -46,7 +56,10 @@ const PersonalInfo = ({ user }: PersonalInfoProps): ReactElement => {
 		if (!(name === "name" || name === "address" || name === "phoneNumber")) return;
 		setFormData((current) => ({ ...current, [name]: value }));
 	};
-	const handleCancel = (): void => setFormData(initialFormData);
+	const handleCancel = (): void => {
+		if (isDirty && !window.confirm("Discard your unsaved profile changes?")) return;
+		setFormData(initialFormData);
+	};
 
 	const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();

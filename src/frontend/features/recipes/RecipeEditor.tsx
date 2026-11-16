@@ -358,7 +358,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 		setValue,
 		watch,
 		getValues,
-		formState: { errors: formErrors },
+		formState: { errors: formErrors, isDirty },
 	} = useForm<EditorFormInput, unknown, EditorFormValues>({
 		resolver: zodResolver(recipeSchema),
 		defaultValues: createInitialEditorState({ recipeId, initialRecipe }),
@@ -367,6 +367,17 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 	const draftFingerprint = JSON.stringify(formRecipe);
 	const currentRestoreCandidate =
 		restoreCandidate?.userId === String(userId) ? restoreCandidate : null;
+	const hasUnsavedChanges = isCreateMode ? hasDraftContent(formRecipe) : isDirty;
+
+	useEffect(() => {
+		if (isCreateMode || !isDirty || isSubmitting) return;
+		const warnBeforeUnload = (event: BeforeUnloadEvent): void => {
+			event.preventDefault();
+			event.returnValue = "";
+		};
+		window.addEventListener("beforeunload", warnBeforeUnload);
+		return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+	}, [isCreateMode, isDirty, isSubmitting]);
 
 	useEffect(() => {
 		setRestoreCandidate(null);
@@ -558,6 +569,7 @@ const RecipeEditor = ({ mode, recipeId = null, initialRecipe = null, onSaved }: 
 	};
 
 	const handleReset = (): void => {
+		if (hasUnsavedChanges && !window.confirm(isCreateMode ? "Discard this recipe draft?" : "Discard your unsaved recipe changes?")) return;
 		if (isCreateMode) clearRecipeDraft(window.localStorage, userId);
 		reset(createInitialEditorState({ recipeId, initialRecipe }));
 		setPreview(null);

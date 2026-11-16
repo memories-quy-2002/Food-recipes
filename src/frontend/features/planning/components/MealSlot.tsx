@@ -49,7 +49,7 @@ export const buildMealCookingHref = (item: MealPlanItem, scope: KitchenScope = P
 
 const statusMeta = {
 	planned: { label: "Planned", className: "bg-muted text-muted-foreground" },
-	cooking: { label: "Cooking", className: "bg-primary/10 text-primary" },
+	cooking: { label: "Cooking", className: "bg-primary/10 text-foreground" },
 	completed: { label: "Completed", className: "bg-secondary text-secondary-foreground" },
 } as const;
 

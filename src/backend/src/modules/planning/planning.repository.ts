@@ -422,7 +422,9 @@ export class PlanningRepository implements PlanningRepositoryPort {
     const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
       INSERT INTO shopping_list_items (user_id, label, quantity, source_recipe_id)
       VALUES (${userId}, ${label}, ${quantity}, ${sourceRecipeId})
-      ON CONFLICT DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT (user_id, LOWER(BTRIM(label::text)), COALESCE(BTRIM(quantity::text), ''::text))
+        WHERE user_id IS NOT NULL AND checked = FALSE
+        DO UPDATE SET updated_at = CURRENT_TIMESTAMP
       RETURNING item_id
     `);
     return (await this.findShoppingItem(userId, rows[0].item_id))!;
@@ -459,7 +461,9 @@ export class PlanningRepository implements PlanningRepositoryPort {
     const rows = await this.prisma.$queryRaw<{ item_id: number }[]>(Prisma.sql`
       INSERT INTO shopping_list_items (user_id, household_id, label, quantity, source_recipe_id)
       VALUES (NULL, ${householdId}, ${label}, ${quantity}, ${sourceRecipeId})
-      ON CONFLICT DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+      ON CONFLICT (household_id, LOWER(BTRIM(label::text)), COALESCE(BTRIM(quantity::text), ''::text))
+        WHERE household_id IS NOT NULL AND checked = FALSE
+        DO UPDATE SET updated_at = CURRENT_TIMESTAMP
       RETURNING item_id
     `);
     return (await this.findShoppingItemForHousehold(householdId, rows[0].item_id))!;

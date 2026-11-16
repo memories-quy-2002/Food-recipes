@@ -1,3 +1,5 @@
+import type { KeyboardCoordinateGetter } from "@dnd-kit/core";
+import { closestCenter, type CollisionDetection } from "@dnd-kit/core";
 import type { MealPlanItem, MealSlot } from "./api/planningApi";
 
 export type MealDropTarget = { date: string; slot: MealSlot };
@@ -9,6 +11,46 @@ export type MealDropResult =
 
 export const mealDropTargetId = ({ date, slot }: MealDropTarget) => `meal-slot:${date}:${slot}`;
 export const mealItemId = (itemId: number) => `meal-item:${itemId}`;
+
+export const mealSlotCollisionDetection: CollisionDetection = (args) => closestCenter({
+	...args,
+	droppableContainers: args.droppableContainers.filter((container) => parseMealDropTargetId(String(container.id)) !== null),
+});
+
+export const mealPlanKeyboardCoordinates: KeyboardCoordinateGetter = (event, { currentCoordinates, context }) => {
+	const axis = event.code === "ArrowUp" || event.code === "ArrowDown" ? "y" : event.code === "ArrowLeft" || event.code === "ArrowRight" ? "x" : null;
+	if (!axis || !context.collisionRect) return;
+	const direction = event.code === "ArrowDown" || event.code === "ArrowRight" ? 1 : -1;
+	const activeRect = context.collisionRect;
+	const activeCenter = {
+		x: activeRect.left + activeRect.width / 2,
+		y: activeRect.top + activeRect.height / 2,
+	};
+
+	const candidates = context.droppableContainers.getEnabled().flatMap((container) => {
+		if (!parseMealDropTargetId(String(container.id))) return [];
+		if (container.id === context.over?.id) return [];
+		const rect = context.droppableRects.get(container.id);
+		if (!rect) return [];
+		const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+		const primaryDelta = (center[axis] - activeCenter[axis]) * direction;
+		if (primaryDelta <= 1) return [];
+		const crossAxis: "x" | "y" = axis === "x" ? "y" : "x";
+		return [{ rect, primaryDelta, crossAxisDelta: Math.abs(center[crossAxis] - activeCenter[crossAxis]) }];
+	});
+
+	const target = candidates.sort((a, b) => a.primaryDelta - b.primaryDelta || a.crossAxisDelta - b.crossAxisDelta)[0];
+	if (!target) return;
+	const targetCenter = {
+		x: target.rect.left + target.rect.width / 2,
+		y: target.rect.top + target.rect.height / 2,
+	};
+	const nextCoordinates = {
+		x: currentCoordinates.x + targetCenter.x - activeCenter.x,
+		y: currentCoordinates.y + targetCenter.y - activeCenter.y,
+	};
+	return nextCoordinates;
+};
 
 export const parseMealDropTargetId = (id: string): MealDropTarget | null => {
 	const [, date, slot] = id.split(":");

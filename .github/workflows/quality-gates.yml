@@ -76,7 +76,7 @@ jobs:
         image: postgres:17-alpine
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
+          POSTGRES_PASSWORD: ${{ format('ci-{0}-{1}', github.run_id, github.run_attempt) }}
           POSTGRES_DB: food_recipes_ci
         ports:
           - 5432:5432
@@ -86,8 +86,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/food_recipes_ci
-      JWT_SECRET: food-recipes-ci-only-secret-with-at-least-32-characters
+      DATABASE_URL: postgresql://postgres:${{ format('ci-{0}-{1}', github.run_id, github.run_attempt) }}@localhost:5432/food_recipes_ci
     steps:
       - uses: actions/checkout@v7
 
@@ -100,6 +99,9 @@ jobs:
           node-version: 24
           cache: pnpm
           cache-dependency-path: src/backend/pnpm-lock.yaml
+
+      - name: Generate ephemeral test JWT secret
+        run: node -e "console.log('JWT_SECRET=' + require('node:crypto').randomBytes(48).toString('base64url'))" >> "$GITHUB_ENV"
 
       - name: Install locked dependencies
         working-directory: src/backend
@@ -218,3 +220,107 @@ jobs:
             src/frontend/test-results
             src/frontend/playwright-report
             src/frontend/output
+
+  real-stack-e2e:
+    name: PostgreSQL-backed browser E2E
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.cross == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ format('ci-{0}-{1}', github.run_id, github.run_attempt) }}
+          POSTGRES_DB: food_recipes_real_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d food_recipes_real_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:${{ format('ci-{0}-{1}', github.run_id, github.run_attempt) }}@localhost:5432/food_recipes_real_e2e
+      PORT: 3000
+      CORS_ORIGINS: http://127.0.0.1:5174
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 11.18.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: |
+            src/backend/pnpm-lock.yaml
+            src/frontend/pnpm-lock.yaml
+
+      - name: Generate ephemeral test JWT secret
+        run: node -e "console.log('JWT_SECRET=' + require('node:crypto').randomBytes(48).toString('base64url'))" >> "$GITHUB_ENV"
+
+      - name: Install locked backend dependencies
+        working-directory: src/backend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install locked frontend dependencies
+        working-directory: src/frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Build frontend for PostgreSQL preview
+        working-directory: src/frontend
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:3000
+        run: pnpm build
+
+      - name: Migrate and seed isolated PostgreSQL
+        working-directory: src/backend
+        run: |
+          pnpm prisma:migrate:deploy
+          pnpm prisma:seed
+          pnpm demo:verify
+
+      - name: Build API
+        working-directory: src/backend
+        run: pnpm build
+
+      - name: Start API and wait for health
+        working-directory: src/backend
+        run: |
+          pnpm start > "$RUNNER_TEMP/food-recipes-api.log" 2>&1 &
+          for attempt in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:3000/api/v1/health > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/food-recipes-api.log"
+          exit 1
+
+      - name: Install Playwright browser
+        working-directory: src/frontend
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run PostgreSQL-backed browser journeys
+        working-directory: src/frontend
+        env:
+          FOOD_RECIPES_E2E_API_ORIGIN: http://127.0.0.1:3000
+          FOOD_RECIPES_E2E_API_URL: http://127.0.0.1:3000/api/v1
+          FOOD_RECIPES_E2E_WEB_URL: http://127.0.0.1:5174
+          VITE_API_BASE_URL: http://127.0.0.1:3000
+        run: pnpm test:e2e:real
+
+      - name: Upload real-stack browser artifacts and API log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: postgres-real-stack-playwright-artifacts
+          if-no-files-found: ignore
+          path: |
+            src/frontend/test-results
+            src/frontend/playwright-report
+            ${{ runner.temp }}/food-recipes-api.log

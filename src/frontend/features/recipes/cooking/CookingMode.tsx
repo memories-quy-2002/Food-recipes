@@ -155,7 +155,7 @@ const CookingMode = ({
 						<p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Guided cooking</p>
 						{planningContext && <p className="mt-1 text-sm font-semibold text-muted-foreground">{formatPlanningContext(planningContext)}</p>}
 					</div>
-						<Button variant="outline" onClick={handleExit} disabled={isExiting} aria-label="Pause and exit cooking"><X className="size-4" aria-hidden="true" />{isExiting ? "Saving…" : "Pause & exit"}</Button>
+						<Button variant="outline" onClick={handleExit} disabled={isExiting} aria-label="Pause & exit cooking"><X className="size-4" aria-hidden="true" />{isExiting ? "Saving…" : "Pause & exit"}</Button>
 				</header>
 
 				<CookingToolsProvider ingredients={recipe?.structured_ingredients ?? recipe?.ingredients ?? null} storageKey={toolsStorageKey}>

@@ -1,12 +1,11 @@
-import { closestCenter, DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { useToast } from "@/app/ToastProvider";
 import Button from "@/shared/ui/Button";
 import { MEAL_SLOTS, type MealPlanItem, type MealSlot } from "../api/planningApi";
 import type { PlanningDay } from "../api/planningDates";
-import { getMealDropAnnouncement, parseMealItemId, resolveMealDrop, resolveMealDropTarget, type MealDropTarget } from "../planningDnD";
+import { getMealDropAnnouncement, mealPlanKeyboardCoordinates, mealSlotCollisionDetection, parseMealItemId, resolveMealDrop, resolveMealDropTarget, type MealDropTarget } from "../planningDnD";
 import MealSlotComponent from "./MealSlot";
 
 type MealPlanAgendaProps = {
@@ -24,7 +23,7 @@ type MealPlanAgendaProps = {
 const MealPlanAgenda = ({ days, items, onAdd, onEdit, onRemove, onOpenRecipe, onMove, isRemoving = false, readOnly = false }: MealPlanAgendaProps) => {
 	const [activeId, setActiveId] = useState<number | null>(null);
 	const { showToast } = useToast();
-	const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+	const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }), useSensor(KeyboardSensor, { coordinateGetter: mealPlanKeyboardCoordinates }));
 	const itemsByKey = new Map(items.map((item) => [`${item.planned_date.slice(0, 10)}:${item.slot}`, item]));
 	const handleDragEnd = ({ active, over }: DragEndEvent) => {
 		if (readOnly) return;
@@ -42,7 +41,7 @@ const MealPlanAgenda = ({ days, items, onAdd, onEdit, onRemove, onOpenRecipe, on
 	const activeItem = activeId === null ? undefined : items.find((item) => item.item_id === activeId);
 
 	return (
-		<DndContext sensors={sensors} collisionDetection={closestCenter} accessibility={{ announcements: { onDragStart: ({ active }) => { const item = items.find((candidate) => candidate.item_id === parseMealItemId(active.id)); return item ? `${item.recipe_name} picked up. Choose an empty meal slot.` : ""; }, onDragOver: ({ active, over }) => getMealDropAnnouncement(items, active.id, over?.id, "over"), onDragEnd: ({ active, over }) => getMealDropAnnouncement(items, active.id, over?.id, "end"), onDragCancel: () => "Move cancelled." } }} onDragStart={({ active }) => { if (!readOnly) setActiveId(parseMealItemId(active.id)); }} onDragCancel={() => { setActiveId(null); }} onDragEnd={handleDragEnd}>
+		<DndContext sensors={sensors} collisionDetection={mealSlotCollisionDetection} accessibility={{ announcements: { onDragStart: ({ active }) => { const item = items.find((candidate) => candidate.item_id === parseMealItemId(active.id)); return item ? `${item.recipe_name} picked up. Choose an empty meal slot.` : ""; }, onDragOver: ({ active, over }) => getMealDropAnnouncement(items, active.id, over?.id, "over"), onDragEnd: ({ active, over }) => getMealDropAnnouncement(items, active.id, over?.id, "end"), onDragCancel: () => "Move cancelled." } }} onDragStart={({ active }) => { if (!readOnly) setActiveId(parseMealItemId(active.id)); }} onDragCancel={() => { setActiveId(null); }} onDragEnd={handleDragEnd}>
 		<section className="space-y-3" aria-label="Meal plan agenda">
 			{days.map((day) => {
 				const plannedSlots = MEAL_SLOTS.filter((slot) => itemsByKey.has(`${day.date}:${slot}`));

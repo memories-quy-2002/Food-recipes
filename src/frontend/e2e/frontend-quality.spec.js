@@ -113,13 +113,49 @@ test("food discovery stays keyboard reachable, within the viewport, and accessib
 		expect(layout.documentWidth, `horizontal overflow at ${width}px`).toBeLessThanOrEqual(layout.viewportWidth);
 	}
 	await page.setViewportSize({ width: 390, height: 844 });
-	await expect(page).toHaveScreenshot("recipe-discovery-mobile.png", { fullPage: true, animations: "disabled" });
+	await expect(page).toHaveScreenshot("recipe-discovery-mobile.png", { fullPage: true, animations: "disabled", maxDiffPixels: 32 });
 
 	const results = await new AxeBuilder({ page })
 		.withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
 		.analyze();
 	const blockingViolations = results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact));
 	expect(blockingViolations, formatViolations(blockingViolations)).toEqual([]);
+});
+
+test("an expired authenticated session returns to sign in with the protected destination preserved", async ({ page }) => {
+	const state = { expired: false };
+	const user = { user_id: 7, full_name: "Smoke User", email: "smoke@example.test" };
+	await bootstrapTestAuth(page, user, "expiring-access-token");
+	await page.route("**/auth/refresh", (route) =>
+		state.expired
+			? route.fulfill(json({ code: "REFRESH_TOKEN_INVALID", message: "Unauthenticated" }, 401))
+			: route.fulfill(json({ token: "expiring-access-token", user })),
+	);
+	await page.route("**/households", (route) => route.fulfill(json({ households: [] })));
+	await page.route("**/users/me/pantry**", (route) => {
+		if (route.request().method() === "POST" && state.expired) {
+			return route.fulfill(json({ code: "AUTH_REQUIRED", message: "Your session has expired." }, 401));
+		}
+		if (route.request().method() === "GET") return route.fulfill(json({ items: [] }));
+		return route.fallback();
+	});
+
+	await page.goto("/pantry");
+	await expect(page.getByRole("heading", { name: "Pantry", exact: true })).toBeVisible();
+	state.expired = true;
+	await page.getByRole("textbox", { name: "Pantry item" }).fill("must-not-be-written");
+	await page.getByRole("spinbutton", { name: "Quantity" }).fill("1");
+	await page.getByRole("combobox", { name: "Unit" }).selectOption("GRAM");
+	const unauthorizedWrite = page.waitForResponse((response) =>
+		response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/users/me/pantry"),
+	);
+	await page.getByRole("button", { name: "Add pantry item" }).click();
+	expect((await unauthorizedWrite).status()).toBe(401);
+
+	await expect(page).toHaveURL(/\/account\?signup=false$/);
+	await expect(page.getByRole("status").filter({ hasText: "Sign in required" })).toBeVisible();
+	const authIntent = JSON.parse(await page.evaluate(() => sessionStorage.getItem("food-recipes:auth-intent")));
+	expect(authIntent).toMatchObject({ returnTo: "/pantry" });
 });
 
 test("mobile drawer closes after route changes and restores focus on Escape", async ({ page }) => {

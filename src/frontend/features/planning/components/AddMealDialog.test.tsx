@@ -58,4 +58,24 @@ describe("AddMealDialog", () => {
 
 		expect(screen.getByRole("button", { name: "Save changes" })).toBeTruthy();
 	});
+
+	it("restores page scrolling after rerenders while the dialog is open", () => {
+		document.body.style.overflow = "";
+		const props = {
+			open: true,
+			initialDate: "2026-08-24",
+			initialSlot: "dinner" as const,
+			onClose: vi.fn(),
+			onSubmit: vi.fn(),
+			isSubmitting: false,
+		};
+		const { rerender } = render(<AddMealDialog {...props} />);
+		expect(document.body.style.overflow).toBe("hidden");
+
+		rerender(<AddMealDialog {...props} onClose={vi.fn()} isSubmitting />);
+		rerender(<AddMealDialog {...props} onClose={vi.fn()} open={false} />);
+
+		expect(document.body.style.overflow).toBe("");
+		document.body.style.overflow = "";
+	});
 });
