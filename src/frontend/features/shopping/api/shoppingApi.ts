@@ -41,6 +41,32 @@ export type PrepareRecipeResponse = {
 	shopping_list_confirmed?: boolean;
 };
 
+export type WeeklyShoppingLine = {
+	name: string;
+	unit: string;
+	requiredQuantity: number;
+	availableQuantity: number;
+	missingQuantity: number;
+	quantity: string;
+	sourceRecipeId: number | null;
+	alreadyListed: boolean;
+};
+
+export type WeeklyShoppingPreview = {
+	planId: number;
+	from: string;
+	to: string;
+	snapshot: string;
+	mealCount: number;
+	items: WeeklyShoppingLine[];
+	needsDetails: string[];
+	skippedRecipes: number[];
+};
+
+export type WeeklyShoppingConfirmResponse = WeeklyShoppingPreview & {
+	addedShoppingItems: number;
+};
+
 export type AddShoppingItemInput = {
 	label: string;
 	quantity?: string;
@@ -60,6 +86,8 @@ export type ShoppingApiRoutes = {
 	shoppingListPrepare: string;
 	shoppingListPrepareAdd: string;
 	shoppingListCompleted: string;
+	weeklyPreview: string;
+	weeklyConfirm: string;
 };
 
 export const createShoppingRoutes = (scope: KitchenScope): ShoppingApiRoutes => {
@@ -72,6 +100,8 @@ export const createShoppingRoutes = (scope: KitchenScope): ShoppingApiRoutes => 
 			shoppingListPrepare: apiRoutes.shoppingListPrepare,
 			shoppingListPrepareAdd: `${apiRoutes.shoppingListPrepare}/add`,
 			shoppingListCompleted: apiRoutes.shoppingListCompleted,
+			weeklyPreview: `${apiRoutes.shoppingList}/weekly-preview`,
+			weeklyConfirm: `${apiRoutes.shoppingList}/weekly-confirm`,
 		};
 	}
 
@@ -84,6 +114,8 @@ export const createShoppingRoutes = (scope: KitchenScope): ShoppingApiRoutes => 
 		shoppingListPrepare: `${shoppingList}/prepare`,
 		shoppingListPrepareAdd: `${shoppingList}/prepare/add`,
 		shoppingListCompleted: `${shoppingList}/completed`,
+		weeklyPreview: `${shoppingList}/weekly-preview`,
+		weeklyConfirm: `${shoppingList}/weekly-confirm`,
 	};
 };
 
@@ -182,6 +214,29 @@ export const addPreparedRecipeIngredients = async (
 	const response = await axios.post<PrepareRecipeResponse>(
 		createShoppingRoutes(scope).shoppingListPrepareAdd,
 		{ recipeId, ...(servings ? { servings } : {}) },
+	);
+	return response.data;
+};
+
+/** A preview never persists data. Pass its snapshot back for confirmation. */
+export const previewWeeklyShopping = async (
+	input: { planId: number; from: string; to: string }, 
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<WeeklyShoppingPreview> => {
+	const response = await axios.post<WeeklyShoppingPreview>(
+		createShoppingRoutes(scope).weeklyPreview,
+		input,
+	);
+	return response.data;
+};
+
+export const confirmWeeklyShopping = async (
+	input: { planId: number; from: string; to: string; snapshot: string },
+	scope: KitchenScope = PERSONAL_KITCHEN,
+): Promise<WeeklyShoppingConfirmResponse> => {
+	const response = await axios.post<WeeklyShoppingConfirmResponse>(
+		createShoppingRoutes(scope).weeklyConfirm,
+		input,
 	);
 	return response.data;
 };

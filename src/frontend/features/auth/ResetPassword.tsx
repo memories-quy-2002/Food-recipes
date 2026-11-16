@@ -150,7 +150,11 @@ const ResetPassword = (): ReactElement => {
 							<p className="text-sm leading-6 text-muted-foreground">
 								{generalError}
 							</p>
-							<Button asChild size="lg" className="w-full">
+							<Button
+								asChild
+								size="lg"
+								className="min-w-0 h-auto min-h-11 w-full whitespace-normal px-3 py-2 text-center leading-5"
+							>
 								<Link to="/account?recovery=true">
 									Request a new recovery link
 								</Link>

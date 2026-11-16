@@ -57,7 +57,7 @@ afterEach(() => {
 		});
 
 		fireEvent.click(screen.getByRole("button", { name: /restored user/i }));
-		fireEvent.click(screen.getByRole("menuitem", { name: /sign out/i }));
+		fireEvent.click(screen.getByRole("link", { name: /sign out/i }));
 
 		expect(mockLogout).toHaveBeenCalledOnce();
 		expect(dispatch).not.toHaveBeenCalled();
@@ -72,8 +72,25 @@ afterEach(() => {
 		});
 
 		fireEvent.click(screen.getByRole("button", { name: /restored user/i }));
-		fireEvent.click(screen.getByRole("menuitem", { name: /sign out/i }));
+		fireEvent.click(screen.getByRole("link", { name: /sign out/i }));
 
 		await vi.waitFor(() => expect(dispatch).toHaveBeenCalledWith({ type: "auth/logout" }));
+	});
+
+	it("keeps account navigation as ordinary links and restores focus on Escape", () => {
+		renderHeader({
+			local: { isAuthenticated: true, user: { full_name: "Restored User" } },
+			session: { isAuthenticated: false, user: null },
+		});
+		const toggle = screen.getByRole("button", { name: /restored user/i });
+
+		fireEvent.click(toggle);
+		expect(toggle).toHaveAttribute("aria-expanded", "true");
+		expect(screen.getByRole("link", { name: /my profile/i })).toBeInTheDocument();
+		expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+
+		fireEvent.keyDown(document, { key: "Escape" });
+		expect(toggle).toHaveAttribute("aria-expanded", "false");
+		expect(toggle).toHaveFocus();
 	});
 });

@@ -13,6 +13,12 @@ const isCookingCompletionResponse = (response) => {
 	return response.request().method() === "POST" && /\/users\/me\/cooking-session\/\d+\/complete$/.test(url.pathname);
 };
 
+const chooseRecipeThroughSearch = async (page) => {
+	await page.goto(`/food?q=${encodeURIComponent(recipeName)}`);
+	await expect(page.getByRole("heading", { name: "Find something worth cooking" })).toBeVisible();
+	await page.getByRole("link", { name: recipeName }).click();
+};
+
 test("real browser: login, choose, prepare, cook, and complete a meal", async ({ page, request }, testInfo) => {
 	const recipe = await findRecipeByName(request, recipeName);
 	const recipeId = recipe.recipe_id;
@@ -30,10 +36,7 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 
 	await expect(page).toHaveURL(/\/$/);
 	await expect(page.getByRole("heading", { name: "Know what to do next." })).toBeVisible();
-	await page
-		.getByRole("region", { name: "Top rated recipes" })
-		.getByRole("link", { name: recipeName })
-		.click();
+	await chooseRecipeThroughSearch(page);
 
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
 	await expect(page.locator("#recipe-title")).toHaveText(recipeName);
@@ -119,10 +122,7 @@ test("real browser: login, choose, prepare, cook, and complete a meal", async ({
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
 	await expect(page.locator("#recipe-title")).toHaveText(recipeName);
 	await page.getByRole("button", { name: "More navigation" }).click();
-	await page
-		.getByRole("menu", { name: "More navigation links" })
-		.getByRole("menuitem", { name: "Cooking history" })
-		.click();
+	await page.getByRole("link", { name: "Cooking history" }).click();
 	await expect(page).toHaveURL(/\/history$/);
 	await expect(page.getByRole("heading", { name: "Your cooking history" })).toBeVisible();
 	const completedRecipeHeadings = page.getByRole("heading", { name: recipeName, exact: true });
@@ -146,7 +146,7 @@ test("real browser: saves a leftover before reviewing the completed recipe", asy
 	await page.getByRole("textbox", { name: "Password *" }).fill(demoCredentials.password);
 	await page.getByRole("button", { name: "Log in" }).click();
 	await expect(page).toHaveURL(/\/$/);
-	await page.getByRole("region", { name: "Top rated recipes" }).getByRole("link", { name: recipeName }).click();
+	await chooseRecipeThroughSearch(page);
 	await expect(page).toHaveURL(new RegExp(`/recipe\\?id=${recipeId}$`));
 	await page.getByRole("link", { name: "Start cooking" }).click();
 	await expect(page.locator("#cooking-mode-title")).toHaveText(recipeName);

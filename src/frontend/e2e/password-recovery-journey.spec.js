@@ -34,6 +34,7 @@ test.describe("password recovery", () => {
 	});
 
 	test("shows a safe state for an invalid reset token", async ({ page }) => {
+		await page.setViewportSize({ width: 320, height: 740 });
 		await stubAnonymousRefresh(page);
 		const token = "opaque-browser-reset-token";
 		await page.route("**/auth/reset-password", (route) =>
@@ -52,6 +53,21 @@ test.describe("password recovery", () => {
 		await expect(
 			page.getByRole("link", { name: "Request a new recovery link" }),
 		).toBeVisible();
+		await expect
+			.poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+			.toBeLessThanOrEqual(320);
+	});
+
+	test("missing recovery link remains usable at a 320px viewport", async ({ page }) => {
+		await page.setViewportSize({ width: 320, height: 740 });
+		await stubAnonymousRefresh(page);
+		await page.goto("/account/reset-password");
+
+		await expect(page.getByRole("heading", { name: "Recovery link unavailable" })).toBeVisible();
+		await expect(page.getByRole("link", { name: "Request a new recovery link" })).toBeVisible();
+		await expect
+			.poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+			.toBeLessThanOrEqual(320);
 	});
 
 	test("completes a valid reset and clears the password form", async ({ page }) => {

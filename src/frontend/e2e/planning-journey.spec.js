@@ -142,7 +142,7 @@ async function authenticateAsTestUser(page) {
 
 async function stubPlanningApi(page) {
 	let plan = null;
-	let item = null;
+	const items = [];
 
 	await page.route("**/users/me/meal-plans**", async (route) => {
 		const request = route.request();
@@ -168,13 +168,13 @@ async function stubPlanningApi(page) {
 		}
 
 		if (method === "GET" && path === "/users/me/meal-plans/12") {
-			return route.fulfill(json({ plan, items: item ? [item] : [] }));
+			return route.fulfill(json({ plan, items }));
 		}
 
 		if (method === "POST" && path === "/users/me/meal-plans/12/items") {
 			const body = JSON.parse(request.postData() || "{}");
-			item = {
-				item_id: 4,
+			const item = {
+				item_id: items.length + 4,
 				plan_id: 12,
 				recipe_id: body.recipeId,
 				recipe_name: recipe.recipe_name,
@@ -183,16 +183,45 @@ async function stubPlanningApi(page) {
 				servings: body.servings,
 				created_at: "2026-08-24T00:00:00.000Z",
 			};
+			items.push(item);
 			return route.fulfill(json({ item }, 201));
 		}
 
-		if (method === "PATCH" && path === "/users/me/meal-plans/12/items/4") {
+		if (method === "PATCH" && /^\/users\/me\/meal-plans\/12\/items\/\d+$/.test(path)) {
 			const body = JSON.parse(request.postData() || "{}");
-			item = { ...item, ...body, recipe_id: body.recipeId ?? item.recipe_id };
-			return route.fulfill(json({ item }));
+			const itemId = Number(path.split("/").at(-1));
+			const index = items.findIndex((candidate) => candidate.item_id === itemId);
+			if (index < 0) return route.fulfill(json({ message: "not found" }, 404));
+			const item = items[index];
+			items[index] = { ...item, ...body, planned_date: body.date ?? item.planned_date, recipe_id: body.recipeId ?? item.recipe_id };
+			return route.fulfill(json({ item: items[index] }));
 		}
 
 		return route.fallback();
+	});
+	return { getItem: () => items[0] ?? null, getItems: () => items };
+}
+
+async function createAgendaPlanWithMeals(page, planningState, slots) {
+	await page.goto("/planning");
+	await page.getByRole("button", { name: "Start a weekly plan" }).click();
+	const agendaButton = page.getByRole("group", { name: "Planning views" }).getByRole("button", { name: "Agenda" });
+	await agendaButton.click();
+	const agenda = page.getByRole("region", { name: "Agenda meal plan view" });
+	for (const slot of slots) {
+		await agenda.getByRole("button", { name: new RegExp(`Add recipe to .* ${slot}`) }).first().click();
+		await page.getByRole("button", { name: recipe.recipe_name, exact: true }).click();
+		await page.getByRole("button", { name: "Add to plan" }).click();
+		await expect.poll(() => planningState.getItems().length).toBe(slots.indexOf(slot) + 1);
+		await expect(page.getByTestId(`draggable-meal-${planningState.getItems().at(-1).item_id}`)).toBeVisible();
+	}
+	return agenda;
+}
+
+async function positionMealSlotsForKeyboardDrag(page) {
+	await page.evaluate(() => {
+		const meal = document.querySelector('[data-testid="draggable-meal-4"]');
+		if (meal) window.scrollBy(0, meal.getBoundingClientRect().top - 200);
 	});
 }
 
@@ -229,6 +258,93 @@ test("authenticated user completes the planning-to-cooking journey", async ({ pa
 	await page.getByRole("button", { name: "Back to plan" }).click();
 	await expect(page).toHaveURL(/\/planning$/);
 	await expect(page.getByText("6 servings", { exact: true })).toBeVisible();
+});
+
+test("mobile agenda supports keyboard meal edits as an alternative to drag and drop", async ({ page }) => {
+	await stubRecipeApi(page);
+	await authenticateAsTestUser(page);
+	const planningState = await stubPlanningApi(page);
+	await page.setViewportSize({ width: 375, height: 800 });
+	await page.goto("/planning");
+	await page.getByRole("button", { name: "Start a weekly plan" }).click();
+
+	const viewControls = page.getByRole("group", { name: "Planning views" });
+	await viewControls.getByRole("button", { name: "Agenda" }).click();
+	const agenda = page.getByRole("region", { name: "Agenda meal plan view" });
+	await expect(agenda).toBeVisible();
+	await expect(viewControls.getByRole("button", { name: "Agenda" })).toHaveAttribute("aria-pressed", "true");
+	const initialOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+	expect(initialOverflow).toBe(false);
+
+	await agenda.getByRole("button", { name: /Add recipe to/ }).first().click();
+	await page.getByRole("button", { name: recipe.recipe_name }).click();
+	await page.getByRole("button", { name: "Add to plan" }).click();
+	await expect(agenda.getByRole("link", { name: `Open ${recipe.recipe_name}` })).toBeVisible();
+	const originalDay = await agenda.getByRole("article").filter({ hasText: recipe.recipe_name }).getByRole("heading").innerText();
+	const item = planningState.getItem();
+	expect(item).not.toBeNull();
+	const nextDate = new Date(`${item.planned_date.slice(0, 10)}T00:00:00.000Z`);
+	nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+	const targetDate = nextDate.toISOString().slice(0, 10);
+
+	const changeButton = page.getByRole("button", { name: `Change ${recipe.recipe_name}` });
+	await changeButton.focus();
+	await page.keyboard.press("Enter");
+	const editDialog = page.getByRole("dialog", { name: "Change planned meal" });
+	await editDialog.getByLabel("Date").fill(targetDate);
+	await editDialog.getByRole("combobox").selectOption("lunch");
+	await editDialog.getByRole("button", { name: "Save changes" }).click();
+
+	await expect.poll(() => planningState.getItem()).toMatchObject({ planned_date: targetDate, slot: "lunch" });
+	const movedMeal = agenda.getByRole("article").filter({ hasText: recipe.recipe_name });
+	await expect(movedMeal.getByRole("heading")).not.toHaveText(originalDay);
+	await expect(movedMeal).toContainText("Lunch");
+	const finalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
+	expect(finalOverflow).toBe(false);
+});
+
+test("agenda supports keyboard-only dragging a meal into an empty slot", async ({ page }) => {
+	await stubRecipeApi(page);
+	await authenticateAsTestUser(page);
+	const planningState = await stubPlanningApi(page);
+	await page.setViewportSize({ width: 375, height: 900 });
+	const agenda = await createAgendaPlanWithMeals(page, planningState, ["breakfast"]);
+	await positionMealSlotsForKeyboardDrag(page);
+	const meal = page.getByTestId("draggable-meal-4");
+	await meal.focus();
+	await page.keyboard.press("Space");
+	await expect(meal).toHaveAttribute("aria-pressed", "true");
+	await page.waitForTimeout(25);
+	await page.keyboard.press("ArrowDown");
+	await expect(page.getByRole("status").filter({ hasText: /lunch slot/i })).toBeVisible();
+	await page.keyboard.press("Space");
+
+	await expect.poll(() => planningState.getItem()?.slot).toBe("lunch");
+	await expect(agenda.getByRole("article").filter({ hasText: recipe.recipe_name }).getByText("Lunch", { exact: true })).toBeVisible();
+});
+
+test("agenda announces and rejects keyboard drops on occupied meal slots", async ({ page }) => {
+	await stubRecipeApi(page);
+	await authenticateAsTestUser(page);
+	const planningState = await stubPlanningApi(page);
+	await page.setViewportSize({ width: 375, height: 900 });
+	const agenda = await createAgendaPlanWithMeals(page, planningState, ["breakfast", "lunch"]);
+	await positionMealSlotsForKeyboardDrag(page);
+	const breakfastItem = planningState.getItems()[0];
+	const originalDate = breakfastItem.planned_date;
+	const meal = page.getByTestId("draggable-meal-4");
+	await meal.focus();
+	await page.keyboard.press("Space");
+	await expect(meal).toHaveAttribute("aria-pressed", "true");
+	await page.waitForTimeout(25);
+	await page.keyboard.press("ArrowDown");
+	await expect(page.getByRole("status").filter({ hasText: /already has a meal/i })).toBeVisible();
+	await page.keyboard.press("Space");
+
+	await expect(page.getByText("Slot already filled", { exact: true })).toBeVisible();
+	expect(planningState.getItems()[0]).toMatchObject({ planned_date: originalDate, slot: "breakfast" });
+	expect(planningState.getItems()[1]).toMatchObject({ slot: "lunch" });
+	await expect(agenda.getByTestId("draggable-meal-4")).toBeVisible();
 });
 
 test("keeps planner layout usable across requested responsive breakpoints", async ({ page }) => {

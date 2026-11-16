@@ -32,6 +32,7 @@ describe("HouseholdsPage", () => {
 		expect(screen.getByRole("heading", { name: "Household kitchens" })).toBeInTheDocument();
 		expect(screen.getByText("Smith Household")).toBeInTheDocument();
 		expect(screen.getByLabelText("Invite email")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Create invite for Smith Household" })).toBeInTheDocument();
 	});
 
 	it("surfaces an invalid or expired invite without losing the token draft", async () => {

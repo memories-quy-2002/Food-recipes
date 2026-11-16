@@ -107,7 +107,10 @@ describe('PlanningRepository shopping-list duplicate prevention', () => {
     const repository = new PlanningRepository(prisma as never);
 
     await expect(repository.addShoppingItem(7, 'rice', '2 kg', 15)).resolves.toEqual(shoppingItem);
-    expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
+    const query = prisma.$queryRaw.mock.calls[0][0].strings.join(' ');
+    expect(query).toContain("ON CONFLICT (user_id, LOWER(BTRIM(label::text)), COALESCE(BTRIM(quantity::text), ''::text))");
+    expect(query).toContain("WHERE user_id IS NOT NULL AND checked = FALSE");
+    expect(query).toContain("DO UPDATE SET updated_at = CURRENT_TIMESTAMP");
   });
 
   it('returns the existing household item when an unchecked duplicate races', async () => {
@@ -117,7 +120,10 @@ describe('PlanningRepository shopping-list duplicate prevention', () => {
     const repository = new PlanningRepository(prisma as never);
 
     await expect(repository.addShoppingItemForHousehold(22, 'rice', '2 kg', 15)).resolves.toMatchObject({ item_id: 12, household_id: 22 });
-    expect(prisma.$queryRaw.mock.calls[0][0].strings.join(' ')).toMatch(/ON CONFLICT DO UPDATE/);
+    const query = prisma.$queryRaw.mock.calls[0][0].strings.join(' ');
+    expect(query).toContain("ON CONFLICT (household_id, LOWER(BTRIM(label::text)), COALESCE(BTRIM(quantity::text), ''::text))");
+    expect(query).toContain("WHERE household_id IS NOT NULL AND checked = FALSE");
+    expect(query).toContain("DO UPDATE SET updated_at = CURRENT_TIMESTAMP");
   });
 
   it('keeps pantry-aware preparation previews read-only until shopping is confirmed', async () => {

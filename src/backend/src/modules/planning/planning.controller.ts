@@ -22,6 +22,8 @@ import { ApplyMealPlanTemplateDto } from './dto/apply-meal-plan-template.dto';
 import { CreateRecurringMealRuleDto } from './dto/create-recurring-meal-rule.dto';
 import { SaveMealPlanTemplateDto } from './dto/save-meal-plan-template.dto';
 import { SavedPlanningService } from './saved-planning.service';
+import { WeeklyShoppingService } from './weekly-shopping.service';
+import { WeeklyShoppingPlanDto, ConfirmWeeklyShoppingDto } from './dto/weekly-shopping.dto';
 
 @ApiTags('Planning')
 @ApiBearerAuth()
@@ -33,6 +35,7 @@ export class PlanningController {
     @Inject(PlanningService) private readonly service: PlanningService,
     @Inject(MealPlanGeneratorService) private readonly generator: MealPlanGeneratorService,
     private readonly savedPlanning: SavedPlanningService,
+    private readonly weeklyShopping: WeeklyShoppingService,
   ) {}
 
   @Post('meal-plans/generate-preview')
@@ -115,6 +118,18 @@ export class PlanningController {
   @ApiOkResponse({ type: MessageResponseDto })
   deletePlanItem(@CurrentUser() user: AuthUser, @Param('planId', ParseIntPipe) planId: number, @Param('itemId', ParseIntPipe) itemId: number) { return this.service.deletePlanItem(user.id, planId, itemId); }
 
+  @Post('shopping-list/weekly-preview')
+  @ApiOperation({ summary: 'Preview missing ingredients across a selected weekly meal plan' })
+  previewWeeklyShopping(@CurrentUser() user: AuthUser, @Body() dto: WeeklyShoppingPlanDto) {
+    return this.weeklyShopping.preview(user.id, dto);
+  }
+
+  @Post('shopping-list/weekly-confirm')
+  @ApiOperation({ summary: 'Confirm weekly shopping changes against a fresh preview' })
+  confirmWeeklyShopping(@CurrentUser() user: AuthUser, @Body() dto: ConfirmWeeklyShoppingDto) {
+    return this.weeklyShopping.confirm(user.id, dto);
+  }
+
   @Get('shopping-list')
   @ApiOperation({ summary: 'List the owned shopping list' })
   @ApiOkResponse({ type: ShoppingListResponseDto })
@@ -170,6 +185,7 @@ export class HouseholdPlanningController {
   constructor(
     @Inject(PlanningService) private readonly service: PlanningService,
     private readonly access: HouseholdAccessService,
+    private readonly weeklyShopping: WeeklyShoppingService,
   ) {}
 
   @Get('meal-plans')
@@ -238,6 +254,20 @@ export class HouseholdPlanningController {
   async deletePlanItem(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Param('planId', ParseIntPipe) planId: number, @Param('itemId', ParseIntPipe) itemId: number) {
     await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
     return this.service.deletePlanItemForHousehold(user.id, householdId, planId, itemId);
+  }
+
+  @Post('shopping-list/weekly-preview')
+  @ApiOperation({ summary: 'Preview household weekly shopping needs' })
+  async previewWeeklyShopping(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Body() dto: WeeklyShoppingPlanDto) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER', 'VIEWER']);
+    return this.weeklyShopping.preview(user.id, dto, householdId);
+  }
+
+  @Post('shopping-list/weekly-confirm')
+  @ApiOperation({ summary: 'Confirm household weekly shopping changes' })
+  async confirmWeeklyShopping(@CurrentUser() user: AuthUser, @Param('householdId', ParseIntPipe) householdId: number, @Body() dto: ConfirmWeeklyShoppingDto) {
+    await this.access.requireRole(user.id, householdId, ['OWNER', 'MEMBER']);
+    return this.weeklyShopping.confirm(user.id, dto, householdId);
   }
 
   @Get('shopping-list')

@@ -248,7 +248,7 @@ test("restores cooking progress after leaving and returning to the recipe", asyn
 	await expect(page.getByText("Step 1 of 2")).toBeVisible();
 	await page.getByRole("button", { name: "Next step" }).click();
 	await expect(page.getByText("Step 2 of 2")).toBeVisible();
-	await page.getByRole("button", { name: "Pause and exit cooking" }).click();
+	await page.getByRole("button", { name: "Pause & exit cooking" }).click();
 	await expect(page).toHaveURL(/\/recipe\?id=7$/);
 
 	await page.goto(`/recipe/cooking?id=${recipe.recipe_id}`);

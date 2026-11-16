@@ -1,13 +1,14 @@
-import { FormEvent, useState } from "react";
-import { Link } from "react-router-dom";
-import { Pencil, Trash2 } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { AlertTriangle, CalendarDays, CheckCircle2, Pencil, ShoppingBasket, Trash2 } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
-import { getWeekRange } from "@/features/planning/api/planningDates";
+import { getWeekRange, parseIsoDate } from "@/features/planning/api/planningDates";
 import { useMealPlanForWeekQuery } from "@/features/planning/api/planningQueries";
 import { usePantryQuery } from "@/features/pantry/api/pantryQueries";
-import type { ShoppingListItem } from "./api/shoppingApi";
+import type { ShoppingListItem, WeeklyShoppingPreview } from "./api/shoppingApi";
 import {
-	useAddRecipeIngredientsFromRecipesMutation,
+	usePreviewWeeklyShoppingMutation,
+	useConfirmWeeklyShoppingMutation,
 	useAddShoppingItemMutation,
 	useClearCompletedShoppingItemsMutation,
 	useDeleteShoppingItemMutation,
@@ -19,6 +20,8 @@ import { isShoppingItemInPantry } from "./shoppingAvailability";
 import "./ShoppingList.css";
 import { useHouseholdScope } from "@/features/households/HouseholdScopeProvider";
 
+const unitLabels: Record<string, string> = { GRAM: "g", KILOGRAM: "kg", MILLILITER: "ml", LITER: "L", PIECE: "pcs", TEASPOON: "tsp", TABLESPOON: "tbsp", CUP: "cup" };
+
 const ShoppingListPage = () => {
 	const { scope, canEdit, scopeLabel } = useHouseholdScope();
 	const shoppingQuery = useShoppingListQuery(scope);
@@ -26,9 +29,14 @@ const ShoppingListPage = () => {
 	const updateMutation = useUpdateShoppingItemMutation(scope);
 	const deleteMutation = useDeleteShoppingItemMutation(scope);
 	const clearMutation = useClearCompletedShoppingItemsMutation(scope);
-	const plannedIngredientsMutation = useAddRecipeIngredientsFromRecipesMutation(scope);
+	const weeklyPreviewMutation = usePreviewWeeklyShoppingMutation(scope);
+	const weeklyConfirmMutation = useConfirmWeeklyShoppingMutation(scope);
 	const importToPantryMutation = useImportCheckedShoppingItemsMutation(scope);
-	const mealPlanQuery = useMealPlanForWeekQuery(getWeekRange(new Date()), {}, scope);
+	const [searchParams] = useSearchParams();
+	const requestedWeek = searchParams.get("week");
+	const parsedWeek = parseIsoDate(requestedWeek);
+	const selectedWeek = getWeekRange(parsedWeek ?? new Date());
+	const mealPlanQuery = useMealPlanForWeekQuery(selectedWeek, {}, scope);
 	const pantryQuery = usePantryQuery(scope);
 	const [label, setLabel] = useState("");
 	const [quantity, setQuantity] = useState("");
@@ -38,22 +46,58 @@ const ShoppingListPage = () => {
 	const [editError, setEditError] = useState<string | null>(null);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [message, setMessage] = useState<string | null>(null);
+	const [weeklyPreview, setWeeklyPreview] = useState<WeeklyShoppingPreview | null>(null);
+	const [acceptPartialPreview, setAcceptPartialPreview] = useState(false);
+	const [weeklyError, setWeeklyError] = useState<string | null>(null);
+	const scopeIdentity = scope.kind === "personal" ? "personal" : `household:${scope.householdId}`;
+	useEffect(() => {
+		setWeeklyPreview(null);
+		setAcceptPartialPreview(false);
+		setWeeklyError(null);
+	}, [scopeIdentity]);
 
 	const items = shoppingQuery.data?.items ?? [];
 	const activeItems = items.filter((item) => !item.checked);
 	const completedItems = items.filter((item) => item.checked);
 	const availablePantryNames = (pantryQuery.data?.items ?? []).filter((item) => item.have && (item.quantity === null || item.quantity > 0)).map((item) => item.name);
-	const plannedRecipeIds = [...new Set((mealPlanQuery.data?.items ?? []).map((item) => item.recipe_id))];
+	const selectedPlanId = mealPlanQuery.data?.plan?.plan_id;
+	const pendingWeeklyItems = weeklyPreview?.items.filter((item) => !item.alreadyListed) ?? [];
+	const needsPartialConfirmation = Boolean(weeklyPreview?.skippedRecipes.length);
+	const canConfirmWeekly = canEdit && pendingWeeklyItems.length > 0 && (!needsPartialConfirmation || acceptPartialPreview) && !weeklyConfirmMutation.isPending;
 	const actionError =
-		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || plannedIngredientsMutation.isError || importToPantryMutation.isError
+		addMutation.isError || updateMutation.isError || deleteMutation.isError || clearMutation.isError || weeklyPreviewMutation.isError || weeklyConfirmMutation.isError || importToPantryMutation.isError
 			? "We could not save that change. Try again."
 			: null;
 
-	const importPlannedIngredients = () => {
-		if (!canEdit || plannedRecipeIds.length === 0 || plannedIngredientsMutation.isPending) return;
-		plannedIngredientsMutation.mutate(plannedRecipeIds, {
-			onSuccess: (response) => setMessage(`${response.items.length} planned ingredient${response.items.length === 1 ? "" : "s"} added to your shopping list.`),
+	const previewPlannedIngredients = () => {
+		if (!selectedPlanId || weeklyPreviewMutation.isPending || weeklyConfirmMutation.isPending) return;
+		setWeeklyPreview(null);
+		setAcceptPartialPreview(false);
+		setWeeklyError(null);
+		setMessage(null);
+		weeklyPreviewMutation.mutate({ planId: selectedPlanId, ...selectedWeek }, {
+			onSuccess: setWeeklyPreview,
+			onError: () => setWeeklyError("We couldn’t calculate your weekly ingredients. Check your connection and try again."),
 		});
+	};
+
+	const confirmPlannedIngredients = () => {
+		if (!canConfirmWeekly || !weeklyPreview) return;
+		weeklyConfirmMutation.mutate(
+			{ planId: weeklyPreview.planId, from: weeklyPreview.from, to: weeklyPreview.to, snapshot: weeklyPreview.snapshot },
+			{
+				onSuccess: (result) => {
+					setWeeklyPreview(null);
+					setAcceptPartialPreview(false);
+					setMessage(`${result.addedShoppingItems} weekly ingredient${result.addedShoppingItems === 1 ? "" : "s"} added to your shopping list.`);
+				},
+				onError: () => {
+					setWeeklyPreview(null);
+					setWeeklyError("Your meal plan, pantry, or list may have changed. Preview again.");
+					setMessage("Your meal plan, pantry, or list may have changed. Preview again.");
+				},
+			},
+		);
 	};
 
 	const importPurchasedItems = () => {
@@ -219,7 +263,7 @@ const ShoppingListPage = () => {
 						{!canEdit && <p role="status">You have read-only access to this kitchen.</p>}
 					</div>
 					<div className="shopping-list-page__header-links">
-						<Link className="shopping-list-page__secondary-link" to="/planning">Back to planning</Link>
+						<Link className="shopping-list-page__secondary-link" to={`/planning?week=${selectedWeek.from}`}>Back to planning</Link>
 						<Link className="shopping-list-page__secondary-link" to="/pantry">My pantry</Link>
 					</div>
 				</header>
@@ -245,17 +289,76 @@ const ShoppingListPage = () => {
 							{formError && <p className="shopping-list-page__inline-error" role="alert">{formError}</p>}
 							{actionError && <p className="shopping-list-page__inline-error" role="alert">{actionError}</p>}
 						</form>}
-						{canEdit && <section className="shopping-list__planned-import" aria-labelledby="planned-import-title">
-							<h3 id="planned-import-title">From this week’s plan</h3>
-							{mealPlanQuery.isError ? (
-								<p role="alert">We could not read this week’s plan.</p>
-							) : plannedRecipeIds.length === 0 ? (
-								<p>Add meals to your plan to import their ingredients together.</p>
-							) : (
-								<button className="shopping-list__button shopping-list__button--quiet" type="button" onClick={importPlannedIngredients} disabled={plannedIngredientsMutation.isPending} aria-busy={plannedIngredientsMutation.isPending}>
-									{plannedIngredientsMutation.isPending ? "Importing…" : `Import ${plannedRecipeIds.length} planned recipe${plannedRecipeIds.length === 1 ? "" : "s"}`}
+					</section>
+					<section className="shopping-list__weekly-card" aria-labelledby="weekly-shopping-title">
+						<div className="shopping-list__weekly-heading">
+							<div className="shopping-list__weekly-heading-icon" aria-hidden="true"><CalendarDays size={22} /></div>
+							<div className="shopping-list__weekly-heading-copy">
+								<p className="shopping-list__weekly-eyebrow">FROM YOUR MEAL PLAN</p>
+								<h2 id="weekly-shopping-title">Smart weekly shopping</h2>
+								<p>Combine this week’s ingredients, compare with your pantry, then review before adding.</p>
+							</div>
+							<span className="shopping-list__weekly-range">{selectedWeek.from} – {selectedWeek.to}</span>
+						</div>
+						{mealPlanQuery.isPending ? (
+							<p className="shopping-list__weekly-info" role="status">Loading this week’s meal plan…</p>
+						) : mealPlanQuery.isError ? (
+							<div className="shopping-list__weekly-alert" role="alert">We couldn’t load this week’s plan. <button type="button" onClick={() => void mealPlanQuery.refetch()}>Try again</button></div>
+						) : !selectedPlanId ? (
+							<div className="shopping-list__weekly-empty">
+								<ShoppingBasket size={22} aria-hidden="true" />
+								<p>Add meals to this week’s plan to preview your shopping needs.</p>
+								<Link to={`/planning?week=${selectedWeek.from}`} className="shopping-list__button shopping-list__button--quiet">Open meal planner</Link>
+							</div>
+						) : (
+							<div className="shopping-list__weekly-start">
+								<button className="shopping-list__button shopping-list__button--quiet" type="button" onClick={previewPlannedIngredients} disabled={weeklyPreviewMutation.isPending || weeklyConfirmMutation.isPending} aria-busy={weeklyPreviewMutation.isPending}>
+									{weeklyPreviewMutation.isPending ? "Calculating…" : weeklyPreview ? "Refresh weekly preview" : "Preview weekly ingredients"}
 								</button>
-							)}
+								{!canEdit && <span className="shopping-list__weekly-info">View only · household members with edit access can add items.</span>}
+							</div>
+						)}
+						{weeklyError && <p role="alert" className="shopping-list__weekly-alert">{weeklyError}</p>}
+						{weeklyPreview && <section className="shopping-list__weekly-review" aria-label="Weekly shopping preview">
+							<div className="shopping-list__weekly-summary" role="status">
+								<CheckCircle2 size={19} aria-hidden="true" />
+								<span>{weeklyPreview.mealCount} planned meal{weeklyPreview.mealCount === 1 ? "" : "s"} reviewed · {pendingWeeklyItems.length} ingredient{pendingWeeklyItems.length === 1 ? "" : "s"} to add</span>
+							</div>
+							{weeklyPreview.items.length > 0 ? <div className="shopping-list__weekly-table-wrap">
+								<table className="shopping-list__weekly-table">
+									<caption className="shopping-list__sr-only">Ingredients required for the selected week</caption>
+									<thead><tr><th scope="col">Ingredient</th><th scope="col">Needed</th><th scope="col">In pantry</th><th scope="col">To buy</th></tr></thead>
+									<tbody>{weeklyPreview.items.map((item) => {
+										const unit = unitLabels[item.unit] ?? item.unit.toLowerCase();
+										return <tr key={`${item.name}:${item.unit}`}>
+											<th scope="row">{item.name}{item.alreadyListed && <span className="shopping-list__weekly-listed">Already on your list</span>}</th>
+											<td data-label="Needed">{item.requiredQuantity} {unit}</td>
+											<td data-label="In pantry">{item.availableQuantity} {unit}</td>
+											<td data-label="To buy" className="shopping-list__weekly-shortage">{item.quantity} to buy</td>
+										</tr>;
+									})}</tbody>
+								</table>
+							</div> : <p className="shopping-list__weekly-info">No additional measured ingredients needed.</p>}
+							{weeklyPreview.needsDetails.length > 0 && <div className="shopping-list__weekly-alert shopping-list__weekly-alert--muted">
+								<AlertTriangle size={18} aria-hidden="true" />
+								<p>Check quantities manually: {weeklyPreview.needsDetails.join(", ")}. These ingredients won’t be added automatically.</p>
+							</div>}
+							{needsPartialConfirmation && <div className="shopping-list__weekly-alert shopping-list__weekly-alert--caution" role="alert">
+								<AlertTriangle size={18} aria-hidden="true" />
+								<div>
+									<p><strong>Incomplete shopping estimate.</strong> {weeklyPreview.skippedRecipes.length} recipe{weeklyPreview.skippedRecipes.length === 1 ? " was" : "s were"} unavailable and could not be included.</p>
+									{canEdit && <label className="shopping-list__weekly-acknowledge">
+										<input type="checkbox" checked={acceptPartialPreview} onChange={(event) => setAcceptPartialPreview(event.target.checked)} />
+										<span>I understand this list is incomplete and want to add the available items anyway.</span>
+									</label>}
+								</div>
+							</div>}
+							<div className="shopping-list__weekly-actions">
+								{canEdit && <button type="button" className="shopping-list__button shopping-list__button--primary" onClick={confirmPlannedIngredients} disabled={!canConfirmWeekly} aria-busy={weeklyConfirmMutation.isPending}>
+									{weeklyConfirmMutation.isPending ? "Confirming…" : "Confirm & add missing items"}
+								</button>}
+								<button type="button" className="shopping-list__button shopping-list__button--quiet" onClick={() => { setWeeklyPreview(null); setAcceptPartialPreview(false); }} disabled={weeklyConfirmMutation.isPending}>Cancel</button>
+							</div>
 						</section>}
 					</section>
 

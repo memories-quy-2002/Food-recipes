@@ -6,8 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KitchenState } from "@/shared/api/contracts";
 
 const prepare = vi.fn();
+let leftoverItems: Array<{ remaining_servings: number }> = [];
 vi.mock("@/features/leftovers/api/leftoversQueries", () => ({
-	useLeftoversQuery: () => ({ data: { items: [] }, isPending: false }),
+	useLeftoversQuery: () => ({ data: { items: leftoverItems }, isPending: false }),
 }));
 vi.mock("@/features/shopping/api/shoppingQueries", () => ({
 	usePrepareRecipeIngredientsMutation: () => ({
@@ -56,6 +57,7 @@ describe("KitchenCommandCenter", () => {
 	beforeEach(() => {
 		window.localStorage.clear();
 		prepare.mockClear();
+		leftoverItems = [];
 	});
 
 	it("shows the current cooking action and next meal preparation action", () => {
@@ -73,6 +75,13 @@ describe("KitchenCommandCenter", () => {
 
 		expect(screen.queryByText("How your kitchen works")).not.toBeInTheDocument();
 		expect(window.localStorage.getItem("food-recipes:onboarding:kitchen:7")).toBe("dismissed");
+	});
+
+	it("keeps visible leftover link text in its accessible name", () => {
+		leftoverItems = [{ remaining_servings: 2 }];
+		render(<MemoryRouter><KitchenCommandCenter kitchen={kitchen} userId={7} /></MemoryRouter>);
+
+		expect(screen.getByRole("link", { name: /Leftovers 2 servings ready Use tonight/ })).toHaveAttribute("href", "/planning");
 	});
 });
 

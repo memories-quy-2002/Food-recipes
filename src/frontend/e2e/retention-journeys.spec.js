@@ -139,7 +139,7 @@ test("household invite unlocks the shared shopping scope", async ({ page }) => {
 	await authenticatedPage(page);
 	await page.goto("/households");
 	await page.getByLabel("Invite email").fill("friend@example.com");
-	await page.getByRole("button", { name: "Invite to Smith Household" }).click();
+	await page.getByRole("button", { name: "Create invite for Smith Household" }).click();
 	await expect(page.getByRole("status")).toContainText("Invite created");
 	await page.goto("/shopping-list");
 	await page.locator('select[aria-label="Kitchen scope"]:visible').selectOption("household:12");

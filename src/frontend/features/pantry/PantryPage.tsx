@@ -184,13 +184,13 @@ const PantryPage = () => {
 	};
 
 	const renderList = (list: PantryItem[], emptyMessage: string) => list.length
-		? <ul>{list.map(renderItem)}</ul>
+		? <ul className="min-w-0">{list.map(renderItem)}</ul>
 		: <div className="rounded-2xl border border-dashed border-border/80 bg-muted/35 px-4 py-8 text-center text-sm text-muted-foreground">{emptyMessage}</div>;
 
 	return (
 		<main className="min-h-screen bg-background px-4 py-7 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="pantry-title">
 			<PageHelmet title="My Pantry" description="Keep a simple list of ingredients you have on hand." path="/pantry" noIndex />
-			<div className="mx-auto w-full max-w-7xl">
+			<div className="mx-auto w-full min-w-0 max-w-7xl">
 				<header className="mb-8 flex flex-col gap-5 border-b border-border/70 pb-7 lg:flex-row lg:items-end lg:justify-between">
 					<div className="max-w-2xl">
 						<p className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary"><PackageCheck className="size-4" aria-hidden="true" />{scopeLabel}</p>
@@ -210,7 +210,7 @@ const PantryPage = () => {
 
 				{canEdit && <Card className="mb-6 overflow-hidden p-0">
 					<div className="border-b border-border/60 bg-muted/35 px-5 py-4 sm:px-6"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground"><Plus className="size-5" aria-hidden="true" /></span><div><h2 className="text-xl font-black">Add an ingredient</h2><p className="mt-1 text-sm text-muted-foreground">Include a quantity and unit so cooking can subtract the right amount automatically.</p></div></div></div>
-					<form onSubmit={submit} className="grid gap-3 p-5 sm:grid-cols-[minmax(0,2fr)_minmax(8rem,0.7fr)_minmax(9rem,0.8fr)_minmax(10rem,0.9fr)_auto] sm:items-end sm:p-6 lg:gap-4">
+					<form onSubmit={submit} className="grid gap-3 p-5 sm:p-6 lg:grid-cols-[minmax(12rem,2fr)_minmax(8rem,0.7fr)_minmax(9rem,0.8fr)_minmax(10rem,0.9fr)_auto] lg:items-end lg:gap-4">
 						<div className="grid gap-2"><label htmlFor="pantry-item" className="text-sm font-bold">Pantry item</label><Input id="pantry-item" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. rice" /></div>
 						<div className="grid gap-2"><label htmlFor="pantry-quantity" className="text-sm font-bold">Quantity</label><Input id="pantry-quantity" type="number" min="0" step="0.001" value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="e.g. 2" /></div>
 						<div className="grid gap-2"><label htmlFor="pantry-unit" className="text-sm font-bold">Unit</label><select id="pantry-unit" className={selectClass} value={unit} onChange={(event) => setUnit(event.target.value as PantryUnit)}>{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select></div>
@@ -232,9 +232,9 @@ const PantryPage = () => {
 							<div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><label className="sr-only" htmlFor="pantry-search">Search pantry</label><Input id="pantry-search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search ingredients" className="pl-10" /></div>
 							<div className="flex shrink-0 items-center gap-2"><label className="sr-only" htmlFor="pantry-filter">Filter pantry</label><select id="pantry-filter" className={`${selectClass} sm:w-44`} value={filter} onChange={(event) => setFilter(event.target.value as PantryFilter)}><option value="all">All items</option><option value="available">On hand</option><option value="missing">Need to buy</option></select><span className="hidden rounded-full bg-muted px-3 py-2 text-xs font-bold text-muted-foreground sm:inline-flex" aria-live="polite">{filteredItems.length} items</span></div>
 						</div>
-						<div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
-							<Card className="p-5 sm:p-6"><div className="mb-4 flex items-end justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Ready now</p><h2 className="mt-1 text-2xl font-black">On hand</h2></div><span className="text-sm font-bold text-muted-foreground">{filteredAvailableItems.length} / {availableItems.length}</span></div>{renderList(filteredAvailableItems, filter === "all" ? "Nothing marked as available." : "No available items match this filter.")}</Card>
-							<Card className="p-5 sm:p-6"><div className="mb-4 flex items-end justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Restock</p><h2 className="mt-1 text-2xl font-black">Need to buy</h2></div><span className="text-sm font-bold text-muted-foreground">{filteredMissingItems.length} / {missingItems.length}</span></div>{renderList(filteredMissingItems, filter === "all" ? "Nothing waiting here." : "No items need restocking for this filter.")}</Card>
+						<div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
+							<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Ready now</p><h2 className="mt-1 text-2xl font-black">On hand</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredAvailableItems.length} / {availableItems.length}</span></div>{renderList(filteredAvailableItems, filter === "all" ? "Nothing marked as available." : "No available items match this filter.")}</Card>
+							<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Restock</p><h2 className="mt-1 text-2xl font-black">Need to buy</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredMissingItems.length} / {missingItems.length}</span></div>{renderList(filteredMissingItems, filter === "all" ? "Nothing waiting here." : "No items need restocking for this filter.")}</Card>
 						</div>
 					</section>
 				)}

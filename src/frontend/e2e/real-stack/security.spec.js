@@ -3,6 +3,7 @@ import {
 	apiUrl,
 	getRefreshCookie,
 	loginApi,
+	loginInBrowser,
 	uniqueName,
 } from "./helpers.js";
 
@@ -104,4 +105,215 @@ test("real stack: rejects an oversized authentication payload at the HTTP bounda
 		},
 	});
 	expect(response.status()).toBe(413);
+});
+
+test("real stack: household OWNER, MEMBER, VIEWER, and non-member permissions match across routes", async ({ request, page }) => {
+	const owner = await loginApi(request);
+	const member = await loginApi(request, { email: "demo.foodie@foodrecipes.local", password: "DemoPass123!" });
+	const viewer = await loginApi(request, { email: "demo.admin@foodrecipes.local", password: "DemoPass123!" });
+	const outsider = await loginApi(request, { email: "demo.chef@foodrecipes.local", password: "DemoPass123!" });
+	const range = { from: "2026-11-16", to: "2026-11-22" };
+	const householdName = uniqueName("Role matrix household");
+	const personalShoppingLabel = uniqueName("personal conflict item");
+	let householdId;
+	let memberId;
+	let viewerId;
+	let personalShoppingItemId;
+	const planIds = [];
+	const shoppingItemIds = [];
+	const pantryItemIds = [];
+
+	try {
+		const householdResponse = await request.post(apiUrl("/households"), {
+			headers: owner.headers,
+			data: { name: householdName },
+		});
+		expect(householdResponse.status()).toBe(201);
+		householdId = (await householdResponse.json()).household.household_id;
+
+		await loginInBrowser(page);
+		await page.setViewportSize({ width: 320, height: 900 });
+		await expect(page.getByRole("combobox", { name: "Kitchen scope" })).toBeVisible();
+		const homeWidth = await page.evaluate(() => ({
+			viewport: document.documentElement.clientWidth,
+			document: document.documentElement.scrollWidth,
+			boxes: ["header", "header > div", "header a[aria-label='Food recipes home']", "header > div > div:last-child", "#kitchen-scope", "header button[aria-label='Open navigation menu']"].map((selector) => {
+				const element = document.querySelector(selector);
+				if (!element) return { selector, missing: true };
+				const rect = element.getBoundingClientRect();
+				return { selector, left: Math.round(rect.left), right: Math.round(rect.right), width: Math.round(rect.width) };
+			}),
+			overflowingElements: [...document.querySelectorAll("body *")]
+				.map((element) => ({
+					tag: element.tagName.toLowerCase(),
+					className: typeof element.className === "string" ? element.className.slice(0, 100) : "",
+					text: (element.textContent ?? "").trim().slice(0, 40),
+					right: Math.round(element.getBoundingClientRect().right),
+					width: Math.round(element.getBoundingClientRect().width),
+				}))
+				.filter((element) => element.width > 0 && element.right > document.documentElement.clientWidth + 1)
+				.slice(0, 6),
+		}));
+		expect(homeWidth.document, `Home should not overflow at ${homeWidth.viewport}px with a household scope; boxes=${JSON.stringify(homeWidth.boxes)}; elements=${JSON.stringify(homeWidth.overflowingElements)}`).toBeLessThanOrEqual(homeWidth.viewport);
+
+		for (const [invitedUser, role] of [[member, "MEMBER"], [viewer, "VIEWER"]]) {
+			const inviteResponse = await request.post(apiUrl(`/households/${householdId}/invites`), {
+				headers: owner.headers,
+				data: { email: invitedUser.user.email },
+			});
+			expect(inviteResponse.status()).toBe(201);
+			const { token } = await inviteResponse.json();
+			const acceptResponse = await request.post(apiUrl(`/household-invites/${token}/accept`), {
+				headers: invitedUser.headers,
+			});
+			expect(acceptResponse.status()).toBe(201);
+			const acceptedMember = (await acceptResponse.json()).member;
+			if (role === "MEMBER") memberId = acceptedMember.member_id;
+			else viewerId = acceptedMember.member_id;
+		}
+
+		const householdDetails = await request.get(apiUrl(`/households/${householdId}`), { headers: owner.headers });
+		expect(householdDetails.status()).toBe(200);
+		const members = (await householdDetails.json()).members;
+		memberId = members.find((candidate) => candidate.email === member.user.email).member_id;
+		viewerId = members.find((candidate) => candidate.email === viewer.user.email).member_id;
+		const viewerRoleResponse = await request.patch(apiUrl(`/households/${householdId}/members/${viewerId}`), {
+			headers: owner.headers,
+			data: { role: "VIEWER" },
+		});
+		expect(viewerRoleResponse.status()).toBe(200);
+
+		const ownerPlanResponse = await request.post(apiUrl(`/households/${householdId}/meal-plans`), {
+			headers: owner.headers,
+			data: { name: uniqueName("Owner plan"), ...range },
+		});
+		expect(ownerPlanResponse.status()).toBe(201);
+		planIds.push((await ownerPlanResponse.json()).plan.plan_id);
+
+		const memberPlanResponse = await request.post(apiUrl(`/households/${householdId}/meal-plans`), {
+			headers: member.headers,
+			data: { name: uniqueName("Member plan"), ...range },
+		});
+		expect(memberPlanResponse.status()).toBe(201);
+		planIds.push((await memberPlanResponse.json()).plan.plan_id);
+
+		const ownerPantryResponse = await request.post(apiUrl(`/households/${householdId}/pantry`), {
+			headers: owner.headers,
+			data: { name: uniqueName("owner pantry item"), quantity: 2, unit: "GRAM" },
+		});
+		expect(ownerPantryResponse.status()).toBe(201);
+		pantryItemIds.push((await ownerPantryResponse.json()).item.pantry_id);
+
+		const memberPantryResponse = await request.post(apiUrl(`/households/${householdId}/pantry`), {
+			headers: member.headers,
+			data: { name: uniqueName("member pantry item"), quantity: 3, unit: "GRAM" },
+		});
+		expect(memberPantryResponse.status()).toBe(201);
+		pantryItemIds.push((await memberPantryResponse.json()).item.pantry_id);
+
+		const memberShoppingResponse = await request.post(apiUrl(`/households/${householdId}/shopping-list/items`), {
+			headers: member.headers,
+			data: { label: uniqueName("member shopping item"), quantity: "1 pack" },
+		});
+		const memberShoppingBody = await memberShoppingResponse.text();
+		expect(memberShoppingResponse.status(), memberShoppingBody).toBe(201);
+		const memberShoppingItemId = JSON.parse(memberShoppingBody).item.item_id;
+		shoppingItemIds.push(memberShoppingItemId);
+		const householdShoppingLabel = JSON.parse(memberShoppingBody).item.label;
+		const duplicateHouseholdShoppingResponse = await request.post(apiUrl(`/households/${householdId}/shopping-list/items`), {
+			headers: owner.headers,
+			data: { label: householdShoppingLabel.toLowerCase(), quantity: "1 pack" },
+		});
+		expect(duplicateHouseholdShoppingResponse.status()).toBe(201);
+		expect((await duplicateHouseholdShoppingResponse.json()).item.item_id).toBe(memberShoppingItemId);
+
+		const personalShoppingResponse = await request.post(apiUrl("/users/me/shopping-list/items"), {
+			headers: owner.headers,
+			data: { label: personalShoppingLabel, quantity: "1 pack" },
+		});
+		expect(personalShoppingResponse.status()).toBe(201);
+		personalShoppingItemId = (await personalShoppingResponse.json()).item.item_id;
+		const duplicatePersonalShoppingResponse = await request.post(apiUrl("/users/me/shopping-list/items"), {
+			headers: owner.headers,
+			data: { label: personalShoppingLabel.toLowerCase(), quantity: "1 pack" },
+		});
+		expect(duplicatePersonalShoppingResponse.status()).toBe(201);
+		expect((await duplicatePersonalShoppingResponse.json()).item.item_id).toBe(personalShoppingItemId);
+
+		const viewerReads = await Promise.all([
+			request.get(apiUrl(`/households/${householdId}`), { headers: viewer.headers }),
+			request.get(apiUrl(`/households/${householdId}/meal-plans`), { headers: viewer.headers }),
+			request.get(apiUrl(`/households/${householdId}/pantry`), { headers: viewer.headers }),
+			request.get(apiUrl(`/households/${householdId}/shopping-list`), { headers: viewer.headers }),
+		]);
+		for (const response of viewerReads) expect(response.status()).toBe(200);
+
+		const previewResponse = await request.post(apiUrl(`/households/${householdId}/shopping-list/weekly-preview`), {
+			headers: viewer.headers,
+			data: { planId: planIds[0], ...range },
+		});
+		expect(previewResponse.status()).toBe(201);
+		const preview = await previewResponse.json();
+		const viewerWrites = await Promise.all([
+			request.post(apiUrl(`/households/${householdId}/shopping-list/weekly-confirm`), {
+				headers: viewer.headers,
+				data: { planId: planIds[0], ...range, snapshot: preview.snapshot },
+			}),
+			request.post(apiUrl(`/households/${householdId}/meal-plans`), {
+				headers: viewer.headers,
+				data: { name: uniqueName("forbidden viewer plan"), ...range },
+			}),
+			request.post(apiUrl(`/households/${householdId}/pantry`), {
+				headers: viewer.headers,
+				data: { name: uniqueName("forbidden viewer pantry item"), quantity: 1, unit: "GRAM" },
+			}),
+			request.post(apiUrl(`/households/${householdId}/shopping-list/items`), {
+				headers: viewer.headers,
+				data: { label: uniqueName("forbidden viewer shopping item") },
+			}),
+			request.patch(apiUrl(`/households/${householdId}/pantry/${pantryItemIds[0]}`), {
+				headers: viewer.headers,
+				data: { quantity: 99, unit: "GRAM" },
+			}),
+			request.patch(apiUrl(`/households/${householdId}/shopping-list/items/${shoppingItemIds[0]}`), {
+				headers: viewer.headers,
+				data: { checked: true },
+			}),
+			request.patch(apiUrl(`/households/${householdId}/meal-plans/${planIds[0]}`), {
+				headers: viewer.headers,
+				data: { name: uniqueName("forbidden viewer edit"), ...range },
+			}),
+		]);
+		for (const response of viewerWrites) expect(response.status()).toBe(403);
+
+		const outsiderResponses = await Promise.all([
+			request.get(apiUrl(`/households/${householdId}`), { headers: outsider.headers }),
+			request.get(apiUrl(`/households/${householdId}/pantry`), { headers: outsider.headers }),
+			request.get(apiUrl(`/households/${householdId}/shopping-list`), { headers: outsider.headers }),
+			request.get(apiUrl(`/households/${householdId}/meal-plans`), { headers: outsider.headers }),
+			request.post(apiUrl(`/households/${householdId}/shopping-list/items`), {
+				headers: outsider.headers,
+				data: { label: uniqueName("forbidden outsider shopping item") },
+			}),
+		]);
+		for (const response of outsiderResponses) expect(response.status()).toBe(403);
+	} finally {
+		if (householdId) {
+			for (const itemId of shoppingItemIds) {
+				await request.delete(apiUrl(`/households/${householdId}/shopping-list/items/${itemId}`), { headers: owner.headers });
+			}
+			for (const itemId of pantryItemIds) {
+				await request.delete(apiUrl(`/households/${householdId}/pantry/${itemId}`), { headers: owner.headers });
+			}
+			for (const planId of planIds) {
+				await request.delete(apiUrl(`/households/${householdId}/meal-plans/${planId}`), { headers: owner.headers });
+			}
+			for (const id of [memberId, viewerId].filter(Boolean)) {
+				await request.delete(apiUrl(`/households/${householdId}/members/${id}`), { headers: owner.headers });
+			}
+		}
+		if (personalShoppingItemId) {
+			await request.delete(apiUrl(`/users/me/shopping-list/items/${personalShoppingItemId}`), { headers: owner.headers });
+		}
+	}
 });

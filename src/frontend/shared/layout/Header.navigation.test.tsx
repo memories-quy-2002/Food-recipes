@@ -222,10 +222,11 @@ describe("primary navigation", () => {
 			<HeaderMoreMenu groups={getMoreNavigation(true, false)} />,
 		);
 		const more = findNodeByProp(renderer, "button", "aria-label", "More navigation");
-		expect(more.props["aria-haspopup"]).toBe("menu");
+		expect(more.props["aria-expanded"]).toBe(false);
 		act(() => invokeCallback(more.props.onClick));
 		expect(findLink(renderer, "Shopping list").props.href).toBe("/shopping-list");
 		expect(findLink(renderer, "Preferences").props.href).toBe("/profile/preferences");
+		expect(renderer.root.findAllByProps({ role: "menuitem" })).toHaveLength(0);
 	});
 
 	it("renders mobile primary navigation as links and closes after activation", () => {

@@ -1,7 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { loginInBrowser, stubThirdPartyMedia, uniqueName } from "./real-stack/helpers.js";
+import { apiUrl, loginInBrowser, stubThirdPartyMedia, uniqueName } from "./real-stack/helpers.js";
 
-const backendApi = "http://localhost:3000/api/v1";
 const demoCredentials = {
 	email: "demo.homecook@foodrecipes.local",
 	password: "DemoPass123!",
@@ -9,7 +8,7 @@ const demoCredentials = {
 const inventoryNames = ["beef bones", "rice noodles", "yellow onion", "ginger", "lime"];
 
 async function getApiAuth(request) {
-	const response = await request.post(`${backendApi}/auth/login`, { data: { ...demoCredentials, remember: true } });
+	const response = await request.post(apiUrl("/auth/login"), { data: { ...demoCredentials, remember: true } });
 	expect(response.ok()).toBeTruthy();
 	const body = await response.json();
 	return {
@@ -18,7 +17,7 @@ async function getApiAuth(request) {
 }
 
 async function findRecipeId(request, name) {
-	const response = await request.get(`${backendApi}/recipes?q=${encodeURIComponent(name)}&limit=100`);
+	const response = await request.get(apiUrl(`/recipes?q=${encodeURIComponent(name)}&limit=100`));
 	expect(response.ok()).toBeTruthy();
 	const body = await response.json();
 	const recipe = (body.recipes ?? []).find((candidate) => candidate.recipe_name === name);
@@ -33,31 +32,31 @@ async function authenticateRealPage(page) {
 }
 
 async function cleanupLocalInventory(request, headers, recipeIds = []) {
-	const pantryResponse = await request.get(`${backendApi}/users/me/pantry`, { headers });
+	const pantryResponse = await request.get(apiUrl("/users/me/pantry"), { headers });
 	if (pantryResponse.ok()) {
 		const pantry = await pantryResponse.json();
 		for (const item of pantry.items ?? []) {
 			if (inventoryNames.includes(String(item.name).trim().toLowerCase())) {
-				await request.delete(`${backendApi}/users/me/pantry/${item.pantry_id}`, { headers });
+				await request.delete(apiUrl(`/users/me/pantry/${item.pantry_id}`), { headers });
 			}
 		}
 	}
 
-	const shoppingResponse = await request.get(`${backendApi}/users/me/shopping-list`, { headers });
+	const shoppingResponse = await request.get(apiUrl("/users/me/shopping-list"), { headers });
 	if (shoppingResponse.ok()) {
 		const shopping = await shoppingResponse.json();
 		for (const item of shopping.items ?? []) {
 			if (String(item.label).trim().toLowerCase() === "beef bones") {
-				await request.delete(`${backendApi}/users/me/shopping-list/items/${item.item_id}`, { headers });
+				await request.delete(apiUrl(`/users/me/shopping-list/items/${item.item_id}`), { headers });
 			}
 		}
 	}
 
 	for (const recipeId of recipeIds) {
-		const sessionResponse = await request.get(`${backendApi}/users/me/cooking-session?recipeId=${recipeId}`, { headers });
+		const sessionResponse = await request.get(apiUrl(`/users/me/cooking-session?recipeId=${recipeId}`), { headers });
 		if (!sessionResponse.ok()) continue;
 		const session = (await sessionResponse.json()).session;
-		if (session?.session_id) await request.delete(`${backendApi}/users/me/cooking-session/${session.session_id}`, { headers });
+		if (session?.session_id) await request.delete(apiUrl(`/users/me/cooking-session/${session.session_id}`), { headers });
 	}
 }
 
@@ -146,7 +145,7 @@ test("real API: cooking an unquantified draft is rejected without a false comple
 	let draftRecipeId;
 	let sessionId;
 	try {
-		const draftResponse = await request.post(`${backendApi}/users/me/recipes/drafts`, {
+		const draftResponse = await request.post(apiUrl("/users/me/recipes/drafts"), {
 			headers,
 			data: {
 				name: uniqueName("Unquantified acceptance recipe"),
@@ -161,20 +160,20 @@ test("real API: cooking an unquantified draft is rejected without a false comple
 		expect(draftResponse.status()).toBe(201);
 		draftRecipeId = (await draftResponse.json()).recipe.recipe_id;
 
-		const ingredientsResponse = await request.put(`${backendApi}/recipes/${draftRecipeId}/ingredients`, {
+		const ingredientsResponse = await request.put(apiUrl(`/recipes/${draftRecipeId}/ingredients`), {
 			headers,
 			data: { ingredients: [{ name: "salt" }] },
 		});
 		expect(ingredientsResponse.ok()).toBeTruthy();
 
-		const startResponse = await request.post(`${backendApi}/users/me/cooking-session`, {
+		const startResponse = await request.post(apiUrl("/users/me/cooking-session"), {
 			headers,
 			data: { recipeId: draftRecipeId, servings: 1 },
 		});
 		expect(startResponse.status()).toBe(201);
 		sessionId = (await startResponse.json()).session.session_id;
 
-		const completeResponse = await request.post(`${backendApi}/users/me/cooking-session/${sessionId}/complete`, {
+		const completeResponse = await request.post(apiUrl(`/users/me/cooking-session/${sessionId}/complete`), {
 			headers,
 			data: {},
 		});
@@ -182,17 +181,150 @@ test("real API: cooking an unquantified draft is rejected without a false comple
 		const errorBody = await completeResponse.json();
 		expect(errorBody.code).toBe("COOKING_RECIPE_INGREDIENTS_UNQUANTIFIED");
 
-		const activeResponse = await request.get(`${backendApi}/users/me/cooking-session?recipeId=${draftRecipeId}`, { headers });
+		const activeResponse = await request.get(apiUrl(`/users/me/cooking-session?recipeId=${draftRecipeId}`), { headers });
 		expect(activeResponse.ok()).toBeTruthy();
 		expect((await activeResponse.json()).session.status).toBe("active");
 	} finally {
 		if (sessionId) {
-			const abandonResponse = await request.delete(`${backendApi}/users/me/cooking-session/${sessionId}`, { headers });
+			const abandonResponse = await request.delete(apiUrl(`/users/me/cooking-session/${sessionId}`), { headers });
 			expect([200, 404]).toContain(abandonResponse.status());
 		}
 		if (draftRecipeId) {
-			const deleteResponse = await request.delete(`${backendApi}/recipes/${draftRecipeId}`, { headers });
+			const deleteResponse = await request.delete(apiUrl(`/recipes/${draftRecipeId}`), { headers });
 			expect([204, 404]).toContain(deleteResponse.status());
+		}
+	}
+});
+
+test("real PostgreSQL: two tabs confirming the same prepared meal create one shopping line", async ({ page, request }) => {
+	const auth = await getApiAuth(request);
+	const { headers } = auth;
+	const recipeName = uniqueName("Concurrent preparation");
+	const ingredientName = uniqueName("concurrent pantry-free ingredient");
+	let recipeId;
+	const secondTab = await page.context().newPage();
+	try {
+		const recipeResponse = await request.post(apiUrl("/recipes"), {
+			headers,
+			data: {
+				name: recipeName,
+				mealId: 1,
+				categoryId: 1,
+				prepTimeMinutes: 1,
+				cookTimeMinutes: 1,
+				ingredients: [ingredientName],
+				structuredIngredients: [{ name: ingredientName, quantity: 20, unit: "GRAM" }],
+				instructions: ["Add the ingredient"],
+			},
+		});
+		expect(recipeResponse.status()).toBe(201);
+		recipeId = (await recipeResponse.json()).recipe.recipe_id;
+
+		await loginInBrowser(page);
+		await Promise.all([page.goto(`/recipe?id=${recipeId}`), secondTab.goto(`/recipe?id=${recipeId}`)]);
+		for (const tab of [page, secondTab]) {
+			await expect(tab.locator("#recipe-title")).toHaveText(recipeName);
+		}
+		await Promise.all([page, secondTab].map((tab) => tab.getByRole("button", { name: "Check ingredients" }).click()));
+		for (const tab of [page, secondTab]) {
+			await expect(tab.getByRole("status", { name: "Meal preparation status" })).toContainText("1 to buy");
+		}
+
+		const isConfirmation = (response) => response.request().method() === "POST" && new URL(response.url()).pathname.endsWith("/users/me/shopping-list/prepare/add");
+		const confirmations = [page, secondTab].map((tab) => tab.waitForResponse(isConfirmation));
+		await Promise.all([page, secondTab].map((tab) => tab.getByRole("button", { name: "Add missing ingredients to shopping list" }).click()));
+		const confirmationResponses = await Promise.all(confirmations);
+		for (const response of confirmationResponses) expect(response.ok()).toBeTruthy();
+		const insertedCounts = await Promise.all(confirmationResponses.map(async (response) => (await response.json()).added_shopping_items));
+		expect(insertedCounts.sort()).toEqual([0, 1]);
+
+		const shoppingResponse = await request.get(apiUrl("/users/me/shopping-list"), { headers });
+		expect(shoppingResponse.ok()).toBeTruthy();
+		const shoppingItems = (await shoppingResponse.json()).items ?? [];
+		expect(shoppingItems.filter((item) => item.label === ingredientName)).toHaveLength(1);
+	} finally {
+		await secondTab.close();
+		if (recipeId) {
+			const shoppingResponse = await request.get(apiUrl("/users/me/shopping-list"), { headers });
+			if (shoppingResponse.ok()) {
+				for (const item of (await shoppingResponse.json()).items ?? []) {
+					if (item.label === ingredientName) await request.delete(apiUrl(`/users/me/shopping-list/items/${item.item_id}`), { headers });
+				}
+			}
+			const deleteResponse = await request.delete(apiUrl(`/recipes/${recipeId}`), { headers });
+			expect([204, 404]).toContain(deleteResponse.status());
+		}
+	}
+});
+
+test("real PostgreSQL: a retried completion writes one history entry and deducts pantry once", async ({ request }) => {
+	const { headers } = await getApiAuth(request);
+	const recipeName = uniqueName("Completion retry");
+	const ingredientName = uniqueName("completion retry ingredient");
+	let recipeId;
+	let pantryId;
+	let sessionId;
+	try {
+		const recipeResponse = await request.post(apiUrl("/recipes"), {
+			headers,
+			data: {
+				name: recipeName,
+				mealId: 1,
+				categoryId: 1,
+				prepTimeMinutes: 1,
+				cookTimeMinutes: 1,
+				ingredients: [ingredientName],
+				structuredIngredients: [{ name: ingredientName, quantity: 25, unit: "GRAM" }],
+				instructions: ["Use the measured ingredient"],
+			},
+		});
+		expect(recipeResponse.status()).toBe(201);
+		recipeId = (await recipeResponse.json()).recipe.recipe_id;
+
+		const pantryResponse = await request.post(apiUrl("/users/me/pantry"), {
+			headers,
+			data: { name: ingredientName, have: true, quantity: 100, unit: "GRAM" },
+		});
+		expect(pantryResponse.status()).toBe(201);
+		pantryId = (await pantryResponse.json()).item.pantry_id;
+
+		const startResponse = await request.post(apiUrl("/users/me/cooking-session"), {
+			headers,
+			data: { recipeId, servings: 1 },
+		});
+		expect(startResponse.status()).toBe(201);
+		sessionId = (await startResponse.json()).session.session_id;
+
+		const completeUrl = apiUrl(`/users/me/cooking-session/${sessionId}/complete`);
+		const completionResponses = await Promise.all([
+			request.post(completeUrl, { headers, data: {} }),
+			request.post(completeUrl, { headers, data: {} }),
+		]);
+		expect(completionResponses.map((response) => response.status()).sort()).toEqual([201, 404]);
+		const retryBody = await completionResponses.find((response) => response.status() === 404).json();
+		expect(retryBody.code).toBe("COOKING_SESSION_NOT_FOUND");
+
+		const historyResponse = await request.get(apiUrl("/users/me/cooking-history"), { headers });
+		expect(historyResponse.ok()).toBeTruthy();
+		const history = (await historyResponse.json()).items ?? [];
+		expect(history.filter((item) => item.recipe_id === recipeId)).toHaveLength(1);
+
+		const pantryAfterResponse = await request.get(apiUrl("/users/me/pantry"), { headers });
+		expect(pantryAfterResponse.ok()).toBeTruthy();
+		const pantryItems = (await pantryAfterResponse.json()).items ?? [];
+		expect(Number(pantryItems.find((item) => item.pantry_id === pantryId)?.quantity)).toBe(75);
+	} finally {
+		if (pantryId) {
+			const deletePantry = await request.delete(apiUrl(`/users/me/pantry/${pantryId}`), { headers });
+			expect([200, 404]).toContain(deletePantry.status());
+		}
+		if (sessionId) {
+			const deleteSession = await request.delete(apiUrl(`/users/me/cooking-session/${sessionId}`), { headers });
+			expect([200, 404]).toContain(deleteSession.status());
+		}
+		if (recipeId) {
+			const deleteRecipe = await request.delete(apiUrl(`/recipes/${recipeId}`), { headers });
+			expect([204, 404]).toContain(deleteRecipe.status());
 		}
 	}
 });

@@ -29,6 +29,7 @@ describe("PersonalInfo", () => {
 	beforeEach(() => {
 		cleanup();
 		vi.clearAllMocks();
+		vi.spyOn(window, "confirm").mockReturnValue(true);
 		mocks.put.mockResolvedValue({ status: 200, data: profile });
 	});
 
@@ -54,8 +55,33 @@ describe("PersonalInfo", () => {
 		await user.type(screen.getByLabelText("Full name"), "Changed");
 		await user.click(screen.getByRole("button", { name: "Cancel" }));
 
+		expect(window.confirm).toHaveBeenCalledWith("Discard your unsaved profile changes?");
 		expect(screen.getByLabelText("Full name")).toHaveValue("Alex");
 		expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+	});
+
+	it("keeps the edited values when cancelling the discard confirmation", async () => {
+		vi.mocked(window.confirm).mockReturnValue(false);
+		const user = userEvent.setup();
+		render(<PersonalInfo user={profile} />);
+
+		await user.clear(screen.getByLabelText("Full name"));
+		await user.type(screen.getByLabelText("Full name"), "Changed");
+		await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+		expect(screen.getByLabelText("Full name")).toHaveValue("Changed");
+		expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+	});
+
+	it("warns the browser before navigating away from unsaved profile edits", async () => {
+		const user = userEvent.setup();
+		render(<PersonalInfo user={profile} />);
+		await user.type(screen.getByLabelText("Full name"), " updated");
+
+		const event = new Event("beforeunload", { cancelable: true });
+		window.dispatchEvent(event);
+
+		expect(event.defaultPrevented).toBe(true);
 	});
 
 	it("updates the auth user after a successful save", async () => {

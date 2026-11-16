@@ -41,7 +41,7 @@ const jobs = Object.fromEntries(
   ]),
 );
 
-const expectedJobs = ['static', 'backend', 'frontend', 'frontend-e2e'];
+const expectedJobs = ['static', 'backend', 'frontend', 'frontend-e2e', 'real-stack-e2e'];
 
 assert.deepEqual(Object.keys(jobs), ['changes', ...expectedJobs], 'quality gates must include change detection before package jobs');
 assert.match(workflow, /^  pull_request:\s*$/m, 'workflow must run for pull requests');
@@ -73,7 +73,7 @@ for (const validator of [
   assertJobContains('static', new RegExp(validator.replace('.', '\\.')));
 }
 
-for (const jobName of ['backend', 'frontend', 'frontend-e2e']) {
+for (const jobName of ['backend', 'frontend', 'frontend-e2e', 'real-stack-e2e']) {
   assertJobContains(jobName, /pnpm\/action-setup@v(?:[4-9]|[1-9]\d+)[\s\S]*version: 11\.18\.0/);
   assertJobContains(jobName, /actions\/setup-node@v(?:[4-9]|[1-9]\d+)[\s\S]*node-version: 24/);
   assertJobContains(jobName, /pnpm install --frozen-lockfile/);
@@ -89,18 +89,39 @@ assertJobContains('backend', /pnpm prisma:generate/);
 assertJobContains('backend', /pnpm check/);
 assertJobContains('backend', /pnpm test:e2e/);
 assertJobContains('backend', /pnpm build/);
+assertJobContains('backend', /Generate ephemeral test JWT secret[\s\S]*?randomBytes\(48\)\.toString\('base64url'\)/);
+assert.match(jobs.backend, /POSTGRES_PASSWORD: \$\{\{ format\('ci-\{0\}-\{1\}', github\.run_id, github\.run_attempt\) \}\}/);
+assert.match(jobs.backend, /DATABASE_URL: postgresql:\/\/postgres:\$\{\{ format\('ci-\{0\}-\{1\}', github\.run_id, github\.run_attempt\) \}\}@localhost:5432\/food_recipes_ci/);
 assertJobContains('frontend', /pnpm check/);
 assertJobContains('frontend', /pnpm build/);
 assertJobContains('frontend-e2e', /needs:\s*changes/);
 assertJobContains('frontend-e2e', /pnpm exec playwright install --with-deps chromium/);
-assertJobContains('frontend-e2e', /pnpm test:e2e:quality/);
+assertJobContains('frontend-e2e', /pnpm test:e2e:ci/);
 assertJobContains('frontend-e2e', /actions\/upload-artifact@v(?:[4-9]|[1-9]\d+)/);
+assertJobContains('real-stack-e2e', /needs:\s*changes/);
+assertJobContains('real-stack-e2e', /needs\.changes\.outputs\.(?:frontend|backend|cross) == 'true'/);
+assertJobContains('real-stack-e2e', /image:\s*postgres:17-alpine/);
+assertJobContains('real-stack-e2e', /pnpm prisma:migrate:deploy/);
+assertJobContains('real-stack-e2e', /pnpm prisma:seed/);
+assertJobContains('real-stack-e2e', /pnpm demo:verify/);
+assertJobContains('real-stack-e2e', /Generate ephemeral test JWT secret[\s\S]*?randomBytes\(48\)\.toString\('base64url'\)/);
+assertJobContains(
+  'real-stack-e2e',
+  /Build frontend for PostgreSQL preview[\s\S]*?working-directory: src\/frontend[\s\S]*?VITE_API_BASE_URL: http:\/\/127\.0\.0\.1:3000[\s\S]*?run: pnpm build[\s\S]*?Run PostgreSQL-backed browser journeys/,
+  'real-stack-e2e must build Vite output before starting its preview server',
+);
+assertJobContains('real-stack-e2e', /pnpm exec playwright install --with-deps chromium/);
+assertJobContains('real-stack-e2e', /pnpm test:e2e:real/);
+assert.match(jobs['real-stack-e2e'], /POSTGRES_PASSWORD: \$\{\{ format\('ci-\{0\}-\{1\}', github\.run_id, github\.run_attempt\) \}\}/);
+assert.match(jobs['real-stack-e2e'], /DATABASE_URL: postgresql:\/\/postgres:\$\{\{ format\('ci-\{0\}-\{1\}', github\.run_id, github\.run_attempt\) \}\}@localhost:5432\/food_recipes_real_e2e/);
+assertJobContains('real-stack-e2e', /actions\/upload-artifact@v(?:[4-9]|[1-9]\d+)/);
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
 assert.doesNotMatch(jobs.frontend, /playwright/i, 'frontend quality gates must not run Playwright journeys');
 assert.doesNotMatch(jobs.frontend, /actions\/upload-artifact@v\d+/, 'frontend quality gates must not upload Playwright artifacts');
 assert.doesNotMatch(workflow, /contents:\s*write/i, 'quality gates must never request write permissions');
 assert.doesNotMatch(workflow, /git push/i, 'quality gates must never push generated changes');
 assert.doesNotMatch(workflow, /prisma migrate reset/i, 'CI must never reset a data-bearing database');
+assert.doesNotMatch(workflow, /^\s*JWT_SECRET:/m, 'CI JWT secrets must be generated per run, not hardcoded in workflow YAML');
 
 for (const [workflowName, productionWorkflow] of [
   ['production migration', productionMigrationWorkflow],

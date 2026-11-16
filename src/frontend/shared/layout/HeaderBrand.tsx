@@ -14,7 +14,7 @@ const HeaderBrand = (): ReactElement => (
 		>
 			<RecipeBookMark className="size-6" />
 		</span>
-		<span>Food recipes</span>
+		<span className="hidden min-[375px]:inline">Food recipes</span>
 	</Link>
 );
 

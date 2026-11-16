@@ -112,6 +112,7 @@ describe("RecipeEditor", () => {
 		cleanup();
 		localStorage.clear();
 		vi.clearAllMocks();
+		vi.spyOn(window, "confirm").mockReturnValue(true);
 		vi.mocked(axios.get).mockImplementation((route: string) => {
 			if (route === "/categories") return Promise.resolve({ data: { categories: [{ id: 1, name: "Dinner" }] } });
 			if (route === "/meals") return Promise.resolve({ data: { meals: [{ id: 2, name: "Main course" }] } });
@@ -201,6 +202,39 @@ describe("RecipeEditor", () => {
 		expect(axios.post).not.toHaveBeenCalled();
 		expect(axios.patch).not.toHaveBeenCalled();
 		expect(axios.put).not.toHaveBeenCalled();
+	});
+
+	it("confirms before discarding unsaved recipe edits", async () => {
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: fixtureRecipe });
+		const name = await screen.findByLabelText(/recipe name/i);
+		fireEvent.change(name, { target: { value: "Changed pasta" } });
+
+		fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+
+		expect(window.confirm).toHaveBeenCalledWith("Discard your unsaved recipe changes?");
+		await waitFor(() => expect(name).toHaveValue("Tomato pasta"));
+	});
+
+	it("keeps unsaved recipe edits when discard is cancelled", async () => {
+		vi.mocked(window.confirm).mockReturnValue(false);
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: fixtureRecipe });
+		const name = await screen.findByLabelText(/recipe name/i);
+		fireEvent.change(name, { target: { value: "Changed pasta" } });
+
+		fireEvent.click(screen.getByRole("button", { name: "Discard changes" }));
+
+		expect(name).toHaveValue("Changed pasta");
+	});
+
+	it("warns before leaving an edited recipe", async () => {
+		renderEditor({ mode: "edit", recipeId: 42, initialRecipe: fixtureRecipe });
+		const name = await screen.findByLabelText(/recipe name/i);
+		fireEvent.change(name, { target: { value: "Changed pasta" } });
+		const event = new Event("beforeunload", { cancelable: true });
+
+		window.dispatchEvent(event);
+
+		expect(event.defaultPrevented).toBe(true);
 	});
 
 	it("uses lifecycle-aware edit actions", async () => {

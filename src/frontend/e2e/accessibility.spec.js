@@ -43,6 +43,13 @@ const recipes = [
 ];
 
 async function stubPublicApi(page) {
+	await page.route("**/auth/refresh", (route) =>
+		route.fulfill({
+			status: 401,
+			contentType: "application/json",
+			body: JSON.stringify({ statusCode: 401, message: "Refresh token is required" }),
+		})
+	);
 	await page.route("**/recipes**", (route) =>
 		route.fulfill({
 			status: 200,

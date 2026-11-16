@@ -43,8 +43,8 @@ const ProfileOverview = ({ user }: ProfileOverviewProps): ReactElement => {
 
 	return (
 		<div className="grid gap-6">
-			<header className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
-				<div>
+			<header className="flex min-w-0 flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between lg:flex-col lg:items-start lg:justify-start xl:flex-row xl:items-end xl:justify-between">
+				<div className="min-w-0">
 					<p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
 						Your kitchen
 					</p>

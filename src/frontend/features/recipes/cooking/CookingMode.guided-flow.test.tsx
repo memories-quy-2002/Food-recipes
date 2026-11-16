@@ -180,7 +180,9 @@ describe("cooking mode guided flow", () => {
 
 		expect(findText(currentRenderer, "This recipe does not have any instructions to guide you through.")).toBeTruthy();
 		await act(async () => {
-			const onClick = findButton(currentRenderer, "Pause and exit cooking").props["onClick"];
+			const exitButton = findButton(currentRenderer, "Pause & exit cooking");
+			expect(exitButton.children.join("")).toContain("Pause & exit");
+			const onClick = exitButton.props["onClick"];
 			if (typeof onClick !== "function") throw new Error("Pause and exit button is not clickable");
 			onClick();
 			await Promise.resolve();

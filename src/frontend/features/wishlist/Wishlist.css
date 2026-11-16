@@ -165,6 +165,8 @@
   line-height: 1.55;
 }
 .wishlist__collections {
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 1.25rem;
   padding: 1.1rem 1.25rem;
   border: 1px solid rgba(98, 58, 18, 0.1);
@@ -200,6 +202,8 @@
   font-weight: 900;
 }
 .wishlist__collections__tabs {
+  min-width: 0;
+  max-width: 100%;
   display: flex;
   gap: 0.55rem;
   margin-top: 1rem;

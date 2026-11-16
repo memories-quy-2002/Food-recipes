@@ -43,6 +43,13 @@ const recipes = [
 ];
 
 async function stubRecipeApi(page) {
+	await page.route("**/auth/refresh", (route) =>
+		route.fulfill({
+			status: 401,
+			contentType: "application/json",
+			body: JSON.stringify({ statusCode: 401, message: "Refresh token is required" }),
+		})
+	);
 	await page.route("**/home-feed", (route) =>
 		route.fulfill({
 			status: 200,
@@ -155,11 +162,12 @@ test.beforeEach(async ({ page }) => {
 
 test("guest searches Home and opens recipe detail", async ({ page }) => {
 	await page.goto("/");
+	await expect(page.getByRole("heading", { name: "Search the recipe index." })).toBeVisible();
 	await page.getByRole("combobox", { name: "Search recipes" }).fill("Chocolate");
 	await page.getByText("Chocolate Banana Bread", { exact: true }).first().click();
 
 	await expect(page).toHaveURL(/\/recipe\?id=1/);
-	await expect(page.getByRole("heading", { name: "Chocolate Banana Bread" })).toBeVisible();
+	await expect(page.getByRole("main").getByRole("heading", { name: "Chocolate Banana Bread", level: 1 })).toBeVisible();
 });
 
 test("Home featured recipe card exposes a focusable link with native Enter navigation", async ({ page }) => {

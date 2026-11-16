@@ -77,4 +77,11 @@ describe("HouseholdScopeProvider", () => {
 
 		await waitFor(() => expect(screen.getByTestId("scope-state")).toHaveTextContent("Read-only Kitchen:false"));
 	});
+
+	it("does not show a scope switch while the household query is pending", () => {
+		listHouseholds.mockReturnValue({ data: undefined, isPending: true, isError: false });
+		renderProvider();
+
+		expect(screen.queryByRole("combobox", { name: "Kitchen scope" })).not.toBeInTheDocument();
+	});
 });
