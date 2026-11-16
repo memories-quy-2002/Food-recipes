@@ -93,7 +93,7 @@ assertJobContains('frontend', /pnpm check/);
 assertJobContains('frontend', /pnpm build/);
 assertJobContains('frontend-e2e', /needs:\s*changes/);
 assertJobContains('frontend-e2e', /pnpm exec playwright install --with-deps chromium/);
-assertJobContains('frontend-e2e', /pnpm test:e2e:quality/);
+assertJobContains('frontend-e2e', /pnpm test:e2e:ci/);
 assertJobContains('frontend-e2e', /actions\/upload-artifact@v(?:[4-9]|[1-9]\d+)/);
 assertJobContains('backend', /docker build --target runtime[\s\S]*src\/backend\/Dockerfile src\/backend/);
 assert.doesNotMatch(jobs.frontend, /playwright/i, 'frontend quality gates must not run Playwright journeys');
