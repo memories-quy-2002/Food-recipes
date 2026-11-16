@@ -184,13 +184,13 @@ const PantryPage = () => {
 	};
 
 	const renderList = (list: PantryItem[], emptyMessage: string) => list.length
-		? <ul>{list.map(renderItem)}</ul>
+		? <ul className="min-w-0">{list.map(renderItem)}</ul>
 		: <div className="rounded-2xl border border-dashed border-border/80 bg-muted/35 px-4 py-8 text-center text-sm text-muted-foreground">{emptyMessage}</div>;
 
 	return (
 		<main className="min-h-screen bg-background px-4 py-7 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="pantry-title">
 			<PageHelmet title="My Pantry" description="Keep a simple list of ingredients you have on hand." path="/pantry" noIndex />
-			<div className="mx-auto w-full max-w-7xl">
+			<div className="mx-auto w-full min-w-0 max-w-7xl">
 				<header className="mb-8 flex flex-col gap-5 border-b border-border/70 pb-7 lg:flex-row lg:items-end lg:justify-between">
 					<div className="max-w-2xl">
 						<p className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary"><PackageCheck className="size-4" aria-hidden="true" />{scopeLabel}</p>
@@ -232,9 +232,9 @@ const PantryPage = () => {
 							<div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><label className="sr-only" htmlFor="pantry-search">Search pantry</label><Input id="pantry-search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search ingredients" className="pl-10" /></div>
 							<div className="flex shrink-0 items-center gap-2"><label className="sr-only" htmlFor="pantry-filter">Filter pantry</label><select id="pantry-filter" className={`${selectClass} sm:w-44`} value={filter} onChange={(event) => setFilter(event.target.value as PantryFilter)}><option value="all">All items</option><option value="available">On hand</option><option value="missing">Need to buy</option></select><span className="hidden rounded-full bg-muted px-3 py-2 text-xs font-bold text-muted-foreground sm:inline-flex" aria-live="polite">{filteredItems.length} items</span></div>
 						</div>
-						<div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
-							<Card className="p-5 sm:p-6"><div className="mb-4 flex items-end justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Ready now</p><h2 className="mt-1 text-2xl font-black">On hand</h2></div><span className="text-sm font-bold text-muted-foreground">{filteredAvailableItems.length} / {availableItems.length}</span></div>{renderList(filteredAvailableItems, filter === "all" ? "Nothing marked as available." : "No available items match this filter.")}</Card>
-							<Card className="p-5 sm:p-6"><div className="mb-4 flex items-end justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Restock</p><h2 className="mt-1 text-2xl font-black">Need to buy</h2></div><span className="text-sm font-bold text-muted-foreground">{filteredMissingItems.length} / {missingItems.length}</span></div>{renderList(filteredMissingItems, filter === "all" ? "Nothing waiting here." : "No items need restocking for this filter.")}</Card>
+						<div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
+							<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Ready now</p><h2 className="mt-1 text-2xl font-black">On hand</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredAvailableItems.length} / {availableItems.length}</span></div>{renderList(filteredAvailableItems, filter === "all" ? "Nothing marked as available." : "No available items match this filter.")}</Card>
+							<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Restock</p><h2 className="mt-1 text-2xl font-black">Need to buy</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredMissingItems.length} / {missingItems.length}</span></div>{renderList(filteredMissingItems, filter === "all" ? "Nothing waiting here." : "No items need restocking for this filter.")}</Card>
 						</div>
 					</section>
 				)}
