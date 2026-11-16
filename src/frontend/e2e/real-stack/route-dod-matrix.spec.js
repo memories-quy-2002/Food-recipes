@@ -75,20 +75,34 @@ test("authenticated product routes fit the supported viewports and pass an axe s
 				viewportWidth: document.documentElement.clientWidth,
 				documentWidth: document.documentElement.scrollWidth,
 				bodyWidth: document.body.scrollWidth,
+				directBodyChildren: [...document.body.children].map((element) => {
+					const rect = element.getBoundingClientRect();
+					return {
+						tag: element.tagName.toLowerCase(),
+						id: element.id,
+						className: typeof element.className === "string" ? element.className.slice(0, 120) : "",
+						left: Number(rect.left.toFixed(2)),
+						right: Number(rect.right.toFixed(2)),
+						width: Number(rect.width.toFixed(2)),
+						scrollWidth: element.scrollWidth,
+					};
+				}),
 				overflowingElements: [...document.querySelectorAll("body *")]
 					.map((element) => ({
 						tag: element.tagName.toLowerCase(),
+						id: element.id,
 						className: typeof element.className === "string" ? element.className.slice(0, 120) : "",
 						text: (element.textContent ?? "").trim().slice(0, 80),
-						right: Math.round(element.getBoundingClientRect().right),
-						width: Math.round(element.getBoundingClientRect().width),
+						left: Number(element.getBoundingClientRect().left.toFixed(2)),
+						right: Number(element.getBoundingClientRect().right.toFixed(2)),
+						width: Number(element.getBoundingClientRect().width.toFixed(2)),
 					}))
-					.filter((element) => element.width > 0 && element.right > document.documentElement.clientWidth + 1)
+					.filter((element) => element.width > 0 && element.right > document.documentElement.clientWidth + 0.1)
 					.slice(0, 8),
 			}));
 			expect(
 				dimensions.documentWidth,
-				`${route.name} has horizontal overflow at ${width}px (document ${dimensions.documentWidth}px, body ${dimensions.bodyWidth}px; elements=${JSON.stringify(dimensions.overflowingElements)})`,
+				`${route.name} has horizontal overflow at ${width}px (document ${dimensions.documentWidth}px, body ${dimensions.bodyWidth}px; elements=${JSON.stringify(dimensions.overflowingElements)}; body children=${JSON.stringify(dimensions.directBodyChildren)})`,
 			).toBeLessThanOrEqual(dimensions.viewportWidth);
 
 			const results = await new AxeBuilder({ page })
