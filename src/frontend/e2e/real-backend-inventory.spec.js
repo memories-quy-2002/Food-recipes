@@ -129,7 +129,7 @@ test("real API: Pantry -> shortage handoff -> replenishment -> cooking completio
 		await page.goto("/pantry");
 		const depletedItem = page.locator("li").filter({ hasText: "beef bones" });
 		await expect(depletedItem).toContainText("0 g");
-		await expect(depletedItem.getByRole("checkbox", { name: "beef bones available" })).not.toBeChecked();
+		await expect(depletedItem.getByRole("checkbox", { name: "Have any beef bones" })).not.toBeChecked();
 		await page.goto("/history");
 		await expect(page.getByRole("article").filter({ hasText: "Classic Vietnamese Pho" }).first()).toBeVisible();
 		await page.screenshot({ path: testInfo.outputPath("real-inventory-history.png"), fullPage: true });
