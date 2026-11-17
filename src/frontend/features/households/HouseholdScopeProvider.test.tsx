@@ -84,4 +84,16 @@ describe("HouseholdScopeProvider", () => {
 
 		expect(screen.queryByRole("combobox", { name: "Kitchen scope" })).not.toBeInTheDocument();
 	});
+
+	it("restores the selected household scope after the app remounts", async () => {
+		const firstMount = renderProvider();
+		fireEvent.change(screen.getByLabelText("Kitchen scope"), { target: { value: "household:12" } });
+		await waitFor(() => expect(screen.getByTestId("scope-state")).toHaveTextContent("Smith Household:true"));
+		firstMount.unmount();
+
+		renderProvider();
+
+		await waitFor(() => expect(screen.getByTestId("scope-state")).toHaveTextContent("Smith Household:true"));
+		expect(screen.getByLabelText("Kitchen scope")).toHaveValue("household:12");
+	});
 });

@@ -4,6 +4,7 @@ import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
+import PageHeader from "@/shared/ui/PageHeader";
 import { useAcceptHouseholdInviteMutation, useCreateHouseholdInviteMutation, useCreateHouseholdMutation, useHouseholdsQuery } from "./api/householdsQueries";
 
 const HouseholdsPage = (): ReactElement => {
@@ -22,22 +23,29 @@ const HouseholdsPage = (): ReactElement => {
 
 	const submitCreate = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (createMutation.isPending) return;
 		if (!name.trim()) return setError("Give your household a name first.");
 		setError(null);
-		createMutation.mutate(name.trim(), { onSuccess: () => { setName(""); setMessage("Household created."); } });
+		createMutation.mutate(name.trim(), {
+			onSuccess: () => { setName(""); setMessage("Household created."); },
+			onError: () => setError("We could not create your household. Try again."),
+		});
 	};
 
 	const submitInvite = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (inviteMutation.isPending) return;
 		if (!ownerHousehold || !inviteEmail.trim()) return setError("Add an email address to invite.");
 		setError(null);
 		inviteMutation.mutate({ householdId: ownerHousehold.household_id, email: inviteEmail.trim() }, {
 			onSuccess: (result) => { setInviteEmail(""); setInviteToken(result.token); setMessage("Invite created. Share this token once with the person you invited."); },
+			onError: () => setError("We could not create this invite. Check your household role and try again."),
 		});
 	};
 
 	const submitAccept = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
+		if (acceptMutation.isPending) return;
 		if (!inviteToken.trim()) return setError("Paste an invite token first.");
 		setError(null);
 		acceptMutation.mutate(inviteToken.trim(), {
@@ -50,7 +58,7 @@ const HouseholdsPage = (): ReactElement => {
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="households-title">
 			<PageHelmet title="Household kitchens" description="Share pantry, planning, and shopping with your household." path="/households" noIndex />
 			<div className="mx-auto grid w-full max-w-5xl gap-6">
-				<header><p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-primary">Shared kitchen</p><h1 id="households-title" className="text-4xl font-black tracking-tight sm:text-5xl">Household kitchens</h1><p className="mt-3 max-w-2xl text-muted-foreground">Keep a personal kitchen separate from the pantry, plan, and shopping list you share with the people you cook for.</p></header>
+				<PageHeader headingId="households-title" eyebrow="Shared kitchen" title="Household kitchens" description="Keep a personal kitchen separate from the pantry, plan, and shopping list you share with the people you cook for." className="mb-0 gap-0 border-0 pb-0 lg:flex-col lg:items-start" />
 				{message && <p className="rounded-xl bg-emerald-100 px-4 py-3 text-sm font-semibold text-emerald-900" role="status">{message}</p>}
 				{error && <p className="rounded-xl bg-destructive/10 px-4 py-3 text-sm font-semibold text-destructive" role="alert">{error}</p>}
 				<section className="grid min-w-0 gap-6 lg:grid-cols-2" aria-label="Household controls">
@@ -58,6 +66,11 @@ const HouseholdsPage = (): ReactElement => {
 						<h2 className="text-xl font-black">Your households</h2>
 						{householdsQuery.isPending ? (
 							<p className="mt-3 text-sm text-muted-foreground">Loading households…</p>
+						) : householdsQuery.isError ? (
+							<div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4" role="alert">
+								<p className="text-sm font-semibold text-destructive">We could not load your households.</p>
+								<Button className="mt-3" variant="outline" size="sm" onClick={() => householdsQuery.refetch()}>Try again</Button>
+							</div>
 						) : households.length === 0 ? (
 							<p className="mt-3 text-sm text-muted-foreground">You do not belong to a household yet.</p>
 						) : (
