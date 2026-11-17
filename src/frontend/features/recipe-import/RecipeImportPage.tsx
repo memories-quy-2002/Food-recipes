@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "@/shared/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/Card";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import PageHeader from "@/shared/ui/PageHeader";
 import { previewRecipeImport, saveImportedRecipeDraft, type RecipeImportPreview } from "./api/recipeImportApi";
 import { trackProductEvent } from "@/shared/analytics/productAnalytics";
 
@@ -83,9 +84,7 @@ const RecipeImportPage = (): ReactElement => {
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="recipe-import-title">
 			<PageHelmet title="Import recipe" description="Preview a recipe from a public URL and save it as a private draft." path="/recipes/import" noIndex />
 			<div className="mx-auto max-w-3xl">
-				<p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-primary">Bring a recipe into your kitchen</p>
-				<h1 id="recipe-import-title" className="text-4xl font-black tracking-tight sm:text-5xl">Import a recipe</h1>
-				<p className="mt-3 max-w-2xl text-muted-foreground">Paste a public recipe URL. Review every field before it becomes a private draft.</p>
+				<PageHeader headingId="recipe-import-title" eyebrow="Bring a recipe into your kitchen" title="Import a recipe" description="Paste a public recipe URL. Review every field before it becomes a private draft." className="mb-0 gap-0 border-0 pb-0" />
 				<Card className="mt-6">
 					<CardHeader><CardTitle>Paste URL</CardTitle><CardDescription>Only public http(s) pages with Recipe JSON-LD are supported.</CardDescription></CardHeader>
 					<CardContent>

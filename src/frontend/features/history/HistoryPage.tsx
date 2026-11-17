@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
+import PageHeader from "@/shared/ui/PageHeader";
 import { useActiveCookingSessionQuery, useCookingHistoryQuery } from "./api/historyQueries";
 import type { CookingHistoryItem } from "./api/historyApi";
 import type { CookingSession } from "./api/cookingSessionApi";
@@ -36,17 +37,24 @@ const HistoryPage = () => {
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="history-title">
 			<PageHelmet title="Cooking history" description="Review the recipes you have cooked and find your next idea." path="/history" noIndex />
 			<div className="mx-auto w-full max-w-[96rem] space-y-8">
-				<header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-					<div className="max-w-3xl">
-						<p className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-primary">Your kitchen memory</p>
-						<h1 id="history-title" className="text-balance text-4xl font-black tracking-[-0.035em] sm:text-5xl">Cooked, remembered, ready to repeat.</h1>
-						<p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">Keep a simple record of finished recipes, then use it to plan the next meal that fits your kitchen.</p>
-					</div>
-					<div className="flex flex-col gap-2 sm:flex-row">
+				<PageHeader
+					headingId="history-title"
+					eyebrow="Your kitchen memory"
+					title="Cooked, remembered, ready to repeat."
+					description="Keep a simple record of finished recipes, then use it to plan the next meal that fits your kitchen."
+					className="mb-0 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+					contentClassName="max-w-3xl"
+					eyebrowClassName="mb-2 text-xs font-black uppercase tracking-[0.18em] text-primary"
+					titleClassName="text-balance text-4xl font-black tracking-[-0.035em] sm:text-5xl"
+					descriptionClassName="mt-4 max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg"
+					actionsClassName="flex flex-col gap-2 sm:flex-row"
+					actions={
+						<>
 						<Button asChild variant="outline"><Link to="/planning"><CalendarCheck2 className="size-4" aria-hidden="true" />Plan next meals</Link></Button>
 						<Button asChild variant="outline"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Open shopping list</Link></Button>
-					</div>
-				</header>
+						</>
+					}
+				/>
 
 				{activeSession && <Card as="section" className="border-primary/30 bg-primary/5 p-5 sm:p-6" aria-labelledby="active-cooking-title">
 					<div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">

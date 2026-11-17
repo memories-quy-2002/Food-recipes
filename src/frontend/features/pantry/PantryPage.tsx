@@ -6,6 +6,7 @@ import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
 import { Card } from "@/shared/ui/Card";
+import PageHeader from "@/shared/ui/PageHeader";
 import { PANTRY_UNITS, type PantryItem, type PantryUnit } from "./api/pantryApi";
 import {
 	useCreatePantryItemMutation,
@@ -14,7 +15,7 @@ import {
 	useUpdatePantryItemMutation,
 } from "./api/pantryQueries";
 
-type PantryFilter = "all" | "available" | "missing";
+type PantryFilter = "all" | "available" | "details" | "missing";
 
 const unitLabels: Record<string, string> = {
 	GRAM: "g",
@@ -43,28 +44,32 @@ const PantryPage = () => {
 	const [expiresAt, setExpiresAt] = useState("");
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [editingQuantity, setEditingQuantity] = useState("");
-	const [editingUnit, setEditingUnit] = useState<PantryUnit>("PIECE");
+	const [editingUnit, setEditingUnit] = useState<PantryUnit | "">("PIECE");
 	const [editingExpiresAt, setEditingExpiresAt] = useState("");
 	const [filter, setFilter] = useState<PantryFilter>("all");
 	const [searchTerm, setSearchTerm] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const items = pantryQuery.data?.items ?? [];
-	const availableItems = items.filter((item) => item.have);
+	const hasUsableQuantity = (item: PantryItem) => Number.isFinite(item.quantity) && item.quantity !== null && item.quantity > 0 && PANTRY_UNITS.includes(item.unit as PantryUnit);
+	const availableItems = items.filter((item) => item.have && hasUsableQuantity(item));
+	const detailItems = items.filter((item) => item.have && !hasUsableQuantity(item));
 	const missingItems = items.filter((item) => !item.have);
 	const normalizedSearch = searchTerm.trim().toLowerCase();
 	const filteredItems = items.filter((item) => {
 		const matchesSearch = !normalizedSearch || item.name.toLowerCase().includes(normalizedSearch);
 		const matchesFilter = filter === "all"
-			|| (filter === "available" && item.have)
+			|| (filter === "available" && item.have && hasUsableQuantity(item))
+			|| (filter === "details" && item.have && !hasUsableQuantity(item))
 			|| (filter === "missing" && !item.have);
 		return matchesSearch && matchesFilter;
 	});
-	const filteredAvailableItems = filteredItems.filter((item) => item.have);
+	const filteredAvailableItems = filteredItems.filter((item) => item.have && hasUsableQuantity(item));
+	const filteredDetailItems = filteredItems.filter((item) => item.have && !hasUsableQuantity(item));
 	const filteredMissingItems = filteredItems.filter((item) => !item.have);
 
 	const submit = (event: FormEvent<HTMLFormElement>) => {
 		event.preventDefault();
-		if (!canEdit) return;
+		if (!canEdit || createMutation.isPending) return;
 		const nextName = name.trim();
 		const nextQuantity = Number(quantity);
 		if (!nextName) {
@@ -81,7 +86,7 @@ const PantryPage = () => {
 				name: nextName,
 				quantity: nextQuantity,
 				unit,
-				have: true,
+				have: nextQuantity > 0,
 				expiresAt: expiresAt || null,
 			},
 			{
@@ -92,20 +97,24 @@ const PantryPage = () => {
 	};
 
 	const startEditing = (item: PantryItem) => {
-		if (!canEdit) return;
+		if (!canEdit || updateMutation.isPending) return;
 		setEditingId(item.pantry_id);
 		setEditingQuantity(item.quantity === null ? "" : String(item.quantity));
-		setEditingUnit(item.unit && PANTRY_UNITS.includes(item.unit as PantryUnit) ? item.unit as PantryUnit : "PIECE");
+		setEditingUnit(item.unit && PANTRY_UNITS.includes(item.unit as PantryUnit) ? item.unit as PantryUnit : "");
 		setEditingExpiresAt(item.expires_at?.slice(0, 10) ?? "");
 		setError(null);
 	};
 
 	const saveEditing = (event: FormEvent<HTMLFormElement>, item: PantryItem) => {
 		event.preventDefault();
-		if (!canEdit) return;
+		if (!canEdit || updateMutation.isPending) return;
 		const nextQuantity = Number(editingQuantity);
 		if (!editingQuantity.trim() || !Number.isFinite(nextQuantity) || nextQuantity < 0) {
 			setError("Add a valid quantity before saving.");
+			return;
+		}
+		if (!PANTRY_UNITS.includes(editingUnit as PantryUnit)) {
+			setError("Choose a supported unit before saving.");
 			return;
 		}
 		setError(null);
@@ -114,11 +123,15 @@ const PantryPage = () => {
 				pantryId: item.pantry_id,
 				input: {
 					quantity: nextQuantity,
-					unit: editingUnit,
+					unit: editingUnit as PantryUnit,
+					have: nextQuantity > 0,
 					expiresAt: editingExpiresAt || null,
 				},
 			},
-			{ onSuccess: () => setEditingId(null) },
+			{
+				onSuccess: () => { setEditingId(null); setError(null); },
+				onError: () => setError(`We could not save ${item.name}. Try again.`),
+			},
 		);
 	};
 
@@ -148,9 +161,10 @@ const PantryPage = () => {
 							<input
 								type="checkbox"
 								checked={item.have}
-								aria-label={`${item.name} available`}
+								aria-label={`Have any ${item.name}`}
 								className="size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-								onChange={() => updateMutation.mutate({ pantryId: item.pantry_id, input: { have: !item.have } })}
+								disabled={updateMutation.isPending}
+								onChange={() => updateMutation.mutate({ pantryId: item.pantry_id, input: { have: !item.have } }, { onSuccess: () => setError(null), onError: () => setError(`We could not update ${item.name}. Try again.`) })}
 							/>
 							<span className={`grid size-10 shrink-0 place-items-center rounded-xl ${item.have ? "bg-secondary/70 text-foreground" : "bg-muted text-muted-foreground"}`} aria-hidden="true">
 								{item.have ? <PackageCheck className="size-5" /> : <AlertTriangle className="size-5" />}
@@ -161,10 +175,14 @@ const PantryPage = () => {
 						<div className="flex min-w-0 flex-1 items-center gap-3"><span className={`grid size-10 shrink-0 place-items-center rounded-xl ${item.have ? "bg-secondary/70 text-foreground" : "bg-muted text-muted-foreground"}`} aria-hidden="true">{item.have ? <PackageCheck className="size-5" /> : <AlertTriangle className="size-5" />}</span>{itemDetails}</div>
 					)}
 					{canEdit && <div className="flex shrink-0 items-center gap-1 opacity-100 transition sm:opacity-70 sm:group-hover:opacity-100">
-						<Button variant="ghost" size="icon" onClick={() => editingId === item.pantry_id ? setEditingId(null) : startEditing(item)} aria-label={`${editingId === item.pantry_id ? "Cancel editing" : "Edit"} ${item.name}`}>
+						<Button variant="ghost" size="icon" disabled={updateMutation.isPending} onClick={() => editingId === item.pantry_id ? setEditingId(null) : startEditing(item)} aria-label={`${editingId === item.pantry_id ? "Cancel editing" : "Edit"} ${item.name}`}>
 							{editingId === item.pantry_id ? <X className="size-4" aria-hidden="true" /> : <Pencil className="size-4" aria-hidden="true" />}
 						</Button>
-						<Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => deleteMutation.mutate(item.pantry_id)} aria-label={`Delete ${item.name}`}>
+						<Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={deleteMutation.isPending} onClick={() => {
+							if (window.confirm(`Delete ${item.name} from this pantry?`)) {
+								deleteMutation.mutate(item.pantry_id, { onSuccess: () => setError(null), onError: () => setError(`We could not delete ${item.name}. Try again.`) });
+							}
+						}} aria-label={`Delete ${item.name}`}>
 							<Trash2 className="size-4" aria-hidden="true" />
 						</Button>
 					</div>}
@@ -173,10 +191,10 @@ const PantryPage = () => {
 					<label className="sr-only" htmlFor={`quantity-${item.pantry_id}`}>Quantity</label>
 					<Input id={`quantity-${item.pantry_id}`} type="number" min="0" step="0.001" value={editingQuantity} onChange={(event) => setEditingQuantity(event.target.value)} />
 					<label className="sr-only" htmlFor={`unit-${item.pantry_id}`}>Unit</label>
-					<select id={`unit-${item.pantry_id}`} className={selectClass} value={editingUnit} onChange={(event) => setEditingUnit(event.target.value as PantryUnit)}>{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select>
+					<select id={`unit-${item.pantry_id}`} className={selectClass} value={editingUnit} onChange={(event) => setEditingUnit(event.target.value as PantryUnit | "")}>{editingUnit === "" && <option value="">Choose unit</option>}{PANTRY_UNITS.map((option) => <option key={option} value={option}>{unitLabel(option)}</option>)}</select>
 					<label className="sr-only" htmlFor={`expiry-${item.pantry_id}`}>Expires on</label>
 					<Input id={`expiry-${item.pantry_id}`} type="date" value={editingExpiresAt} onChange={(event) => setEditingExpiresAt(event.target.value)} />
-					<Button type="submit" size="icon" aria-label={`Save ${item.name}`}><Check className="size-4" aria-hidden="true" /></Button>
+					<Button type="submit" size="icon" disabled={updateMutation.isPending} aria-label={`Save ${item.name}`}><Check className="size-4" aria-hidden="true" /></Button>
 				</form>}
 				{item.have && item.expiry_status === "use_soon" && <Link className="ml-8 mt-2 inline-flex min-h-10 items-center gap-2 text-sm font-black text-primary underline-offset-4 hover:underline sm:ml-20" to={`/food?q=${encodeURIComponent(item.name)}&pantryIngredient=${encodeURIComponent(item.name)}`} aria-label={`Find recipes using ${item.name}`}>Find recipes using {item.name}<Search className="size-4" aria-hidden="true" /></Link>}
 			</li>
@@ -191,21 +209,27 @@ const PantryPage = () => {
 		<main className="min-h-screen bg-background px-4 py-7 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="pantry-title">
 			<PageHelmet title="My Pantry" description="Keep a simple list of ingredients you have on hand." path="/pantry" noIndex />
 			<div className="mx-auto w-full min-w-0 max-w-7xl">
-				<header className="mb-8 flex flex-col gap-5 border-b border-border/70 pb-7 lg:flex-row lg:items-end lg:justify-between">
-					<div className="max-w-2xl">
-						<p className="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary"><PackageCheck className="size-4" aria-hidden="true" />{scopeLabel}</p>
-						<h1 id="pantry-title" className="text-4xl font-black tracking-tight sm:text-5xl">Pantry</h1>
-						<p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">A clear view of what is ready to cook and what needs restocking.</p>
-					</div>
-					<div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+				<PageHeader
+					headingId="pantry-title"
+					eyebrow={<><PackageCheck className="size-4" aria-hidden="true" />{scopeLabel}</>}
+					title="Pantry"
+					description="A clear view of what is ready to cook and what needs restocking."
+					className="mb-8 border-b border-border/70 pb-7"
+					contentClassName="max-w-2xl"
+					eyebrowClassName="mb-2 inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-primary"
+					descriptionClassName="mt-3 max-w-xl text-base leading-7 text-muted-foreground"
+					actionsClassName="flex w-full flex-col gap-2 sm:w-auto sm:flex-row"
+					actions={<>
 						<Button asChild variant="outline" size="sm" className="flex-1"><Link to="/food"><Search className="size-4" aria-hidden="true" />Find recipes</Link></Button>
 						<Button asChild variant="outline" size="sm" className="flex-1"><Link to="/shopping-list"><ShoppingBasket className="size-4" aria-hidden="true" />Shopping list</Link></Button>
-					</div>
-				</header>
+					</>}
+				/>
+				{error && <p className="mb-5 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive" role="alert">{error}</p>}
 
-				<section className="mb-6 grid max-w-3xl gap-3 sm:grid-cols-2" aria-label="Pantry overview">
+				<section className="mb-6 grid max-w-5xl gap-3 md:grid-cols-3" aria-label="Pantry overview">
 					<div className="rounded-2xl bg-secondary/55 px-5 py-4"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted-foreground"><CheckCircle2 className="size-4" aria-hidden="true" />On hand</div><p className="mt-2 text-3xl font-black text-foreground">{availableItems.length}</p><p className="text-sm text-muted-foreground">ready to use</p></div>
 					<div className="rounded-2xl bg-muted px-5 py-4"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em] text-muted-foreground"><AlertTriangle className="size-4" aria-hidden="true" />Need to buy</div><p className="mt-2 text-3xl font-black text-foreground">{missingItems.length}</p><p className="text-sm text-muted-foreground">out of stock</p></div>
+					<div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100"><div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.14em]"><AlertTriangle className="size-4" aria-hidden="true" />Needs details</div><p className="mt-2 text-3xl font-black">{detailItems.length}</p><p className="text-sm opacity-80">quantity and unit needed</p></div>
 				</section>
 
 				{canEdit && <Card className="mb-6 overflow-hidden p-0">
@@ -217,7 +241,6 @@ const PantryPage = () => {
 						<div className="grid gap-2"><label htmlFor="pantry-expires-at" className="text-sm font-bold">Expires on <span className="font-normal text-muted-foreground">(optional)</span></label><Input id="pantry-expires-at" type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></div>
 						<Button type="submit" className="w-full sm:w-auto" disabled={createMutation.isPending}>{createMutation.isPending ? "Adding..." : <><Plus className="size-4" aria-hidden="true" />Add pantry item</>}</Button>
 					</form>
-					{error && <p className="mx-5 mb-5 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive sm:mx-6" role="alert">{error}</p>}
 				</Card>}
 
 				{pantryQuery.isPending ? (
@@ -230,12 +253,20 @@ const PantryPage = () => {
 					<section aria-label="Pantry ingredients">
 						<div className="mb-5 flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-3 shadow-sm sm:flex-row sm:items-center sm:p-4">
 							<div className="relative min-w-0 flex-1"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><label className="sr-only" htmlFor="pantry-search">Search pantry</label><Input id="pantry-search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search ingredients" className="pl-10" /></div>
-							<div className="flex shrink-0 items-center gap-2"><label className="sr-only" htmlFor="pantry-filter">Filter pantry</label><select id="pantry-filter" className={`${selectClass} sm:w-44`} value={filter} onChange={(event) => setFilter(event.target.value as PantryFilter)}><option value="all">All items</option><option value="available">On hand</option><option value="missing">Need to buy</option></select><span className="hidden rounded-full bg-muted px-3 py-2 text-xs font-bold text-muted-foreground sm:inline-flex" aria-live="polite">{filteredItems.length} items</span></div>
+							<div className="flex shrink-0 items-center gap-2"><label className="sr-only" htmlFor="pantry-filter">Filter pantry</label><select id="pantry-filter" className={`${selectClass} sm:w-44`} value={filter} onChange={(event) => setFilter(event.target.value as PantryFilter)}><option value="all">All items</option><option value="available">On hand</option><option value="details">Needs details</option><option value="missing">Need to buy</option></select><span className="hidden rounded-full bg-muted px-3 py-2 text-xs font-bold text-muted-foreground sm:inline-flex" aria-live="polite">{filteredItems.length} items</span></div>
 						</div>
-						<div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]">
-							<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Ready now</p><h2 className="mt-1 text-2xl font-black">On hand</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredAvailableItems.length} / {availableItems.length}</span></div>{renderList(filteredAvailableItems, filter === "all" ? "Nothing marked as available." : "No available items match this filter.")}</Card>
-							<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Restock</p><h2 className="mt-1 text-2xl font-black">Need to buy</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredMissingItems.length} / {missingItems.length}</span></div>{renderList(filteredMissingItems, filter === "all" ? "Nothing waiting here." : "No items need restocking for this filter.")}</Card>
-						</div>
+						{filteredItems.length === 0 ? (
+							<div className="rounded-2xl border border-dashed border-border/80 bg-muted/35 px-4 py-8 text-center" role="status">
+								<p className="text-sm text-muted-foreground">No pantry items match this search and filter.</p>
+								<Button className="mt-3" variant="outline" size="sm" onClick={() => { setSearchTerm(""); setFilter("all"); }}>Clear search and filters</Button>
+							</div>
+						) : (
+							<div className={`grid min-w-0 grid-cols-1 gap-4 ${detailItems.length ? "lg:grid-cols-3" : "lg:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.85fr)]"}`}>
+								<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-primary">Ready now</p><h2 className="mt-1 text-2xl font-black">On hand</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredAvailableItems.length} / {availableItems.length}</span></div>{renderList(filteredAvailableItems, filter === "all" ? "Nothing with a usable quantity yet." : "No available items match this filter.")}</Card>
+								{detailItems.length > 0 && <Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-amber-800 dark:text-amber-300">Check stock details</p><h2 className="mt-1 text-2xl font-black">Needs details</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredDetailItems.length} / {detailItems.length}</span></div><p className="mb-3 text-sm text-muted-foreground">Marked as present, but missing a positive quantity or supported unit needed for recipe matching.</p>{renderList(filteredDetailItems, "Every marked item has a usable quantity and unit.")}</Card>}
+								<Card className="min-w-0 p-5 sm:p-6"><div className="mb-4 flex min-w-0 items-end justify-between gap-3"><div className="min-w-0"><p className="text-xs font-black uppercase tracking-[0.16em] text-muted-foreground">Restock</p><h2 className="mt-1 text-2xl font-black">Need to buy</h2></div><span className="shrink-0 text-sm font-bold text-muted-foreground">{filteredMissingItems.length} / {missingItems.length}</span></div>{renderList(filteredMissingItems, filter === "all" ? "Nothing waiting here." : "No items need restocking for this filter.")}</Card>
+							</div>
+						)}
 					</section>
 				)}
 			</div>

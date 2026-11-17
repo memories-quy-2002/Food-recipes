@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { KitchenScope } from "@/features/households/householdScope";
@@ -62,6 +62,7 @@ describe("PantryPage", () => {
 
 	afterEach(() => {
 		cleanup();
+		vi.restoreAllMocks();
 		vi.clearAllMocks();
 	});
 
@@ -72,8 +73,8 @@ describe("PantryPage", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
 		expect(mockPantry.add).toHaveBeenCalledWith({ name: "Rice", quantity: 2, unit: "PIECE", have: true, expiresAt: null }, expect.any(Object));
 
-		fireEvent.click(screen.getByRole("checkbox", { name: "Eggs available" }));
-		expect(mockPantry.update).toHaveBeenCalledWith({ pantryId: 4, input: { have: false } });
+		fireEvent.click(screen.getByRole("checkbox", { name: "Have any Eggs" }));
+		expect(mockPantry.update).toHaveBeenCalledWith({ pantryId: 4, input: { have: false } }, expect.objectContaining({ onError: expect.any(Function) }));
 	});
 
 	it("passes the selected household scope to pantry reads and mutations", () => {
@@ -98,7 +99,7 @@ describe("PantryPage", () => {
 		expect(screen.getByText("Eggs")).toBeInTheDocument();
 		expect(screen.queryByRole("heading", { name: "Add an ingredient" })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Add pantry item" })).not.toBeInTheDocument();
-		expect(screen.queryByRole("checkbox", { name: "Eggs available" })).not.toBeInTheDocument();
+		expect(screen.queryByRole("checkbox", { name: "Have any Eggs" })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Edit Eggs" })).not.toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Delete Eggs" })).not.toBeInTheDocument();
 		expect(mockPantry.add).not.toHaveBeenCalled();
@@ -151,6 +152,109 @@ describe("PantryPage", () => {
 		expect(screen.queryByText("Eggs")).not.toBeInTheDocument();
 
 		fireEvent.change(screen.getByLabelText("Filter pantry"), { target: { value: "missing" } });
-		expect(screen.getByText("No available items match this filter.")).toBeInTheDocument();
+		expect(screen.getByRole("status")).toHaveTextContent("No pantry items match this search and filter");
+	});
+
+	it("offers a clear action when search and filters return no pantry items", () => {
+		renderPage();
+		fireEvent.change(screen.getByLabelText("Search pantry"), { target: { value: "saffron" } });
+
+		expect(screen.getByRole("status")).toHaveTextContent("No pantry items match");
+		fireEvent.click(screen.getByRole("button", { name: "Clear search and filters" }));
+		expect(screen.getByLabelText("Search pantry")).toHaveValue("");
+		expect(screen.getByLabelText("Filter pantry")).toHaveValue("all");
+		expect(screen.getByText("Eggs")).toBeInTheDocument();
+	});
+
+	it("shows available stock separately from items that need quantity details", () => {
+		mockPantry.usePantryQuery.mockReturnValue({
+			data: { items: [
+				{ pantry_id: 4, name: "Eggs", have: true, quantity: 12, unit: "PIECE" },
+				{ pantry_id: 7, name: "Flour", have: true, quantity: null, unit: null },
+				{ pantry_id: 8, name: "Water", have: true, quantity: 0, unit: "LITER" },
+				{ pantry_id: 9, name: "Salt", have: false, quantity: 0, unit: "GRAM" },
+			] },
+			isPending: false,
+			isError: false,
+			refetch: mockPantry.refetch,
+		});
+		renderPage();
+
+		const overview = within(screen.getByRole("region", { name: "Pantry overview" }));
+		expect(overview.getByText("On hand").parentElement?.parentElement).toHaveTextContent("1");
+		expect(screen.getByRole("heading", { name: "Needs details" })).toBeInTheDocument();
+		expect(screen.getByText("Flour")).toBeInTheDocument();
+		expect(screen.getByText("Water")).toBeInTheDocument();
+		expect(screen.getByText("Salt")).toBeInTheDocument();
+		expect(screen.getByRole("checkbox", { name: "Have any Flour" })).toBeChecked();
+	});
+
+	it("keeps edit, availability, and delete errors visible to the user", async () => {
+		const update = vi.fn((_input: unknown, options?: { onError?: () => void }) => options?.onError?.());
+		const remove = vi.fn((_id: number, options?: { onError?: () => void }) => options?.onError?.());
+		vi.spyOn(window, "confirm").mockReturnValue(true);
+		mockPantry.useUpdatePantryItemMutation.mockReturnValue({ mutate: update, isPending: false });
+		mockPantry.useDeletePantryItemMutation.mockReturnValue({ mutate: remove, isPending: false });
+		renderPage();
+
+		fireEvent.click(screen.getByRole("checkbox", { name: "Have any Eggs" }));
+		expect(screen.getByRole("alert")).toHaveTextContent("could not update Eggs");
+
+		fireEvent.click(screen.getByRole("button", { name: "Edit Eggs" }));
+		fireEvent.click(screen.getByRole("button", { name: "Save Eggs" }));
+		expect(update).toHaveBeenCalledWith(expect.objectContaining({ pantryId: 4, input: expect.objectContaining({ have: true }) }), expect.objectContaining({ onError: expect.any(Function) }));
+		expect(screen.getByRole("alert")).toHaveTextContent("could not save Eggs");
+
+		fireEvent.click(screen.getByRole("button", { name: "Delete Eggs" }));
+		expect(screen.getByRole("alert")).toHaveTextContent("could not delete Eggs");
+	});
+
+	it("does not mark zero quantity as usable stock when adding", () => {
+		renderPage();
+		fireEvent.change(screen.getByLabelText("Pantry item"), { target: { value: "Empty jar" } });
+		fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "0" } });
+		fireEvent.click(screen.getByRole("button", { name: "Add pantry item" }));
+
+		expect(mockPantry.add).toHaveBeenCalledWith(expect.objectContaining({ name: "Empty jar", quantity: 0, have: false }), expect.any(Object));
+	});
+
+	it("requires a supported unit before a legacy item can become usable stock", () => {
+		mockPantry.usePantryQuery.mockReturnValue({
+			data: { items: [{ pantry_id: 10, name: "Flour", have: true, quantity: null, unit: null }] },
+			isPending: false,
+			isError: false,
+			refetch: mockPantry.refetch,
+		});
+		renderPage();
+		fireEvent.click(screen.getByRole("button", { name: "Edit Flour" }));
+		const editForm = screen.getByRole("form", { name: "Edit Flour" });
+		fireEvent.change(within(editForm).getByLabelText("Quantity"), { target: { value: "250" } });
+		fireEvent.click(within(editForm).getByRole("button", { name: "Save Flour" }));
+
+		expect(screen.getByRole("alert")).toHaveTextContent("Choose a supported unit");
+		expect(mockPantry.update).not.toHaveBeenCalled();
+
+		fireEvent.change(within(editForm).getByLabelText("Unit"), { target: { value: "GRAM" } });
+		fireEvent.click(within(editForm).getByRole("button", { name: "Save Flour" }));
+		expect(mockPantry.update).toHaveBeenCalledWith(expect.objectContaining({ pantryId: 10, input: expect.objectContaining({ quantity: 250, unit: "GRAM", have: true }) }), expect.any(Object));
+	});
+
+	it("does not delete an ingredient when the confirmation is canceled", () => {
+		vi.spyOn(window, "confirm").mockReturnValue(false);
+		renderPage();
+		fireEvent.click(screen.getByRole("button", { name: "Delete Eggs" }));
+
+		expect(window.confirm).toHaveBeenCalledWith("Delete Eggs from this pantry?");
+		expect(mockPantry.remove).not.toHaveBeenCalled();
+	});
+
+	it("disables pantry controls while a matching mutation is pending", () => {
+		mockPantry.useUpdatePantryItemMutation.mockReturnValue({ mutate: mockPantry.update, isPending: true });
+		mockPantry.useDeletePantryItemMutation.mockReturnValue({ mutate: mockPantry.remove, isPending: true });
+		renderPage();
+
+		expect(screen.getByRole("checkbox", { name: "Have any Eggs" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Edit Eggs" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Delete Eggs" })).toBeDisabled();
 	});
 });

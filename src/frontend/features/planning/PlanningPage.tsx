@@ -4,6 +4,7 @@ import { Bookmark, CalendarDays, List, ShoppingBasket, Sparkles, Utensils } from
 import PageHelmet from "@/shared/seo/PageHelmet";
 import Button from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
+import PageHeader from "@/shared/ui/PageHeader";
 import type { AddMealPlanItemInput, MealPlanItem, MealSlot } from "./api/planningApi";
 import { getWeekRange, parseIsoDate, shiftWeek, type WeekRange } from "./api/planningDates";
 import { useAddMealPlanItemMutation, useCreateMealPlanMutation, useDeleteMealPlanItemMutation, useMealPlanForWeekQuery, useUpdateMealPlanItemMutation } from "./api/planningQueries";
@@ -153,19 +154,25 @@ const PlanningPage = () => {
 		<main className="min-h-screen bg-background px-4 py-6 sm:px-6 lg:px-8 lg:py-10" aria-labelledby="planning-title">
 			<PageHelmet title="Planning" description="Plan your meals for the week and keep cooking days organized." path="/planning" noIndex />
 			<div className="mx-auto w-full max-w-[96rem]">
-				<header className="mb-7 flex flex-col gap-5 lg:flex-col lg:items-end lg:justify-between xl:flex-row">
-					<div className="max-w-3xl">
-						<p className="mb-2 text-sm font-bold uppercase tracking-[0.16em] text-primary">{scopeLabel}</p>
-						<h1 id="planning-title" className="text-4xl font-black tracking-[-0.035em] sm:text-5xl lg:text-6xl">Plan with intention</h1>
-						<p className="sr-only">Put recipes on the days you actually want to cook them, set servings once, and make the week easier to execute.</p>
-					</div>
-					<div className="flex w-full flex-col gap-2 sm:flex-row lg:w-full xl:w-auto">
+				<PageHeader
+					headingId="planning-title"
+					eyebrow={scopeLabel}
+					title="Plan with intention"
+					description="Put recipes on the days you actually want to cook them, set servings once, and make the week easier to execute."
+					className="mb-7 flex flex-col gap-5 lg:flex-col lg:items-end lg:justify-between xl:flex-row"
+					contentClassName="max-w-3xl"
+					titleClassName="text-4xl font-black tracking-[-0.035em] sm:text-5xl lg:text-6xl"
+					descriptionClassName="sr-only"
+					actionsClassName="flex w-full flex-col gap-2 sm:flex-row lg:w-full xl:w-auto"
+					actions={
+						<>
 						{canEdit && scope.kind === "personal" && <Button className="flex-1 xl:flex-none" onClick={() => setIsGenerateDialogOpen(true)}><Sparkles className="size-4" aria-hidden="true" />Generate week</Button>}
 						{canEdit && <Button variant="outline" className="flex-1 xl:flex-none" onClick={() => setIsLeftoverDialogOpen(true)}><Utensils className="size-4" aria-hidden="true" />Use leftovers</Button>}
 						<Button asChild variant="outline" className="flex-1 xl:flex-none"><Link to="/wishlist"><Bookmark className="size-4" aria-hidden="true" />Saved recipes</Link></Button>
 						<Button asChild className="flex-1 xl:flex-none"><Link to={`/shopping-list?week=${visibleWeek.from}`}><ShoppingBasket className="size-4" aria-hidden="true" />Shopping list</Link></Button>
-					</div>
-				</header>
+						</>
+					}
+				/>
 				<Card className="overflow-hidden p-4 sm:p-5 lg:p-6">
 					<WeekNavigator range={visibleWeek} onPrevious={() => moveWeek(-1)} onNext={() => moveWeek(1)} isCurrentWeek={currentWeek.from === visibleWeek.from} />
 					<div className="mt-5">{renderPlanContent()}</div>

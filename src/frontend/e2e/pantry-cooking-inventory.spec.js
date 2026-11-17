@@ -196,8 +196,10 @@ test("Pantry route loads without console errors and remains usable at mobile and
 		const audit = await page.evaluate(() => ({ viewportWidth: window.innerWidth, documentWidth: document.documentElement.scrollWidth, overlayCount: document.querySelectorAll('[role="dialog"][aria-modal="true"]').length }));
 		expect(audit.documentWidth).toBeLessThanOrEqual(audit.viewportWidth);
 		expect(audit.overlayCount).toBe(0);
+		if (width === 375 || width === 1440) {
+			await page.screenshot({ path: testInfo.outputPath(`pantry-route-${width}.png`), fullPage: true });
+		}
 	}
-	await page.screenshot({ path: testInfo.outputPath("pantry-route.png"), fullPage: true });
 	expect(consoleErrors).toEqual([]);
 });
 
@@ -206,6 +208,10 @@ test("user validates, adds, edits, moves, deletes, and handles a failed Pantry m
 	const pantry = await stubPantryApi(page);
 	await page.goto("/pantry");
 	await expect(page.getByRole("heading", { name: "On hand" })).toBeVisible();
+	await page.getByRole("textbox", { name: "Search pantry" }).fill("not in stock");
+	await expect(page.getByRole("status")).toContainText("No pantry items match this search and filter");
+	await page.getByRole("button", { name: "Clear search and filters" }).click();
+	await expect(page.getByText("rice", { exact: true })).toBeVisible();
 
 	await page.getByRole("button", { name: "Add pantry item" }).click();
 	await expect(page.getByRole("alert")).toHaveText("Add an item name before saving.");
@@ -226,11 +232,19 @@ test("user validates, adds, edits, moves, deletes, and handles a failed Pantry m
 	await editForm.getByRole("button", { name: "Save flour" }).click();
 	await expect(page.getByText("0.5 kg", { exact: true })).toBeVisible();
 
-	await page.getByRole("checkbox", { name: "flour available" }).click();
-	await expect(page.getByRole("checkbox", { name: "flour available" })).not.toBeChecked();
+	await page.getByRole("checkbox", { name: /have any flour/i }).click();
+	await expect(page.getByRole("checkbox", { name: /have any flour/i })).not.toBeChecked();
 	await expect(page.getByRole("heading", { name: "Need to buy" })).toBeVisible();
 
+	const deleteDialogMessage = new Promise((resolve) => {
+		page.once("dialog", async (dialog) => {
+			const message = dialog.message();
+			await dialog.accept();
+			resolve(message);
+		});
+	});
 	await page.getByRole("button", { name: "Delete flour" }).click();
+	expect(await deleteDialogMessage).toBe("Delete flour from this pantry?");
 	await expect(page.getByText("flour", { exact: true })).toHaveCount(0);
 
 	pantry.failCreate = true;

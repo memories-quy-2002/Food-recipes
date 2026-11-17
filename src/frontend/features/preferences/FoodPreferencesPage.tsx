@@ -9,6 +9,7 @@ import {
 } from "react";
 import { X } from "lucide-react";
 import PageHelmet from "@/shared/seo/PageHelmet";
+import PageHeader from "@/shared/ui/PageHeader";
 import PageState from "@/shared/ui/PageState";
 import Button from "@/shared/ui/Button";
 import Input from "@/shared/ui/Input";
@@ -346,17 +347,7 @@ const FoodPreferencesPage = (): ReactElement => {
 				noIndex
 			/>
 			<div className="mx-auto w-full max-w-5xl min-w-0">
-				<header className="mb-7 max-w-3xl">
-					<p className="mb-2 text-xs font-black uppercase tracking-[0.16em] text-primary">
-						Your kitchen, your rules
-					</p>
-					<h1 id="food-preferences-title" className="text-4xl font-black tracking-[-0.035em] sm:text-5xl">
-						Food preferences
-					</h1>
-					<p className="mt-3 text-base leading-7 text-muted-foreground">
-						Tell us what fits your table so future recipe suggestions feel more like yours.
-					</p>
-				</header>
+				<PageHeader headingId="food-preferences-title" eyebrow="Your kitchen, your rules" title="Food preferences" description="Tell us what fits your table so future recipe suggestions feel more like yours." className="mb-7 max-w-3xl gap-0 border-0 pb-0 lg:flex-col lg:items-start" contentClassName="max-w-3xl" eyebrowClassName="mb-2 text-xs font-black uppercase tracking-[0.16em] text-primary" titleClassName="text-4xl font-black tracking-[-0.035em] sm:text-5xl" descriptionClassName="mt-3 text-base leading-7 text-muted-foreground" />
 
 				<section className="min-w-0 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-6 lg:p-8">
 					<form
