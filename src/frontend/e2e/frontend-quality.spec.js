@@ -46,7 +46,9 @@ async function stubCatalogApi(page, options = {}) {
 		return route.fulfill(json(recipeList(limit)));
 	});
 	await page.route("**/categories", (route) => route.fulfill(json({ categories: [{ id: 2, name: "Main Course", recipe_count: 1 }] })));
-	await page.route("**/meals", (route) => route.fulfill(json({ meals: [{ id: 3, name: "Dinner" }] })));
+	await page.route("**/meals", (route) => route.fulfill(json({
+		meals: options.featuredMeals ?? [{ id: 3, name: "Dinner" }],
+	})));
 	await page.route("**/home-feed", (route) => route.fulfill(json({ sections: [] })));
 
 	return {
@@ -55,6 +57,31 @@ async function stubCatalogApi(page, options = {}) {
 		},
 	};
 }
+
+test("Home featured carousel exposes a usable pause control on mobile", async ({ page }) => {
+	await page.setViewportSize({ width: 390, height: 844 });
+	await stubCatalogApi(page, {
+		featuredMeals: [
+			{ id: 1, name: "Breakfast" },
+			{ id: 2, name: "Lunch & Dinner" },
+			{ id: 3, name: "Snack" },
+			{ id: 4, name: "Dinner" },
+		],
+	});
+	await page.goto("/");
+
+	const pauseButton = page.getByRole("button", { name: "Pause featured carousel" });
+	await expect(pauseButton).toBeVisible();
+	const bounds = await pauseButton.boundingBox();
+	expect(bounds?.width ?? 0).toBeGreaterThanOrEqual(44);
+	expect(bounds?.height ?? 0).toBeGreaterThanOrEqual(44);
+	expect((bounds?.x ?? 390) + (bounds?.width ?? 0)).toBeLessThanOrEqual(390);
+
+	await pauseButton.click();
+	const resumeButton = page.getByRole("button", { name: "Resume featured carousel" });
+	await expect(resumeButton).toBeVisible();
+	await expect(resumeButton).toHaveAttribute("aria-pressed", "true");
+});
 
 const formatViolations = (violations) => violations
 	.map(({ id, impact, help, nodes }) => `${impact}: ${id} - ${help} (${nodes.length} node${nodes.length === 1 ? "" : "s"})`)
