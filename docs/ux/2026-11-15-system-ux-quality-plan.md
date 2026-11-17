@@ -2,7 +2,7 @@
 
 **Reviewed:** 2026-11-16
 **Basis:** `src/frontend/app/AppRoutes.tsx`, `docs/frontend/current-user-journeys.md`, `src/frontend/features/**`, existing Playwright quality and kitchen-loop tests.  
-**Status:** Wave 1 shipped in PR #206. Waves 2–5 are implemented on `feat/ux-quality-dod`; final branch CI, PostgreSQL route matrix, merge-SHA deployment, and read-only production smoke are pending. Do not call the full plan closed until those release checks pass.
+**Status:** Complete. Waves 1–5 are implemented and released. PR #210 merged to `master` as `9cec958677ebe75c2482ce7927b63bad9616147a`; Quality Gates run 44003412042 passed, its exact-SHA Vercel production deployment is READY, and the read-only production Playwright smoke passed.
 
 ## Product principles
 
@@ -26,7 +26,7 @@
 - [x] Component tests + Playwright responsive, permissions, consent, duplicate and week-navigation journeys.
 - [x] PostgreSQL real-stack retry/concurrency behavior: two tabs preparing the same meal produce one shopping row; replaying completion after a lost response produces one history row and one pantry deduction. This tests duplicate/retry safety, not simultaneous pantry edits. The same suite runs in the isolated PostgreSQL CI job.
 
-### Wave 2 — Global navigation and continuity (implemented; release checks pending)
+### Wave 2 — Global navigation and continuity (implemented and released)
 Surfaces: Header/mobile drawer, Home, Discover, Recipe details, Saved, Profile.
 - [x] Keep active navigation state and distinguish personal versus household scope consistently.
 - [x] Maintain search/filter state on back navigation and after authentication.
@@ -36,7 +36,7 @@ Surfaces: Header/mobile drawer, Home, Discover, Recipe details, Saved, Profile.
 - [x] Guest save/return, protected-route and expired-session recovery journeys pass in the deterministic browser suite. Session expiry is fixture-driven, not a live provider/session revocation test.
 - [x] Discover filters use URL state and protected routes retain the requested destination. A PostgreSQL-backed matrix visits all 22 authenticated product routes at 320, 375, 390, 720, 768, 1024 and 1440 CSS pixels, checks horizontal overflow and axe WCAG 2.0/2.1/2.2 A/AA, captures 46 screenshots, and asserts route review caused no writes except the expected cooking-session start. Screenshot sheets were reviewed manually.
 
-### Wave 3 — Planning and cooking (implemented; release checks pending)
+### Wave 3 — Planning and cooking (implemented and released)
 Surfaces: Planning grid/agenda, meal dialogs, recipe editor, cooking sessions, leftovers.
 - Planning week selection is now mirrored in `?week=YYYY-MM-DD`, follows browser back/forward, and carries into Shopping List and its return links; invalid calendar dates are rejected.
 - Existing planning UI provides calendar and agenda views, keyboard-operable drag-and-drop, edit dialogs, and loading/empty/error states. The mobile agenda now has a Playwright journey that changes a meal's date and slot through the keyboard-operable edit action, without relying on drag-and-drop.
@@ -46,7 +46,7 @@ Surfaces: Planning grid/agenda, meal dialogs, recipe editor, cooking sessions, l
 - [x] Test both leftover completion paths before review/history: Skip and Save leftover.
 - [x] Preserve unsaved recipe editor values on validation/API failures and warn before discarding recipe/profile edits or leaving the page; component tests cover confirm/cancel and `beforeunload` behavior.
 
-### Wave 4 — Pantry, household and account UX (implemented; release checks pending)
+### Wave 4 — Pantry, household and account UX (implemented and released)
 Surfaces: Pantry, Households/invites, History, Journal, Preferences, Notifications, Account recovery.
 - [x] Normalize ingredient units and validation help, and avoid inventory-state ambiguities. Pantry separates usable stock, unquantified/unsupported legacy stock, and items to buy; zero quantity is not marked on hand, and legacy stock must have a supported unit selected before saving.
 - [x] Make membership/role actions explicit and prevent accidental edits by viewers.
@@ -56,7 +56,7 @@ Surfaces: Pantry, Households/invites, History, Journal, Preferences, Notificatio
 - [x] Verify the use-soon pantry path through recipe search, ingredient preparation and meal planning. PostgreSQL role/security coverage verifies OWNER, MEMBER, VIEWER and non-member behavior, including read-only and duplicate-write boundaries.
 - [x] Route-level accessibility/overflow review covers the authenticated product routes above. Mock journeys additionally exercise empty, retryable error, validation, guest and permission-denied states on the relevant routes; this is journey-level state coverage, not every possible state combination on every URL.
 
-### Wave 5 — UI design system and release QA (implemented; release checks pending)
+### Wave 5 — UI design system and release QA (implemented and released)
 - [x] Consolidate repeated page headers, button variants, form labels, status/skeleton/error components without replacing established branding. `PageHeader` is reused by Pantry, Planning, History, Households, Journal, Food Preferences, Notification Preferences, and Recipe Import; distinctive discovery, shopping, auth, cooking, and recipe headers retain their established layouts.
 - [x] Existing shared primitives include Button, Input, PageState, focus-visible tokens and reduced-motion handling. Axe WCAG 2.0/2.1/2.2 A/AA ran on every route at every viewport, including applicable contrast and WCAG 2.2 target-size checks; 720 CSS px is the 200% reflow equivalent of 1440 CSS px. The 720px check is viewport reflow coverage, not a browser zoom-control test. The product's preferred 44px touch size is not a universal rule for every desktop control.
 - [x] Deterministic Playwright coverage includes 320, 375, 390, 720, 768, 1024 and 1440px. The PostgreSQL-backed route matrix captured 46 screenshots; the full route contact sheets and Home/Households at 320px were visually reviewed. On the final responsive fixes, Profile, Planning, Pantry, and Journal screenshots at 390px and 1440px were reviewed. Existing Discover/weekly-shopping snapshot baselines remain in place.
@@ -69,7 +69,8 @@ Surfaces: Pantry, Households/invites, History, Journal, Preferences, Notificatio
 - The selected household scope is covered through provider remount restoration; existing API/query tests cover pantry, planning, and shopping scope isolation.
 - Local verification on the current tree: frontend `pnpm check` passed (140 files / 478 tests), `pnpm build` passed, and deterministic Playwright passed 84/84. Backend `pnpm check` passed (67 suites / 350 tests and both migration validators), backend build and `prisma:validate` passed, and backend API E2E passed 14 with 8 skipped because no local database was configured; the PostgreSQL-backed CI job is required to cover those integration cases.
 - Pantry screenshots at 375px and 1440px were reviewed; no overflow was reported. The weekly-shopping snapshot showed a stable 47-pixel edge-rendering diff on Windows with no visible layout change; its assertion now tolerates up to 64 differing pixels.
-- Pending before this plan can be marked fully passed: GitHub Quality Gates for this branch (including the isolated PostgreSQL route/accessibility matrix), merge of the exact tested head, READY production deployment, and a read-only production Playwright smoke. Do not infer these from local tests.
+- Release verification: PR #210 merged with tested head `368741a1fbf57b8e38bdb82d224a3fa3681e3f50`; GitHub Quality Gates run [44003412042](https://github.com/memories-quy-2002/Food-recipes/actions/runs/44003412042) passed, including all 84 deterministic journeys and all 15 PostgreSQL-backed journeys. The real-stack suite's authenticated route matrix passed its viewport/axe scan. The exact merge SHA `9cec958677ebe75c2482ce7927b63bad9616147a` has READY Vercel production deployment `dpl_4sPr6fpHw7MjbzZfThfrBJtvVPmq`, serving `foodrecipes1.vercel.app`.
+- Production Playwright smoke was read-only: Home rendered the featured carousel and its mobile pause control; Recipes loaded 20 results; Banana Oat Pancakes loaded; anonymous `/pantry` access returned to the account sign-in screen. At 375 CSS px the Home document had no horizontal overflow, and the screenshot was visually reviewed. Home feed, category, and meal requests returned HTTP 200. The only console error was the anonymous `/auth/refresh` request returning 401; no warnings were recorded. Authenticated production mutations were not performed; authenticated route, role, inventory, and write behavior was verified against isolated PostgreSQL in CI.
 
 ### Implementation evidence (2026-11-16)
 - `planningDates.parseIsoDate` rejects malformed and overflow calendar dates; focused unit coverage was added.
@@ -87,9 +88,9 @@ Surfaces: Pantry, Households/invites, History, Journal, Preferences, Notificatio
 - [x] Keyboard: visible focus and tested logical keyboard paths, including Escape/drawer/dialog and planning drag/edit behavior.
 - [x] Accessibility: semantic labels/landmarks and WCAG 2.0/2.1/2.2 A/AA axe scan per route and viewport, including applicable contrast and WCAG 2.2 target-size checks. The 720px viewport verifies 200% reflow equivalence; the browser zoom control itself was not changed. The product's preferred 44px touch size is not applied as a universal minimum to desktop controls.
 - [x] State: filters/week/scope are preserved in relevant journeys; route review asserts no unintended API writes.
-- [x] Testing: Vitest/Jest, all 84 Playwright mock journeys, and 15 PostgreSQL-backed real-stack tests pass in CI; the relevant full checks also pass locally. Current branch CI is still required before release.
-- [x] Deployment: PR checks passed, preview reviewed, PR #206 merged safely, and the resulting production revision passed a read-only route/API smoke check. Authenticated and write flows remain covered by isolated PostgreSQL CI rather than production mutations.
+- [x] Testing: frontend checks and all 84 Playwright mock journeys passed locally and in CI; backend Jest passed locally (67 suites / 350 tests); all 15 PostgreSQL-backed real-stack tests passed in CI, including the authenticated route viewport/axe matrix.
+- [x] Deployment: PR checks passed, PR #210 merged safely, and the exact merge-SHA production revision passed a read-only Playwright route/API smoke check. The protected Vercel preview check passed; direct preview browsing was SSO-gated. Authenticated and write flows remain covered by isolated PostgreSQL CI rather than production mutations.
 
 ## Evidence boundary
 
-Quality Gates run the deterministic frontend browser suite, backend tests, and a separate PostgreSQL-backed real-stack suite. The final route matrix and API integration evidence is on GitHub CI run 43843102033; the Vercel preview UI is separately reviewed. Deployment DoD passed after PR #206 merged and the exact merge-SHA production deployment passed a read-only smoke check. The branch preview hostname is outside the Railway API CORS allowlist; no production policy change was made. Add that exact origin only with explicit owner authorization. The signed-out smoke's refresh endpoint returning 401 is expected and does not establish authenticated production behavior.
+Quality Gates run the deterministic frontend browser suite, backend tests, and a separate PostgreSQL-backed real-stack suite. The earlier Wave 1 route/API evidence is on run 43843102033; current Waves 2–5 code and production evidence is on run 44003412042 and PR #210. That run passed all 84 deterministic journeys, all 15 PostgreSQL-backed journeys, and the authenticated route viewport/axe matrix. PR #210 merged as `9cec958677ebe75c2482ce7927b63bad9616147a`; deployment `dpl_4sPr6fpHw7MjbzZfThfrBJtvVPmq` is READY and serves `foodrecipes1.vercel.app`. Production Playwright checked Home, the 20-recipe library, Banana Oat Pancakes, the mobile carousel control, and anonymous Pantry access. Home feed, categories, and meals returned HTTP 200. The sole console error was the expected signed-out `/auth/refresh` 401; no warnings were recorded. Authenticated and write flows are verified through isolated PostgreSQL CI rather than production mutations. The branch preview hostname is outside the Railway API CORS allowlist; no production policy change was made.
